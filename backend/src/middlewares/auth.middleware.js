@@ -1,23 +1,23 @@
-import jwt from 'jsonwebtoken';
-import { AppError } from '../utils/AppError.js';
-import catchAsync from '../utils/catchAsync.js';
-import env from '../config/env.js';
+// src/middlewares/auth.middleware.js
+const jwt = require('jsonwebtoken');
+const env = require('../config/env');
+const AppError = require('../utils/AppError');
 
-export const protectAdmin = catchAsync(async (req, res, next) => {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
+/**
+ * Verify JWT token and attach user payload to request.
+ * Expected Authorization header: Bearer <token>
+ */
+module.exports = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next(new AppError('Missing or malformed Authorization header', 401));
   }
-
-  if (!token) {
-    return next(new AppError('You are not logged in! Please log in to get access.', 401));
+  const token = authHeader.split(' ')[1];
+  try {
+    const payload = jwt.verify(token, env.JWT_SECRET);
+    req.user = payload; // payload should contain at least { id, role }
+    return next();
+  } catch (err) {
+    return next(new AppError('Invalid or expired token', 401));
   }
-
-  // Verify token
-  const decoded = jwt.verify(token, env.JWT_SECRET);
-
-  // Check if user still exists, etc.
-  // req.user = currentUser;
-  
-  next();
-});
+};

@@ -1,15 +1,26 @@
-import mongoose from 'mongoose';
-import env from './env.js';
-import logger from './logger.js';
+// src/config/db.js
+const mongoose = require('mongoose');
+const env = require('./env');
+const logger = require('./logger');
 
+/**
+ * Initialize MongoDB connection using Mongoose.
+ * Returns a promise that resolves when the connection is established.
+ */
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(env.MONGODB_URI);
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    logger.error(`Error connecting to MongoDB: ${error.message}`);
+    await mongoose.connect(env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    logger.info('MongoDB connected');
+  } catch (err) {
+    logger.error('MongoDB connection error:', err);
     process.exit(1);
   }
 };
 
-export default connectDB;
+module.exports = {
+  connectDB,
+  mongoose,
+};

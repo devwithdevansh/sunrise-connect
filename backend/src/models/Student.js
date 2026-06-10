@@ -67,6 +67,11 @@ const studentSchema = new mongoose.Schema(
 // Essential for Parent App login. When a parent logs in, we need to instantly fetch all their children.
 studentSchema.index({ parentId: 1 });
 
+// 1.5 Duplicate Prevention Index (Migration Safety)
+// Enforces that a single household cannot register the same child twice in the same medium.
+// Intentionally omits 'standard' so the uniqueness constraint survives yearly promotions.
+studentSchema.index({ parentId: 1, studentName: 1, medium: 1 }, { unique: true });
+
 // 2. Search Optimization Index
 // A standard B-tree index on the name allows for highly efficient prefix-based regex searches (e.g., /^John/i).
 studentSchema.index({ studentName: 1 });

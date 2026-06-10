@@ -1,3 +1,4 @@
+// src/models/Parent.js
 import mongoose from 'mongoose';
 
 const parentSchema = new mongoose.Schema(
@@ -11,14 +12,14 @@ const parentSchema = new mongoose.Schema(
     primaryMobileNumber: {
       type: String,
       required: [true, 'Primary mobile number is required'],
-      unique: true, // Essential for login uniqueness
+      unique: true,
       trim: true,
-      match: [/^[0-9]{10,15}$/, 'Please provide a valid primary mobile number'],
+      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit primary mobile number'],
     },
     secondaryMobileNumber: {
       type: String,
       trim: true,
-      match: [/^[0-9]{10,15}$/, 'Please provide a valid secondary mobile number'],
+      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit secondary mobile number'],
       default: null,
     },
     email: {
@@ -45,27 +46,25 @@ const parentSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-      index: true, // Optimized for filtering active vs inactive parents during mass communication
+      index: true,
     },
+    // Refresh token storage – hashed token + expiry
+    refreshTokens: [
+      {
+        tokenHash: { type: String, required: true },
+        expiresAt: { type: Date, required: true },
+      },
+    ],
+
   },
-  {
-    timestamps: true, // Automatically manages createdAt and updatedAt
-  }
+  { timestamps: true }
 );
 
-// Indexes
-
-// Secondary Mobile Number Index
-// Ensures that if a secondary number (e.g., Mother) is provided, it is completely unique across the platform to avoid login conflicts.
-// The partialFilterExpression is critical: it ignores `null` values, preventing duplicate key errors for parents who only provide a primary number.
+// Index for secondary mobile number – unique when present
 parentSchema.index(
   { secondaryMobileNumber: 1 },
-  { 
-    unique: true, 
-    partialFilterExpression: { secondaryMobileNumber: { $type: "string" } } 
-  }
+  { unique: true, partialFilterExpression: { secondaryMobileNumber: { $type: 'string' } } }
 );
 
 const Parent = mongoose.model('Parent', parentSchema);
-
 export default Parent;
