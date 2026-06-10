@@ -1,0 +1,87 @@
+import mongoose from 'mongoose';
+
+const studentSchema = new mongoose.Schema(
+  {
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Parent',
+      required: [true, 'A student must be linked to a parent'],
+    },
+    studentCode: {
+      type: String,
+      required: [true, 'Student code is required'],
+      unique: true,
+      trim: true,
+    },
+    studentName: {
+      type: String,
+      required: [true, 'Student name is required'],
+      trim: true,
+      maxlength: [100, 'Student name cannot exceed 100 characters'],
+    },
+    medium: {
+      type: String,
+      required: [true, 'Medium of instruction is required'],
+      enum: {
+        values: ['English', 'Gujarati'],
+        message: '{VALUE} is not a valid medium',
+      },
+    },
+    standard: {
+      type: String,
+      required: [true, 'Standard is required'],
+      trim: true,
+    },
+    division: {
+      type: String,
+      required: [true, 'Division is required'],
+      trim: true,
+      uppercase: true, // Auto-convert 'a' to 'A'
+    },
+    transportType: {
+      type: String,
+      required: [true, 'Transport type is required'],
+      enum: {
+        values: ['Railnagar', 'Outside Railnagar', 'None'],
+        message: '{VALUE} is not a valid transport type',
+      },
+      default: 'None',
+    },
+    isRTE: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  {
+    timestamps: true, // Automatically manages createdAt and updatedAt
+  }
+);
+
+// Indexes
+
+// 1. Foreign Key Index
+// Essential for Parent App login. When a parent logs in, we need to instantly fetch all their children.
+studentSchema.index({ parentId: 1 });
+
+// 2. Search Optimization Index
+// A standard B-tree index on the name allows for highly efficient prefix-based regex searches (e.g., /^John/i).
+studentSchema.index({ studentName: 1 });
+
+// 3. Hierarchical Filtering Compound Index
+// Used extensively for Admin Reports and Fee Generation. 
+// Queries filtering by Medium, then Standard, then Division will hit this single index.
+studentSchema.index({ medium: 1, standard: 1, division: 1 });
+
+// 4. Single Field Filtering Indexes
+// For targeted operations like generating monthly transport fees or filtering RTE students.
+studentSchema.index({ transportType: 1 });
+studentSchema.index({ isRTE: 1 });
+studentSchema.index({ isActive: 1 });
+
+const Student = mongoose.model('Student', studentSchema);
+
+export default Student;
