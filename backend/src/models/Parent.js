@@ -11,7 +11,7 @@ const parentSchema = new mongoose.Schema(
     primaryMobileNumber: {
       type: String,
       required: [true, 'Primary mobile number is required'],
-      unique: true, // Essential for OTP login uniqueness
+      unique: true, // Essential for login uniqueness
       trim: true,
       match: [/^[0-9]{10,15}$/, 'Please provide a valid primary mobile number'],
     },
@@ -34,6 +34,14 @@ const parentSchema = new mongoose.Schema(
       maxlength: [500, 'Address cannot exceed 500 characters'],
       default: null,
     },
+    passwordHash: {
+      type: String,
+      select: false,
+    },
+    isPasswordSet: {
+      type: Boolean,
+      default: false,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -48,7 +56,7 @@ const parentSchema = new mongoose.Schema(
 // Indexes
 
 // Secondary Mobile Number Index
-// Ensures that if a secondary number (e.g., Mother) is provided, it is completely unique across the platform to avoid OTP login conflicts.
+// Ensures that if a secondary number (e.g., Mother) is provided, it is completely unique across the platform to avoid login conflicts.
 // The partialFilterExpression is critical: it ignores `null` values, preventing duplicate key errors for parents who only provide a primary number.
 parentSchema.index(
   { secondaryMobileNumber: 1 },
