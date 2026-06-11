@@ -349,3 +349,326 @@
     at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:02:13 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:02:13 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:02:13 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:04:29 error: Error: Over‑payment not allowed
+    at Function.createPayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-11 12:04:29 error: Error: Payment not found
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-11 12:04:29 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-11 12:04:36 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:04:36 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:04:36 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:05:04 info: POST /api/v1/payments
+2026-06-11 12:05:04 info: POST /api/v1/payments
+2026-06-11 12:05:04 info: POST /api/v1/payments
+2026-06-11 12:05:04 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:05:06 info: GET /api/v1/parents
+2026-06-11 12:05:06 info: GET /api/v1/parents
+2026-06-11 12:05:06 info: POST /api/v1/parents
+2026-06-11 12:05:06 info: POST /api/v1/parents
+2026-06-11 12:05:06 info: POST /api/v1/parents/reset-password
+2026-06-11 12:05:07 info: POST /api/v1/auth/portal/login
+2026-06-11 12:05:07 info: POST /api/v1/auth/portal/login
+2026-06-11 12:05:07 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:05:07 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:05:07 info: POST /api/v1/auth/refresh
+2026-06-11 12:05:07 info: POST /api/v1/auth/refresh
+2026-06-11 12:05:07 info: POST /api/v1/auth/logout
+2026-06-11 12:05:07 info: POST /api/v1/auth/logout-all
+2026-06-11 12:05:09 error: Error: Over‑payment not allowed
+    at Function.createPayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-11 12:05:09 error: Error: Payment not found
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-11 12:05:09 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-11 12:05:11 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:05:11 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:05:11 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:08:10 info: POST /api/v1/payments
+2026-06-11 12:08:10 info: POST /api/v1/payments
+2026-06-11 12:08:10 info: POST /api/v1/payments
+2026-06-11 12:08:10 info: POST /api/v1/payments
+2026-06-11 12:08:10 info: POST /api/v1/payments
+2026-06-11 12:08:10 info: POST /api/v1/payments
+2026-06-11 12:08:10 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:08:10 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:08:10 info: GET /api/v1/payments
+2026-06-11 12:08:12 info: GET /api/v1/parents
+2026-06-11 12:08:12 info: GET /api/v1/parents
+2026-06-11 12:08:12 info: POST /api/v1/parents
+2026-06-11 12:08:12 info: POST /api/v1/parents
+2026-06-11 12:08:12 info: POST /api/v1/parents
+2026-06-11 12:08:12 info: GET /api/v1/parents
+2026-06-11 12:08:12 info: GET /api/v1/parents/p1
+2026-06-11 12:08:12 info: GET /api/v1/parents/p1
+2026-06-11 12:08:12 info: POST /api/v1/parents/reset-password
+2026-06-11 12:08:12 info: POST /api/v1/parents/reset-password
+2026-06-11 12:08:13 info: POST /api/v1/auth/portal/login
+2026-06-11 12:08:13 info: POST /api/v1/auth/portal/login
+2026-06-11 12:08:13 info: POST /api/v1/auth/portal/login
+2026-06-11 12:08:14 info: POST /api/v1/auth/portal/login
+2026-06-11 12:08:14 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:08:14 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:08:14 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:08:14 info: POST /api/v1/auth/refresh
+2026-06-11 12:08:14 info: POST /api/v1/auth/refresh
+2026-06-11 12:08:14 info: POST /api/v1/auth/logout
+2026-06-11 12:08:14 info: POST /api/v1/auth/logout-all
+2026-06-11 12:08:18 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:08:18 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:08:18 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:08:20 error: Error: Over‑payment not allowed
+    at Function.createPayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-11 12:08:20 error: Error: Payment not found
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-11 12:08:20 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-11 12:12:34 info: GET /api/v1/parents
+2026-06-11 12:12:56 info: GET /api/v1/parents
+2026-06-11 12:14:51 info: GET /api/v1/parents
+2026-06-11 12:15:44 info: POST /api/v1/payments
+2026-06-11 12:15:44 info: POST /api/v1/payments
+2026-06-11 12:15:44 info: POST /api/v1/payments
+2026-06-11 12:15:44 info: POST /api/v1/payments
+2026-06-11 12:15:44 info: POST /api/v1/payments
+2026-06-11 12:15:44 info: POST /api/v1/payments
+2026-06-11 12:15:44 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:15:44 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:15:44 info: GET /api/v1/payments
+2026-06-11 12:15:46 info: GET /api/v1/parents
+2026-06-11 12:15:46 info: GET /api/v1/parents
+2026-06-11 12:15:46 info: POST /api/v1/parents
+2026-06-11 12:15:46 info: POST /api/v1/parents
+2026-06-11 12:15:46 info: POST /api/v1/parents
+2026-06-11 12:15:46 info: GET /api/v1/parents
+2026-06-11 12:15:46 info: GET /api/v1/parents/p1
+2026-06-11 12:15:46 info: GET /api/v1/parents/p1
+2026-06-11 12:15:46 info: POST /api/v1/parents/reset-password
+2026-06-11 12:15:46 info: POST /api/v1/parents/reset-password
+2026-06-11 12:15:48 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:15:48 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:15:48 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:15:52 error: Error: Over‑payment not allowed
+    at Function.createPayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-11 12:15:52 error: Error: Payment not found
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-11 12:15:52 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-11 12:15:54 info: POST /api/v1/auth/portal/login
+2026-06-11 12:15:54 info: POST /api/v1/auth/portal/login
+2026-06-11 12:15:54 info: POST /api/v1/auth/portal/login
+2026-06-11 12:15:54 info: POST /api/v1/auth/portal/login
+2026-06-11 12:15:54 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:15:54 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:15:54 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:15:54 info: POST /api/v1/auth/refresh
+2026-06-11 12:15:54 info: POST /api/v1/auth/refresh
+2026-06-11 12:15:54 info: POST /api/v1/auth/logout
+2026-06-11 12:15:54 info: POST /api/v1/auth/logout-all
+2026-06-11 12:18:28 info: GET /api/v1/students
+2026-06-11 12:18:28 info: GET /api/v1/students
+2026-06-11 12:18:28 info: POST /api/v1/students
+2026-06-11 12:18:28 info: POST /api/v1/students
+2026-06-11 12:18:28 info: GET /api/v1/students
+2026-06-11 12:18:30 info: GET /api/v1/ledgers
+2026-06-11 12:18:30 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-11 12:18:30 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-11 12:18:30 info: GET /api/v1/ledgers
+2026-06-11 12:18:33 info: POST /api/v1/migration/parents
+2026-06-11 12:18:33 info: POST /api/v1/migration/parents
+2026-06-11 12:18:36 info: POST /api/v1/payments
+2026-06-11 12:18:36 info: POST /api/v1/payments
+2026-06-11 12:18:36 info: POST /api/v1/payments
+2026-06-11 12:18:36 info: POST /api/v1/payments
+2026-06-11 12:18:36 info: POST /api/v1/payments
+2026-06-11 12:18:36 info: POST /api/v1/payments
+2026-06-11 12:18:36 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:18:36 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:18:36 info: GET /api/v1/payments
+2026-06-11 12:18:38 error: Error: Over‑payment not allowed
+    at Function.createPayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-11 12:18:38 error: Error: Payment not found
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-11 12:18:38 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-11 12:18:42 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:18:42 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:18:43 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:18:45 info: GET /api/v1/parents
+2026-06-11 12:18:46 info: GET /api/v1/parents
+2026-06-11 12:18:46 info: POST /api/v1/parents
+2026-06-11 12:18:46 info: POST /api/v1/parents
+2026-06-11 12:18:46 info: POST /api/v1/parents
+2026-06-11 12:18:46 info: GET /api/v1/parents
+2026-06-11 12:18:46 info: GET /api/v1/parents/p1
+2026-06-11 12:18:46 info: GET /api/v1/parents/p1
+2026-06-11 12:18:46 info: POST /api/v1/parents/reset-password
+2026-06-11 12:18:46 info: POST /api/v1/parents/reset-password
+2026-06-11 12:18:47 info: POST /api/v1/auth/portal/login
+2026-06-11 12:18:47 info: POST /api/v1/auth/portal/login
+2026-06-11 12:18:47 info: POST /api/v1/auth/portal/login
+2026-06-11 12:18:47 info: POST /api/v1/auth/portal/login
+2026-06-11 12:18:47 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:18:47 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:18:47 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:18:47 info: POST /api/v1/auth/refresh
+2026-06-11 12:18:47 info: POST /api/v1/auth/refresh
+2026-06-11 12:18:47 info: POST /api/v1/auth/logout
+2026-06-11 12:18:47 info: POST /api/v1/auth/logout-all
+2026-06-11 12:22:51 info: GET /api/v1/dashboard/system
+2026-06-11 12:22:51 info: GET /api/v1/dashboard/system
+2026-06-11 12:22:51 info: GET /api/v1/dashboard/parent/testuser
+2026-06-11 12:22:53 info: GET /api/v1/audit
+2026-06-11 12:22:53 info: GET /api/v1/audit
+2026-06-11 12:22:54 info: GET /api/v1/students
+2026-06-11 12:22:54 info: GET /api/v1/students
+2026-06-11 12:22:54 info: POST /api/v1/students
+2026-06-11 12:22:54 info: POST /api/v1/students
+2026-06-11 12:22:54 info: GET /api/v1/students
+2026-06-11 12:22:56 error: Error: Over‑payment not allowed
+    at Function.createPayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-11 12:22:56 error: Error: Payment not found
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-11 12:22:56 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (E:\Sunrise Connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-11 12:22:58 error: Error: Over‑payment not allowed
+    at Function.addPayment (E:\Sunrise Connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-11 12:22:58 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (E:\Sunrise Connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-11 12:22:58 error: Error: Ledger not fully settled
+    at Function.markAsPaid (E:\Sunrise Connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (E:\Sunrise Connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-11 12:23:02 info: POST /api/v1/auth/portal/login
+2026-06-11 12:23:02 info: POST /api/v1/auth/portal/login
+2026-06-11 12:23:02 info: POST /api/v1/auth/portal/login
+2026-06-11 12:23:02 info: POST /api/v1/auth/portal/login
+2026-06-11 12:23:02 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:23:02 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:23:02 info: POST /api/v1/auth/parent/verify
+2026-06-11 12:23:02 info: POST /api/v1/auth/refresh
+2026-06-11 12:23:02 info: POST /api/v1/auth/refresh
+2026-06-11 12:23:02 info: POST /api/v1/auth/logout
+2026-06-11 12:23:02 info: POST /api/v1/auth/logout-all
+2026-06-11 12:23:04 info: POST /api/v1/payments
+2026-06-11 12:23:04 info: POST /api/v1/payments
+2026-06-11 12:23:04 info: POST /api/v1/payments
+2026-06-11 12:23:04 info: POST /api/v1/payments
+2026-06-11 12:23:04 info: POST /api/v1/payments
+2026-06-11 12:23:04 info: POST /api/v1/payments
+2026-06-11 12:23:04 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:23:04 info: POST /api/v1/payments/pay1/reverse
+2026-06-11 12:23:04 info: GET /api/v1/payments
+2026-06-11 12:23:06 info: GET /api/v1/parents
+2026-06-11 12:23:06 info: GET /api/v1/parents
+2026-06-11 12:23:06 info: POST /api/v1/parents
+2026-06-11 12:23:06 info: POST /api/v1/parents
+2026-06-11 12:23:06 info: POST /api/v1/parents
+2026-06-11 12:23:06 info: GET /api/v1/parents
+2026-06-11 12:23:06 info: GET /api/v1/parents/p1
+2026-06-11 12:23:06 info: GET /api/v1/parents/p1
+2026-06-11 12:23:06 info: POST /api/v1/parents/reset-password
+2026-06-11 12:23:06 info: POST /api/v1/parents/reset-password
+2026-06-11 12:23:07 info: POST /api/v1/migration/parents
+2026-06-11 12:23:07 info: POST /api/v1/migration/parents
+2026-06-11 12:23:09 info: GET /api/v1/ledgers
+2026-06-11 12:23:09 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-11 12:23:09 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-11 12:23:09 info: GET /api/v1/ledgers

@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backend specific
+backend/.env
+backend/node_modules/
+backend/.cache/
+backend/dist/
+backend/build/
+
+# Flutter
+FlutterProject/.dart_tool/
+FlutterProject/.packages
+FlutterProject/build/
+FlutterProject/ios/Pods/
+FlutterProject/pubspec.lock
+
+# Frontend (React/Angular/Vue)
+admin-frontend/node_modules/
+admin-frontend/.env
+admin-frontend/build/
+admin-frontend/dist/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

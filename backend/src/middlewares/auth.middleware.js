@@ -1,13 +1,10 @@
 // src/middlewares/auth.middleware.js
-const jwt = require('jsonwebtoken');
-const env = require('../config/env');
-const AppError = require('../utils/AppError');
+// Verifies JWT and attaches decoded payload to req.user
+import jwt from 'jsonwebtoken';
+import env from '../config/env.js';
+import AppError from '../utils/AppError.js';
 
-/**
- * Verify JWT token and attach user payload to request.
- * Expected Authorization header: Bearer <token>
- */
-module.exports = (req, res, next) => {
+const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return next(new AppError('Missing or malformed Authorization header', 401));
@@ -15,9 +12,11 @@ module.exports = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const payload = jwt.verify(token, env.JWT_SECRET);
-    req.user = payload; // payload should contain at least { id, role }
+    req.user = payload; // { id, role }
     return next();
-  } catch (err) {
+  } catch {
     return next(new AppError('Invalid or expired token', 401));
   }
 };
+
+export default authenticate;
