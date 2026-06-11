@@ -1,7 +1,7 @@
 // src/config/db.js
-const mongoose = require('mongoose');
-const env = require('./env');
-const logger = require('./logger');
+import mongoose from 'mongoose';
+import env from './env.js';
+import logger from './logger.js';
 
 /**
  * Initialize MongoDB connection using Mongoose.
@@ -9,10 +9,7 @@ const logger = require('./logger');
  */
 const connectDB = async () => {
   try {
-    await mongoose.connect(env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(env.MONGODB_URI);
     logger.info('MongoDB connected');
   } catch (err) {
     logger.error('MongoDB connection error:', err);
@@ -20,7 +17,4 @@ const connectDB = async () => {
   }
 };
 
-module.exports = {
-  connectDB,
-  mongoose,
-};
+export default connectDB;

@@ -672,3 +672,9 @@
 2026-06-11 12:23:09 info: POST /api/v1/ledgers/ledger123/concession
 2026-06-11 12:23:09 info: POST /api/v1/ledgers/ledger123/concession
 2026-06-11 12:23:09 info: GET /api/v1/ledgers
+2026-06-11 12:54:09 info: Server is running on port 3000 in development mode
+2026-06-11 12:54:39 error: MongooseServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at _handleConnectionErrors (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1180:11)
+    at NativeConnection.openUri (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1111:11)
+    at async connectDB (file:///E:/Sunrise%20Connect/backend/src/config/db.js:12:5)
+2026-06-11 12:55:12 info: Server is running on port 3000 in development mode
