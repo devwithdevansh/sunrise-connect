@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70% </span>
+                <span class="strong">10% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/10</span>
+                <span class='fraction'>1/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.14% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/14</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.14% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70% </span>
+                <span class="strong">10% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/10</span>
+                <span class='fraction'>1/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -108,21 +108,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -134,7 +121,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -145,22 +145,22 @@
 import Payment from '../models/Payment.js';
 &nbsp;
 const paymentRepository = {
-  async create(data, opts = {}) {
-    const [doc] = await Payment.create([data], opts);
-    return doc;
+<span class="fstat-no" title="function not covered" >  as</span>ync create(data, opts = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    const [doc] = <span class="cstat-no" title="statement not covered" >await Payment.create([data], opts);</span>
+<span class="cstat-no" title="statement not covered" >    return doc;</span>
   },
 &nbsp;
-  async findById(id, projection = null, opts = {}) {
-    return Payment.findById(id, projection, opts).lean();
+<span class="fstat-no" title="function not covered" >  as</span>ync findById(id, projection = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span> opts = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+<span class="cstat-no" title="statement not covered" >    return Payment.findById(id, projection, opts).lean();</span>
   },
 &nbsp;
 <span class="fstat-no" title="function not covered" >  as</span>ync findOne(filter, projection = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span> opts = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
 <span class="cstat-no" title="statement not covered" >    return Payment.findOne(filter, projection, opts).lean();</span>
   },
 &nbsp;
-  async find(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> projection = null, opts = {}) {
-    const { limit = 20, skip = 0, sort = { createdAt: -1 }, session } = opts;
-    return Payment.find(filter, projection, { limit, skip, sort, session }).lean();
+<span class="fstat-no" title="function not covered" >  as</span>ync find(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> projection = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span> opts = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    const { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> sort = <span class="branch-0 cbranch-no" title="branch not covered" >{ createdAt: -1 },</span> session } = <span class="cstat-no" title="statement not covered" >opts;</span>
+<span class="cstat-no" title="statement not covered" >    return Payment.find(filter, projection, { limit, skip, sort, session }).lean();</span>
   },
 &nbsp;
 <span class="fstat-no" title="function not covered" >  as</span>ync updateOne(filter, update, opts = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
@@ -171,8 +171,8 @@ const paymentRepository = {
 <span class="cstat-no" title="statement not covered" >    return Payment.aggregate(pipeline, opts);</span>
   },
 &nbsp;
-  async countDocuments(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
-    return Payment.countDocuments(filter);
+<span class="fstat-no" title="function not covered" >  as</span>ync countDocuments(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+<span class="cstat-no" title="statement not covered" >    return Payment.countDocuments(filter);</span>
   },
 };
 &nbsp;
@@ -184,7 +184,7 @@ export default paymentRepository;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T06:34:43.079Z
+                at 2026-06-11T09:12:46.341Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -36,6 +36,14 @@ const studentFeeLedgerSchema = new mongoose.Schema(
       required: [true, 'Fee period is required (e.g., "June" or "Term 1")'],
       trim: true,
     },
+    feeType: {
+      type: String,
+      required: [true, 'Fee type is required'],
+      enum: {
+        values: ['EDUCATION', 'TERM', 'TRANSPORT', 'ADMISSION', 'OTHER', 'BAG_KIT'],
+        message: '{VALUE} is not a valid fee type',
+      },
+    },
     ledgerNumber: {
       type: String,
       required: [true, 'Ledger number is required'],

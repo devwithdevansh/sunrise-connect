@@ -3,9 +3,11 @@ import { z } from 'zod';
 
 export const createStudentSchema = {
   body: z.object({
-    parentId: z.string().min(1),
-    studentCode: z.string().min(1),
+    parentId: z.string().min(1).optional(),
+    studentCode: z.string().min(1).optional(),
     studentName: z.string().min(1).max(100),
+    parentName: z.string().optional(),
+    parentMobile: z.string().optional(),
     medium: z.enum(['English', 'Gujarati']),
     standard: z.string().min(1),
     division: z.string().min(1),
@@ -34,7 +36,7 @@ export const listStudentsSchema = {
     standard: z.string().optional(),
     division: z.string().optional(),
     isActive: z.coerce.boolean().optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
+    limit: z.coerce.number().int().min(1).max(2000).optional(),
     skip: z.coerce.number().int().min(0).optional(),
   }),
 };

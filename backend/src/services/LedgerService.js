@@ -55,9 +55,11 @@ class LedgerService {
       const remaining = ledger.totalAmount - newPaid - ledger.concessionAmount;
       if (remaining < 0) throw new AppError('Over‑payment not allowed', 400);
 
+      const status = remaining === 0 ? 'PAID' : 'PARTIAL';
+
       const result = await ledgerRepository.updateOne(
         { _id: ledgerId, __v: ledger.__v },
-        { $set: { paidAmount: newPaid }, $inc: { __v: 1 } },
+        { $set: { paidAmount: newPaid, remainingAmount: remaining, status }, $inc: { __v: 1 } },
         { session }
       );
       if (result.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
@@ -90,9 +92,11 @@ class LedgerService {
       const remaining = ledger.totalAmount - ledger.paidAmount - newConcession;
       if (remaining < 0) throw new AppError('Concession exceeds remaining amount', 400);
 
+      const status = remaining === 0 ? 'PAID' : ledger.paidAmount > 0 ? 'PARTIAL' : 'PENDING';
+
       const result = await ledgerRepository.updateOne(
         { _id: ledgerId, __v: ledger.__v },
-        { $set: { concessionAmount: newConcession }, $inc: { __v: 1 } },
+        { $set: { concessionAmount: newConcession, remainingAmount: remaining, status }, $inc: { __v: 1 } },
         { session }
       );
       if (result.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);

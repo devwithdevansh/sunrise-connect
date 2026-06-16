@@ -13,7 +13,7 @@ process.on('uncaughtException', (err) => {
 // Connect to Database
 connectDB();
 
-const server = app.listen(env.PORT, () => {
+const server = app.listen(env.PORT, '0.0.0.0', () => {
   logger.info(`Server is running on port ${env.PORT} in ${env.NODE_ENV} mode`);
 });
 

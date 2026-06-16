@@ -5,11 +5,10 @@ const studentSchema = new mongoose.Schema(
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Parent',
-      required: [true, 'A student must be linked to a parent'],
+      required: false,
     },
     studentCode: {
       type: String,
-      required: [true, 'Student code is required'],
       unique: true,
       trim: true,
     },

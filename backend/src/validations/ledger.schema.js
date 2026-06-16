@@ -16,6 +16,7 @@ export const createLedgerSchema = {
     academicYear: z.string().min(1),
     feeCategoryId: z.string().min(1),
     feePeriod: z.string().min(1),
+    feeType: z.enum(['EDUCATION', 'TERM', 'TRANSPORT', 'ADMISSION', 'OTHER', 'BAG_KIT']),
     ledgerNumber: z.string().min(1),
     totalAmount: z.number().nonnegative(),
     dueDate: z.string().datetime(),
@@ -47,7 +48,7 @@ export const listLedgersSchema = {
     studentId: z.string().optional(),
     status: z.enum(['PENDING', 'PARTIAL', 'PAID', 'WAIVED', 'CANCELLED']).optional(),
     academicYear: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
+    limit: z.coerce.number().int().min(1).max(2000).optional(),
     skip: z.coerce.number().int().min(0).optional(),
   }),
 };

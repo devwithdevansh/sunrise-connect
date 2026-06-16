@@ -16,6 +16,7 @@ import paymentRoutes   from './routes/payment.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import migrationRoutes from './routes/migration.routes.js';
 import auditRoutes     from './routes/audit.routes.js';
+import feeStructureRoutes from './routes/fee-structure.routes.js';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use(`${V1}/payments`,   paymentRoutes);
 app.use(`${V1}/dashboard`,  dashboardRoutes);
 app.use(`${V1}/migration`,  migrationRoutes);
 app.use(`${V1}/audit`,      auditRoutes);
+app.use(`${V1}/fee-structures`, feeStructureRoutes);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.all('/{*splat}', (req, _res, next) => {

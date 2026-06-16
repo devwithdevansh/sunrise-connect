@@ -33,16 +33,10 @@ const feeCategorySchema = new mongoose.Schema(
   }
 );
 
-// Indexes
-
 // 1. Filtering by Category Type and Status
 // Optimized for admin screens that need to load specific types of active fees 
 // (e.g., "Give me all active ADMISSION type categories")
 feeCategorySchema.index({ type: 1, isActive: 1 });
-
-// 2. Sorting and Listing
-// Admin configuration screens typically list items alphabetically by name
-feeCategorySchema.index({ name: 1 });
 
 const FeeCategory = mongoose.model('FeeCategory', feeCategorySchema);
 

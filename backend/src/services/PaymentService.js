@@ -24,13 +24,14 @@ class PaymentService {
       const remaining = ledger.totalAmount - newPaid - ledger.concessionAmount;
       if (remaining < 0) throw new AppError('Over‑payment not allowed', 400);
 
+      const status = remaining === 0 ? 'PAID' : 'PARTIAL';
       // Insert payment record
       const payment = await paymentRepository.create({ ledgerId, amount, method, details }, { session });
 
       // Atomic OCC ledger update
       const updateResult = await ledgerRepository.updateOne(
         { _id: ledgerId, __v: ledger.__v },
-        { $set: { paidAmount: newPaid }, $inc: { __v: 1 } },
+        { $set: { paidAmount: newPaid, remainingAmount: remaining, status }, $inc: { __v: 1 } },
         { session }
       );
       if (updateResult.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
@@ -66,6 +67,9 @@ class PaymentService {
       const newPaid = ledger.paidAmount - payment.amount;
       if (newPaid < 0) throw new AppError('Ledger paid amount cannot become negative', 400);
 
+      const remaining = ledger.totalAmount - newPaid - ledger.concessionAmount;
+      const status = remaining === 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'PENDING';
+
       // Create reversal record
       const reversal = await paymentRepository.create({
         ledgerId: payment.ledgerId,
@@ -78,7 +82,7 @@ class PaymentService {
       // OCC ledger decrement
       const result = await ledgerRepository.updateOne(
         { _id: ledger._id, __v: ledger.__v },
-        { $set: { paidAmount: newPaid }, $inc: { __v: 1 } },
+        { $set: { paidAmount: newPaid, remainingAmount: remaining, status }, $inc: { __v: 1 } },
         { session }
       );
       if (result.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
