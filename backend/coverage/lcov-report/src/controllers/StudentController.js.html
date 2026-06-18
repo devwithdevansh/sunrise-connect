@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.23% </span>
+                <span class="strong">30.76% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/13</span>
+                <span class='fraction'>4/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.23% </span>
+                <span class="strong">30.76% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/13</span>
+                <span class='fraction'>4/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,26 +103,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -136,16 +136,16 @@ import sendResponse from '../utils/response.js';
 &nbsp;
 class StudentController {
   /** POST /api/v1/students */
-  static createStudent = catchAsync(async (req, res) =&gt; {
-    const student = await StudentService.createStudent(req.body);
-    sendResponse(res, 201, student);
+  static createStudent = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const student = <span class="cstat-no" title="statement not covered" >await StudentService.createStudent(req.body);</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 201, student);</span>
   });
 &nbsp;
   /** GET /api/v1/students */
-  static listStudents = catchAsync(async (req, res) =&gt; {
-    const { limit = 20, skip = 0, ...filter } = req.query;
-    const students = await StudentService.listStudents(filter, { limit: Number(limit), skip: Number(skip) });
-    sendResponse(res, 200, students);
+  static listStudents = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> ...filter } = <span class="cstat-no" title="statement not covered" >req.query;</span>
+    const students = <span class="cstat-no" title="statement not covered" >await StudentService.listStudents(filter, { limit: Number(limit), skip: Number(skip) });</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, students);</span>
   });
 &nbsp;
   /** GET /api/v1/students/:id */
@@ -169,7 +169,7 @@ export default StudentController;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T06:53:16.302Z
+                at 2026-06-18T10:09:33.174Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -14,6 +14,7 @@ const feeStructureSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Standard is required'],
       trim: true,
+      unique: true,
     },
     annualFee: {
       type: Number,
@@ -31,6 +32,22 @@ const feeStructureSchema = new mongoose.Schema(
       required: [true, 'Term part count is required (e.g., 2 terms)'],
       min: [0, 'Term part count cannot be negative'],
       default: 2,
+    },
+    // Additional fee components editable by admin
+    admissionFee: {
+      type: Number,
+      min: [0, 'Admission fee cannot be negative'],
+      default: 0,
+    },
+    bagKitFee: {
+      type: Number,
+      min: [0, 'Bag & Kit fee cannot be negative'],
+      default: 0,
+    },
+    termFee: {
+      type: Number,
+      min: [0, 'Term fee cannot be negative'],
+      default: 0,
     },
     applicableFeeCategories: [
       {

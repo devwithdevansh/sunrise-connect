@@ -72,11 +72,17 @@ export const CollectFee: React.FC = () => {
     const annualFee = fs?.annualFee ?? 0;
     const eduParts = fs?.educationPartCount ?? 12;
     const termParts = fs?.termPartCount ?? 2;
+    const totalParts = eduParts + termParts; // 14 total parts
 
-    const education = eduParts > 0 ? Math.round(annualFee / eduParts) : 0;
-    const term = termParts > 0 ? Math.round(annualFee / termParts) : 0;
-    const admission = Math.round(annualFee * 0.07);
-    const bagKit = Math.round(annualFee * 0.05);
+    // Annual fee divided into totalParts equal parts (e.g., 35000/14 = 2500 per part)
+    const education = totalParts > 0 ? Math.round(annualFee / totalParts) : 0;
+
+    // Use stored termFee (set by admin), fallback 0
+    const term = fs?.termFee ?? 0;
+
+    // Use stored admissionFee and bagKitFee (set by admin), fallback 0
+    const admission = fs?.admissionFee ?? 0;
+    const bagKit = fs?.bagKitFee ?? 0;
 
     // Transport
     const tfs = transportFeeStructures.find(
@@ -103,13 +109,16 @@ export const CollectFee: React.FC = () => {
   };
 
   /** What ledger entry exists for this student + category + period (any status) */
-  const getLedger = (category: string, period: string) =>
-    ledgerEntries.find(
+  const getLedger = (category: string, period: string) => {
+    // selectedStudent may have _id (from DB) or id (from mock). Match either.
+    const sId = selectedStudent?._id || selectedStudent?.id;
+    return ledgerEntries.find(
       (l) =>
-        l.studentId === selectedStudent?._id &&
+        (l.studentId === sId) &&
         l.feeType === category &&
         l.feePeriod === period
     );
+  };
 
   /** Amount still due for a period (0 if fully paid or no ledger = fresh) */
   const getDueAmount = (category: string, period: string): number => {
@@ -178,8 +187,8 @@ export const CollectFee: React.FC = () => {
   // -------------------------------------------------------------------
   const filteredStudents = students.filter(
     (s) =>
-      s.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.studentCode.toLowerCase().includes(searchQuery.toLowerCase())
+      s.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.studentCode ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getStudentDueAmount = (studentId: string) =>
@@ -188,7 +197,7 @@ export const CollectFee: React.FC = () => {
       .reduce((sum, l) => sum + l.remainingAmount, 0);
 
   const getStudentDueLabel = (student: Student) => {
-    const amount = getStudentDueAmount(student._id);
+    const amount = getStudentDueAmount(student._id || student.id);
     if (amount === 0) return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
     if (student.status === '2 DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (2 MONTHS)`, color: 'text-amber-600 bg-amber-50' };
     if (student.status === '3+ DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (3+ MONTHS)`, color: 'text-red-600 bg-red-50' };

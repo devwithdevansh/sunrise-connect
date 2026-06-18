@@ -51,9 +51,13 @@ export const UnpaidFees: React.FC = () => {
       if (zoneType === 'None' && s.transportType !== 'None') return false;
     }
 
-    // Filter by Search Query
-    if (searchQuery) {
-      return s.studentName.toLowerCase().includes(searchQuery.toLowerCase());
+    // Filter by Search Query — search name, code, or parent mobile
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = (s.studentName ?? '').toLowerCase().includes(q);
+      const matchCode = (s.studentCode ?? '').toLowerCase().includes(q);
+      const matchMobile = (s.parentMobile ?? '').toLowerCase().includes(q);
+      return matchName || matchCode || matchMobile;
     }
 
     return true;
@@ -64,6 +68,9 @@ export const UnpaidFees: React.FC = () => {
       .filter((l) => l.studentId === studentId && l.status !== 'PAID')
       .reduce((sum, l) => sum + l.remainingAmount, 0);
   };
+
+  // Helper: get a stable student ID (works for both DB-loaded and mock students)
+  const getSid = (s: (typeof students)[0]) => s._id || s.id;
 
   const getLastPaidMonth = (studentId: string) => {
     // Mock last paid mapping
@@ -76,7 +83,7 @@ export const UnpaidFees: React.FC = () => {
     if (selectedStudentIds.length === unpaidStudents.length) {
       setSelectedStudentIds([]);
     } else {
-      setSelectedStudentIds(unpaidStudents.map((s) => s._id));
+      setSelectedStudentIds(unpaidStudents.map((s) => getSid(s)!));
     }
   };
 
@@ -272,7 +279,8 @@ export const UnpaidFees: React.FC = () => {
                 </tr>
               ) : (
                 unpaidStudents.map((s) => {
-                  const isChecked = selectedStudentIds.includes(s._id!);
+                  const sId = getSid(s);
+                  const isChecked = selectedStudentIds.includes(sId!);
                   const isThreePlus = s.status === '3+ DUE';
                   const isTwo = s.status === '2 DUE';
 
@@ -281,9 +289,9 @@ export const UnpaidFees: React.FC = () => {
                   else if (isTwo) badgeColor = 'bg-amber-50 text-amber-600 border border-amber-100';
 
                   return (
-                    <tr key={s._id} className="hover:bg-slate-50/30 transition-colors">
+                    <tr key={sId} className="hover:bg-slate-50/30 transition-colors">
                       <td className="py-4 px-4 text-center">
-                        <button onClick={() => handleSelectRow(s._id!)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                        <button onClick={() => handleSelectRow(sId!)} className="text-slate-400 hover:text-slate-600 transition-colors">
                           {isChecked ? (
                             <CheckSquare className="h-4 w-4 text-blue-600 fill-blue-50/20" />
                           ) : (
@@ -306,10 +314,10 @@ export const UnpaidFees: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-4 px-4 font-bold text-slate-800">
-                        ₹{getOutstandingAmount(s._id!).toLocaleString('en-IN')}
+                        ₹{getOutstandingAmount(sId!).toLocaleString('en-IN')}
                       </td>
                       <td className="py-4 px-4 text-slate-400 text-xs font-semibold">
-                        {getLastPaidMonth(s._id!)}
+                        {getLastPaidMonth(sId!)}
                       </td>
                       <td className="py-4 px-4">
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">21.42% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>3/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">21.42% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>3/14</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -99,29 +99,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -133,26 +133,26 @@ import AppError from '../utils/AppError.js';
 const processedKeys = new Map(); // key -&gt; response snapshot
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 &nbsp;
-const idempotency = (req, res, next) =&gt; {
-  const key = req.headers['idempotency-key'];
-  if (!key) {
-    return next(new AppError('Idempotency-Key header is required for this endpoint', 400));
+const idempotency = <span class="fstat-no" title="function not covered" >(r</span>eq, res, next) =&gt; {
+  const key = <span class="cstat-no" title="statement not covered" >req.headers['idempotency-key'];</span>
+<span class="cstat-no" title="statement not covered" >  if (!key) {</span>
+<span class="cstat-no" title="statement not covered" >    return next(new AppError('Idempotency-Key header is required for this endpoint', 400));</span>
   }
 &nbsp;
-  const existing = processedKeys.get(key);
-  if (existing &amp;&amp; Date.now() - existing.ts &lt; TTL_MS) {
+  const existing = <span class="cstat-no" title="statement not covered" >processedKeys.get(key);</span>
+<span class="cstat-no" title="statement not covered" >  if (existing &amp;&amp; Date.now() - existing.ts &lt; TTL_MS) {</span>
     // Replay the cached response
-    return res.status(existing.status).json(existing.body);
+<span class="cstat-no" title="statement not covered" >    return res.status(existing.status).json(existing.body);</span>
   }
 &nbsp;
   // Monkey-patch res.json to capture the response for future replays
-  const originalJson = res.json.bind(res);
-  res.json = (body) =&gt; {
-    processedKeys.set(key, { status: res.statusCode, body, ts: Date.now() });
-    return originalJson(body);
+  const originalJson = <span class="cstat-no" title="statement not covered" >res.json.bind(res);</span>
+<span class="cstat-no" title="statement not covered" >  res.json = <span class="fstat-no" title="function not covered" >(b</span>ody) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    processedKeys.set(key, { status: res.statusCode, body, ts: Date.now() });</span>
+<span class="cstat-no" title="statement not covered" >    return originalJson(body);</span>
   };
 &nbsp;
-  return next();
+<span class="cstat-no" title="statement not covered" >  return next();</span>
 };
 &nbsp;
 export default idempotency;
@@ -163,7 +163,7 @@ export default idempotency;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-11T06:53:16.302Z
+                at 2026-06-18T10:09:33.174Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

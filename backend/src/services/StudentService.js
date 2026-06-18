@@ -133,11 +133,22 @@ class StudentService {
       const eduPartCount = feeStruct?.educationPartCount || 12;
       const termPartCount = feeStruct?.termPartCount || 2;
       const annualFee = feeStruct?.annualFee || (student.medium === 'English' ? 36000 : 30000);
-      const eduAmount = Math.round(annualFee / eduPartCount);
-      const termAmount = Math.round(annualFee / termPartCount);
-      // Admission & Bag-Kit are one-time; derive as a proportion or use sensible defaults
-      const admissionAmount = Math.round(annualFee * 0.07); // ~7% of annual
-      const bagKitAmount = Math.round(annualFee * 0.05);    // ~5% of annual
+      const totalParts = eduPartCount + termPartCount; // 12 + 2 = 14 parts
+      const eduAmount = Math.round(annualFee / totalParts);
+      
+      // Term fee, Admission fee, Bag & Kit fee are now admin-editable fields stored in FeeStructure.
+      // We check if they are set (greater than 0), otherwise we fall back to proportional calculations for backward compatibility.
+      const termAmount = (feeStruct?.termFee !== undefined && feeStruct?.termFee > 0)
+        ? feeStruct.termFee
+        : Math.round(annualFee / totalParts);
+
+      const admissionAmount = (feeStruct?.admissionFee !== undefined && feeStruct?.admissionFee > 0)
+        ? feeStruct.admissionFee
+        : Math.round(annualFee * 0.07);
+
+      const bagKitAmount = (feeStruct?.bagKitFee !== undefined && feeStruct?.bagKitFee > 0)
+        ? feeStruct.bagKitFee
+        : Math.round(annualFee * 0.05);
 
       // --- Fetch transport amount from TransportFeeStructure ---
       let transportAmount = 0;

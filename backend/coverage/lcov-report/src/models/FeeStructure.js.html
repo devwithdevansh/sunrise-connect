@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/models/Parent.js</title>
+    <title>Code coverage report for src/models/FeeStructure.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/models</a> Parent.js</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/models</a> FeeStructure.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -127,23 +127,9 @@
 <a name='L62'></a><a href='#L62'>62</a>
 <a name='L63'></a><a href='#L63'>63</a>
 <a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a>
-<a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L65'></a><a href='#L65'>65</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -200,79 +186,75 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// src/models/Parent.js
-import mongoose from 'mongoose';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose from 'mongoose';
 &nbsp;
-const parentSchema = new mongoose.Schema(
+const feeStructureSchema = new mongoose.Schema(
   {
-    parentName: {
+    medium: {
       type: String,
-      required: [true, 'Parent name is required'],
+      required: [true, 'Medium of instruction is required'],
+      enum: {
+        values: ['English', 'Gujarati'],
+        message: '{VALUE} is not a valid medium',
+      },
+    },
+    standard: {
+      type: String,
+      required: [true, 'Standard is required'],
       trim: true,
-      maxlength: [100, 'Parent name cannot exceed 100 characters'],
     },
-    primaryMobileNumber: {
-      type: String,
-      required: [true, 'Primary mobile number is required'],
-      unique: true,
-      trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit primary mobile number'],
+    annualFee: {
+      type: Number,
+      required: [true, 'Annual fee is required'],
+      min: [0, 'Annual fee cannot be negative'],
     },
-    secondaryMobileNumber: {
-      type: String,
-      trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit secondary mobile number'],
-      default: null,
+    educationPartCount: {
+      type: Number,
+      required: [true, 'Education part count is required (e.g., 12 months)'],
+      min: [1, 'Must have at least 1 education fee part'],
+      default: 12,
     },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
-      default: null,
+    termPartCount: {
+      type: Number,
+      required: [true, 'Term part count is required (e.g., 2 terms)'],
+      min: [0, 'Term part count cannot be negative'],
+      default: 2,
     },
-    address: {
-      type: String,
-      trim: true,
-      maxlength: [500, 'Address cannot exceed 500 characters'],
-      default: null,
-    },
-    passwordHash: {
-      type: String,
-      select: false,
-    },
-    isPasswordSet: {
-      type: Boolean,
-      default: false,
-    },
+    applicableFeeCategories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'FeeCategory',
+        required: true,
+      },
+    ],
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
     },
-    // Refresh token storage – hashed token + expiry
-    refreshTokens: [
-      {
-        tokenHash: { type: String, required: true },
-        expiresAt: { type: Date, required: true },
-      },
-    ],
-&nbsp;
   },
-  { timestamps: true }
+  {
+    timestamps: true, // Automatically manages createdAt and updatedAt
+  }
 );
 &nbsp;
-// Index for secondary mobile number – unique when present
-parentSchema.index(
-  { secondaryMobileNumber: 1 },
-  { unique: true, partialFilterExpression: { secondaryMobileNumber: { $type: 'string' } } }
-);
+// Indexes
 &nbsp;
-const Parent = mongoose.model('Parent', parentSchema);
-export default Parent;
+// 1. Unique Compound Index (Medium + Standard)
+// Ensures we never accidentally create two different master fee structures for the exact same medium and standard.
+feeStructureSchema.index({ medium: 1, standard: 1 }, { unique: true });
+&nbsp;
+// 2. Active Status Filtering Index
+// Useful when fetching all active structures to populate dropdowns on the admin dashboard.
+feeStructureSchema.index({ isActive: 1 });
+&nbsp;
+const FeeStructure = mongoose.model('FeeStructure', feeStructureSchema);
+&nbsp;
+export default FeeStructure;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->

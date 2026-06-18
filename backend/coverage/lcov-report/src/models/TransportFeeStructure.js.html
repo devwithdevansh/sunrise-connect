@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/models/Parent.js</title>
+    <title>Code coverage report for src/models/TransportFeeStructure.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/models</a> Parent.js</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/models</a> TransportFeeStructure.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -119,45 +119,9 @@
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
 <a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a>
-<a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a>
-<a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L57'></a><a href='#L57'>57</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -201,78 +165,72 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// src/models/Parent.js
-import mongoose from 'mongoose';
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose from 'mongoose';
 &nbsp;
-const parentSchema = new mongoose.Schema(
+const transportFeeStructureSchema = new mongoose.Schema(
   {
-    parentName: {
+    transportType: {
       type: String,
-      required: [true, 'Parent name is required'],
-      trim: true,
-      maxlength: [100, 'Parent name cannot exceed 100 characters'],
+      required: [true, 'Transport type is required'],
+      enum: {
+        values: ['Railnagar', 'Outside Railnagar'],
+        message: '{VALUE} is not a valid transport type',
+      },
     },
-    primaryMobileNumber: {
+    amount: {
+      type: Number,
+      required: [true, 'Transport fee amount is required'],
+      min: [0, 'Transport fee cannot be negative'],
+    },
+    frequency: {
       type: String,
-      required: [true, 'Primary mobile number is required'],
-      unique: true,
-      trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit primary mobile number'],
-    },
-    secondaryMobileNumber: {
-      type: String,
-      trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit secondary mobile number'],
-      default: null,
-    },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
-      default: null,
-    },
-    address: {
-      type: String,
-      trim: true,
-      maxlength: [500, 'Address cannot exceed 500 characters'],
-      default: null,
-    },
-    passwordHash: {
-      type: String,
-      select: false,
-    },
-    isPasswordSet: {
-      type: Boolean,
-      default: false,
+      required: [true, 'Fee frequency is required'],
+      enum: {
+        values: ['MONTHLY', 'QUARTERLY', 'YEARLY'],
+        message: '{VALUE} is not a valid frequency',
+      },
+      default: 'MONTHLY',
     },
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
     },
-    // Refresh token storage – hashed token + expiry
-    refreshTokens: [
-      {
-        tokenHash: { type: String, required: true },
-        expiresAt: { type: Date, required: true },
-      },
-    ],
-&nbsp;
   },
-  { timestamps: true }
+  {
+    timestamps: true, // Automatically manages createdAt and updatedAt
+  }
 );
 &nbsp;
-// Index for secondary mobile number – unique when present
-parentSchema.index(
-  { secondaryMobileNumber: 1 },
-  { unique: true, partialFilterExpression: { secondaryMobileNumber: { $type: 'string' } } }
+// Indexes
+&nbsp;
+// 1. Partial Unique Index (Crucial for preventing duplicates)
+// This strictly enforces that there can be ONLY ONE "Active" configuration per transport type at any time.
+// However, it allows you to have unlimited "Inactive" (historical/legacy) configurations for the same route from previous years.
+transportFeeStructureSchema.index(
+  { transportType: 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { isActive: true } 
+  }
 );
 &nbsp;
-const Parent = mongoose.model('Parent', parentSchema);
-export default Parent;
+// 2. Query Optimization Index
+// During cron jobs or monthly ledger generation, the engine will query specifically for { isActive: true, transportType: 'Railnagar' }
+transportFeeStructureSchema.index({ transportType: 1, isActive: 1 });
+&nbsp;
+const TransportFeeStructure = mongoose.model('TransportFeeStructure', transportFeeStructureSchema);
+&nbsp;
+export default TransportFeeStructure;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->

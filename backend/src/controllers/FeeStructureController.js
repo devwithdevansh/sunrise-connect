@@ -3,6 +3,7 @@ import FeeStructure from '../models/FeeStructure.js';
 import TransportFeeStructure from '../models/TransportFeeStructure.js';
 import catchAsync from '../utils/catchAsync.js';
 import sendResponse from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 class FeeStructureController {
   /**
@@ -17,6 +18,32 @@ class FeeStructureController {
     ]);
 
     sendResponse(res, 200, { feeStructures, transportStructures });
+  });
+
+  /**
+   * PUT /api/v1/fee-structures/:id
+   * Updates standard fee structure (e.g. annualFee, parts counts)
+   */
+  static updateFeeStructure = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const updated = await FeeStructure.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!updated) {
+      throw new AppError('Fee structure not found', 404);
+    }
+    sendResponse(res, 200, updated);
+  });
+
+  /**
+   * PUT /api/v1/fee-structures/transport/:id
+   * Updates transport fee structure (e.g. amount)
+   */
+  static updateTransportFeeStructure = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const updated = await TransportFeeStructure.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!updated) {
+      throw new AppError('Transport fee structure not found', 404);
+    }
+    sendResponse(res, 200, updated);
   });
 }
 

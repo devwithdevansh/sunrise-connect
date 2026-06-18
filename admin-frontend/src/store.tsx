@@ -28,6 +28,9 @@ export interface FeeStructureData {
   annualFee: number;
   educationPartCount: number;
   termPartCount: number;
+  admissionFee?: number;
+  bagKitFee?: number;
+  termFee?: number;
   isActive: boolean;
 }
 
@@ -58,6 +61,8 @@ interface AppContextType {
   ) => void;
   applyConcession: (ledgerId: string, amount: number) => void;
   reversePayment: (transactionId: string) => void;
+  updateFeeStructure: (id: string, data: Partial<FeeStructureData>) => Promise<boolean>;
+  updateTransportFeeStructure: (id: string, data: Partial<TransportFeeStructureData>) => Promise<boolean>;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
   login: (email: string, pass: string) => boolean;
   logout: () => void;
@@ -330,6 +335,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Update a standard fee structure
+  const updateFeeStructure = async (id: string, data: Partial<FeeStructureData>): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/v1/fee-structures/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update fee structure');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  // Update a transport fee structure
+  const updateTransportFeeStructure = async (id: string, data: Partial<TransportFeeStructureData>): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/v1/fee-structures/transport/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update transport fee structure');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -344,6 +383,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         recordPayment,
         applyConcession,
         reversePayment,
+        updateFeeStructure,
+        updateTransportFeeStructure,
         currentUser,
         login,
         logout
