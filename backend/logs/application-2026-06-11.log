@@ -672,6 +672,7 @@
 2026-06-11 12:23:09 info: POST /api/v1/ledgers/ledger123/concession
 2026-06-11 12:23:09 info: POST /api/v1/ledgers/ledger123/concession
 2026-06-11 12:23:09 info: GET /api/v1/ledgers
+<<<<<<< HEAD
 2026-06-11 13:04:52 error: Error: Over‑payment not allowed
     at Function.addPayment (D:\projects\New folder\sunrise-connect\backend\src\services\LedgerService.js:56:32)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
@@ -3344,3 +3345,40 @@
 2026-06-11 23:00:01 info: MongoDB connected
 2026-06-11 23:21:25 info: Server is running on port 3000 in development mode
 2026-06-11 23:21:27 info: MongoDB connected
+=======
+2026-06-11 12:54:09 info: Server is running on port 3000 in development mode
+2026-06-11 12:54:39 error: MongooseServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at _handleConnectionErrors (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1180:11)
+    at NativeConnection.openUri (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1111:11)
+    at async connectDB (file:///E:/Sunrise%20Connect/backend/src/config/db.js:12:5)
+2026-06-11 12:55:12 info: Server is running on port 3000 in development mode
+2026-06-11 13:18:25 info: Server is running on port 3000 in development mode
+2026-06-11 13:18:42 info: GET /
+2026-06-11 13:18:42 error: Error: Cannot find / on this server
+    at file:///D:/sunrise_connect/sunrise-connect/backend/src/app.js:52:8
+    at Layer.handleRequest (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at file:///D:/sunrise_connect/sunrise-connect/backend/src/app.js:31:3
+2026-06-11 13:18:45 info: GET /favicon.ico
+2026-06-11 13:18:45 error: Error: Cannot find /favicon.ico on this server
+    at file:///D:/sunrise_connect/sunrise-connect/backend/src/app.js:52:8
+    at Layer.handleRequest (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at param (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:600:14)
+    at param (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:610:14)
+    at processParams (D:\sunrise_connect\sunrise-connect\backend\node_modules\router\index.js:664:3)
+2026-06-11 13:18:55 error: MongooseServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at _handleConnectionErrors (D:\sunrise_connect\sunrise-connect\backend\node_modules\mongoose\lib\connection.js:1180:11)
+    at NativeConnection.openUri (D:\sunrise_connect\sunrise-connect\backend\node_modules\mongoose\lib\connection.js:1111:11)
+    at async connectDB (file:///D:/sunrise_connect/sunrise-connect/backend/src/config/db.js:12:5)
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc

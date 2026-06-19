@@ -23,30 +23,54 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">57.89% </span>
                 <span class="quiet">Statements</span>
                 <span class='fraction'>11/19</span>
+=======
+                <span class="strong">31.57% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>6/19</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
                 <span class='fraction'>2/2</span>
+=======
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/2</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">33.33% </span>
                 <span class="quiet">Functions</span>
                 <span class='fraction'>2/6</span>
+=======
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/6</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">57.89% </span>
                 <span class="quiet">Lines</span>
                 <span class='fraction'>11/19</span>
+=======
+                <span class="strong">31.57% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>6/19</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
@@ -61,7 +85,11 @@
             </div>
         </template>
     </div>
+<<<<<<< HEAD
     <div class='status-line medium'></div>
+=======
+    <div class='status-line low'></div>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -115,6 +143,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -129,17 +158,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
+=======
+<span class="cline-any cline-yes">1x</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">8x</span>
+=======
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -147,6 +185,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
+=======
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -166,10 +225,17 @@ class LedgerController {
   });
 &nbsp;
   /** GET /api/v1/ledgers */
+<<<<<<< HEAD
   static listLedgers = catchAsync(async (req, res) =&gt; {
     const { limit = 20, skip = 0, ...filter } = req.query;
     const ledgers = await LedgerService.listLedgers(filter, { limit: Number(limit), skip: Number(skip) });
     sendResponse(res, 200, ledgers);
+=======
+  static listLedgers = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> ...filter } = <span class="cstat-no" title="statement not covered" >req.query;</span>
+    const ledgers = <span class="cstat-no" title="statement not covered" >await LedgerService.listLedgers(filter, { limit: Number(limit), skip: Number(skip) });</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, ledgers);</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   });
 &nbsp;
   /** GET /api/v1/ledgers/:id */
@@ -185,9 +251,15 @@ class LedgerController {
   });
 &nbsp;
   /** POST /api/v1/ledgers/:id/concession */
+<<<<<<< HEAD
   static applyConcession = catchAsync(async (req, res) =&gt; {
     const ledger = await LedgerService.applyConcession({ ledgerId: req.params.id, ...req.body });
     sendResponse(res, 200, ledger);
+=======
+  static applyConcession = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const ledger = <span class="cstat-no" title="statement not covered" >await LedgerService.applyConcession({ ledgerId: req.params.id, ...req.body });</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, ledger);</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   });
 &nbsp;
   /** PATCH /api/v1/ledgers/:id/mark-paid */
@@ -205,7 +277,11 @@ export default LedgerController;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+<<<<<<< HEAD
                 at 2026-06-19T04:46:02.845Z
+=======
+                at 2026-06-18T10:09:33.174Z
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         <script src="../../prettify.js"></script>
         <script>

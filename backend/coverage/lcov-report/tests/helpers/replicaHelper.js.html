@@ -23,9 +23,15 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
                 <span class='fraction'>13/13</span>
+=======
+                <span class="strong">38.46% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>5/13</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
@@ -37,16 +43,28 @@
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
                 <span class='fraction'>5/5</span>
+=======
+                <span class="strong">60% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>3/5</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
                 <span class='fraction'>13/13</span>
+=======
+                <span class="strong">38.46% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>5/13</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
@@ -61,7 +79,11 @@
             </div>
         </template>
     </div>
+<<<<<<< HEAD
     <div class='status-line high'></div>
+=======
+    <div class='status-line low'></div>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -130,6 +152,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -137,26 +160,49 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">18x</span>
+=======
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">18x</span>
+=======
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
+=======
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">26x</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">156x</span>
+=======
+<span class="cline-any cline-yes">26x</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// src/tests/helpers/replicaHelper.js
@@ -178,6 +224,7 @@ let replSet;
 &nbsp;
 export async function connectReplica() {
   replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+<<<<<<< HEAD
   const uri = replSet.getUri();
   await mongoose.connect(uri);
 &nbsp;
@@ -185,20 +232,39 @@ export async function connectReplica() {
   // Transactions cannot create collections – they must already exist.
   await Promise.all(
     Object.values(mongoose.connection.models).map(m =&gt; m.createCollection())
+=======
+  const uri = <span class="cstat-no" title="statement not covered" >replSet.getUri();</span>
+<span class="cstat-no" title="statement not covered" >  await mongoose.connect(uri);</span>
+&nbsp;
+  // Step 1: Create all collections explicitly so they exist before any transaction.
+  // Transactions cannot create collections – they must already exist.
+<span class="cstat-no" title="statement not covered" >  await Promise.all(</span>
+    Object.values(mongoose.connection.models).map(<span class="fstat-no" title="function not covered" >m </span>=&gt; <span class="cstat-no" title="statement not covered" >m.createCollection())</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   );
 &nbsp;
   // Step 2: Build all indexes synchronously.
   // Without this, Mongoose may kick off background index builds that hold
   // DDL locks, causing IX-lock timeout errors in subsequent transactions.
+<<<<<<< HEAD
   await Promise.all(
     Object.values(mongoose.connection.models).map(m =&gt; m.syncIndexes())
+=======
+<span class="cstat-no" title="statement not covered" >  await Promise.all(</span>
+    Object.values(mongoose.connection.models).map(<span class="fstat-no" title="function not covered" >m </span>=&gt; <span class="cstat-no" title="statement not covered" >m.syncIndexes())</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   );
 }
 &nbsp;
 export async function disconnectReplica() {
   await mongoose.connection.dropDatabase();
+<<<<<<< HEAD
   await mongoose.connection.close();
   await replSet.stop();
+=======
+<span class="cstat-no" title="statement not covered" >  await mongoose.connection.close();</span>
+<span class="cstat-no" title="statement not covered" >  await replSet.stop();</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 }
 &nbsp;
 export async function clearCollections() {
@@ -214,7 +280,11 @@ export async function clearCollections() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+<<<<<<< HEAD
                 at 2026-06-11T06:34:43.079Z
+=======
+                at 2026-06-11T09:12:46.341Z
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         <script src="../../prettify.js"></script>
         <script>

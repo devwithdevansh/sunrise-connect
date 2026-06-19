@@ -23,30 +23,54 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">87.5% </span>
                 <span class="quiet">Statements</span>
                 <span class='fraction'>14/16</span>
+=======
+                <span class="strong">31.25% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>5/16</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
                 <span class='fraction'>2/2</span>
+=======
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/2</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">80% </span>
                 <span class="quiet">Functions</span>
                 <span class='fraction'>4/5</span>
+=======
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/5</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
+<<<<<<< HEAD
                 <span class="strong">87.5% </span>
                 <span class="quiet">Lines</span>
                 <span class='fraction'>14/16</span>
+=======
+                <span class="strong">31.25% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>5/16</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
@@ -61,7 +85,11 @@
             </div>
         </template>
     </div>
+<<<<<<< HEAD
     <div class='status-line high'></div>
+=======
+    <div class='status-line low'></div>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -109,6 +137,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -129,14 +158,42 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
+=======
+<span class="cline-any cline-yes">1x</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+=======
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -148,6 +205,7 @@ import sendResponse from '../utils/response.js';
 &nbsp;
 class ParentController {
   /** POST /api/v1/parents */
+<<<<<<< HEAD
   static createParent = catchAsync(async (req, res) =&gt; {
     const parent = await ParentService.createParent(req.body);
     sendResponse(res, 201, parent);
@@ -164,6 +222,24 @@ class ParentController {
   static getParent = catchAsync(async (req, res) =&gt; {
     const parent = await ParentService.getParent(req.params.id);
     sendResponse(res, 200, parent);
+=======
+  static createParent = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const parent = <span class="cstat-no" title="statement not covered" >await ParentService.createParent(req.body);</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 201, parent);</span>
+  });
+&nbsp;
+  /** GET /api/v1/parents */
+  static listParents = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> ...filter } = <span class="cstat-no" title="statement not covered" >req.query;</span>
+    const parents = <span class="cstat-no" title="statement not covered" >await ParentService.listParents(filter, { limit: Number(limit), skip: Number(skip) });</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, parents);</span>
+  });
+&nbsp;
+  /** GET /api/v1/parents/:id */
+  static getParent = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+    const parent = <span class="cstat-no" title="statement not covered" >await ParentService.getParent(req.params.id);</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, parent);</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   });
 &nbsp;
   /** PATCH /api/v1/parents/:id */
@@ -173,9 +249,15 @@ class ParentController {
   });
 &nbsp;
   /** POST /api/v1/parents/reset-password (ADMIN only) */
+<<<<<<< HEAD
   static resetParentPassword = catchAsync(async (req, res) =&gt; {
     await ParentService.resetParentPassword({ ...req.body, performedBy: req.user.id });
     sendResponse(res, 200, null, 'Password reset. Parent must re-onboard.');
+=======
+  static resetParentPassword = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+<span class="cstat-no" title="statement not covered" >    await ParentService.resetParentPassword({ ...req.body, performedBy: req.user.id });</span>
+<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, null, 'Password reset. Parent must re-onboard.');</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   });
 }
 &nbsp;
@@ -187,7 +269,11 @@ export default ParentController;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+<<<<<<< HEAD
                 at 2026-06-19T04:46:02.845Z
+=======
+                at 2026-06-18T10:09:33.174Z
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         <script src="../../prettify.js"></script>
         <script>

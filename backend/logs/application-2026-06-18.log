@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2026-06-18 18:14:09 info: Server is running on port 3000 in development mode
 2026-06-18 18:14:13 info: MongoDB connected
 2026-06-18 18:14:14 info: POST /api/v1/auth/parent/login
@@ -243,3 +244,263 @@
 2026-06-18 20:59:02 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
 2026-06-18 23:43:34 info: Server is running on port 3000 in development mode
 2026-06-18 23:43:35 info: MongoDB connected
+=======
+2026-06-18 15:45:53 info: Server is running on port 3000 in development mode
+2026-06-18 15:45:54 info: MongoDB connected
+2026-06-18 15:46:13 info: GET /api/v1/students?limit=1000
+2026-06-18 15:46:13 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:46:13 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:46:13 info: GET /api/v1/fee-structures
+2026-06-18 15:46:14 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:46:14 info: GET /api/v1/fee-structures
+2026-06-18 15:46:14 info: GET /api/v1/students?limit=1000
+2026-06-18 15:46:14 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:47:26 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa68
+2026-06-18 15:47:26 info: GET /api/v1/students?limit=1000
+2026-06-18 15:47:26 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:47:26 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:47:26 info: GET /api/v1/fee-structures
+2026-06-18 15:53:05 info: GET /api/v1/students?limit=1000
+2026-06-18 15:53:05 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:53:05 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:53:05 info: GET /api/v1/fee-structures
+2026-06-18 15:53:05 info: GET /api/v1/fee-structures
+2026-06-18 15:53:05 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:53:05 info: GET /api/v1/students?limit=1000
+2026-06-18 15:53:05 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:53:16 info: GET /api/v1/students?limit=1000
+2026-06-18 15:53:16 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:53:16 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:53:16 info: GET /api/v1/fee-structures
+2026-06-18 15:53:16 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:53:16 info: GET /api/v1/fee-structures
+2026-06-18 15:53:16 info: GET /api/v1/students?limit=1000
+2026-06-18 15:53:16 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:53:23 info: GET /api/v1/students?limit=1000
+2026-06-18 15:53:23 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:53:23 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:53:23 info: GET /api/v1/fee-structures
+2026-06-18 15:53:23 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:53:23 info: GET /api/v1/fee-structures
+2026-06-18 15:53:23 info: GET /api/v1/students?limit=1000
+2026-06-18 15:53:23 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:57:25 info: GET /api/v1/students?limit=1000
+2026-06-18 15:57:25 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 15:57:25 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:57:25 info: GET /api/v1/fee-structures
+2026-06-18 15:57:25 info: GET /api/v1/payments?limit=1000
+2026-06-18 15:57:25 info: GET /api/v1/fee-structures
+2026-06-18 15:57:25 info: GET /api/v1/students?limit=1000
+2026-06-18 15:57:25 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:02:00 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:02:00 info: GET /api/v1/fee-structures
+2026-06-18 16:02:00 info: GET /api/v1/students?limit=1000
+2026-06-18 16:02:00 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:02:02 info: GET /api/v1/fee-structures
+2026-06-18 16:02:02 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:02:03 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:02:03 info: GET /api/v1/students?limit=1000
+2026-06-18 16:05:51 info: GET /api/v1/students?limit=1000
+2026-06-18 16:05:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:05:51 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:05:51 info: GET /api/v1/fee-structures
+2026-06-18 16:05:51 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:05:51 info: GET /api/v1/fee-structures
+2026-06-18 16:05:51 info: GET /api/v1/students?limit=1000
+2026-06-18 16:05:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:06:39 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa68
+2026-06-18 16:06:39 info: GET /api/v1/students?limit=1000
+2026-06-18 16:06:39 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:06:39 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:06:39 info: GET /api/v1/fee-structures
+2026-06-18 16:06:51 info: GET /api/v1/students?limit=1000
+2026-06-18 16:06:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:06:51 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:06:51 info: GET /api/v1/fee-structures
+2026-06-18 16:06:51 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:06:51 info: GET /api/v1/fee-structures
+2026-06-18 16:06:51 info: GET /api/v1/students?limit=1000
+2026-06-18 16:06:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:16:06 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa68
+2026-06-18 16:16:06 info: GET /api/v1/students?limit=1000
+2026-06-18 16:16:06 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:16:06 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:16:06 info: GET /api/v1/fee-structures
+2026-06-18 16:21:47 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa7c
+2026-06-18 16:25:24 info: Server is running on port 3000 in development mode
+2026-06-18 16:25:25 info: MongoDB connected
+2026-06-18 16:25:44 info: GET /api/v1/students?limit=1000
+2026-06-18 16:25:44 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:25:44 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:25:44 info: GET /api/v1/fee-structures
+2026-06-18 16:25:45 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:25:45 info: GET /api/v1/fee-structures
+2026-06-18 16:25:45 info: GET /api/v1/students?limit=1000
+2026-06-18 16:25:45 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:25:57 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa68
+2026-06-18 16:25:57 info: GET /api/v1/students?limit=1000
+2026-06-18 16:25:57 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:25:57 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:25:57 info: GET /api/v1/fee-structures
+2026-06-18 16:26:03 info: GET /api/v1/students?limit=1000
+2026-06-18 16:26:03 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:26:03 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:26:03 info: GET /api/v1/fee-structures
+2026-06-18 16:26:03 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:26:03 info: GET /api/v1/fee-structures
+2026-06-18 16:26:03 info: GET /api/v1/students?limit=1000
+2026-06-18 16:26:03 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:26:49 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa69
+2026-06-18 16:26:49 info: GET /api/v1/students?limit=1000
+2026-06-18 16:26:49 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:26:49 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:26:49 info: GET /api/v1/fee-structures
+2026-06-18 16:41:51 info: GET /api/v1/students?limit=1000
+2026-06-18 16:41:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:41:51 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:41:51 info: GET /api/v1/fee-structures
+2026-06-18 16:41:51 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:41:51 info: GET /api/v1/fee-structures
+2026-06-18 16:41:51 info: GET /api/v1/students?limit=1000
+2026-06-18 16:41:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:42:18 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa68
+2026-06-18 16:42:18 info: GET /api/v1/students?limit=1000
+2026-06-18 16:42:18 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:42:18 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:42:18 info: GET /api/v1/fee-structures
+2026-06-18 16:42:33 info: PUT /api/v1/fee-structures/6a3182197e45b575237baa68
+2026-06-18 16:42:33 info: GET /api/v1/students?limit=1000
+2026-06-18 16:42:33 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:42:33 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:42:33 info: GET /api/v1/fee-structures
+2026-06-18 16:58:04 info: POST /api/v1/payments
+2026-06-18 16:58:05 info: POST /api/v1/payments
+2026-06-18 16:58:05 info: POST /api/v1/payments
+2026-06-18 16:58:06 info: POST /api/v1/payments
+2026-06-18 16:58:06 info: POST /api/v1/payments
+2026-06-18 16:58:06 info: POST /api/v1/payments
+2026-06-18 16:58:07 info: POST /api/v1/payments
+2026-06-18 16:58:07 info: POST /api/v1/payments
+2026-06-18 16:58:08 info: POST /api/v1/payments
+2026-06-18 16:58:08 info: POST /api/v1/payments
+2026-06-18 16:58:08 info: GET /api/v1/students?limit=1000
+2026-06-18 16:58:08 info: GET /api/v1/fee-structures
+2026-06-18 16:58:08 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:58:08 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:58:59 info: POST /api/v1/payments
+2026-06-18 16:59:00 info: POST /api/v1/payments
+2026-06-18 16:59:01 info: POST /api/v1/payments
+2026-06-18 16:59:01 info: POST /api/v1/payments
+2026-06-18 16:59:02 info: POST /api/v1/payments
+2026-06-18 16:59:02 info: POST /api/v1/payments
+2026-06-18 16:59:02 info: POST /api/v1/payments
+2026-06-18 16:59:03 info: POST /api/v1/payments
+2026-06-18 16:59:04 info: POST /api/v1/payments
+2026-06-18 16:59:04 info: POST /api/v1/payments
+2026-06-18 16:59:04 info: POST /api/v1/payments
+2026-06-18 16:59:05 info: POST /api/v1/payments
+2026-06-18 16:59:06 info: GET /api/v1/students?limit=1000
+2026-06-18 16:59:06 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 16:59:06 info: GET /api/v1/payments?limit=1000
+2026-06-18 16:59:06 info: GET /api/v1/fee-structures
+2026-06-18 17:07:30 info: GET /api/v1/students?limit=1000
+2026-06-18 17:07:30 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:07:30 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:07:30 info: GET /api/v1/fee-structures
+2026-06-18 17:07:30 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:07:30 info: GET /api/v1/fee-structures
+2026-06-18 17:07:31 info: GET /api/v1/students?limit=1000
+2026-06-18 17:07:31 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:07:39 info: GET /api/v1/students?limit=1000
+2026-06-18 17:07:39 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:07:39 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:07:39 info: GET /api/v1/fee-structures
+2026-06-18 17:07:39 info: GET /api/v1/fee-structures
+2026-06-18 17:07:39 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:07:39 info: GET /api/v1/students?limit=1000
+2026-06-18 17:07:39 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:07:45 info: GET /api/v1/students?limit=1000
+2026-06-18 17:07:45 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:07:45 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:07:45 info: GET /api/v1/fee-structures
+2026-06-18 17:07:45 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:07:45 info: GET /api/v1/fee-structures
+2026-06-18 17:07:45 info: GET /api/v1/students?limit=1000
+2026-06-18 17:07:45 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:28:57 info: GET /api/v1/students?limit=1000
+2026-06-18 17:28:57 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 17:28:57 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:28:57 info: GET /api/v1/fee-structures
+2026-06-18 17:28:57 info: GET /api/v1/payments?limit=1000
+2026-06-18 17:28:57 info: GET /api/v1/fee-structures
+2026-06-18 17:28:57 info: GET /api/v1/students?limit=1000
+2026-06-18 17:28:57 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:50:27 info: Server is running on port 3000 in development mode
+2026-06-18 18:50:30 info: GET /api/v1/students?limit=1000
+2026-06-18 18:50:30 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:50:30 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:50:30 info: GET /api/v1/fee-structures
+2026-06-18 18:50:40 error: MongooseError: Operation `students.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 error: MongooseError: Operation `studentfeeledgers.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 error: MongooseError: Operation `payments.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 error: MongooseError: Operation `feestructures.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 info: GET /api/v1/students?limit=1000
+2026-06-18 18:50:40 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:50:40 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:50:40 info: GET /api/v1/fee-structures
+2026-06-18 18:50:50 error: MongooseError: Operation `students.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:50 error: MongooseError: Operation `studentfeeledgers.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:50 error: MongooseError: Operation `payments.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:50 error: MongooseError: Operation `feestructures.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:57 error: MongooseServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at _handleConnectionErrors (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1180:11)
+    at NativeConnection.openUri (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1111:11)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async connectDB (file:///E:/Sunrise%20Connect/backend/src/config/db.js:23:5)
+2026-06-18 18:54:03 info: Server is running on port 3000 in development mode
+2026-06-18 18:54:04 info: MongoDB connected
+2026-06-18 18:54:09 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:09 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:54:09 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:09 info: GET /api/v1/fee-structures
+2026-06-18 18:54:10 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:10 info: GET /api/v1/fee-structures
+2026-06-18 18:54:10 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:10 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/fee-structures
+2026-06-18 18:54:25 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/fee-structures
+2026-06-18 18:54:25 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 19:18:02 info: Server is running on port 3000 in development mode
+2026-06-18 19:18:03 info: MongoDB connected
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc

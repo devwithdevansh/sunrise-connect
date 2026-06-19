@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2026-06-19 00:09:44 info: Server is running on port 3000 in development mode
 2026-06-19 00:09:46 info: MongoDB connected
 2026-06-19 09:54:13 info: Server is running on port 3000 in development mode
@@ -1175,3 +1176,336 @@
 2026-06-19 22:23:11 info: MongoDB connected
 2026-06-19 22:23:27 info: Server is running on port 3000 in development mode
 2026-06-19 22:23:28 info: MongoDB connected
+=======
+2026-06-19 17:01:17 info: Server is running on port 3000 in development mode
+2026-06-19 17:01:18 info: MongoDB connected
+2026-06-19 17:01:21 info: GET /api/v1/students?limit=1000
+2026-06-19 17:01:21 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 17:01:21 info: GET /api/v1/payments?limit=1000
+2026-06-19 17:01:21 info: GET /api/v1/fee-structures
+2026-06-19 17:01:21 info: GET /api/v1/payments?limit=1000
+2026-06-19 17:01:21 info: GET /api/v1/fee-structures
+2026-06-19 17:01:21 info: GET /api/v1/students?limit=1000
+2026-06-19 17:01:21 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 17:01:22 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 17:01:22 info: GET /api/v1/students?limit=1000
+2026-06-19 17:01:22 info: GET /api/v1/payments?limit=1000
+2026-06-19 17:01:22 info: GET /api/v1/fee-structures
+2026-06-19 17:01:22 info: GET /api/v1/payments?limit=1000
+2026-06-19 17:01:22 info: GET /api/v1/fee-structures
+2026-06-19 17:01:22 info: GET /api/v1/students?limit=1000
+2026-06-19 17:01:22 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:15:48 info: Server is running on port 3000 in development mode
+2026-06-19 19:15:50 info: MongoDB connected
+2026-06-19 19:16:02 info: GET /api/v1/students?limit=1000
+2026-06-19 19:16:02 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:16:02 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:16:02 info: GET /api/v1/fee-structures
+2026-06-19 19:16:02 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:16:02 info: GET /api/v1/fee-structures
+2026-06-19 19:16:02 info: GET /api/v1/students?limit=1000
+2026-06-19 19:16:03 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:46:38 info: POST /api/v1/students
+2026-06-19 19:46:43 info: GET /api/v1/students?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/fee-structures
+2026-06-19 19:46:43 info: GET /api/v1/students?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/fee-structures
+2026-06-19 19:46:43 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:46:43 info: GET /api/v1/fee-structures
+2026-06-19 19:46:43 info: GET /api/v1/students?limit=1000
+2026-06-19 19:46:44 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:46:45 info: GET /api/v1/students?limit=1000
+2026-06-19 19:46:45 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:46:45 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:46:45 info: GET /api/v1/fee-structures
+2026-06-19 19:46:45 info: GET /api/v1/fee-structures
+2026-06-19 19:46:45 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:46:45 info: GET /api/v1/students?limit=1000
+2026-06-19 19:46:46 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:49:27 info: POST /api/v1/payments
+2026-06-19 19:49:28 info: POST /api/v1/payments
+2026-06-19 19:49:28 info: POST /api/v1/payments
+2026-06-19 19:49:28 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:28 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:28 info: POST /api/v1/payments
+2026-06-19 19:49:28 info: POST /api/v1/payments
+2026-06-19 19:49:28 info: POST /api/v1/payments
+2026-06-19 19:49:28 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:28 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:28 info: GET /api/v1/students?limit=1000
+2026-06-19 19:49:28 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:49:28 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:49:28 info: GET /api/v1/fee-structures
+2026-06-19 19:49:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 info: POST /api/v1/payments
+2026-06-19 19:49:29 info: POST /api/v1/payments
+2026-06-19 19:49:29 error: MongoServerError: Caused by :: Write conflict during plan execution and yielding is disabled. :: Please retry your operation or multi-document transaction.
+    at Connection.sendCommand (E:\Sunrise Connect\backend\node_modules\mongodb\lib\cmap\connection.js:320:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Connection.command (E:\Sunrise Connect\backend\node_modules\mongodb\lib\cmap\connection.js:347:26)
+    at async Server.command (E:\Sunrise Connect\backend\node_modules\mongodb\lib\sdam\server.js:208:29)
+    at async executeOperationWithRetries (E:\Sunrise Connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:193:32)
+    at async executeOperation (E:\Sunrise Connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:83:16)
+    at async Collection.updateOne (E:\Sunrise Connect\backend\node_modules\mongodb\lib\collection.js:238:16)
+    at async maybeTracedQueryExec (E:\Sunrise Connect\backend\node_modules\mongoose\lib\query.js:4801:65)
+    at async PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:32:28)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 error: MongoServerError: Caused by :: Write conflict during plan execution and yielding is disabled. :: Please retry your operation or multi-document transaction.
+    at Connection.sendCommand (E:\Sunrise Connect\backend\node_modules\mongodb\lib\cmap\connection.js:320:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Connection.command (E:\Sunrise Connect\backend\node_modules\mongodb\lib\cmap\connection.js:347:26)
+    at async Server.command (E:\Sunrise Connect\backend\node_modules\mongodb\lib\sdam\server.js:208:29)
+    at async executeOperationWithRetries (E:\Sunrise Connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:193:32)
+    at async executeOperation (E:\Sunrise Connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:83:16)
+    at async Collection.updateOne (E:\Sunrise Connect\backend\node_modules\mongodb\lib\collection.js:238:16)
+    at async maybeTracedQueryExec (E:\Sunrise Connect\backend\node_modules\mongoose\lib\query.js:4801:65)
+    at async PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:32:28)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 info: GET /api/v1/students?limit=1000
+2026-06-19 19:49:29 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:49:29 info: GET /api/v1/fee-structures
+2026-06-19 19:49:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///E:/Sunrise%20Connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///E:/Sunrise%20Connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 19:49:29 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:49:29 info: GET /api/v1/fee-structures
+2026-06-19 19:49:29 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:49:30 info: GET /api/v1/fee-structures
+2026-06-19 19:49:30 info: GET /api/v1/students?limit=1000
+2026-06-19 19:49:30 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:49:30 info: GET /api/v1/students?limit=1000
+2026-06-19 19:49:30 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:49:31 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:51:47 info: GET /api/v1/students?limit=1000
+2026-06-19 19:51:47 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:51:47 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:51:47 info: GET /api/v1/fee-structures
+2026-06-19 19:51:47 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:51:47 info: GET /api/v1/fee-structures
+2026-06-19 19:51:48 info: GET /api/v1/students?limit=1000
+2026-06-19 19:51:48 info: GET /api/v1/students?limit=1000
+2026-06-19 19:51:48 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:51:48 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:51:48 info: GET /api/v1/fee-structures
+2026-06-19 19:51:49 info: GET /api/v1/students?limit=1000
+2026-06-19 19:51:49 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:51:49 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:51:49 info: GET /api/v1/fee-structures
+2026-06-19 19:51:49 info: GET /api/v1/students?limit=1000
+2026-06-19 19:51:49 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:51:50 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:51:51 info: GET /api/v1/fee-structures
+2026-06-19 19:52:06 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:06 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:06 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:06 info: GET /api/v1/fee-structures
+2026-06-19 19:52:06 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:06 info: GET /api/v1/fee-structures
+2026-06-19 19:52:06 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:06 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:08 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:08 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:08 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:08 info: GET /api/v1/fee-structures
+2026-06-19 19:52:08 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:08 info: GET /api/v1/fee-structures
+2026-06-19 19:52:08 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:08 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:31 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:31 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:31 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:31 info: GET /api/v1/fee-structures
+2026-06-19 19:52:32 info: GET /api/v1/fee-structures
+2026-06-19 19:52:32 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:32 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:32 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:38 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:38 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:52:38 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:38 info: GET /api/v1/fee-structures
+2026-06-19 19:52:38 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:52:38 info: GET /api/v1/fee-structures
+2026-06-19 19:52:38 info: GET /api/v1/students?limit=1000
+2026-06-19 19:52:38 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:53:00 info: POST /api/v1/payments/6a3550715de19b730300f319/reverse
+2026-06-19 19:53:00 info: GET /api/v1/students?limit=1000
+2026-06-19 19:53:00 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 19:53:00 info: GET /api/v1/payments?limit=1000
+2026-06-19 19:53:00 info: GET /api/v1/fee-structures
+2026-06-19 20:02:47 info: GET /api/v1/students?limit=1000
+2026-06-19 20:02:47 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 20:02:47 info: GET /api/v1/audit?limit=100
+2026-06-19 20:02:47 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:02:47 info: GET /api/v1/payments?limit=1000
+2026-06-19 20:02:47 info: GET /api/v1/fee-structures
+2026-06-19 20:02:47 info: GET /api/v1/audit?limit=100
+2026-06-19 20:02:47 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:02:48 info: GET /api/v1/payments?limit=1000
+2026-06-19 20:02:48 info: GET /api/v1/fee-structures
+2026-06-19 20:02:48 info: GET /api/v1/students?limit=1000
+2026-06-19 20:02:49 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 20:07:51 info: GET /api/v1/students?limit=1000
+2026-06-19 20:07:51 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 20:07:51 info: GET /api/v1/audit?limit=100
+2026-06-19 20:07:51 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:07:51 info: GET /api/v1/payments?limit=1000
+2026-06-19 20:07:51 info: GET /api/v1/fee-structures
+2026-06-19 20:07:51 info: GET /api/v1/audit?limit=100
+2026-06-19 20:07:51 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:07:59 info: GET /api/v1/students?limit=1000
+2026-06-19 20:08:00 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 20:08:00 info: GET /api/v1/fee-structures
+2026-06-19 20:08:00 info: GET /api/v1/payments?limit=1000
+2026-06-19 20:10:05 info: GET /api/v1/students?limit=1000
+2026-06-19 20:10:05 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 20:10:05 info: GET /api/v1/audit?limit=100
+2026-06-19 20:10:05 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:10:05 info: GET /api/v1/payments?limit=1000
+2026-06-19 20:10:05 info: GET /api/v1/fee-structures
+2026-06-19 20:10:05 info: GET /api/v1/audit?limit=100
+2026-06-19 20:10:05 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:10:06 info: GET /api/v1/payments?limit=1000
+2026-06-19 20:10:06 info: GET /api/v1/students?limit=1000
+2026-06-19 20:10:06 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 20:10:11 info: GET /api/v1/fee-structures
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+2026-06-19 22:44:16 info: Server is running on port 3000 in development mode
+2026-06-19 22:44:17 info: MongoDB connected
+2026-06-19 22:44:23 info: POST /api/v1/auth/parent/login
+2026-06-19 22:44:24 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 22:44:25 info: POST /api/v1/auth/portal/login
+2026-06-19 22:44:25 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 22:44:25 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 22:44:25 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 22:53:46 info: Server is running on port 3000 in development mode
+2026-06-19 22:53:47 info: MongoDB connected
+2026-06-19 22:53:53 info: GET /api/v1/students?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/payments?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/fee-structures
+2026-06-19 22:53:53 info: GET /api/v1/audit?limit=100
+2026-06-19 22:53:53 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 22:53:53 info: GET /api/v1/audit?limit=100
+2026-06-19 22:53:53 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 22:53:53 info: GET /api/v1/fee-structures
+2026-06-19 22:53:53 info: GET /api/v1/students?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/payments?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 22:54:05 info: Server is running on port 3000 in development mode
+2026-06-19 22:54:05 info: MongoDB connected
