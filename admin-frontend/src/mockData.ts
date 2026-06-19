@@ -15,6 +15,7 @@ export interface Student {
 }
 
 export interface LedgerEntry {
+  _id?: string;
   id: string;
   studentId: string;
   feePeriod: string; // e.g. "June", "Term 1", "Term 2", "Transport - June"
@@ -37,7 +38,7 @@ export interface PaymentTransaction {
   amount: number;
   method: 'CASH' | 'CHEQUE' | 'ONLINE' | 'UPI' | 'CARD' | 'NET BANKING' | 'GOVT';
   time: string; // e.g. "9:42 AM"
-  status: 'PAID' | 'PARTIAL' | 'RTE';
+  status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED';
   date: string; // e.g. "2026-06-11"
   remark?: string;
 }

@@ -188,3 +188,71 @@
 2026-06-18 17:28:57 info: GET /api/v1/fee-structures
 2026-06-18 17:28:57 info: GET /api/v1/students?limit=1000
 2026-06-18 17:28:57 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:50:27 info: Server is running on port 3000 in development mode
+2026-06-18 18:50:30 info: GET /api/v1/students?limit=1000
+2026-06-18 18:50:30 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:50:30 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:50:30 info: GET /api/v1/fee-structures
+2026-06-18 18:50:40 error: MongooseError: Operation `students.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 error: MongooseError: Operation `studentfeeledgers.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 error: MongooseError: Operation `payments.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 error: MongooseError: Operation `feestructures.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:40 info: GET /api/v1/students?limit=1000
+2026-06-18 18:50:40 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:50:40 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:50:40 info: GET /api/v1/fee-structures
+2026-06-18 18:50:50 error: MongooseError: Operation `students.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:50 error: MongooseError: Operation `studentfeeledgers.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:50 error: MongooseError: Operation `payments.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:50 error: MongooseError: Operation `feestructures.find()` buffering timed out after 10000ms
+    at Timeout._onTimeout (E:\Sunrise Connect\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:142:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+2026-06-18 18:50:57 error: MongooseServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at _handleConnectionErrors (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1180:11)
+    at NativeConnection.openUri (E:\Sunrise Connect\backend\node_modules\mongoose\lib\connection.js:1111:11)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async connectDB (file:///E:/Sunrise%20Connect/backend/src/config/db.js:23:5)
+2026-06-18 18:54:03 info: Server is running on port 3000 in development mode
+2026-06-18 18:54:04 info: MongoDB connected
+2026-06-18 18:54:09 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:09 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:54:09 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:09 info: GET /api/v1/fee-structures
+2026-06-18 18:54:10 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:10 info: GET /api/v1/fee-structures
+2026-06-18 18:54:10 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:10 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/fee-structures
+2026-06-18 18:54:25 info: GET /api/v1/payments?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/fee-structures
+2026-06-18 18:54:25 info: GET /api/v1/students?limit=1000
+2026-06-18 18:54:25 info: GET /api/v1/ledgers?limit=1000
+2026-06-18 19:18:02 info: Server is running on port 3000 in development mode
+2026-06-18 19:18:03 info: MongoDB connected

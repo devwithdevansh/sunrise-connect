@@ -42,6 +42,16 @@ export interface TransportFeeStructureData {
   isActive: boolean;
 }
 
+export interface AuditLog {
+  _id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  performedBy: string;
+  details: any;
+  createdAt: string;
+}
+
 interface AppContextType {
   currentScreen: ScreenType;
   setScreen: (screen: ScreenType) => void;
@@ -50,6 +60,7 @@ interface AppContextType {
   transactions: PaymentTransaction[];
   feeStructures: FeeStructureData[];
   transportFeeStructures: TransportFeeStructureData[];
+  auditLogs: AuditLog[];
   addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
   recordPayment: (
     studentId: string,
@@ -77,21 +88,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [feeStructures, setFeeStructures] = useState<FeeStructureData[]>([]);
   const [transportFeeStructures, setTransportFeeStructures] = useState<TransportFeeStructureData[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   // Fetch data from backend on mount and after mutations
   const fetchAll = async () => {
     try {
-      const [studRes, ledRes, txRes, feeRes] = await Promise.all([
+      const [studRes, ledRes, txRes, feeRes, auditRes] = await Promise.all([
         fetch('/api/v1/students?limit=1000'),
         fetch('/api/v1/ledgers?limit=1000'),
         fetch('/api/v1/payments?limit=1000'),
-        fetch('/api/v1/fee-structures')
+        fetch('/api/v1/fee-structures'),
+        fetch('/api/v1/audit?limit=100')
       ]);
-      const [studResp, ledResp, txResp, feeResp] = await Promise.all([
+      const [studResp, ledResp, txResp, feeResp, auditResp] = await Promise.all([
         studRes.json(),
         ledRes.json(),
         txRes.json(),
-        feeRes.json()
+        feeRes.json(),
+        auditRes.json()
       ]);
       
       const rawStudents = studResp.data || [];
@@ -102,6 +116,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const feeData = feeResp.data || {};
       setFeeStructures(feeData.feeStructures || []);
       setTransportFeeStructures(feeData.transportStructures || []);
+
+      // Audit logs
+      setAuditLogs(auditResp.data?.logs || []);
 
 
       // Map ledgers (inject id)
@@ -223,7 +240,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const recordPayment = async (
-    studentId: string,
+    _studentId: string,
     feesToPay: { category: string; period: string; ledgerId?: string; totalAmount: number }[],
     amountPaid: number,
     paymentMethod: PaymentTransaction['method'],
@@ -379,6 +396,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         transactions,
         feeStructures,
         transportFeeStructures,
+        auditLogs,
         addStudent,
         recordPayment,
         applyConcession,

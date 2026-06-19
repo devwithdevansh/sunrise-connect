@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 const ScreenContent: React.FC = () => {
-  const { currentScreen, transactions, reversePayment } = useApp();
+  const { currentScreen, transactions, reversePayment, auditLogs } = useApp();
 
   switch (currentScreen) {
     case 'dashboard':
@@ -222,34 +222,31 @@ const ScreenContent: React.FC = () => {
 
           <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
             <div className="divide-y divide-slate-100">
-              <div className="py-3 flex items-start gap-4 text-sm">
-                <span className="text-slate-400 text-xs shrink-0 font-semibold w-24">11:12 AM</span>
-                <div>
-                  <span className="font-bold text-slate-800">PAYMENT_RECORDED</span>
-                  <p className="text-xs text-slate-500 mt-0.5">Amit Trivedi (Std 7-A): ₹2,400 Term 1 fee paid online via UPI.</p>
-                </div>
-              </div>
-              <div className="py-3 flex items-start gap-4 text-sm">
-                <span className="text-slate-400 text-xs shrink-0 font-semibold w-24">09:42 AM</span>
-                <div>
-                  <span className="font-bold text-slate-800">PAYMENT_RECORDED</span>
-                  <p className="text-xs text-slate-500 mt-0.5">Rahul Mehta (Std 7-A): ₹3,000 June education & transport paid online.</p>
-                </div>
-              </div>
-              <div className="py-3 flex items-start gap-4 text-sm">
-                <span className="text-slate-400 text-xs shrink-0 font-semibold w-24">09:18 AM</span>
-                <div>
-                  <span className="font-bold text-slate-800">PAYMENT_RECORDED</span>
-                  <p className="text-xs text-slate-500 mt-0.5">Priya Shah (Std 5-B): ₹2,800 Term 2 fee paid by cash.</p>
-                </div>
-              </div>
-              <div className="py-3 flex items-start gap-4 text-sm">
-                <span className="text-slate-400 text-xs shrink-0 font-semibold w-24">08:30 AM</span>
-                <div>
-                  <span className="font-bold text-slate-800">RTE_EXEMPTION_APPLIED</span>
-                  <p className="text-xs text-slate-500 mt-0.5">Kavya Desai (Std 3-C): ₹2,500 June education fee waived under RTE quota.</p>
-                </div>
-              </div>
+              {auditLogs.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">No audit logs found.</div>
+              ) : (
+                auditLogs.map((log) => {
+                  const dateStr = new Date(log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  let detailStr = '';
+                  if (log.details?.remark) detailStr = log.details.remark;
+                  else if (log.details?.reason) detailStr = log.details.reason;
+                  else if (typeof log.details === 'object' && Object.keys(log.details).length > 0) {
+                    detailStr = JSON.stringify(log.details).substring(0, 100);
+                  } else {
+                    detailStr = `Action performed on ${log.entityType}`;
+                  }
+                  
+                  return (
+                    <div key={log._id} className="py-3 flex items-start gap-4 text-sm hover:bg-slate-50/50 transition-colors">
+                      <span className="text-slate-400 text-xs shrink-0 font-semibold w-28">{dateStr}</span>
+                      <div>
+                        <span className="font-bold text-slate-800">{log.action}</span>
+                        <p className="text-xs text-slate-500 mt-0.5">{detailStr}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

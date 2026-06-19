@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, ledgerEntries, setScreen } = useApp();
+  const { students, ledgerEntries, transactions, setScreen } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [dueFilter, setDueFilter] = useState<'ALL' | '1_DUE' | '2_DUE' | '3_DUE'>('ALL');
   
@@ -23,13 +23,16 @@ export const UnpaidFees: React.FC = () => {
   const [mediumFilter, setMediumFilter] = useState('All Mediums');
   const [zoneFilter, setZoneFilter] = useState('All Zones');
 
-  // Hardcoded counts matching the UI wireframe
-  const counts = {
-    all: 233,
-    oneMonth: 142,
-    twoMonths: 68,
-    threeMonths: 23
-  };
+  // Dynamic counts based on actual students
+  const counts = React.useMemo(() => {
+    const unpaid = students.filter((s) => s.status !== 'PAID' && s.status !== 'RTE');
+    return {
+      all: unpaid.length,
+      oneMonth: unpaid.filter(s => s.status === '1 DUE').length,
+      twoMonths: unpaid.filter(s => s.status === '2 DUE').length,
+      threeMonths: unpaid.filter(s => s.status === '3+ DUE').length,
+    };
+  }, [students]);
 
   // Map students to overdue profiles matching the wireframe rows
   const unpaidStudents = students.filter((s) => {
@@ -73,10 +76,20 @@ export const UnpaidFees: React.FC = () => {
   const getSid = (s: (typeof students)[0]) => s._id || s.id;
 
   const getLastPaidMonth = (studentId: string) => {
-    // Mock last paid mapping
-    if (studentId === 's2') return 'April 2026';
-    if (studentId === 's6') return 'March 2026';
-    return 'May 2026';
+    const studentTxs = transactions.filter(t => t.studentId === studentId && t.status !== 'REVERSED');
+    if (studentTxs.length === 0) return 'Never';
+    // Find the latest transaction date
+    const latestTx = studentTxs.reduce((latest, tx) => {
+      const txDate = new Date(tx.date || new Date().toISOString());
+      const latestDate = new Date(latest.date || new Date().toISOString());
+      return txDate > latestDate ? tx : latest;
+    }, studentTxs[0]);
+    
+    // Format to "Month Year" if possible
+    if (latestTx.date) {
+      return new Date(latestTx.date).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    }
+    return 'Recent';
   };
 
   const handleSelectAll = () => {
@@ -106,7 +119,9 @@ export const UnpaidFees: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Unpaid Fees</h2>
-          <p className="text-xs font-semibold text-slate-400">Sunday, June 7, 2026</p>
+          <p className="text-xs font-semibold text-slate-400">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -228,20 +243,16 @@ export const UnpaidFees: React.FC = () => {
             </div>
           </div>
 
-          <button className="flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold px-3 py-2 rounded-xl text-xs shadow-sm transition-all">
-            <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400" />
-            Export Excel
+          <button disabled className="flex items-center gap-1.5 border border-slate-200 bg-slate-50 text-slate-400 font-bold px-3 py-2 rounded-xl text-xs shadow-sm transition-all cursor-not-allowed opacity-70">
+            <FileSpreadsheet className="h-3.5 w-3.5 text-slate-300" />
+            Export Excel (WIP)
           </button>
           <button
-            disabled={selectedStudentIds.length === 0}
-            className={`flex items-center gap-1.5 font-bold px-3 py-2 rounded-xl text-xs transition-all shadow-sm ${
-              selectedStudentIds.length === 0
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
+            disabled
+            className="flex items-center gap-1.5 font-bold px-3 py-2 rounded-xl text-xs transition-all bg-slate-200 text-slate-400 cursor-not-allowed shadow-none opacity-70"
           >
             <MessageSquare className="h-3.5 w-3.5" />
-            Send WhatsApp
+            Send WhatsApp (WIP)
           </button>
         </div>
       </div>

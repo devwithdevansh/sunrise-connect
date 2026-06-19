@@ -415,9 +415,10 @@ export const FeeStructure: React.FC = () => {
       </div>
 
       {/* Twin Columns Fee Comparison Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className={`grid grid-cols-1 ${selectedStandard === '11' || selectedStandard === '12' ? 'lg:max-w-3xl mx-auto w-full' : 'lg:grid-cols-2'} gap-6`}>
         
         {/* Column 1: English Medium */}
+        {selectedStandard !== '11' && selectedStandard !== '12' && (
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
           <div>
             {/* Header */}
@@ -488,6 +489,7 @@ export const FeeStructure: React.FC = () => {
             </div>
           )}
         </div>
+        )}
 
         {/* Column 2: Gujarati Medium */}
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">

@@ -83,7 +83,9 @@ export const Students: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Students</h2>
-          <p className="text-xs font-semibold text-slate-400">Sunday, June 7, 2026</p>
+          <p className="text-xs font-semibold text-slate-400">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
