@@ -14,7 +14,6 @@ const feeStructureSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Standard is required'],
       trim: true,
-      unique: true,
     },
     annualFee: {
       type: Number,

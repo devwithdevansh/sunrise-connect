@@ -303,6 +303,7 @@ export const CollectFee: React.FC = () => {
                   onClick={() => {
                     setSelectedStudent(student);
                     setSelectedFees([]);
+                    setFeeCategory('EDUCATION');
                   }}
                   className={`p-4 border rounded-2xl cursor-pointer transition-all duration-200 ${
                     isSelected
@@ -370,24 +371,30 @@ export const CollectFee: React.FC = () => {
                 )}
               </div>
 
-              {/* Category Tabs */}
               <div className="flex bg-slate-200/50 p-0.5 rounded-lg border border-slate-200/20 flex-wrap">
-                {(['EDUCATION', 'TRANSPORT', 'ADMISSION', 'BAG_KIT'] as const).map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => { 
-                      setFeeCategory(cat); 
-                    }}
-                    className={`px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
-                      feeCategory === cat
-                        ? 'bg-white text-slate-800 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    {cat === 'EDUCATION' ? 'EDUCATION & TERM' : cat === 'BAG_KIT' ? 'BAG & KIT' : cat}
-                  </button>
-                ))}
+                {(['EDUCATION', 'TRANSPORT', 'ADMISSION', 'BAG_KIT'] as const)
+                  .filter((cat) => {
+                    if ((cat === 'ADMISSION' || cat === 'BAG_KIT') && !selectedStudent.isNewAdmission) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => { 
+                        setFeeCategory(cat); 
+                      }}
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
+                        feeCategory === cat
+                          ? 'bg-white text-slate-800 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {cat === 'EDUCATION' ? 'EDUCATION & TERM' : cat === 'BAG_KIT' ? 'BAG & KIT' : cat}
+                    </button>
+                  ))}
               </div>
             </div>
 

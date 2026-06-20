@@ -15,7 +15,8 @@ import {
   History,
   BarChart3,
   LogOut,
-  Sun
+  Sun,
+  Settings
 } from 'lucide-react';
 
 interface MenuItem {
@@ -77,6 +78,7 @@ export const Sidebar: React.FC = () => {
     {
       title: 'ADMIN',
       items: [
+        { id: 'setup', label: 'Setup', icon: Settings },
         { id: 'audit', label: 'Audit Log', icon: History },
         { id: 'reports', label: 'Reports', icon: BarChart3 },
       ]

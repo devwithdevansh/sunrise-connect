@@ -2,7 +2,17 @@
 
 This document provides a comprehensive overview of the MongoDB database schema for the **Sunrise Connect** application. It is intended for frontend developers (Admin Web and Flutter Parent App) to understand the data structures, relationships, and constraints.
 
-## 1. User (Admins & Staff)
+## 1. AcademicYear
+Defines the school year periods to isolate fee structures and student ledgers.
+
+| Field | Type | Required | Constraints / Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `name` | String | Yes | Unique, e.g. "2026-2027" | Name of the academic year. |
+| `startDate` | Date | Yes | - | The official start date of the year. |
+| `endDate` | Date | Yes | - | The official end date of the year. |
+| `isActive` | Boolean | No | Default: `false` | Only one Academic Year can be active at a time. |
+
+## 2. User (Admins & Staff)
 Handles administrative and staff accounts for the admin portal.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -14,7 +24,7 @@ Handles administrative and staff accounts for the admin portal.
 | `isActive` | Boolean | No | Default: `true` | Indicates if the account is active. |
 | `lastLogin` | Date | No | Default: `null` | Timestamp of the last login. |
 
-## 2. Parent
+## 3. Parent
 Handles parent accounts primarily used in the Flutter App.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -28,7 +38,7 @@ Handles parent accounts primarily used in the Flutter App.
 | `isPasswordSet` | Boolean | No | Default: `false` | Whether the parent has set up their password. |
 | `isActive` | Boolean | No | Default: `true` | Account status. |
 
-## 3. Student
+## 4. Student
 Represents students enrolled in the school.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -45,7 +55,7 @@ Represents students enrolled in the school.
 
 *(Note: Uniqueness enforced on `parentId` + `studentName` + `medium`)*
 
-## 4. FeeCategory
+## 5. FeeCategory
 Defines the types of fees applicable in the system.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -55,7 +65,7 @@ Defines the types of fees applicable in the system.
 | `description` | String | No | Max 250 chars | Details about the category. |
 | `isActive` | Boolean | No | Default: `true` | Active status. |
 
-## 5. FeeStructure
+## 6. FeeStructure
 Master fee configuration based on Medium and Standard.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -73,7 +83,7 @@ Master fee configuration based on Medium and Standard.
 
 *(Note: Compound unique index on `medium` + `standard`)*
 
-## 6. TransportFeeStructure
+## 7. TransportFeeStructure
 Master configuration for transport fees.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -83,13 +93,13 @@ Master configuration for transport fees.
 | `frequency` | String | Yes | `MONTHLY`, `QUARTERLY`, `YEARLY` | Frequency of the fee (Default: `MONTHLY`). |
 | `isActive` | Boolean | No | Default: `true` | Active status. Only 1 active per `transportType`. |
 
-## 7. StudentFeeLedger
+## 8. StudentFeeLedger
 Core financial record representing a specific fee due for a student.
 
 | Field | Type | Required | Constraints / Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `studentId` | ObjectId | Yes | Ref: `Student` | Associated student. |
-| `academicYear` | String | Yes | e.g., `2025-26` | Target academic year. |
+| `academicYear` | String | Yes | e.g., `2025-26` | Target academic year string. |
 | `feeCategoryId` | ObjectId | Yes | Ref: `FeeCategory` | Type of fee category. |
 | `feePeriod` | String | Yes | e.g., `June` or `Term 1` | Period this ledger covers. |
 | `feeType` | String | Yes | `EDUCATION`, `TERM`, `TRANSPORT`, `ADMISSION`, `OTHER`, `BAG_KIT` | Specific fee type. |
@@ -108,7 +118,7 @@ Core financial record representing a specific fee due for a student.
 
 *(Note: Unique on `studentId` + `feeCategoryId` + `feePeriod` + `academicYear`)*
 
-## 8. Payment
+## 9. Payment
 Represents an individual payment or reversal transaction.
 
 | Field | Type | Required | Constraints / Default | Description |
@@ -119,7 +129,7 @@ Represents an individual payment or reversal transaction.
 | `details` | Mixed | No | Default: `{}` | Additional data (e.g., transaction IDs). |
 | `isReversal` | Boolean | No | Default: `false` | True if this negates a previous payment. |
 
-## 9. AuditLog
+## 10. AuditLog
 Stores business-state change events for auditing purposes.
 
 | Field | Type | Required | Constraints / Default | Description |

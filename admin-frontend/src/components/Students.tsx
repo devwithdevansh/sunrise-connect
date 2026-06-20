@@ -23,6 +23,7 @@ export const Students: React.FC = () => {
   const [newSDivision, setNewSDivision] = useState('A');
   const [newSTransport, setNewSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
+  const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
 
   const filteredStudents = students.filter((s) => {
     // Quick filter chips
@@ -62,6 +63,7 @@ export const Students: React.FC = () => {
       division: newSDivision,
       transportType: newSTransport,
       isRTE: newSIsRTE,
+      isNewAdmission: newSIsNewAdmission,
       isActive: true
     });
 
@@ -74,6 +76,7 @@ export const Students: React.FC = () => {
     setNewSDivision('A');
     setNewSTransport('None');
     setNewSIsRTE(false);
+    setNewSIsNewAdmission(true);
     setIsModalOpen(false);
   };
 
@@ -248,6 +251,11 @@ export const Students: React.FC = () => {
                       {isRTE && (
                         <span className="bg-purple-100 text-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
                           RTE
+                        </span>
+                      )}
+                      {s.isNewAdmission && (
+                        <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                          New
                         </span>
                       )}
                     </div>
@@ -428,6 +436,19 @@ export const Students: React.FC = () => {
                 />
                 <label htmlFor="rteCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
                   Student admitted under RTE (Right to Education) quota
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <input
+                  type="checkbox"
+                  id="newAdmissionCheckbox"
+                  checked={newSIsNewAdmission}
+                  onChange={(e) => setNewSIsNewAdmission(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="newAdmissionCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                  New Admission (charges Admission & Bag/Kit fees)
                 </label>
               </div>
 

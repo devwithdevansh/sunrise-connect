@@ -6,6 +6,7 @@ import { CollectFee } from './components/CollectFee';
 import { UnpaidFees } from './components/UnpaidFees';
 import { Students } from './components/Students';
 import { FeeStructure } from './components/FeeStructure';
+import { Setup } from './components/Setup';
 import { Login } from './components/Login';
 import {
   MessageSquare,
@@ -25,6 +26,8 @@ const ScreenContent: React.FC = () => {
       return <UnpaidFees />;
     case 'fee-structure':
       return <FeeStructure />;
+    case 'setup':
+      return <Setup />;
     case 'students':
       return <Students />;
     

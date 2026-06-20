@@ -19,7 +19,24 @@ export type ScreenType =
   | 'receipts'
   | 'audit'
   | 'reports'
+  | 'setup'
   | 'login';
+
+export interface AcademicYearData {
+  _id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+export interface FeeCategoryData {
+  _id: string;
+  name: string;
+  type: string;
+  description: string;
+  isActive: boolean;
+}
 
 export interface FeeStructureData {
   _id: string;
@@ -60,6 +77,8 @@ interface AppContextType {
   transactions: PaymentTransaction[];
   feeStructures: FeeStructureData[];
   transportFeeStructures: TransportFeeStructureData[];
+  academicYears: AcademicYearData[];
+  feeCategories: FeeCategoryData[];
   auditLogs: AuditLog[];
   addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
   recordPayment: (
@@ -74,6 +93,11 @@ interface AppContextType {
   reversePayment: (transactionId: string) => void;
   updateFeeStructure: (id: string, data: Partial<FeeStructureData>) => Promise<boolean>;
   updateTransportFeeStructure: (id: string, data: Partial<TransportFeeStructureData>) => Promise<boolean>;
+  createFeeStructure: (data: Partial<FeeStructureData>) => Promise<boolean>;
+  createTransportFeeStructure: (data: Partial<TransportFeeStructureData>) => Promise<boolean>;
+  createAcademicYear: (data: Partial<AcademicYearData>) => Promise<boolean>;
+  activateAcademicYear: (id: string) => Promise<boolean>;
+  createFeeCategory: (data: Partial<FeeCategoryData>) => Promise<boolean>;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
   login: (email: string, pass: string) => boolean;
   logout: () => void;
@@ -88,24 +112,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [feeStructures, setFeeStructures] = useState<FeeStructureData[]>([]);
   const [transportFeeStructures, setTransportFeeStructures] = useState<TransportFeeStructureData[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
+  const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   // Fetch data from backend on mount and after mutations
   const fetchAll = async () => {
     try {
-      const [studRes, ledRes, txRes, feeRes, auditRes] = await Promise.all([
+      const [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes] = await Promise.all([
         fetch('/api/v1/students?limit=1000'),
         fetch('/api/v1/ledgers?limit=1000'),
         fetch('/api/v1/payments?limit=1000'),
         fetch('/api/v1/fee-structures'),
-        fetch('/api/v1/audit?limit=100')
+        fetch('/api/v1/audit?limit=100'),
+        fetch('/api/v1/academic-years'),
+        fetch('/api/v1/fee-categories')
       ]);
-      const [studResp, ledResp, txResp, feeResp, auditResp] = await Promise.all([
+      const [studResp, ledResp, txResp, feeResp, auditResp, ayResp, fcResp] = await Promise.all([
         studRes.json(),
         ledRes.json(),
         txRes.json(),
         feeRes.json(),
-        auditRes.json()
+        auditRes.json(),
+        ayRes.json(),
+        fcRes.json()
       ]);
       
       const rawStudents = studResp.data || [];
@@ -119,6 +149,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       // Audit logs
       setAuditLogs(auditResp.data?.logs || []);
+
+      // Academic Years and Fee Categories
+      setAcademicYears(ayResp.data || []);
+      setFeeCategories(fcResp.data || []);
 
 
       // Map ledgers (inject id)
@@ -386,6 +420,86 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const createFeeStructure = async (data: Partial<FeeStructureData>): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/v1/fee-structures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to create fee structure');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const createTransportFeeStructure = async (data: Partial<TransportFeeStructureData>): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/v1/fee-structures/transport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to create transport fee structure');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const createAcademicYear = async (data: Partial<AcademicYearData>): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/v1/academic-years', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to create academic year');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const activateAcademicYear = async (id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/v1/academic-years/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true })
+      });
+      if (!res.ok) throw new Error('Failed to activate academic year');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const createFeeCategory = async (data: Partial<FeeCategoryData>): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/v1/fee-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to create fee category');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -396,6 +510,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         transactions,
         feeStructures,
         transportFeeStructures,
+        academicYears,
+        feeCategories,
         auditLogs,
         addStudent,
         recordPayment,
@@ -403,6 +519,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         reversePayment,
         updateFeeStructure,
         updateTransportFeeStructure,
+        createFeeStructure,
+        createTransportFeeStructure,
+        createAcademicYear,
+        activateAcademicYear,
+        createFeeCategory,
         currentUser,
         login,
         logout

@@ -6,7 +6,9 @@ yarn-error.log*
 
 # Backend specific
 backend/.env
+   
 backend/node_modules/
+backend/logs/
 backend/.cache/
 backend/dist/
 backend/build/
