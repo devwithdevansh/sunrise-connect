@@ -21,6 +21,24 @@ class FeeStructureController {
   });
 
   /**
+   * POST /api/v1/fee-structures
+   * Create a new standard fee structure
+   */
+  static createFeeStructure = catchAsync(async (req, res) => {
+    const newStructure = await FeeStructure.create(req.body);
+    sendResponse(res, 201, newStructure);
+  });
+
+  /**
+   * POST /api/v1/fee-structures/transport
+   * Create a new transport fee structure
+   */
+  static createTransportFeeStructure = catchAsync(async (req, res) => {
+    const newStructure = await TransportFeeStructure.create(req.body);
+    sendResponse(res, 201, newStructure);
+  });
+
+  /**
    * PUT /api/v1/fee-structures/:id
    * Updates standard fee structure (e.g. annualFee, parts counts)
    */

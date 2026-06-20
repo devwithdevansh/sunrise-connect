@@ -1,5 +1,27 @@
 import { z } from 'zod';
 
+export const createFeeStructureSchema = {
+  body: z.object({
+    medium: z.enum(['English', 'Gujarati']),
+    standard: z.string().min(1),
+    annualFee: z.number().nonnegative(),
+    educationPartCount: z.number().int().positive().default(12),
+    termPartCount: z.number().int().nonnegative().default(2),
+    termFee: z.number().nonnegative().default(0),
+    admissionFee: z.number().nonnegative().default(0),
+    bagKitFee: z.number().nonnegative().default(0),
+    applicableFeeCategories: z.array(z.string()).optional(),
+  }),
+};
+
+export const createTransportFeeStructureSchema = {
+  body: z.object({
+    transportType: z.enum(['Railnagar', 'Outside Railnagar']),
+    amount: z.number().nonnegative(),
+    frequency: z.enum(['MONTHLY', 'QUARTERLY', 'YEARLY']).default('MONTHLY'),
+  }),
+};
+
 export const updateFeeStructureSchema = {
   params: z.object({
     id: z.string().min(1),

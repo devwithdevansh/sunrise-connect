@@ -1,0 +1,256 @@
+import React, { useState } from 'react';
+import { useApp } from '../store';
+import { Calendar, Tag, Layers, Plus, Check, X } from 'lucide-react';
+import { FeeStructure } from './FeeStructure'; // Reuse existing component for the Fee Structure tab
+
+export const Setup: React.FC = () => {
+  const { 
+    academicYears, 
+    feeCategories, 
+    createAcademicYear, 
+    activateAcademicYear, 
+    createFeeCategory 
+  } = useApp();
+  
+  const [activeTab, setActiveTab] = useState<'academic-year' | 'fee-categories' | 'fee-structure'>('academic-year');
+
+  // Form states
+  const [showAYForm, setShowAYForm] = useState(false);
+  const [newAY, setNewAY] = useState({ name: '', startDate: '', endDate: '' });
+
+  const [showFCForm, setShowFCForm] = useState(false);
+  const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '' });
+
+  const handleCreateAY = async () => {
+    if (!newAY.name || !newAY.startDate || !newAY.endDate) return;
+    const ok = await createAcademicYear(newAY);
+    if (ok) {
+      setShowAYForm(false);
+      setNewAY({ name: '', startDate: '', endDate: '' });
+    }
+  };
+
+  const handleActivateAY = async (id: string) => {
+    await activateAcademicYear(id);
+  };
+
+  const handleCreateFC = async () => {
+    if (!newFC.name || !newFC.type) return;
+    const ok = await createFeeCategory(newFC);
+    if (ok) {
+      setShowFCForm(false);
+      setNewFC({ name: '', type: 'EDUCATION', description: '' });
+    }
+  };
+
+  return (
+    <div className="flex-1 p-6 space-y-6 bg-[#F8FAFC]">
+      <header>
+        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">System Setup</h2>
+        <p className="text-xs font-semibold text-slate-400">Configure academic years, fee categories, and master fee structures</p>
+      </header>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('academic-year')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'academic-year' ? 'border-[#1E3A8A] text-[#1E3A8A]' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Calendar className="w-4 h-4" /> Academic Year
+        </button>
+        <button
+          onClick={() => setActiveTab('fee-categories')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'fee-categories' ? 'border-[#1E3A8A] text-[#1E3A8A]' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Tag className="w-4 h-4" /> Fee Categories
+        </button>
+        <button
+          onClick={() => setActiveTab('fee-structure')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'fee-structure' ? 'border-[#1E3A8A] text-[#1E3A8A]' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Layers className="w-4 h-4" /> Fee Structure
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="pt-2">
+        {activeTab === 'academic-year' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-800">Manage Academic Years</h3>
+              <button
+                onClick={() => setShowAYForm(true)}
+                className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm"
+              >
+                <Plus className="w-4 h-4" /> Add Year
+              </button>
+            </div>
+
+            {showAYForm && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
+                <h4 className="font-bold text-slate-700 mb-4 text-sm">Create New Academic Year</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Name (e.g. 2026-2027)</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newAY.name}
+                      onChange={e => setNewAY({ ...newAY, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newAY.startDate}
+                      onChange={e => setNewAY({ ...newAY, startDate: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newAY.endDate}
+                      onChange={e => setNewAY({ ...newAY, endDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button onClick={() => setShowAYForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
+                  <button onClick={handleCreateAY} className="px-4 py-2 bg-[#F59E0B] text-slate-900 font-bold rounded-lg text-sm shadow-sm hover:bg-amber-500">Save</button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {academicYears.map(ay => (
+                <div key={ay._id} className={`bg-white rounded-2xl p-5 shadow-sm border ${ay.isActive ? 'border-emerald-500 ring-1 ring-emerald-500' : 'border-slate-200'} transition-all`}>
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="font-extrabold text-slate-800 text-lg">{ay.name}</h4>
+                    {ay.isActive ? (
+                      <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Active
+                      </span>
+                    ) : (
+                      <button onClick={() => handleActivateAY(ay._id)} className="text-xs font-bold text-slate-400 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 px-2.5 py-1 rounded-full border border-slate-200 transition-colors">
+                        Set Active
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500 space-y-1">
+                    <p><strong className="text-slate-700">Start:</strong> {new Date(ay.startDate).toLocaleDateString()}</p>
+                    <p><strong className="text-slate-700">End:</strong> {new Date(ay.endDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'fee-categories' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-800">Fee Categories</h3>
+              <button onClick={() => setShowFCForm(true)} className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm">
+                <Plus className="w-4 h-4" /> Add Category
+              </button>
+            </div>
+
+            {showFCForm && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
+                <h4 className="font-bold text-slate-700 mb-4 text-sm">Create New Fee Category</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Name</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newFC.name}
+                      onChange={e => setNewFC({ ...newFC, name: e.target.value })}
+                      placeholder="e.g. Monthly Education Fee"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">System Type</label>
+                    <select
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newFC.type}
+                      onChange={e => setNewFC({ ...newFC, type: e.target.value })}
+                    >
+                      <option value="EDUCATION">EDUCATION</option>
+                      <option value="TERM">TERM</option>
+                      <option value="TRANSPORT">TRANSPORT</option>
+                      <option value="ADMISSION">ADMISSION</option>
+                      <option value="BAG_KIT">BAG_KIT</option>
+                      <option value="OTHER">OTHER</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Description (Optional)</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newFC.description}
+                      onChange={e => setNewFC({ ...newFC, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button onClick={() => setShowFCForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
+                  <button onClick={handleCreateFC} className="px-4 py-2 bg-[#F59E0B] text-slate-900 font-bold rounded-lg text-sm shadow-sm hover:bg-amber-500">Save</button>
+                </div>
+              </div>
+            )}
+            
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-xs">
+                    <th className="py-3.5 px-5">Category Name</th>
+                    <th className="py-3.5 px-5">System Type</th>
+                    <th className="py-3.5 px-5">Description</th>
+                    <th className="py-3.5 px-5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {feeCategories.map(cat => (
+                    <tr key={cat._id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-5 font-bold text-slate-800">{cat.name}</td>
+                      <td className="py-3.5 px-5">
+                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold border border-slate-200">{cat.type}</span>
+                      </td>
+                      <td className="py-3.5 px-5 text-slate-500 text-xs">{cat.description}</td>
+                      <td className="py-3.5 px-5">
+                        {cat.isActive ? (
+                          <span className="text-emerald-500 font-bold text-xs flex items-center gap-1"><Check className="w-3 h-3"/> Active</span>
+                        ) : (
+                          <span className="text-slate-400 font-bold text-xs flex items-center gap-1"><X className="w-3 h-3"/> Inactive</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'fee-structure' && (
+          <div className="mt-[-24px]">
+             {/* Reusing existing FeeStructure logic, just wrapped in tab */}
+             <FeeStructure />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
