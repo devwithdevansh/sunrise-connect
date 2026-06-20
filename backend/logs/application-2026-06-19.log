@@ -1,3 +1,1182 @@
+<<<<<<< HEAD
+2026-06-19 00:09:44 info: Server is running on port 3000 in development mode
+2026-06-19 00:09:46 info: MongoDB connected
+2026-06-19 09:54:13 info: Server is running on port 3000 in development mode
+2026-06-19 09:54:15 info: MongoDB connected
+2026-06-19 09:57:51 info: GET /
+2026-06-19 09:57:51 error: Error: Cannot find / on this server
+    at file:///D:/projects/sunrise-connect/backend/src/app.js:52:8
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at file:///D:/projects/sunrise-connect/backend/src/app.js:31:3
+2026-06-19 09:57:52 info: GET /favicon.ico
+2026-06-19 09:57:52 error: Error: Cannot find /favicon.ico on this server
+    at file:///D:/projects/sunrise-connect/backend/src/app.js:52:8
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at param (D:\projects\sunrise-connect\backend\node_modules\router\index.js:600:14)
+    at param (D:\projects\sunrise-connect\backend\node_modules\router\index.js:610:14)
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:664:3)
+2026-06-19 10:01:44 info: Server is running on port 3000 in development mode
+2026-06-19 10:01:45 info: MongoDB connected
+2026-06-19 10:01:53 error: Error: Over‑payment not allowed
+    at Function.addPayment (D:\projects\sunrise-connect\backend\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-19 10:01:53 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (D:\projects\sunrise-connect\backend\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-19 10:01:53 error: Error: Ledger not fully settled
+    at Function.markAsPaid (D:\projects\sunrise-connect\backend\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-19 10:01:55 error: Error: Over‑payment not allowed
+    at Function.createPayment (D:\projects\sunrise-connect\backend\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-19 10:01:55 error: Error: Payment not found
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-19 10:01:55 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-19 10:01:59 info: GET /api/v1/parents
+2026-06-19 10:01:59 info: GET /api/v1/parents
+2026-06-19 10:01:59 info: POST /api/v1/parents
+2026-06-19 10:01:59 info: POST /api/v1/parents
+2026-06-19 10:01:59 info: POST /api/v1/parents
+2026-06-19 10:01:59 info: GET /api/v1/parents
+2026-06-19 10:01:59 info: GET /api/v1/parents/p1
+2026-06-19 10:01:59 info: GET /api/v1/parents/p1
+2026-06-19 10:01:59 info: POST /api/v1/parents/reset-password
+2026-06-19 10:01:59 info: POST /api/v1/parents/reset-password
+2026-06-19 10:02:00 info: POST /api/v1/payments
+2026-06-19 10:02:00 info: POST /api/v1/payments
+2026-06-19 10:02:00 info: POST /api/v1/payments
+2026-06-19 10:02:00 info: POST /api/v1/payments
+2026-06-19 10:02:00 info: POST /api/v1/payments
+2026-06-19 10:02:00 info: POST /api/v1/payments
+2026-06-19 10:02:00 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:02:00 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:02:00 info: GET /api/v1/payments
+2026-06-19 10:02:01 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:02 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:02 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:02 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:02 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:02:02 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:02:02 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:02:02 info: POST /api/v1/auth/refresh
+2026-06-19 10:02:02 info: POST /api/v1/auth/refresh
+2026-06-19 10:02:02 info: POST /api/v1/auth/logout
+2026-06-19 10:02:02 info: POST /api/v1/auth/logout-all
+2026-06-19 10:02:04 info: GET /
+2026-06-19 10:02:04 info: GET /api/v1/students
+2026-06-19 10:02:04 info: GET /api/v1/students
+2026-06-19 10:02:04 info: POST /api/v1/students
+2026-06-19 10:02:04 info: POST /api/v1/students
+2026-06-19 10:02:04 info: GET /api/v1/students
+2026-06-19 10:02:06 info: GET /api/v1/ledgers
+2026-06-19 10:02:06 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:02:06 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:02:06 info: GET /api/v1/ledgers
+2026-06-19 10:02:09 info: GET /api/v1/dashboard/system
+2026-06-19 10:02:09 info: GET /api/v1/dashboard/system
+2026-06-19 10:02:09 info: GET /api/v1/dashboard/parent/testuser
+2026-06-19 10:02:11 info: POST /api/v1/migration/parents
+2026-06-19 10:02:11 info: POST /api/v1/migration/parents
+2026-06-19 10:02:12 info: GET /api/v1/audit
+2026-06-19 10:02:12 info: GET /api/v1/audit
+2026-06-19 10:02:14 error: Error: Over‑payment not allowed
+    at Function.addPayment (D:\projects\sunrise-connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-19 10:02:14 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (D:\projects\sunrise-connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-19 10:02:14 error: Error: Ledger not fully settled
+    at Function.markAsPaid (D:\projects\sunrise-connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-19 10:02:19 error: Error: Over‑payment not allowed
+    at Function.createPayment (D:\projects\sunrise-connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-19 10:02:19 error: Error: Payment not found
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-19 10:02:19 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-19 10:02:21 info: GET /api/v1/students
+2026-06-19 10:02:21 info: GET /api/v1/students
+2026-06-19 10:02:21 info: POST /api/v1/students
+2026-06-19 10:02:21 info: POST /api/v1/students
+2026-06-19 10:02:21 info: GET /api/v1/students
+2026-06-19 10:02:22 info: GET /api/v1/parents
+2026-06-19 10:02:22 info: GET /api/v1/parents
+2026-06-19 10:02:22 info: POST /api/v1/parents
+2026-06-19 10:02:22 info: POST /api/v1/parents
+2026-06-19 10:02:22 info: POST /api/v1/parents
+2026-06-19 10:02:22 info: GET /api/v1/parents
+2026-06-19 10:02:22 info: GET /api/v1/parents/p1
+2026-06-19 10:02:22 info: GET /api/v1/parents/p1
+2026-06-19 10:02:22 info: POST /api/v1/parents/reset-password
+2026-06-19 10:02:22 info: POST /api/v1/parents/reset-password
+2026-06-19 10:02:24 info: POST /api/v1/payments
+2026-06-19 10:02:24 info: POST /api/v1/payments
+2026-06-19 10:02:24 info: POST /api/v1/payments
+2026-06-19 10:02:24 info: POST /api/v1/payments
+2026-06-19 10:02:24 info: POST /api/v1/payments
+2026-06-19 10:02:24 info: POST /api/v1/payments
+2026-06-19 10:02:24 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:02:24 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:02:24 info: GET /api/v1/payments
+2026-06-19 10:02:25 info: GET /api/v1/ledgers
+2026-06-19 10:02:25 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:02:25 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:02:25 info: GET /api/v1/ledgers
+2026-06-19 10:02:26 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:27 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:27 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:27 info: POST /api/v1/auth/portal/login
+2026-06-19 10:02:27 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:02:27 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:02:27 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:02:27 info: POST /api/v1/auth/refresh
+2026-06-19 10:02:27 info: POST /api/v1/auth/refresh
+2026-06-19 10:02:27 info: POST /api/v1/auth/logout
+2026-06-19 10:02:27 info: POST /api/v1/auth/logout-all
+2026-06-19 10:02:28 info: GET /api/v1/audit
+2026-06-19 10:02:28 info: GET /api/v1/audit
+2026-06-19 10:02:30 info: POST /api/v1/migration/parents
+2026-06-19 10:02:30 info: POST /api/v1/migration/parents
+2026-06-19 10:02:31 info: GET /api/v1/dashboard/system
+2026-06-19 10:02:31 info: GET /api/v1/dashboard/system
+2026-06-19 10:02:31 info: GET /api/v1/dashboard/parent/testuser
+2026-06-19 10:07:53 info: POST /api/v1/auth/parent/login
+2026-06-19 10:07:55 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 10:07:57 info: POST /api/v1/auth/portal/login
+2026-06-19 10:07:57 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 10:07:57 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 10:07:58 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 10:08:12 info: POST /api/v1/payments
+2026-06-19 10:08:13 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 10:08:14 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 10:11:52 info: POST /api/v1/auth/parent/login
+2026-06-19 10:11:53 info: Parent login: 6a3401f5fd1a6943f501ec72
+2026-06-19 10:11:53 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:11:54 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 10:12:34 info: POST /api/v1/auth/parent/login
+2026-06-19 10:12:34 error: Error: Invalid credentials
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:94:23)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 10:12:40 info: POST /api/v1/auth/parent/login
+2026-06-19 10:12:40 error: Error: Invalid credentials
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:94:23)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 10:12:56 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:13:09 info: POST /api/v1/auth/parent/set-password
+2026-06-19 10:13:09 error: Error: Too many requests. Please try again later.
+    at file:///D:/projects/sunrise-connect/backend/src/middlewares/rateLimit.middleware.js:18:19
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+2026-06-19 10:13:14 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:13:14 error: Error: Too many requests. Please try again later.
+    at file:///D:/projects/sunrise-connect/backend/src/middlewares/rateLimit.middleware.js:18:19
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+2026-06-19 10:13:16 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:13:16 error: Error: Too many requests. Please try again later.
+    at file:///D:/projects/sunrise-connect/backend/src/middlewares/rateLimit.middleware.js:18:19
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+2026-06-19 10:14:18 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:14:18 error: Error: Too many requests. Please try again later.
+    at file:///D:/projects/sunrise-connect/backend/src/middlewares/rateLimit.middleware.js:18:19
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+2026-06-19 10:14:24 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:14:24 error: Error: Too many requests. Please try again later.
+    at file:///D:/projects/sunrise-connect/backend/src/middlewares/rateLimit.middleware.js:18:19
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+2026-06-19 10:14:41 info: Server is running on port 3000 in development mode
+2026-06-19 10:14:43 info: MongoDB connected
+2026-06-19 10:14:48 info: Server is running on port 3000 in development mode
+2026-06-19 10:14:54 info: MongoDB connected
+2026-06-19 10:15:03 error: Error: Over‑payment not allowed
+    at Function.addPayment (D:\projects\sunrise-connect\backend\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-19 10:15:03 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (D:\projects\sunrise-connect\backend\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-19 10:15:03 error: Error: Ledger not fully settled
+    at Function.markAsPaid (D:\projects\sunrise-connect\backend\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-19 10:15:06 error: Error: Over‑payment not allowed
+    at Function.createPayment (D:\projects\sunrise-connect\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-19 10:15:07 error: Error: Payment not found
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-19 10:15:07 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-19 10:15:09 info: GET /api/v1/parents
+2026-06-19 10:15:09 info: GET /api/v1/parents
+2026-06-19 10:15:09 info: POST /api/v1/parents
+2026-06-19 10:15:09 info: POST /api/v1/parents
+2026-06-19 10:15:09 info: POST /api/v1/parents
+2026-06-19 10:15:09 info: GET /api/v1/parents
+2026-06-19 10:15:09 info: GET /api/v1/parents/p1
+2026-06-19 10:15:09 info: GET /api/v1/parents/p1
+2026-06-19 10:15:09 info: POST /api/v1/parents/reset-password
+2026-06-19 10:15:09 info: POST /api/v1/parents/reset-password
+2026-06-19 10:15:11 error: Error: Over‑payment not allowed
+    at Function.addPayment (D:\projects\sunrise-connect\backend\src\services\LedgerService.js:56:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\LedgerService.test.js:78:7)
+2026-06-19 10:15:11 error: Error: Concession exceeds remaining amount
+    at Function.applyConcession (D:\projects\sunrise-connect\backend\src\services\LedgerService.js:91:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\LedgerService.test.js:102:7)
+2026-06-19 10:15:11 error: Error: Ledger not fully settled
+    at Function.markAsPaid (D:\projects\sunrise-connect\backend\src\services\LedgerService.js:123:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\src\tests\LedgerService.test.js:121:7)
+2026-06-19 10:15:19 error: Error: Over‑payment not allowed
+    at Function.createPayment (D:\projects\sunrise-connect\backend\backend\src\services\PaymentService.js:25:32)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\PaymentService.test.js:57:7)
+2026-06-19 10:15:19 error: Error: Payment not found
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\backend\src\services\PaymentService.js:59:27)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\PaymentService.test.js:83:7)
+2026-06-19 10:15:19 error: Error: Cannot reverse a reversal
+    at Function.reversePayment (D:\projects\sunrise-connect\backend\backend\src\services\PaymentService.js:60:37)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.<anonymous> (D:\projects\sunrise-connect\backend\backend\src\tests\PaymentService.test.js:91:7)
+2026-06-19 10:15:21 info: GET /api/v1/students
+2026-06-19 10:15:21 info: GET /api/v1/students
+2026-06-19 10:15:21 info: POST /api/v1/students
+2026-06-19 10:15:21 info: POST /api/v1/students
+2026-06-19 10:15:21 info: GET /api/v1/students
+2026-06-19 10:15:23 info: POST /api/v1/payments
+2026-06-19 10:15:23 info: POST /api/v1/payments
+2026-06-19 10:15:23 info: POST /api/v1/payments
+2026-06-19 10:15:23 info: POST /api/v1/payments
+2026-06-19 10:15:23 info: POST /api/v1/payments
+2026-06-19 10:15:23 info: POST /api/v1/payments
+2026-06-19 10:15:23 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:15:23 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:15:23 info: GET /api/v1/payments
+2026-06-19 10:15:25 info: GET /api/v1/ledgers
+2026-06-19 10:15:25 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:15:25 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:15:25 info: GET /api/v1/ledgers
+2026-06-19 10:15:26 info: POST /api/v1/migration/parents
+2026-06-19 10:15:26 info: POST /api/v1/migration/parents
+2026-06-19 10:15:28 info: GET /api/v1/parents
+2026-06-19 10:15:28 info: GET /api/v1/parents
+2026-06-19 10:15:28 info: POST /api/v1/parents
+2026-06-19 10:15:28 info: POST /api/v1/parents
+2026-06-19 10:15:28 info: POST /api/v1/parents
+2026-06-19 10:15:28 info: GET /api/v1/parents
+2026-06-19 10:15:28 info: GET /api/v1/parents/p1
+2026-06-19 10:15:28 info: GET /api/v1/parents/p1
+2026-06-19 10:15:28 info: POST /api/v1/parents/reset-password
+2026-06-19 10:15:28 info: POST /api/v1/parents/reset-password
+2026-06-19 10:15:29 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:29 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:29 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:29 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:29 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:15:29 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:15:29 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:15:30 info: POST /api/v1/auth/refresh
+2026-06-19 10:15:30 info: POST /api/v1/auth/refresh
+2026-06-19 10:15:30 info: POST /api/v1/auth/logout
+2026-06-19 10:15:30 info: POST /api/v1/auth/logout-all
+2026-06-19 10:15:32 info: GET /api/v1/dashboard/system
+2026-06-19 10:15:32 info: GET /api/v1/dashboard/system
+2026-06-19 10:15:32 info: GET /api/v1/dashboard/parent/testuser
+2026-06-19 10:15:33 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:34 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:34 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:34 info: POST /api/v1/auth/portal/login
+2026-06-19 10:15:34 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:15:34 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:15:34 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:15:34 info: POST /api/v1/auth/refresh
+2026-06-19 10:15:34 info: POST /api/v1/auth/refresh
+2026-06-19 10:15:34 info: POST /api/v1/auth/logout
+2026-06-19 10:15:34 info: POST /api/v1/auth/logout-all
+2026-06-19 10:15:35 info: GET /api/v1/audit
+2026-06-19 10:15:35 info: GET /api/v1/audit
+2026-06-19 10:15:37 info: POST /api/v1/payments
+2026-06-19 10:15:37 info: POST /api/v1/payments
+2026-06-19 10:15:37 info: POST /api/v1/payments
+2026-06-19 10:15:38 info: POST /api/v1/payments
+2026-06-19 10:15:38 info: POST /api/v1/payments
+2026-06-19 10:15:38 info: POST /api/v1/payments
+2026-06-19 10:15:38 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:15:38 info: POST /api/v1/payments/pay1/reverse
+2026-06-19 10:15:38 info: GET /api/v1/payments
+2026-06-19 10:15:40 info: POST /api/v1/migration/parents
+2026-06-19 10:15:40 info: POST /api/v1/migration/parents
+2026-06-19 10:15:45 info: GET /api/v1/students
+2026-06-19 10:15:45 info: GET /api/v1/students
+2026-06-19 10:15:45 info: POST /api/v1/students
+2026-06-19 10:15:45 info: POST /api/v1/students
+2026-06-19 10:15:45 info: GET /api/v1/students
+2026-06-19 10:15:47 info: GET /api/v1/dashboard/system
+2026-06-19 10:15:47 info: GET /api/v1/dashboard/system
+2026-06-19 10:15:47 info: GET /api/v1/dashboard/parent/testuser
+2026-06-19 10:15:49 info: GET /api/v1/ledgers
+2026-06-19 10:15:49 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:15:49 info: POST /api/v1/ledgers/ledger123/concession
+2026-06-19 10:15:49 info: GET /api/v1/ledgers
+2026-06-19 10:15:50 info: GET /api/v1/audit
+2026-06-19 10:15:50 info: GET /api/v1/audit
+2026-06-19 10:16:30 info: POST /api/v1/auth/parent/verify
+2026-06-19 10:16:38 info: POST /api/v1/auth/parent/set-password
+2026-06-19 10:17:00 info: POST /api/v1/auth/parent/login
+2026-06-19 10:17:00 info: Parent login: 6a3401f5fd1a6943f501ec72
+2026-06-19 10:17:01 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:17:01 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 10:19:27 info: POST /api/v1/payments
+2026-06-19 10:19:28 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:19:28 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 10:19:31 info: POST /api/v1/payments
+2026-06-19 10:19:31 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:19:32 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 10:19:32 info: POST /api/v1/payments
+2026-06-19 10:19:32 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:32 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:33 info: POST /api/v1/payments
+2026-06-19 10:19:33 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:33 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:33 info: POST /api/v1/payments
+2026-06-19 10:19:33 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:33 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:35 info: POST /api/v1/payments
+2026-06-19 10:19:35 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:35 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:40 info: POST /api/v1/payments
+2026-06-19 10:19:41 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:19:41 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 10:19:43 info: POST /api/v1/payments
+2026-06-19 10:19:43 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:43 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 10:19:48 info: POST /api/v1/payments
+2026-06-19 10:19:48 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:19:49 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 10:19:50 info: POST /api/v1/payments
+2026-06-19 10:19:51 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 10:19:51 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 11:10:13 info: GET /api/v1/payments?limit=100
+2026-06-19 11:10:13 error: Error: Invalid or expired token
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:18:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 11:10:14 info: POST /api/v1/auth/portal/login
+2026-06-19 11:10:14 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 11:10:15 info: GET /api/v1/payments?limit=100
+2026-06-19 11:10:15 info: GET /api/v1/payments?limit=100
+2026-06-19 11:13:21 info: GET /favicon.ico
+2026-06-19 11:13:21 error: Error: Cannot find /favicon.ico on this server
+    at file:///D:/projects/sunrise-connect/backend/src/app.js:66:8
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at param (D:\projects\sunrise-connect\backend\node_modules\router\index.js:600:14)
+    at param (D:\projects\sunrise-connect\backend\node_modules\router\index.js:610:14)
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:664:3)
+2026-06-19 12:29:46 info: POST /api/v1/auth/portal/login
+2026-06-19 12:29:47 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 12:29:48 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 12:29:49 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 14:32:27 info: POST /api/v1/auth/portal/login
+2026-06-19 14:32:28 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 14:32:29 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 14:32:29 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 14:32:54 info: POST /api/v1/auth/parent/login
+2026-06-19 14:32:55 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 14:32:55 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 14:32:56 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 14:34:38 info: POST /api/v1/auth/parent/login
+2026-06-19 14:34:39 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 14:34:39 info: POST /api/v1/auth/portal/login
+2026-06-19 14:34:39 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 14:34:40 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 14:34:41 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 14:35:50 info: GET /api/v1/payments?limit=100
+2026-06-19 14:35:58 info: GET /api/v1/payments?limit=100
+2026-06-19 14:44:47 info: GET /api/v1/payments?limit=100
+2026-06-19 14:44:52 info: GET /api/v1/payments?limit=100
+2026-06-19 14:47:46 info: POST /api/v1/auth/parent/login
+2026-06-19 14:47:46 error: Error: Parent not found
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:92:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 14:47:52 info: POST /api/v1/auth/parent/login
+2026-06-19 14:47:52 info: Parent login: 6a3401f5fd1a6943f501ec72
+2026-06-19 14:47:53 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 14:47:53 error: Error: Invalid or expired token
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:18:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 14:47:53 info: POST /api/v1/auth/portal/login
+2026-06-19 14:47:54 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 14:47:54 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 14:47:55 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 16:18:24 info: POST /api/v1/auth/portal/login
+2026-06-19 16:18:25 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 16:18:26 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72
+2026-06-19 16:18:26 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73
+2026-06-19 16:33:17 info: POST /api/v1/auth/parent/login
+2026-06-19 16:33:17 error: Error: Invalid credentials
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:94:23)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 16:34:05 info: POST /api/v1/auth/parent/verify
+2026-06-19 16:34:17 info: POST /api/v1/auth/parent/set-password
+2026-06-19 16:34:58 info: POST /api/v1/auth/parent/login
+2026-06-19 16:34:59 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 16:35:00 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 16:35:00 error: Error: Invalid or expired token
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:18:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 16:35:00 info: POST /api/v1/auth/portal/login
+2026-06-19 16:35:00 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 16:35:01 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 16:35:01 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 16:36:35 info: POST /api/v1/auth/parent/login
+2026-06-19 16:36:35 error: Error: Parent not found
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:92:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 16:37:00 info: POST /api/v1/auth/parent/login
+2026-06-19 16:37:00 error: Error: Parent not found
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:92:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 16:37:26 info: POST /api/v1/auth/parent/login
+2026-06-19 16:37:27 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 17:00:40 info: POST /api/v1/auth/parent/login
+2026-06-19 17:00:41 error: Error: Invalid credentials
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:94:23)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 17:01:14 info: POST /api/v1/auth/parent/verify
+2026-06-19 17:01:26 info: POST /api/v1/auth/parent/set-password
+2026-06-19 17:01:42 info: POST /api/v1/auth/parent/login
+2026-06-19 17:01:43 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 17:01:43 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 17:01:43 error: Error: Invalid or expired token
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:18:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 17:01:44 info: POST /api/v1/auth/portal/login
+2026-06-19 17:01:44 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 17:01:45 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 17:01:45 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 17:02:08 info: GET /api/v1/payments?limit=100
+2026-06-19 17:02:15 info: GET /api/v1/payments?limit=100
+2026-06-19 17:10:29 info: POST /api/v1/auth/parent/verify
+2026-06-19 17:10:58 info: POST /api/v1/auth/parent/set-password
+2026-06-19 17:11:12 info: POST /api/v1/auth/parent/login
+2026-06-19 17:11:13 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 17:11:14 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 17:11:15 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 17:12:03 info: GET /api/v1/payments?limit=100
+2026-06-19 17:14:29 info: GET /api/v1/payments?limit=100
+2026-06-19 18:49:09 info: POST /api/v1/auth/parent/login
+2026-06-19 18:49:12 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 18:49:14 info: POST /api/v1/auth/portal/login
+2026-06-19 18:49:14 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 19:03:44 info: POST /api/v1/auth/parent/login
+2026-06-19 19:03:50 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 19:03:54 info: POST /api/v1/auth/portal/login
+2026-06-19 19:03:54 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 19:19:54 info: POST /api/v1/auth/portal/login
+2026-06-19 19:20:43 info: Server is running on port 3000 in development mode
+2026-06-19 19:20:52 info: MongoDB connected
+2026-06-19 19:22:47 info: POST /api/v1/auth/portal/login
+2026-06-19 19:22:47 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 19:36:15 info: MongoDB connected
+2026-06-19 19:37:44 info: POST /api/v1/auth/portal/login
+2026-06-19 19:37:46 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 19:37:46 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 19:43:03 info: GET /health
+2026-06-19 19:47:50 info: POST /api/v1/auth/parent/verify
+2026-06-19 19:48:04 info: POST /api/v1/auth/parent/set-password
+2026-06-19 19:48:21 info: POST /api/v1/auth/parent/login
+2026-06-19 19:48:22 info: Parent login: 6a354f47fcd9ea136c018e07
+2026-06-19 19:48:22 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07
+2026-06-19 19:48:22 error: Error: Invalid or expired token
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:18:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 19:48:23 info: POST /api/v1/auth/portal/login
+2026-06-19 19:48:23 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 19:48:24 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07
+2026-06-19 19:48:25 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08
+2026-06-19 19:50:59 info: POST /api/v1/auth/parent/login
+2026-06-19 19:50:59 info: Parent login: 6a354f47fcd9ea136c018e07
+2026-06-19 19:51:37 info: POST /api/v1/payments
+2026-06-19 19:51:38 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07
+2026-06-19 19:51:39 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08
+2026-06-19 19:52:27 info: POST /api/v1/payments
+2026-06-19 19:52:28 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07
+2026-06-19 19:52:28 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08
+2026-06-19 19:56:08 info: MongoDB connected
+2026-06-19 19:58:01 info: Server is running on port 3000 in development mode
+2026-06-19 19:58:15 info: MongoDB connected
+2026-06-19 20:47:32 error: Error: Invalid or expired token
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:18:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:47:32 info: GET /api/v1/payments?limit=100 - Status: 401 (88ms)
+2026-06-19 20:47:37 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 20:47:37 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3 - Status: 401 (4ms)
+2026-06-19 21:09:51 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 21:09:51 info: POST /api/v1/auth/portal/login - Status: 200 (1929ms)
+2026-06-19 21:09:51 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (80ms)
+2026-06-19 21:09:52 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (171ms)
+2026-06-19 21:09:55 info: POST /api/v1/payments - Status: 201 (788ms)
+2026-06-19 21:09:56 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (85ms)
+2026-06-19 21:09:56 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (187ms)
+2026-06-19 21:10:02 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:02 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:02 info: POST /api/v1/payments - Status: 400 (124ms)
+2026-06-19 21:10:08 info: POST /api/v1/payments - Status: 201 (297ms)
+2026-06-19 21:10:08 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (61ms)
+2026-06-19 21:10:08 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (74ms)
+2026-06-19 21:10:11 info: POST /api/v1/payments - Status: 201 (449ms)
+2026-06-19 21:10:12 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (85ms)
+2026-06-19 21:10:12 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:12 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:12 info: POST /api/v1/payments - Status: 400 (126ms)
+2026-06-19 21:10:12 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (64ms)
+2026-06-19 21:10:18 info: POST /api/v1/payments - Status: 201 (384ms)
+2026-06-19 21:10:18 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (100ms)
+2026-06-19 21:10:18 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (59ms)
+2026-06-19 21:10:20 info: POST /api/v1/payments - Status: 201 (387ms)
+2026-06-19 21:10:20 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (99ms)
+2026-06-19 21:10:21 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (75ms)
+2026-06-19 21:10:33 info: POST /api/v1/payments - Status: 201 (414ms)
+2026-06-19 21:10:34 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (82ms)
+2026-06-19 21:10:34 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (120ms)
+2026-06-19 21:10:35 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:35 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:35 info: POST /api/v1/payments - Status: 400 (156ms)
+2026-06-19 21:10:36 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:36 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:36 info: POST /api/v1/payments - Status: 400 (135ms)
+2026-06-19 21:10:39 info: POST /api/v1/payments - Status: 201 (467ms)
+2026-06-19 21:10:39 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (96ms)
+2026-06-19 21:10:40 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (70ms)
+2026-06-19 21:10:41 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:41 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:41 info: POST /api/v1/payments - Status: 400 (188ms)
+2026-06-19 21:10:47 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:47 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:10:47 info: POST /api/v1/payments - Status: 400 (178ms)
+2026-06-19 21:10:49 info: POST /api/v1/payments - Status: 201 (407ms)
+2026-06-19 21:10:50 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (100ms)
+2026-06-19 21:10:50 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (72ms)
+2026-06-19 21:10:54 info: POST /api/v1/payments - Status: 201 (457ms)
+2026-06-19 21:10:54 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (66ms)
+2026-06-19 21:10:55 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (146ms)
+2026-06-19 21:10:57 info: POST /api/v1/payments - Status: 201 (415ms)
+2026-06-19 21:10:58 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (78ms)
+2026-06-19 21:10:58 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (67ms)
+2026-06-19 21:11:02 info: POST /api/v1/payments - Status: 201 (595ms)
+2026-06-19 21:11:03 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (193ms)
+2026-06-19 21:11:04 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (101ms)
+2026-06-19 21:11:06 info: POST /api/v1/payments - Status: 201 (2158ms)
+2026-06-19 21:11:07 error: MongoServerError: Caused by :: Write conflict during plan execution and yielding is disabled. :: Please retry your operation or multi-document transaction.
+    at Connection.sendCommand (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\cmap\connection.js:320:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Connection.command (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\cmap\connection.js:347:26)
+    at async Server.command (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\sdam\server.js:208:29)
+    at async executeOperationWithRetries (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:193:32)
+    at async executeOperation (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:83:16)
+    at async Collection.updateOne (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\collection.js:238:16)
+    at async maybeTracedQueryExec (D:\projects\sunrise-connect\backend\node_modules\mongoose\lib\query.js:4801:65)
+    at async PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:31:28)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:07 error: MongoServerError: Caused by :: Write conflict during plan execution and yielding is disabled. :: Please retry your operation or multi-document transaction.
+    at Connection.sendCommand (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\cmap\connection.js:320:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Connection.command (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\cmap\connection.js:347:26)
+    at async Server.command (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\sdam\server.js:208:29)
+    at async executeOperationWithRetries (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:193:32)
+    at async executeOperation (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\operations\execute_operation.js:83:16)
+    at async Collection.updateOne (D:\projects\sunrise-connect\backend\node_modules\mongodb\lib\collection.js:238:16)
+    at async maybeTracedQueryExec (D:\projects\sunrise-connect\backend\node_modules\mongoose\lib\query.js:4801:65)
+    at async PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:31:28)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:07 info: POST /api/v1/payments - Status: 500 (756ms)
+2026-06-19 21:11:07 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (170ms)
+2026-06-19 21:11:08 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (143ms)
+2026-06-19 21:11:09 info: POST /api/v1/payments - Status: 201 (621ms)
+2026-06-19 21:11:09 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (197ms)
+2026-06-19 21:11:10 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (104ms)
+2026-06-19 21:11:15 info: POST /api/v1/payments - Status: 201 (474ms)
+2026-06-19 21:11:16 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (94ms)
+2026-06-19 21:11:16 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (167ms)
+2026-06-19 21:11:31 info: POST /api/v1/payments - Status: 201 (1801ms)
+2026-06-19 21:11:31 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (63ms)
+2026-06-19 21:11:31 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:31 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:31 info: POST /api/v1/payments - Status: 400 (114ms)
+2026-06-19 21:11:32 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (326ms)
+2026-06-19 21:11:34 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:34 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:34 info: POST /api/v1/payments - Status: 400 (127ms)
+2026-06-19 21:11:34 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:34 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:34 info: POST /api/v1/payments - Status: 400 (208ms)
+2026-06-19 21:11:43 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:43 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:43 info: POST /api/v1/payments - Status: 400 (330ms)
+2026-06-19 21:11:54 info: POST /api/v1/payments - Status: 201 (628ms)
+2026-06-19 21:11:55 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:55 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:55 info: POST /api/v1/payments - Status: 400 (270ms)
+2026-06-19 21:11:55 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (100ms)
+2026-06-19 21:11:56 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (977ms)
+2026-06-19 21:11:59 info: POST /api/v1/payments - Status: 201 (1843ms)
+2026-06-19 21:11:59 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:59 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:59 info: POST /api/v1/payments - Status: 400 (196ms)
+2026-06-19 21:11:59 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:59 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:11:59 info: POST /api/v1/payments - Status: 400 (319ms)
+2026-06-19 21:11:59 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (183ms)
+2026-06-19 21:12:01 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (570ms)
+2026-06-19 21:12:02 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:02 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:02 info: POST /api/v1/payments - Status: 400 (210ms)
+2026-06-19 21:12:03 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:03 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:03 info: POST /api/v1/payments - Status: 400 (285ms)
+2026-06-19 21:12:07 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:07 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:07 info: POST /api/v1/payments - Status: 400 (268ms)
+2026-06-19 21:12:10 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:10 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:12:10 info: POST /api/v1/payments - Status: 400 (312ms)
+2026-06-19 21:12:30 info: POST /api/v1/payments - Status: 201 (541ms)
+2026-06-19 21:12:30 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (115ms)
+2026-06-19 21:12:31 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (116ms)
+2026-06-19 21:12:38 info: GET /api/v1/payments?limit=100 - Status: 200 (1011ms)
+2026-06-19 21:12:46 info: GET /api/v1/payments?limit=100 - Status: 200 (138ms)
+2026-06-19 21:19:59 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 21:20:00 info: POST /api/v1/auth/parent/login - Status: 200 (3334ms)
+2026-06-19 21:20:01 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 21:20:01 info: POST /api/v1/auth/portal/login - Status: 200 (990ms)
+2026-06-19 21:20:02 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3 - Status: 200 (916ms)
+2026-06-19 21:20:03 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab - Status: 200 (1390ms)
+2026-06-19 21:20:15 info: GET /api/v1/payments?limit=100 - Status: 200 (61ms)
+2026-06-19 21:20:20 info: GET /api/v1/payments?limit=100 - Status: 304 (305ms)
+2026-06-19 21:20:24 info: GET /api/v1/payments?limit=100 - Status: 304 (575ms)
+2026-06-19 21:20:47 info: POST /api/v1/payments - Status: 201 (461ms)
+2026-06-19 21:20:48 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3 - Status: 304 (78ms)
+2026-06-19 21:20:48 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab - Status: 200 (226ms)
+2026-06-19 21:20:57 info: GET /api/v1/payments?limit=100 - Status: 200 (119ms)
+2026-06-19 21:21:51 error: Error: Parent not found
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:92:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 21:21:51 info: POST /api/v1/auth/parent/login - Status: 404 (206ms)
+2026-06-19 21:22:08 error: Error: Parent not found
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:92:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 21:22:08 info: POST /api/v1/auth/parent/login - Status: 404 (83ms)
+2026-06-19 21:22:51 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (229ms)
+2026-06-19 21:22:51 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (152ms)
+2026-06-19 21:24:21 info: Parent login: 6a354f47fcd9ea136c018e07
+2026-06-19 21:24:21 info: POST /api/v1/auth/parent/login - Status: 200 (771ms)
+2026-06-19 21:24:21 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (79ms)
+2026-06-19 21:24:21 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (85ms)
+2026-06-19 21:24:27 info: GET /api/v1/payments?limit=100 - Status: 304 (82ms)
+2026-06-19 21:24:30 info: GET /api/v1/payments?limit=100 - Status: 304 (85ms)
+2026-06-19 21:24:54 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:24:54 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:24:54 info: POST /api/v1/payments - Status: 400 (209ms)
+2026-06-19 21:25:00 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:25:00 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:25:00 info: POST /api/v1/payments - Status: 400 (144ms)
+2026-06-19 21:25:39 info: Parent login: 6a3401f5fd1a6943f501ec72
+2026-06-19 21:25:39 info: POST /api/v1/auth/parent/login - Status: 200 (673ms)
+2026-06-19 21:25:39 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 200 (56ms)
+2026-06-19 21:25:39 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (76ms)
+2026-06-19 21:26:23 info: POST /api/v1/payments - Status: 201 (606ms)
+2026-06-19 21:26:23 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:26:23 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:26:23 info: POST /api/v1/payments - Status: 400 (154ms)
+2026-06-19 21:26:24 info: POST /api/v1/payments - Status: 201 (504ms)
+2026-06-19 21:26:24 info: POST /api/v1/payments - Status: 201 (467ms)
+2026-06-19 21:26:24 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:26:24 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:26:24 info: POST /api/v1/payments - Status: 400 (211ms)
+2026-06-19 21:26:25 info: POST /api/v1/payments - Status: 201 (481ms)
+2026-06-19 21:26:25 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (60ms)
+2026-06-19 21:26:25 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (223ms)
+2026-06-19 21:26:40 info: GET /api/v1/payments?limit=100 - Status: 200 (922ms)
+2026-06-19 21:27:00 info: POST /api/v1/payments - Status: 201 (465ms)
+2026-06-19 21:27:01 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (66ms)
+2026-06-19 21:27:01 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (145ms)
+2026-06-19 21:27:05 info: POST /api/v1/payments - Status: 201 (533ms)
+2026-06-19 21:27:05 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (177ms)
+2026-06-19 21:27:05 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (75ms)
+2026-06-19 21:27:06 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:06 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:06 info: POST /api/v1/payments - Status: 400 (248ms)
+2026-06-19 21:27:23 info: POST /api/v1/payments - Status: 201 (1491ms)
+2026-06-19 21:27:23 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:23 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:23 info: POST /api/v1/payments - Status: 400 (139ms)
+2026-06-19 21:27:24 info: POST /api/v1/payments - Status: 201 (643ms)
+2026-06-19 21:27:24 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (319ms)
+2026-06-19 21:27:24 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (81ms)
+2026-06-19 21:27:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:29 info: POST /api/v1/payments - Status: 400 (143ms)
+2026-06-19 21:27:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:29 info: POST /api/v1/payments - Status: 400 (130ms)
+2026-06-19 21:27:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:29 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:29 info: POST /api/v1/payments - Status: 400 (125ms)
+2026-06-19 21:27:30 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:30 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:30 info: POST /api/v1/payments - Status: 400 (123ms)
+2026-06-19 21:27:30 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:30 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:30 info: POST /api/v1/payments - Status: 400 (128ms)
+2026-06-19 21:27:30 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:30 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:27:30 info: POST /api/v1/payments - Status: 400 (184ms)
+2026-06-19 21:34:22 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 21:34:22 info: POST /api/v1/auth/parent/login - Status: 200 (935ms)
+2026-06-19 21:34:23 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 21:34:23 info: POST /api/v1/auth/portal/login - Status: 200 (413ms)
+2026-06-19 21:34:23 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3 - Status: 200 (94ms)
+2026-06-19 21:34:23 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab - Status: 200 (97ms)
+2026-06-19 21:34:31 info: GET /api/v1/payments?limit=100 - Status: 200 (143ms)
+2026-06-19 21:34:34 info: GET /api/v1/payments?limit=100 - Status: 304 (164ms)
+2026-06-19 21:35:16 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 21:35:16 info: POST /api/v1/auth/parent/login - Status: 200 (788ms)
+2026-06-19 21:35:39 error: Error: Invalid credentials
+    at AuthService.parentLogin (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:94:23)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:27:20
+2026-06-19 21:35:39 info: POST /api/v1/auth/parent/login - Status: 401 (437ms)
+2026-06-19 21:35:48 info: Parent login: 6a3401f5fd1a6943f501ec72
+2026-06-19 21:35:48 info: POST /api/v1/auth/parent/login - Status: 200 (722ms)
+2026-06-19 21:35:48 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 200 (83ms)
+2026-06-19 21:35:48 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (84ms)
+2026-06-19 21:35:57 info: GET /api/v1/payments?limit=100 - Status: 304 (187ms)
+2026-06-19 21:36:51 info: POST /api/v1/payments - Status: 201 (2120ms)
+2026-06-19 21:36:52 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (1289ms)
+2026-06-19 21:36:52 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (311ms)
+2026-06-19 21:36:53 info: POST /api/v1/payments - Status: 201 (831ms)
+2026-06-19 21:36:54 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (439ms)
+2026-06-19 21:36:54 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (416ms)
+2026-06-19 21:36:58 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:36:58 error: Error: Over‑payment not allowed
+    at PaymentService.createPayment (file:///D:/projects/sunrise-connect/backend/src/services/PaymentService.js:25:32)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/PaymentController.js:9:21
+2026-06-19 21:36:58 info: POST /api/v1/payments - Status: 400 (126ms)
+2026-06-19 21:37:08 info: POST /api/v1/payments - Status: 201 (442ms)
+2026-06-19 21:37:08 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (79ms)
+2026-06-19 21:37:08 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (252ms)
+2026-06-19 21:37:12 info: POST /api/v1/payments - Status: 201 (434ms)
+2026-06-19 21:37:12 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (136ms)
+2026-06-19 21:37:12 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (120ms)
+2026-06-19 21:37:34 info: POST /api/v1/payments - Status: 201 (551ms)
+2026-06-19 21:37:34 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (95ms)
+2026-06-19 21:37:34 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (291ms)
+2026-06-19 21:37:52 info: GET /api/v1/payments?limit=100 - Status: 200 (191ms)
+2026-06-19 21:38:21 info: POST /api/v1/payments - Status: 201 (1374ms)
+2026-06-19 21:38:21 info: GET /api/v1/students?parentId=6a3401f5fd1a6943f501ec72 - Status: 304 (147ms)
+2026-06-19 21:38:21 info: GET /api/v1/ledgers?studentId=6a3401f5fd1a6943f501ec73 - Status: 200 (121ms)
+2026-06-19 21:40:24 info: Server is running on port 3000 in development mode
+2026-06-19 21:59:26 info: Server is running on port 3000 in development mode
+2026-06-19 21:59:28 info: MongoDB connected
+2026-06-19 21:59:39 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 21:59:39 info: POST /api/v1/auth/parent/login - Status: 200 (675ms)
+2026-06-19 21:59:39 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 21:59:39 info: POST /api/v1/auth/portal/login - Status: 200 (311ms)
+2026-06-19 21:59:40 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3 - Status: 200 (97ms)
+2026-06-19 21:59:40 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab - Status: 200 (152ms)
+2026-06-19 22:12:16 info: Server is running on port 3000 in development mode
+2026-06-19 22:12:17 info: MongoDB connected
+2026-06-19 22:13:31 info: Server is running on port 3000 in development mode
+2026-06-19 22:13:33 info: MongoDB connected
+2026-06-19 22:13:36 info: Server is running on port 3000 in development mode
+2026-06-19 22:13:37 info: MongoDB connected
+2026-06-19 22:14:58 info: Server is running on port 3000 in development mode
+2026-06-19 22:14:58 info: MongoDB connected
+2026-06-19 22:15:04 info: GET / - Status: 200 (8ms)
+2026-06-19 22:15:05 error: Error: Cannot find /favicon.ico on this server
+    at file:///D:/projects/sunrise-connect/backend/src/app.js:70:8
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\projects\sunrise-connect\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:295:15
+    at param (D:\projects\sunrise-connect\backend\node_modules\router\index.js:600:14)
+    at param (D:\projects\sunrise-connect\backend\node_modules\router\index.js:610:14)
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:664:3)
+2026-06-19 22:15:05 info: GET /favicon.ico - Status: 404 (4ms)
+2026-06-19 22:18:13 info: Server is running on port 3000 in development mode
+2026-06-19 22:18:13 info: MongoDB connected
+2026-06-19 22:18:21 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 22:18:21 info: POST /api/v1/auth/parent/login - Status: 200 (621ms)
+2026-06-19 22:18:21 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 22:18:21 info: POST /api/v1/auth/portal/login - Status: 200 (248ms)
+2026-06-19 22:18:22 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3 - Status: 200 (73ms)
+2026-06-19 22:18:22 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab - Status: 200 (84ms)
+2026-06-19 22:18:50 error: Error: Onboarding already completed. Please log in normally.
+    at AuthService.verifyParentLastFour (file:///D:/projects/sunrise-connect/backend/src/services/AuthService.js:49:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///D:/projects/sunrise-connect/backend/src/controllers/AuthController.js:15:20
+2026-06-19 22:18:50 info: POST /api/v1/auth/parent/verify - Status: 400 (183ms)
+2026-06-19 22:19:11 info: Parent login: 6a354f47fcd9ea136c018e07
+2026-06-19 22:19:11 info: POST /api/v1/auth/parent/login - Status: 200 (686ms)
+2026-06-19 22:19:12 info: GET /api/v1/students?parentId=6a354f47fcd9ea136c018e07 - Status: 200 (1181ms)
+2026-06-19 22:19:12 info: GET /api/v1/ledgers?studentId=6a354f47fcd9ea136c018e08 - Status: 200 (136ms)
+2026-06-19 22:23:10 info: Server is running on port 3000 in development mode
+2026-06-19 22:23:11 info: MongoDB connected
+2026-06-19 22:23:27 info: Server is running on port 3000 in development mode
+2026-06-19 22:23:28 info: MongoDB connected
+=======
 2026-06-19 17:01:17 info: Server is running on port 3000 in development mode
 2026-06-19 17:01:18 info: MongoDB connected
 2026-06-19 17:01:21 info: GET /api/v1/students?limit=1000
@@ -285,3 +1464,48 @@
 2026-06-19 20:10:06 info: GET /api/v1/students?limit=1000
 2026-06-19 20:10:06 info: GET /api/v1/ledgers?limit=1000
 2026-06-19 20:10:11 info: GET /api/v1/fee-structures
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+2026-06-19 22:44:16 info: Server is running on port 3000 in development mode
+2026-06-19 22:44:17 info: MongoDB connected
+2026-06-19 22:44:23 info: POST /api/v1/auth/parent/login
+2026-06-19 22:44:24 info: Parent login: 6a3182190bd834bcb4bb58e3
+2026-06-19 22:44:25 info: POST /api/v1/auth/portal/login
+2026-06-19 22:44:25 info: Portal login: 6a33f5084687f3932b97fda6
+2026-06-19 22:44:25 info: GET /api/v1/students?parentId=6a3182190bd834bcb4bb58e3
+2026-06-19 22:44:25 info: GET /api/v1/ledgers?studentId=6a31821b7e45b575237baaab
+2026-06-19 22:53:46 info: Server is running on port 3000 in development mode
+2026-06-19 22:53:47 info: MongoDB connected
+2026-06-19 22:53:53 info: GET /api/v1/students?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/payments?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/fee-structures
+2026-06-19 22:53:53 info: GET /api/v1/audit?limit=100
+2026-06-19 22:53:53 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 22:53:53 info: GET /api/v1/audit?limit=100
+2026-06-19 22:53:53 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///D:/projects/sunrise-connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+    at D:\projects\sunrise-connect\backend\node_modules\router\index.js:297:9
+    at processParams (D:\projects\sunrise-connect\backend\node_modules\router\index.js:582:12)
+    at next (D:\projects\sunrise-connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (D:\projects\sunrise-connect\backend\node_modules\router\index.js:186:3)
+    at router (D:\projects\sunrise-connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (D:\projects\sunrise-connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\projects\sunrise-connect\backend\node_modules\router\index.js:342:13)
+2026-06-19 22:53:53 info: GET /api/v1/fee-structures
+2026-06-19 22:53:53 info: GET /api/v1/students?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/payments?limit=1000
+2026-06-19 22:53:53 info: GET /api/v1/ledgers?limit=1000
+2026-06-19 22:54:05 info: Server is running on port 3000 in development mode
+2026-06-19 22:54:05 info: MongoDB connected

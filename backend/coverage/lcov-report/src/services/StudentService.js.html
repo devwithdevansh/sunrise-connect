@@ -25,28 +25,44 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
+<<<<<<< HEAD
+                <span class='fraction'>0/27</span>
+=======
                 <span class='fraction'>0/91</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
+<<<<<<< HEAD
+                <span class='fraction'>0/4</span>
+=======
                 <span class='fraction'>0/80</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
+<<<<<<< HEAD
+                <span class='fraction'>0/4</span>
+=======
                 <span class='fraction'>0/10</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
+<<<<<<< HEAD
+                <span class='fraction'>0/26</span>
+=======
                 <span class='fraction'>0/90</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
@@ -130,6 +146,9 @@
 <a name='L65'></a><a href='#L65'>65</a>
 <a name='L66'></a><a href='#L66'>66</a>
 <a name='L67'></a><a href='#L67'>67</a>
+<<<<<<< HEAD
+<a name='L68'></a><a href='#L68'>68</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+=======
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a>
 <a name='L70'></a><a href='#L70'>70</a>
@@ -409,6 +428,7 @@
 <a name='L344'></a><a href='#L344'>344</a>
 <a name='L345'></a><a href='#L345'>345</a>
 <a name='L346'></a><a href='#L346'>346</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -427,6 +447,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<<<<<<< HEAD
+<span class="cline-any cline-neutral">&nbsp;</span>
+=======
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -706,6 +729,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -769,6 +793,9 @@ class StudentService {
     const session = <span class="cstat-no" title="statement not covered" >await mongoose.startSession();</span>
 <span class="cstat-no" title="statement not covered" >    session.startTransaction();</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
+<<<<<<< HEAD
+      const student = <span class="cstat-no" title="statement not covered" >await studentRepository.create(data, { session });</span>
+=======
       let parentId = <span class="cstat-no" title="statement not covered" >data.parentId;</span>
 <span class="cstat-no" title="statement not covered" >      if (!parentId &amp;&amp; data.parentMobile) {</span>
         // Normalize mobile number: extract digits
@@ -806,10 +833,13 @@ class StudentService {
       };
 &nbsp;
       const student = <span class="cstat-no" title="statement not covered" >await studentRepository.create(studentData, { session });</span>
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cstat-no" title="statement not covered" >      await AuditService.log(</span>
         { performedBy: null, targetStudentId: student._id, action: 'STUDENT_CREATED', details: {} },
         session
       );
+<<<<<<< HEAD
+=======
 &nbsp;
       // --- Generate all categories of fee ledgers for the entire academic year ---
       let educationCategory = <span class="cstat-no" title="statement not covered" >await mongoose.model('FeeCategory').findOne({ type: 'EDUCATION' }, null, { session });</span>
@@ -1052,6 +1082,7 @@ class StudentService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      await mongoose.model('StudentFeeLedger').insertMany(ledgersToCreate, { session });</span>
 &nbsp;
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cstat-no" title="statement not covered" >      await session.commitTransaction();</span>
 <span class="cstat-no" title="statement not covered" >      return student;</span>
     } catch (err) {
@@ -1105,7 +1136,11 @@ export default StudentService;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+<<<<<<< HEAD
+                at 2026-06-19T04:46:02.845Z
+=======
                 at 2026-06-18T10:09:33.174Z
+>>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         <script src="../../prettify.js"></script>
         <script>
