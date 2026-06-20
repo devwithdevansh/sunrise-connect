@@ -9,6 +9,7 @@ import '../../../../data/models/notification_model.dart';
 import '../../../../data/repositories/student_repository.dart';
 import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
+import '../../fees/payment_history/controllers/payment_history_controller.dart';
 
 class DashboardController extends GetxController {
   final StudentRepository _studentRepo = StudentRepository();
@@ -142,15 +143,59 @@ class DashboardController extends GetxController {
 
     isLoading.value = true;
     final success = await _feeRepo.payFee(fee.id, fee.remainingAmount, 'online');
-    isLoading.value = false;
 
     if (success) {
+      // ── Optimistic UI update ────────────────────────────────────────────
+      // Immediately reflect the payment in the local fees list so that
+      // PendingFees and FeeSummary update right away, without waiting for
+      // the network refresh to complete.
+      final updatedFees = fees.map((f) {
+        if (f.id == fee.id) {
+          return FeeModel(
+            id: f.id,
+            studentId: f.studentId,
+            termName: f.termName,
+            amount: f.amount,
+            paidAmount: f.amount,       // fully paid
+            remainingAmount: 0,          // nothing left
+            dueDate: f.dueDate,
+            status: 'PAID',
+            academicYear: f.academicYear,
+          );
+        }
+        return f;
+      }).toList();
+      fees.assignAll(updatedFees);
+      _calculateAggregates(updatedFees);
+      // ───────────────────────────────────────────────────────────────────
+
       Get.snackbar(
         'Payment Successful ✅',
         'Your payment of ₹${fee.remainingAmount.toInt()} for ${fee.termName} has been processed.',
         snackPosition: SnackPosition.BOTTOM,
       );
-      await refreshData();
+
+      // Clear all caches so next load fetches fresh data from server
+      final prefs = await SharedPreferences.getInstance();
+      final sId = student.value?.id ?? '';
+      final pId = prefs.getString(StorageKeys.parentId) ?? '';
+      if (sId.isNotEmpty) {
+        await prefs.remove('fees_cache_$sId');
+        await prefs.remove('payments_cache_$sId');
+        await prefs.remove('payments_time_$sId');
+      }
+      if (pId.isNotEmpty) {
+        // Reset student cache timestamp so next loadDashboardData hits network
+        await prefs.remove('student_time_$pId');
+      }
+
+      // Background refresh to sync with server truth
+      refreshData();
+
+      // If payment history screen is already open, refresh it immediately
+      if (Get.isRegistered<PaymentHistoryController>()) {
+        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
+      }
     } else {
       Get.snackbar(
         'Payment Failed ❌',
@@ -158,5 +203,7 @@ class DashboardController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+
+    isLoading.value = false;
   }
 }

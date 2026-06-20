@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/network/api_client.dart';
@@ -9,54 +8,25 @@ class OtpController extends GetxController {
   final isLoading = false.obs;
   final errorMsg = ''.obs;
 
-  final List<TextEditingController> otpControllers =
-      List.generate(4, (_) => TextEditingController());
-  final List<FocusNode> focusNodes = List.generate(4, (_) => FocusNode());
-
-  final phoneController = TextEditingController();
-  final passwordController = TextEditingController();
-
   @override
   void onInit() {
     super.onInit();
     phone.value = Get.arguments?.toString() ?? '';
   }
 
-  @override
-  void onClose() {
-    for (final c in otpControllers) c.dispose();
-    for (final f in focusNodes) f.dispose();
-    phoneController.dispose();
-    passwordController.dispose();
-    super.onClose();
-  }
-
-  void onOtpChanged(String val, int index) {
-    if (val.isNotEmpty && index < 3) {
-      focusNodes[index + 1].requestFocus();
-    } else if (val.isEmpty && index > 0) {
-      focusNodes[index - 1].requestFocus();
-    }
-    errorMsg.value = '';
-  }
-
-  String get _fullOtp => otpControllers.map((c) => c.text).join();
-
-  Future<void> startVerification() async {
-    final inputPhone = phoneController.text.trim();
+  void startVerification(String inputPhone) {
     if (inputPhone.length != 10) {
       errorMsg.value = 'Please enter a valid 10-digit mobile number';
       return;
     }
     phone.value = inputPhone;
     errorMsg.value = '';
-    focusNodes[0].requestFocus();
   }
 
-  Future<void> verifyCodeAndSetup() async {
-    if (_fullOtp.length != 4) {
+  Future<String?> verifyCodeAndSetup(String otp) async {
+    if (otp.length != 4) {
       errorMsg.value = 'Please enter all 4 digits';
-      return;
+      return null;
     }
 
     isLoading.value = true;
@@ -65,15 +35,12 @@ class OtpController extends GetxController {
     try {
       final response = await ApiClient.post('/auth/parent/verify', {
         'primaryMobileNumber': phone.value,
-        'lastFourDigits': _fullOtp,
+        'lastFourDigits': otp,
       });
 
       if (response.statusCode == 200) {
         final body = json.decode(response.body);
-        final parentId = body['data']['parentId'] as String;
-
-        // Verify successful, prompt for password creation
-        _showPasswordCreationDialog(parentId);
+        return body['data']['parentId'] as String;
       } else {
         final body = json.decode(response.body);
         errorMsg.value = body['message'] ?? 'Verification failed';
@@ -84,54 +51,10 @@ class OtpController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+    return null;
   }
 
-  void _showPasswordCreationDialog(String parentId) {
-    final passwordFieldController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Create Password 🔑'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Enter a password for your account (minimum 8 characters):'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordFieldController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newPassword = passwordFieldController.text;
-              if (newPassword.length < 8) {
-                Get.snackbar('Error', 'Password must be at least 8 characters long');
-                return;
-              }
-              Get.back(); // Close dialog
-              await _setPassword(parentId, newPassword);
-            },
-            child: const Text('Save Password'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _setPassword(String parentId, String newPassword) async {
+  Future<void> setPassword(String parentId, String newPassword) async {
     isLoading.value = true;
     try {
       final response = await ApiClient.post('/auth/parent/set-password', {

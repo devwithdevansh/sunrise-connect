@@ -11,7 +11,7 @@ import AppError from '../utils/AppError.js';
 
 class PaymentService {
   /** Create a payment and atomically update the ledger paidAmount */
-  static async createPayment({ ledgerId, amount, method, details = {} }) {
+  static async createPayment({ ledgerId, amount, method, details = {}, performedBy = null }) {
     if (amount <= 0) throw new AppError('Payment amount must be positive', 400);
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -37,7 +37,7 @@ class PaymentService {
       if (updateResult.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
 
       await AuditService.log(
-        { performedBy: null, targetLedgerId: ledgerId, action: 'PAYMENT_CREATED', details: { paymentId: payment._id, amount, method } },
+        { performedBy, targetLedgerId: ledgerId, action: 'PAYMENT_CREATED', details: { paymentId: payment._id, amount, method } },
         session
       );
       await session.commitTransaction();
@@ -52,7 +52,7 @@ class PaymentService {
   }
 
   /** Reverse a payment – creates a reversal record and decrements ledger paidAmount */
-  static async reversePayment({ paymentId, reason }) {
+  static async reversePayment({ paymentId, reason, performedBy = null }) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -88,7 +88,7 @@ class PaymentService {
       if (result.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
 
       await AuditService.log(
-        { performedBy: null, targetLedgerId: ledger._id, action: 'PAYMENT_REVERSED', details: { reversalId: reversal._id, reason } },
+        { performedBy, targetLedgerId: ledger._id, action: 'PAYMENT_REVERSED', details: { reversalId: reversal._id, reason } },
         session
       );
       await session.commitTransaction();
@@ -109,9 +109,9 @@ class PaymentService {
     return payment;
   }
 
-  /** List payments with optional filters */
+  /** List payments with optional filters, populating ledger context */
   static async listPayments(filter = {}, pagination = { limit: 20, skip: 0 }) {
-    return paymentRepository.find(filter, null, pagination);
+    return paymentRepository.findWithLedger(filter, pagination);
   }
 }
 

@@ -192,6 +192,7 @@ class DashboardView extends GetView<DashboardController> {
   }
 
   Widget _buildFeeSummaryCard() {
+    return Obx(() {
     final total = controller.totalFees.value;
     final paid = controller.totalPaid.value;
     final pending = controller.totalPending.value;
@@ -265,6 +266,7 @@ class DashboardView extends GetView<DashboardController> {
         ],
       ),
     );
+    });
   }
 
   Widget _buildQuickActions() {
@@ -317,6 +319,7 @@ class DashboardView extends GetView<DashboardController> {
   }
 
   Widget _buildFeesList() {
+    return Obx(() {
     final pending = controller.fees.where((f) => !f.isPaid).take(3).toList();
     if (pending.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -337,9 +340,11 @@ class DashboardView extends GetView<DashboardController> {
         ...pending.map((f) => _FeeRowCard(fee: f, controller: controller)),
       ],
     );
+    });
   }
 
   Widget _buildNotifications() {
+    return Obx(() {
     final list = controller.notifications.take(2).toList();
     if (list.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -360,6 +365,7 @@ class DashboardView extends GetView<DashboardController> {
         ...list.map((n) => _NotifCard(notif: n)),
       ],
     );
+    });
   }
 }
 
@@ -400,9 +406,19 @@ class _FeeRowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const statusColor = AppColors.red;
-    const statusBg = AppColors.redPale;
-    const statusLabel = 'Pending';
+    final isOverdue = fee.dueDate.isNotEmpty &&
+        DateTime.tryParse(fee.dueDate)?.isBefore(DateTime.now()) == true;
+    final statusColor = fee.isPartial
+        ? AppColors.amber
+        : isOverdue
+            ? AppColors.red
+            : AppColors.red;
+    final statusBg = fee.isPartial ? AppColors.amberPale : AppColors.redPale;
+    final statusLabel = fee.isPartial
+        ? 'Partial'
+        : isOverdue
+            ? 'Overdue'
+            : 'Pending';
 
     return GestureDetector(
       onTap: () => _showPaymentDialog(context),
@@ -420,7 +436,7 @@ class _FeeRowCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.calendar_today_rounded, color: statusColor, size: 18),
+              child: Icon(Icons.calendar_today_rounded, color: statusColor, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(

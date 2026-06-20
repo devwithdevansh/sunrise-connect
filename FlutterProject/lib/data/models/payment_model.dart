@@ -1,10 +1,14 @@
 class PaymentModel {
   final String id;
-  final String feeId;
+  final String feeId;          // ledgerId
   final double amount;
   final String paymentDate;
   final String paymentMode;
   final String transactionId;
+  final String termName;       // feePeriod from ledger e.g. "June", "Term 1"
+  final String feeType;        // feeType from ledger e.g. "TRANSPORT", "TERM", "EDUCATION"
+  final String studentName;    // snapshot.studentName from ledger
+  final bool isReversal;
 
   const PaymentModel({
     required this.id,
@@ -13,16 +17,57 @@ class PaymentModel {
     required this.paymentDate,
     required this.paymentMode,
     required this.transactionId,
+    this.termName = '',
+    this.feeType = 'EDUCATION',
+    this.studentName = '',
+    this.isReversal = false,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
         id: (json['id'] ?? json['_id'] ?? '').toString(),
         feeId: (json['feeId'] ?? json['ledgerId'] ?? '').toString(),
-        amount: (json['amount'] as num).toDouble(),
+        amount: ((json['amount'] ?? 0) as num).toDouble(),
         paymentDate: json['paymentDate'] as String? ?? json['createdAt'] as String? ?? '',
         paymentMode: json['paymentMode'] as String? ?? json['method'] as String? ?? 'UPI',
-        transactionId: json['transactionId'] as String? ?? (json['details'] != null && json['details']['transactionId'] != null ? json['details']['transactionId'].toString() : ''),
+        transactionId: _extractTxnId(json),
+        termName: json['termName'] as String? ?? json['feePeriod'] as String? ?? '',
+        feeType: json['feeType'] as String? ?? 'EDUCATION',
+        studentName: json['studentName'] as String? ?? '',
+        isReversal: json['isReversal'] as bool? ?? false,
       );
+
+  static String _extractTxnId(Map<String, dynamic> json) {
+    if (json['transactionId'] != null) return json['transactionId'].toString();
+    final details = json['details'];
+    if (details is Map && details['transactionId'] != null) {
+      return details['transactionId'].toString();
+    }
+    return '';
+  }
+
+  /// Whether this is a TRANSPORT fee
+  bool get isTransport => feeType == 'TRANSPORT';
+
+  /// Human-readable category label
+  String get categoryLabel {
+    switch (feeType) {
+      case 'TRANSPORT': return 'Transport';
+      case 'TERM':
+      case 'EDUCATION': return 'Education';
+      case 'ADMISSION': return 'Admission';
+      case 'BAG_KIT': return 'Bag / Kit';
+      default: return 'General';
+    }
+  }
+
+  /// Month name parsed from paymentDate ISO string
+  String get monthLabel {
+    final dt = DateTime.tryParse(paymentDate);
+    if (dt == null) return '';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[dt.month - 1]} ${dt.year}';
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -31,5 +76,9 @@ class PaymentModel {
         'paymentDate': paymentDate,
         'paymentMode': paymentMode,
         'transactionId': transactionId,
+        'termName': termName,
+        'feeType': feeType,
+        'studentName': studentName,
+        'isReversal': isReversal,
       };
 }

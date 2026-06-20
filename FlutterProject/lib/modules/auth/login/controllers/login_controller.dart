@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/storage_keys.dart';
@@ -7,26 +6,12 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/network/api_client.dart';
 
 class LoginController extends GetxController {
-  final formKey = GlobalKey<FormState>();
-  final phoneController = TextEditingController();
-  final passwordController = TextEditingController();
   final isLoading = false.obs;
 
-  @override
-  void onClose() {
-    phoneController.dispose();
-    passwordController.dispose();
-    super.onClose();
-  }
-
-  Future<void> login() async {
-    if (!formKey.currentState!.validate()) return;
+  Future<void> login({required String phone, required String password}) async {
     isLoading.value = true;
 
     try {
-      final phone = phoneController.text.trim();
-      final password = passwordController.text;
-
       final response = await ApiClient.post('/auth/parent/login', {
         'primaryMobileNumber': phone,
         'password': password,
@@ -35,7 +20,6 @@ class LoginController extends GetxController {
       if (response.statusCode == 200) {
         final body = json.decode(response.body);
         final accessToken = body['data']['accessToken'] as String;
-        final refreshToken = body['data']['refreshToken'] as String;
 
         // Decode token to extract parentId
         final jwtData = ApiClient.decodeJwt(accessToken);

@@ -50,13 +50,29 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
             );
           }
 
-          return ListView.builder(
+          final educationReceipts = controller.receipts.where((r) => !r.isTransport).toList();
+          final transportReceipts = controller.receipts.where((r) => r.isTransport).toList();
+
+          return ListView(
             padding: const EdgeInsets.all(16),
-            itemCount: controller.receipts.length,
-            itemBuilder: (context, index) {
-              final receipt = controller.receipts[index];
-              return _buildReceiptRow(context, receipt);
-            },
+            children: [
+              if (educationReceipts.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
+                  child: Text('Education Fees', style: AppTextStyles.h3),
+                ),
+                ...educationReceipts.map((r) => _buildReceiptRow(context, r)),
+                const SizedBox(height: 16),
+              ],
+              if (transportReceipts.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
+                  child: Text('Transport Fees', style: AppTextStyles.h3),
+                ),
+                ...transportReceipts.map((r) => _buildReceiptRow(context, r)),
+                const SizedBox(height: 16),
+              ],
+            ],
           );
         }),
       ),
@@ -92,7 +108,11 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Receipt #${receipt.receiptNumber.substring(0, receipt.receiptNumber.length > 10 ? 10 : receipt.receiptNumber.length)}', style: AppTextStyles.labelLarge),
+                  Text('${receipt.categoryLabel} Receipt #${receipt.receiptNumber.substring(0, receipt.receiptNumber.length > 10 ? 10 : receipt.receiptNumber.length)}', style: AppTextStyles.labelLarge),
+                  if (receipt.termName.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(receipt.termName, style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryMid, fontWeight: FontWeight.w600)),
+                  ],
                   const SizedBox(height: 2),
                   Text('Date: $dateStr', style: AppTextStyles.bodySmall),
                 ],
@@ -147,6 +167,12 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
               const SizedBox(height: 10),
               _buildDetailRow('Student Name:', receipt.studentName),
               const SizedBox(height: 10),
+              _buildDetailRow('Category:', receipt.categoryLabel),
+              const SizedBox(height: 10),
+              if (receipt.termName.isNotEmpty) ...[
+                _buildDetailRow('Term / Month:', receipt.termName),
+                const SizedBox(height: 10),
+              ],
               _buildDetailRow('Payment Date:', dateStr),
               const SizedBox(height: 10),
               _buildDetailRow('Payment Mode:', receipt.paymentMode.toUpperCase()),

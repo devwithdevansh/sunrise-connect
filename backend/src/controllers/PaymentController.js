@@ -6,7 +6,7 @@ import sendResponse from '../utils/response.js';
 class PaymentController {
   /** POST /api/v1/payments */
   static createPayment = catchAsync(async (req, res) => {
-    const payment = await PaymentService.createPayment(req.body);
+    const payment = await PaymentService.createPayment({ ...req.body, performedBy: req.user?.id ?? null });
     sendResponse(res, 201, payment);
   });
 
@@ -25,7 +25,7 @@ class PaymentController {
 
   /** POST /api/v1/payments/:id/reverse (ADMIN only) */
   static reversePayment = catchAsync(async (req, res) => {
-    const reversal = await PaymentService.reversePayment({ paymentId: req.params.id, ...req.body });
+    const reversal = await PaymentService.reversePayment({ paymentId: req.params.id, ...req.body, performedBy: req.user?.id ?? null });
     sendResponse(res, 200, reversal);
   });
 }

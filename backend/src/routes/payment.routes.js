@@ -13,7 +13,7 @@ import {
 
 const router = Router();
 
-// router.use(authenticate); // disabled for dev
+router.use(authenticate);
 
 // Idempotency enforced on payment creation to prevent duplicate charges
 router.post('/', idempotency, validate(createPaymentSchema), PaymentController.createPayment);

@@ -23,7 +23,7 @@ const rateLimit = ({ windowMs = 15 * 60 * 1000, max = 100 } = {}) =>
   };
 
 /** Stricter limiter for auth endpoints */
-export const authRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+export const authRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 
 /** Default API limiter */
 export const apiRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });

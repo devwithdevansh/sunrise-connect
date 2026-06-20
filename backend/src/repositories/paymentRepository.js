@@ -33,6 +33,53 @@ const paymentRepository = {
   async countDocuments(filter = {}) {
     return Payment.countDocuments(filter);
   },
+
+  /**
+   * List payments joined with their ledger for full context (feePeriod, feeType, studentName).
+   * Used by the parent-facing payment history & receipts endpoints.
+   */
+  async findWithLedger(filter = {}, { limit = 20, skip = 0 } = {}) {
+    const matchStage = {};
+    if (filter.ledgerId) {
+      const mongoose = await import('mongoose');
+      matchStage.ledgerId = new mongoose.default.Types.ObjectId(filter.ledgerId);
+    }
+    if (filter.isReversal !== undefined) {
+      matchStage.isReversal = filter.isReversal;
+    }
+
+    return Payment.aggregate([
+      { $match: matchStage },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: Number(limit) },
+      {
+        $lookup: {
+          from: 'studentfeeledgers',
+          localField: 'ledgerId',
+          foreignField: '_id',
+          as: 'ledger',
+        },
+      },
+      { $unwind: { path: '$ledger', preserveNullAndEmpty: true } },
+      {
+        $project: {
+          _id: 1,
+          ledgerId: 1,
+          amount: 1,
+          method: 1,
+          details: 1,
+          isReversal: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          feePeriod: '$ledger.feePeriod',
+          feeType: '$ledger.feeType',
+          studentName: '$ledger.snapshot.studentName',
+          academicYear: '$ledger.academicYear',
+        },
+      },
+    ]);
+  },
 };
 
 export default paymentRepository;

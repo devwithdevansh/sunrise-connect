@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import '../../core/network/api_client.dart';
 import '../models/fee_model.dart';
 
@@ -42,6 +43,11 @@ class FeeRepository {
   /// Pay fee in full
   Future<bool> payFee(String ledgerId, double amount, String method) async {
     try {
+      // Generate a random idempotency key to prevent duplicate charge replays
+      final random = Random.secure();
+      final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+      final idempotencyKey = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
       final response = await ApiClient.post(
         '/payments',
         {
@@ -55,7 +61,7 @@ class FeeRepository {
         },
         useStaffToken: true,
         extraHeaders: {
-          'Idempotency-Key': 'idem-${DateTime.now().millisecondsSinceEpoch}-${ledgerId}'
+          'Idempotency-Key': idempotencyKey,
         }
       );
       return response.statusCode == 201;

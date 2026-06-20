@@ -7,8 +7,95 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
 import '../controllers/otp_controller.dart';
 
-class OtpView extends GetView<OtpController> {
+class OtpView extends StatefulWidget {
   const OtpView({super.key});
+
+  @override
+  State<OtpView> createState() => _OtpViewState();
+}
+
+class _OtpViewState extends State<OtpView> {
+  final _phoneController = TextEditingController();
+  final List<TextEditingController> _otpControllers =
+      List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  late final OtpController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<OtpController>();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    for (final c in _otpControllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onOtpChanged(String val, int index) {
+    if (val.isNotEmpty && index < 3) {
+      _focusNodes[index + 1].requestFocus();
+    } else if (val.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
+    }
+    _controller.errorMsg.value = '';
+  }
+
+  void _showPasswordCreationDialog(BuildContext context, String parentId) {
+    final dialogPasswordController = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Create Password 🔑'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter a password for your account (minimum 8 characters):'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: dialogPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'New Password',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              dialogPasswordController.dispose();
+              Get.back();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newPassword = dialogPasswordController.text;
+              if (newPassword.length < 8) {
+                Get.snackbar('Error', 'Password must be at least 8 characters long');
+                return;
+              }
+              dialogPasswordController.dispose();
+              Get.back(); // Close dialog
+              await _controller.setPassword(parentId, newPassword);
+            },
+            child: const Text('Save Password'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +113,7 @@ class OtpView extends GetView<OtpController> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Obx(() {
-            final isPhoneEmpty = controller.phone.value.isEmpty;
+            final isPhoneEmpty = _controller.phone.value.isEmpty;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,7 +124,7 @@ class OtpView extends GetView<OtpController> {
                 Text(
                   isPhoneEmpty
                       ? 'Enter your registered mobile number to set up your password.'
-                      : 'For verification, please enter the last 4 digits of your mobile number (+91 ${controller.phone.value}).',
+                      : 'For verification, please enter the last 4 digits of your mobile number (+91 ${_controller.phone.value}).',
                   style: AppTextStyles.bodyMedium,
                 ),
                 const SizedBox(height: 32),
@@ -46,7 +133,7 @@ class OtpView extends GetView<OtpController> {
                   CustomTextField(
                     label: 'Registered Mobile Number',
                     hint: '98765 43210',
-                    controller: controller.phoneController,
+                    controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -58,35 +145,53 @@ class OtpView extends GetView<OtpController> {
                   const SizedBox(height: 24),
                   CustomButton(
                     label: 'Continue',
-                    loading: controller.isLoading.value,
-                    onTap: controller.startVerification,
+                    loading: _controller.isLoading.value,
+                    onTap: () {
+                      _controller.startVerification(_phoneController.text.trim());
+                    },
                   ),
                 ] else ...[
                   // 4 OTP boxes
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(4, (i) => _OtpBox(index: i, controller: controller)),
+                    children: List.generate(
+                      4,
+                      (i) => _OtpBox(
+                        index: i,
+                        otpControllers: _otpControllers,
+                        focusNodes: _focusNodes,
+                        onChanged: _onOtpChanged,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 32),
-                  if (controller.errorMsg.value.isNotEmpty)
+                  if (_controller.errorMsg.value.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Text(
-                        controller.errorMsg.value,
+                        _controller.errorMsg.value,
                         style: AppTextStyles.bodySmall.copyWith(color: AppColors.red),
                       ),
                     ),
                   CustomButton(
                     label: 'Verify Code',
-                    loading: controller.isLoading.value,
-                    onTap: controller.verifyCodeAndSetup,
+                    loading: _controller.isLoading.value,
+                    onTap: () async {
+                      final otp = _otpControllers.map((c) => c.text).join();
+                      final parentId = await _controller.verifyCodeAndSetup(otp);
+                      if (parentId != null && context.mounted) {
+                        _showPasswordCreationDialog(context, parentId);
+                      }
+                    },
                   ),
                   const SizedBox(height: 24),
                   Center(
                     child: TextButton(
                       onPressed: () {
-                        controller.phone.value = '';
-                        for (final c in controller.otpControllers) c.clear();
+                        _controller.phone.value = '';
+                        for (final c in _otpControllers) {
+                          c.clear();
+                        }
                       },
                       child: Text(
                         'Change Mobile Number',
@@ -106,8 +211,16 @@ class OtpView extends GetView<OtpController> {
 
 class _OtpBox extends StatelessWidget {
   final int index;
-  final OtpController controller;
-  const _OtpBox({required this.index, required this.controller});
+  final List<TextEditingController> otpControllers;
+  final List<FocusNode> focusNodes;
+  final void Function(String, int) onChanged;
+
+  const _OtpBox({
+    required this.index,
+    required this.otpControllers,
+    required this.focusNodes,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -115,8 +228,8 @@ class _OtpBox extends StatelessWidget {
       width: 50,
       height: 60,
       child: TextField(
-        controller: controller.otpControllers[index],
-        focusNode: controller.focusNodes[index],
+        controller: otpControllers[index],
+        focusNode: focusNodes[index],
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
@@ -140,7 +253,7 @@ class _OtpBox extends StatelessWidget {
             borderSide: const BorderSide(color: AppColors.primaryMid, width: 2),
           ),
         ),
-        onChanged: (val) => controller.onOtpChanged(val, index),
+        onChanged: (val) => onChanged(val, index),
       ),
     );
   }

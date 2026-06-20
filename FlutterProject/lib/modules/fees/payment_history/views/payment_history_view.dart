@@ -55,8 +55,11 @@ class PaymentHistoryView extends GetView<PaymentHistoryController> {
             itemBuilder: (context, index) {
               final payment = controller.payments[index];
               final dateStr = payment.paymentDate.split('T').first;
+              final isTransport = payment.isTransport;
+              
+              final isNewMonth = index == 0 || payment.monthLabel != controller.payments[index - 1].monthLabel;
 
-              return Container(
+              Widget row = Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -69,18 +72,23 @@ class PaymentHistoryView extends GetView<PaymentHistoryController> {
                     Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(
-                        color: AppColors.tealPale,
+                      decoration: BoxDecoration(
+                        color: isTransport ? AppColors.amberPale : AppColors.tealPale,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check_rounded, color: AppColors.teal, size: 22),
+                      child: Icon(isTransport ? Icons.directions_bus_rounded : Icons.school_rounded, 
+                                  color: isTransport ? AppColors.amber : AppColors.teal, size: 22),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Fee Payment', style: AppTextStyles.labelLarge),
+                          Text('${payment.categoryLabel} Fee', style: AppTextStyles.labelLarge),
+                          if (payment.termName.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(payment.termName, style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryMid, fontWeight: FontWeight.w600)),
+                          ],
                           const SizedBox(height: 2),
                           Text('Txn: ${payment.transactionId}', style: AppTextStyles.bodySmall),
                           Text('Date: $dateStr', style: AppTextStyles.bodySmall),
@@ -108,6 +116,21 @@ class PaymentHistoryView extends GetView<PaymentHistoryController> {
                   ],
                 ),
               );
+
+              if (isNewMonth && payment.monthLabel.isNotEmpty) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 12, left: 4),
+                      child: Text(payment.monthLabel, style: AppTextStyles.h3),
+                    ),
+                    row,
+                  ],
+                );
+              }
+
+              return row;
             },
           );
         }),

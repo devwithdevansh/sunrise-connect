@@ -8,8 +8,31 @@ import '../../../../core/widgets/custom_textfield.dart';
 import '../../../../core/utils/validators.dart';
 import '../controllers/login_controller.dart';
 
-class LoginView extends GetView<LoginController> {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final _formKey = GlobalKey<FormState>();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  late final LoginController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<LoginController>();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +43,7 @@ class LoginView extends GetView<LoginController> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Form(
-              key: controller.formKey,
+              key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +76,7 @@ class LoginView extends GetView<LoginController> {
                   CustomTextField(
                     label: 'Mobile Number',
                     hint: '98765 43210',
-                    controller: controller.phoneController,
+                    controller: _phoneController,
                     validator: Validators.phone,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
@@ -67,7 +90,7 @@ class LoginView extends GetView<LoginController> {
                   CustomTextField(
                     label: 'Password',
                     hint: '••••••••',
-                    controller: controller.passwordController,
+                    controller: _passwordController,
                     obscureText: true,
                     validator: (val) {
                       if (val == null || val.isEmpty) return 'Password is required';
@@ -77,13 +100,20 @@ class LoginView extends GetView<LoginController> {
                   const SizedBox(height: 32),
                   Obx(() => CustomButton(
                         label: 'Login',
-                        loading: controller.isLoading.value,
-                        onTap: controller.login,
+                        loading: _controller.isLoading.value,
+                        onTap: () {
+                          if (_formKey.currentState!.validate()) {
+                            _controller.login(
+                              phone: _phoneController.text.trim(),
+                              password: _passwordController.text,
+                            );
+                          }
+                        },
                       )),
                   const SizedBox(height: 24),
                   Center(
                     child: TextButton(
-                      onPressed: controller.goToOnboarding,
+                      onPressed: _controller.goToOnboarding,
                       child: Text(
                         'First time here? Set up password',
                         style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid),
