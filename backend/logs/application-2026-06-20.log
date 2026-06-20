@@ -768,3 +768,41 @@
 2026-06-20 20:25:32 info: GET /api/v1/ledgers?limit=1000
 2026-06-20 20:25:32 info: GET /api/v1/fee-categories
 2026-06-20 20:25:32 info: GET /api/v1/academic-years
+2026-06-20 20:31:12 info: Server is running on port 3000 in development mode
+2026-06-20 20:31:13 info: MongoDB connected
+2026-06-20 20:31:18 info: GET /api/v1/students?limit=1000
+2026-06-20 20:31:18 info: GET /api/v1/ledgers?limit=1000
+2026-06-20 20:31:18 info: GET /api/v1/payments?limit=1000
+2026-06-20 20:31:18 info: GET /api/v1/fee-structures
+2026-06-20 20:31:18 info: GET /api/v1/audit?limit=100
+2026-06-20 20:31:18 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-20 20:31:18 info: GET /api/v1/academic-years
+2026-06-20 20:31:18 info: GET /api/v1/fee-categories
+2026-06-20 20:31:18 info: GET /api/v1/audit?limit=100
+2026-06-20 20:31:18 error: Error: Missing or malformed Authorization header
+    at authenticate (file:///E:/Sunrise%20Connect/backend/src/middlewares/auth.middleware.js:10:17)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+    at E:\Sunrise Connect\backend\node_modules\router\index.js:297:9
+    at processParams (E:\Sunrise Connect\backend\node_modules\router\index.js:582:12)
+    at next (E:\Sunrise Connect\backend\node_modules\router\index.js:291:5)
+    at Function.handle (E:\Sunrise Connect\backend\node_modules\router\index.js:186:3)
+    at router (E:\Sunrise Connect\backend\node_modules\router\index.js:60:12)
+    at Layer.handleRequest (E:\Sunrise Connect\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (E:\Sunrise Connect\backend\node_modules\router\index.js:342:13)
+2026-06-20 20:31:18 info: GET /api/v1/academic-years
+2026-06-20 20:31:18 info: GET /api/v1/fee-categories
+2026-06-20 20:31:18 info: GET /api/v1/payments?limit=1000
+2026-06-20 20:31:18 info: GET /api/v1/fee-structures
+2026-06-20 20:31:18 info: GET /api/v1/ledgers?limit=1000
+2026-06-20 20:31:18 info: GET /api/v1/students?limit=1000
