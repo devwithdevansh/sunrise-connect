@@ -210,6 +210,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               })()
             : 'General Fee',
           amount: tx.amount,
+          concessionAmount: tx.concessionAmount || 0,
           method: tx.method,
           time: tx.createdAt ? new Date(tx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
           status: tx.isReversal ? 'REVERSED' : (ledger?.status || 'PAID'),
@@ -303,49 +304,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         const currentRemaining = ledger.remainingAmount;
 
-        // 1. Concession
+        // Calculate concession for this ledger slot
         let concessionApplied = 0;
         if (concessionRemaining > 0) {
           concessionApplied = Math.min(currentRemaining, concessionRemaining);
           concessionRemaining -= concessionApplied;
-
-          if (concessionApplied > 0) {
-            const concRes = await fetch(`/api/v1/ledgers/${ledgerId}/concession`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ amount: concessionApplied, reason: remark || 'Concession applied' })
-            });
-            if (!concRes.ok) {
-              console.error(`Failed to apply concession for ledger ${ledgerId}`);
-            }
-          }
         }
 
-        // 2. Payment
+        // Calculate payment after concession
         const remainingAfterConcession = currentRemaining - concessionApplied;
         let paymentApplied = 0;
         if (paymentRemaining > 0 && remainingAfterConcession > 0) {
           paymentApplied = Math.min(remainingAfterConcession, paymentRemaining);
           paymentRemaining -= paymentApplied;
+        }
 
-          if (paymentApplied > 0) {
-            const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-            const payRes = await fetch('/api/v1/payments', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Idempotency-Key': idempotencyKey
-              },
-              body: JSON.stringify({
-                ledgerId,
-                amount: paymentApplied,
-                method: methodMapped,
-                details: { remark }
-              })
-            });
-            if (!payRes.ok) {
-              console.error(`Failed to record payment for ledger ${ledgerId}`);
-            }
+        if (paymentApplied > 0) {
+          // Case A: Payment (with optional embedded concession) - single Payment record that stores concessionAmount
+          const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+          const payRes = await fetch('/api/v1/payments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Idempotency-Key': idempotencyKey
+            },
+            body: JSON.stringify({
+              ledgerId,
+              amount: paymentApplied,
+              concessionAmount: concessionApplied,
+              method: methodMapped,
+              details: { remark }
+            })
+          });
+          if (!payRes.ok) {
+            console.error(`Failed to record payment for ledger ${ledgerId}`);
+          }
+        } else if (concessionApplied > 0) {
+          // Case B: Concession only (no payment portion) - use standalone concession endpoint
+          const concRes = await fetch(`/api/v1/ledgers/${ledgerId}/concession`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: concessionApplied, reason: remark || 'Concession applied' })
+          });
+          if (!concRes.ok) {
+            console.error(`Failed to apply concession for ledger ${ledgerId}`);
           }
         }
       }

@@ -45,6 +45,11 @@ export const Dashboard: React.FC = () => {
       .reduce((sum, t) => sum + t.amount, 0);
   }, [todayTransactions]);
 
+  // Today's Concession – summed directly from payment records stored in DB
+  const todayConcession = useMemo(() => {
+    return todayTransactions.reduce((sum, t) => sum + (t.concessionAmount || 0), 0);
+  }, [todayTransactions]);
+
   // Payment mode stats for today
   const getModeSum = (method: string) => {
     if (method === 'ONLINE') {
@@ -175,6 +180,10 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center gap-2 bg-blue-900/40 px-3 py-1.5 rounded-full border border-blue-400/30">
             <span className="h-2 w-2 rounded-full bg-teal-400"></span>
             <span>Gujarati Medium: <strong className="text-white">₹{gujaratiCol.toLocaleString('en-IN')}</strong></span>
+          </div>
+          <div className="flex items-center gap-2 bg-blue-900/40 px-3 py-1.5 rounded-full border border-blue-400/30">
+            <span className="h-2 w-2 rounded-full bg-pink-400"></span>
+            <span>Concessions Given: <strong className="text-white">₹{todayConcession.toLocaleString('en-IN')}</strong></span>
           </div>
         </div>
       </section>

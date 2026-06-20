@@ -16,6 +16,10 @@ const paymentSchema = new mongoose.Schema(
       required: [true, 'Amount is required'],
       // Negative amounts represent reversals
     },
+    concessionAmount: {
+      type: Number,
+      default: 0,
+    },
     method: {
       type: String,
       required: [true, 'Payment method is required'],

@@ -37,6 +37,7 @@ export interface PaymentTransaction {
   classInfo: string; // e.g. "7 - A Gujarati"
   feeType: string; // e.g. "Education Fee - June"
   amount: number;
+  concessionAmount?: number; // concession applied in this payment record
   method: 'CASH' | 'CHEQUE' | 'ONLINE' | 'UPI' | 'CARD' | 'NET BANKING' | 'GOVT';
   time: string; // e.g. "9:42 AM"
   status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED';

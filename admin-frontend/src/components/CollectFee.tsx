@@ -133,13 +133,53 @@ export const CollectFee: React.FC = () => {
     // Don't toggle already fully PAID periods
     if (entry && entry.status === 'PAID') return;
     
+    if (category === 'ADMISSION' || category === 'BAG_KIT') {
+      setSelectedFees((prev) => {
+        const exists = prev.find((p) => p.category === category && p.period === period);
+        if (exists) {
+          return prev.filter((p) => !(p.category === category && p.period === period));
+        } else {
+          return [...prev, { category, period }];
+        }
+      });
+      return;
+    }
+
+    // Determine the ordered list for sequential enforcement
+    const configList = (category === 'EDUCATION' || category === 'TERM') 
+      ? COMBINED_EDU_TERM_CONFIG 
+      : MONTHS_CONFIG;
+    
+    const clickedIndex = configList.findIndex(c => c.value === period);
+
     setSelectedFees((prev) => {
-      const exists = prev.find((p) => p.category === category && p.period === period);
-      if (exists) {
-        return prev.filter((p) => !(p.category === category && p.period === period));
+      const isCurrentlySelected = prev.some((p) => p.category === category && p.period === period);
+      let newSelections = [...prev];
+      
+      if (isCurrentlySelected) {
+        // Deselecting: also deselect any unpaid periods AFTER this one in the sequence
+        configList.forEach((c, idx) => {
+          if (idx >= clickedIndex) {
+            const cat = (category === 'EDUCATION' || category === 'TERM') ? c.type : category;
+            newSelections = newSelections.filter(p => !(p.category === cat && p.period === c.value));
+          }
+        });
       } else {
-        return [...prev, { category: category, period }];
+        // Selecting: also select any unpaid periods BEFORE this one in the sequence
+        configList.forEach((c, idx) => {
+          if (idx <= clickedIndex) {
+            const cat = (category === 'EDUCATION' || category === 'TERM') ? c.type : category;
+            const checkEntry = getLedger(cat, c.value);
+            const isPaid = checkEntry?.status === 'PAID';
+            const alreadySelected = newSelections.some(p => p.category === cat && p.period === c.value);
+            
+            if (!isPaid && !alreadySelected) {
+              newSelections.push({ category: cat, period: c.value });
+            }
+          }
+        });
       }
+      return newSelections;
     });
   };
 
@@ -165,10 +205,10 @@ export const CollectFee: React.FC = () => {
 
   const selectNextNMonths = (n: number) => {
     if (feeCategory === 'EDUCATION') {
-      const pendingEdu = COMBINED_EDU_TERM_CONFIG.filter(c => c.type === 'EDUCATION' && getDueAmount(c.type, c.value) > 0);
-      const toSelect = pendingEdu.slice(0, n);
+      const pendingItems = COMBINED_EDU_TERM_CONFIG.filter(c => getDueAmount(c.type, c.value) > 0);
+      const toSelect = pendingItems.slice(0, n);
       setSelectedFees((prev) => {
-        const otherCategories = prev.filter((p) => p.category !== 'EDUCATION');
+        const otherCategories = prev.filter((p) => p.category !== 'EDUCATION' && p.category !== 'TERM');
         const newSelections = toSelect.map((p) => ({ category: p.type, period: p.value }));
         return [...otherCategories, ...newSelections];
       });
@@ -420,15 +460,15 @@ export const CollectFee: React.FC = () => {
                     Select any month(s) — paid months are greyed, due months are highlighted
                   </p>
                   <div className="flex gap-3 text-[10px] uppercase font-bold text-blue-600 shrink-0">
-                    <button type="button" onClick={() => selectNextNMonths(1)} className="hover:underline">1M</button>
+                    <button type="button" onClick={() => selectNextNMonths(1)} className="hover:underline">1 Pay</button>
                     <span>·</span>
-                    <button type="button" onClick={() => selectNextNMonths(3)} className="hover:underline">3M</button>
+                    <button type="button" onClick={() => selectNextNMonths(3)} className="hover:underline">3 Pay</button>
                     <span>·</span>
-                    <button type="button" onClick={() => selectNextNMonths(6)} className="hover:underline">6M</button>
+                    <button type="button" onClick={() => selectNextNMonths(6)} className="hover:underline">6 Pay</button>
                     <span>·</span>
                     <button type="button" onClick={selectAllPending} className="hover:underline">Select All Due</button>
                     <span>·</span>
-                    <button type="button" onClick={() => setSelectedFees((prev) => prev.filter(p => p.category !== feeCategory))} className="hover:underline">Clear</button>
+                    <button type="button" onClick={() => setSelectedFees((prev) => prev.filter(p => feeCategory === 'EDUCATION' ? (p.category !== 'EDUCATION' && p.category !== 'TERM') : p.category !== feeCategory))} className="hover:underline">Clear</button>
                   </div>
                 </div>
 
