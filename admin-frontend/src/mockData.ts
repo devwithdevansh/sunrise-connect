@@ -8,6 +8,7 @@ export interface Student {
   division: string;
   transportType: 'Railnagar' | 'Outside Railnagar' | 'None';
   isRTE: boolean;
+  isNewAdmission?: boolean;
   isActive: boolean;
   parentName: string;
   parentMobile: string;

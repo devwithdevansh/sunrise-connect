@@ -253,57 +253,58 @@ class StudentService {
         });
       }
 
-      // 4. Admission ledger
-      ledgersToCreate.push({
-        studentId: student._id,
-        feePeriod: 'Admission',
-        feeType: 'ADMISSION',
-        totalAmount: admissionAmount,
-        paidAmount: 0,
-        concessionAmount: 0,
-        remainingAmount: admissionAmount,
-        dueDate: new Date('2026-06-15'),
-        status: 'PENDING',
-        feeCategoryId: admissionCategory._id,
-        academicYear: '2025-26',
-        source: 'MANUAL',
-        generatedFrom: 'FEE_STRUCTURE',
-        ledgerNumber: `LEDGER_ADM_${student.studentCode || student._id}`,
-        snapshot: {
-          studentName: student.studentName,
-          medium: student.medium,
-          standard: student.standard,
-          division: student.division,
-          transportType: student.transportType || 'None',
-          isRTE: isRTE
-        }
-      });
+      // 4. Admission ledger & 5. Bag & Kit ledger (only for new admissions)
+      if (student.isNewAdmission) {
+        ledgersToCreate.push({
+          studentId: student._id,
+          feePeriod: 'Admission',
+          feeType: 'ADMISSION',
+          totalAmount: admissionAmount,
+          paidAmount: 0,
+          concessionAmount: 0,
+          remainingAmount: admissionAmount,
+          dueDate: new Date('2026-06-15'),
+          status: 'PENDING',
+          feeCategoryId: admissionCategory._id,
+          academicYear: '2025-26',
+          source: 'MANUAL',
+          generatedFrom: 'FEE_STRUCTURE',
+          ledgerNumber: `LEDGER_ADM_${student.studentCode || student._id}`,
+          snapshot: {
+            studentName: student.studentName,
+            medium: student.medium,
+            standard: student.standard,
+            division: student.division,
+            transportType: student.transportType || 'None',
+            isRTE: isRTE
+          }
+        });
 
-      // 5. Bag & Kit ledger
-      ledgersToCreate.push({
-        studentId: student._id,
-        feePeriod: 'Bag & Kit',
-        feeType: 'BAG_KIT',
-        totalAmount: bagKitAmount,
-        paidAmount: 0,
-        concessionAmount: 0,
-        remainingAmount: bagKitAmount,
-        dueDate: new Date('2026-06-15'),
-        status: 'PENDING',
-        feeCategoryId: bagKitCategory._id,
-        academicYear: '2025-26',
-        source: 'MANUAL',
-        generatedFrom: 'FEE_STRUCTURE',
-        ledgerNumber: `LEDGER_BAG_${student.studentCode || student._id}`,
-        snapshot: {
-          studentName: student.studentName,
-          medium: student.medium,
-          standard: student.standard,
-          division: student.division,
-          transportType: student.transportType || 'None',
-          isRTE: isRTE
-        }
-      });
+        ledgersToCreate.push({
+          studentId: student._id,
+          feePeriod: 'Bag & Kit',
+          feeType: 'BAG_KIT',
+          totalAmount: bagKitAmount,
+          paidAmount: 0,
+          concessionAmount: 0,
+          remainingAmount: bagKitAmount,
+          dueDate: new Date('2026-06-15'),
+          status: 'PENDING',
+          feeCategoryId: bagKitCategory._id,
+          academicYear: '2025-26',
+          source: 'MANUAL',
+          generatedFrom: 'FEE_STRUCTURE',
+          ledgerNumber: `LEDGER_BAG_${student.studentCode || student._id}`,
+          snapshot: {
+            studentName: student.studentName,
+            medium: student.medium,
+            standard: student.standard,
+            division: student.division,
+            transportType: student.transportType || 'None',
+            isRTE: isRTE
+          }
+        });
+      }
 
 
       await mongoose.model('StudentFeeLedger').insertMany(ledgersToCreate, { session });

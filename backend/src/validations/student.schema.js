@@ -13,6 +13,7 @@ export const createStudentSchema = {
     division: z.string().min(1),
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
+    isNewAdmission: z.boolean().optional(),
   }),
 };
 
@@ -24,6 +25,7 @@ export const updateStudentSchema = {
     division: z.string().optional(),
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
+    isNewAdmission: z.boolean().optional(),
     isActive: z.boolean().optional(),
   }),
   params: z.object({ id: z.string().min(1) }),
