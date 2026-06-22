@@ -36,3 +36,12 @@ export const listParentsSchema = {
     skip: z.coerce.number().int().min(0).optional(),
   }),
 };
+
+export const checkMobileSchema = {
+  query: z.object({
+    primaryMobile: z.string().optional(),
+    secondaryMobile: z.string().optional()
+  }).refine(data => data.primaryMobile || data.secondaryMobile, {
+    message: "At least one mobile number must be provided"
+  }),
+};

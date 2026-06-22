@@ -10,6 +10,12 @@ class ParentController {
     sendResponse(res, 201, parent);
   });
 
+  /** GET /api/v1/parents/check-mobile */
+  static checkMobile = catchAsync(async (req, res) => {
+    const parent = await ParentService.checkMobile(req.query);
+    sendResponse(res, 200, parent);
+  });
+
   /** GET /api/v1/parents */
   static listParents = catchAsync(async (req, res) => {
     const { limit = 20, skip = 0, ...filter } = req.query;

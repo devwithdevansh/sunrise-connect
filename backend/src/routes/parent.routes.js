@@ -9,6 +9,7 @@ import {
   updateParentSchema,
   listParentsSchema,
   resetPasswordSchema,
+  checkMobileSchema,
 } from '../validations/parent.schema.js';
 
 const router = Router();
@@ -16,6 +17,7 @@ const router = Router();
 // All parent routes require authentication
 router.use(authenticate);
 
+router.get('/check-mobile',     authorize('ADMIN', 'STAFF'), validate(checkMobileSchema), ParentController.checkMobile);
 router.post('/',                authorize('ADMIN', 'STAFF'), validate(createParentSchema), ParentController.createParent);
 router.get('/',                 authorize('ADMIN', 'STAFF'), validate(listParentsSchema),  ParentController.listParents);
 router.get('/:id',              authorize('ADMIN', 'STAFF', 'parent'), ParentController.getParent);

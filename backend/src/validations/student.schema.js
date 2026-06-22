@@ -8,6 +8,7 @@ export const createStudentSchema = {
     studentName: z.string().min(1).max(100),
     parentName: z.string().optional(),
     parentMobile: z.string().optional(),
+    parentSecondaryMobile: z.string().optional(),
     medium: z.enum(['English', 'Gujarati']),
     standard: z.string().min(1),
     division: z.string().min(1),

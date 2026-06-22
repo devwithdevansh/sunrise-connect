@@ -27,12 +27,22 @@ class StudentService {
         
         let parent = await mongoose.model('Parent').findOne({ primaryMobileNumber: mobile }, null, { session });
         if (!parent) {
-          parent = await mongoose.model('Parent').create([{
+          const newParent = {
             parentName: data.parentName || `Parent of ${data.studentName}`,
             primaryMobileNumber: mobile,
             passwordHash: 'hashedpassword',
             isActive: true
-          }], { session }).then(docs => docs[0]);
+          };
+          if (data.parentSecondaryMobile) {
+            let secMobile = data.parentSecondaryMobile.replace(/\D/g, '');
+            if (secMobile.length > 10) secMobile = secMobile.slice(-10);
+            if (!/^[6-9]\d{9}$/.test(secMobile)) {
+              secMobile = '9' + secMobile.padEnd(9, '0').slice(0, 9);
+            }
+            newParent.secondaryMobileNumber = secMobile;
+          }
+
+          parent = await mongoose.model('Parent').create([newParent], { session }).then(docs => docs[0]);
         }
         parentId = parent._id;
       }

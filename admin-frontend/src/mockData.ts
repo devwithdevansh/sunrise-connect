@@ -10,8 +10,10 @@ export interface Student {
   isRTE: boolean;
   isNewAdmission?: boolean;
   isActive: boolean;
+  parentId?: string;
   parentName: string;
   parentMobile: string;
+  parentSecondaryMobile?: string;
   status: 'PAID' | 'PARTIAL' | '2 DUE' | '1 DUE' | '3+ DUE' | 'RTE';
 }
 

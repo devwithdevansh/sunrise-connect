@@ -4,7 +4,7 @@ import { useApp } from '../store';
 import { Search, ChevronDown, Plus, X } from 'lucide-react';
 
 export const Students: React.FC = () => {
-  const { students, addStudent, setScreen } = useApp();
+  const { students, addStudent, setScreen, checkMobile } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('All Classes');
   const [divFilter, setDivFilter] = useState('All Divisions');
@@ -17,6 +17,7 @@ export const Students: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newSName, setNewSName] = useState('');
   const [newSParentMobile, setNewSParentMobile] = useState('');
+  const [newSParentSecondaryMobile, setNewSParentSecondaryMobile] = useState('');
   const [newSParentName, setNewSParentName] = useState('');
   const [newSMedium, setNewSMedium] = useState<'English' | 'Gujarati'>('English');
   const [newSStandard, setNewSStandard] = useState('5');
@@ -24,6 +25,9 @@ export const Students: React.FC = () => {
   const [newSTransport, setNewSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
+
+  // Sibling Modal State
+  const [siblingModalData, setSiblingModalData] = useState<{parentName: string, parentId: string} | null>(null);
 
   const filteredStudents = students.filter((s) => {
     // Quick filter chips
@@ -49,15 +53,27 @@ export const Students: React.FC = () => {
 
 
 
-  const handleCreateStudent = (e: React.FormEvent) => {
+  const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSName || !newSParentMobile || !newSParentName) return;
 
+    // Check if mobile numbers already exist
+    const checkRes = await checkMobile(newSParentMobile, newSParentSecondaryMobile);
+    if (checkRes && checkRes.exists && checkRes.parent) {
+      setSiblingModalData({ parentName: checkRes.parent.parentName, parentId: checkRes.parent._id });
+    } else {
+      submitStudentCreation();
+    }
+  };
+
+  const submitStudentCreation = (existingParentId?: string) => {
     addStudent({
       studentCode: `STU${Date.now()}`,
       studentName: newSName,
       parentName: newSParentName,
       parentMobile: newSParentMobile,
+      parentSecondaryMobile: newSParentSecondaryMobile || undefined,
+      parentId: existingParentId,
       medium: newSMedium,
       standard: newSStandard,
       division: newSDivision,
@@ -70,6 +86,7 @@ export const Students: React.FC = () => {
     // Reset states
     setNewSName('');
     setNewSParentMobile('');
+    setNewSParentSecondaryMobile('');
     setNewSParentName('');
     setNewSMedium('English');
     setNewSStandard('5');
@@ -373,6 +390,19 @@ export const Students: React.FC = () => {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Secondary Mobile</label>
+                  <input
+                    type="text"
+                    value={newSParentSecondaryMobile}
+                    onChange={(e) => setNewSParentSecondaryMobile(e.target.value)}
+                    placeholder="Optional secondary number"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Medium of Instruction</label>
                   <select
                     value={newSMedium}
@@ -468,6 +498,38 @@ export const Students: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Sibling Check Modal */}
+      {siblingModalData && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-fade-in">
+          <div className="w-full max-w-sm bg-white rounded-2xl border border-slate-100 shadow-2xl p-6 relative overflow-hidden animate-scale-up">
+            <h3 className="text-lg font-extrabold text-slate-800 mb-2">Number Already Exists</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              The mobile number provided already belongs to parent <strong>{siblingModalData.parentName}</strong>. Is this new student a sibling?
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  submitStudentCreation(siblingModalData.parentId);
+                  setSiblingModalData(null);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all"
+              >
+                Yes, this is a sibling
+              </button>
+              <button
+                onClick={() => {
+                  setSiblingModalData(null);
+                  alert("Please enter a different mobile number for this new parent. Unique numbers are required for distinct parents.");
+                }}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-xl transition-all"
+              >
+                No, this is a different parent
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -98,9 +98,9 @@ interface AppContextType {
   createAcademicYear: (data: Partial<AcademicYearData>) => Promise<boolean>;
   activateAcademicYear: (id: string) => Promise<boolean>;
   createFeeCategory: (data: Partial<FeeCategoryData>) => Promise<boolean>;
-  currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
+  checkMobile: (primary: string, secondary: string) => Promise<any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -584,12 +584,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error('Failed to create fee category');
+      if (!res.ok) return false;
       await fetchAll();
       return true;
     } catch (err) {
-      console.error(err);
       return false;
+    }
+  };
+
+  const checkMobile = async (primary: string, secondary: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (primary) params.append('primaryMobile', primary);
+      if (secondary) params.append('secondaryMobile', secondary);
+      
+      const res = await authFetch(`/api/v1/parents/check-mobile?${params.toString()}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.data; // { exists: boolean, parent: object | null }
+    } catch (err) {
+      console.error(err);
+      return null;
     }
   };
 
@@ -619,7 +634,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createFeeCategory,
         currentUser,
         login,
-        logout
+        logout,
+        checkMobile
       }}
     >
       {children}

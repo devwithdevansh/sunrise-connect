@@ -64,6 +64,34 @@ class ParentService {
     return parentRepository.find(filter, null, pagination);
   }
 
+  /** Check if any parent exists with the given primary or secondary mobile number */
+  static async checkMobile(query) {
+    const numbersToCheck = [];
+    if (query.primaryMobile) {
+      let mobile = query.primaryMobile.replace(/\D/g, '');
+      if (mobile.length > 10) mobile = mobile.slice(-10);
+      if (!/^[6-9]\d{9}$/.test(mobile)) mobile = '9' + mobile.padEnd(9, '0').slice(0, 9);
+      numbersToCheck.push(mobile);
+    }
+    if (query.secondaryMobile) {
+      let mobile = query.secondaryMobile.replace(/\D/g, '');
+      if (mobile.length > 10) mobile = mobile.slice(-10);
+      if (!/^[6-9]\d{9}$/.test(mobile)) mobile = '9' + mobile.padEnd(9, '0').slice(0, 9);
+      numbersToCheck.push(mobile);
+    }
+
+    if (numbersToCheck.length === 0) return { exists: false, parent: null };
+
+    const parent = await parentRepository.findOne({
+      $or: [
+        { primaryMobileNumber: { $in: numbersToCheck } },
+        { secondaryMobileNumber: { $in: numbersToCheck } }
+      ]
+    });
+
+    return { exists: !!parent, parent };
+  }
+
   /**
    * Admin‑only password reset.
    * Verifies last 4 digits of primaryMobileNumber in service layer (no DB field).
