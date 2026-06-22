@@ -9,7 +9,7 @@ const store = new Map(); // key -> [timestamps]
  * rateLimit({ windowMs, max })
  * Keyed by IP address.
  */
-const rateLimit = ({ windowMs = 15 * 60 * 1000, max = 100 } = {}) =>
+const rateLimit = ({ windowMs = 15 * 60 * 10000, max = 1000 } = {}) =>
   (req, res, next) => {
     const key = req.ip || 'unknown';
     const now = Date.now();
@@ -23,9 +23,9 @@ const rateLimit = ({ windowMs = 15 * 60 * 1000, max = 100 } = {}) =>
   };
 
 /** Stricter limiter for auth endpoints */
-export const authRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+export const authRateLimit = rateLimit({ windowMs: 15 * 60 * 10000, max: 1000 });
 
 /** Default API limiter */
-export const apiRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+export const apiRateLimit = rateLimit({ windowMs: 15 * 60 * 10000, max: 2000 });
 
 export default rateLimit;

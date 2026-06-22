@@ -103,38 +103,14 @@
 <a name='L38'></a><a href='#L38'>38</a>
 <a name='L39'></a><a href='#L39'>39</a>
 <a name='L40'></a><a href='#L40'>40</a>
-<<<<<<< HEAD
-<a name='L41'></a><a href='#L41'>41</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-=======
 <a name='L41'></a><a href='#L41'>41</a>
 <a name='L42'></a><a href='#L42'>42</a>
-<a name='L43'></a><a href='#L43'>43</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<<<<<<< HEAD
-<span class="cline-any cline-yes">8x</span>
-=======
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -147,11 +123,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<<<<<<< HEAD
-<span class="cline-any cline-yes">8x</span>
-=======
-<span class="cline-any cline-yes">1x</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -167,22 +156,17 @@ import { z } from 'zod';
 &nbsp;
 export const createStudentSchema = {
   body: z.object({
-<<<<<<< HEAD
-    parentId: z.string().min(1),
-    studentCode: z.string().min(1),
-    studentName: z.string().min(1).max(100),
-=======
     parentId: z.string().min(1).optional(),
     studentCode: z.string().min(1).optional(),
     studentName: z.string().min(1).max(100),
     parentName: z.string().optional(),
     parentMobile: z.string().optional(),
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
     medium: z.enum(['English', 'Gujarati']),
     standard: z.string().min(1),
     division: z.string().min(1),
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
+    isNewAdmission: z.boolean().optional(),
   }),
 };
 &nbsp;
@@ -194,6 +178,7 @@ export const updateStudentSchema = {
     division: z.string().optional(),
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
+    isNewAdmission: z.boolean().optional(),
     isActive: z.boolean().optional(),
   }),
   params: z.object({ id: z.string().min(1) }),
@@ -206,11 +191,7 @@ export const listStudentsSchema = {
     standard: z.string().optional(),
     division: z.string().optional(),
     isActive: z.coerce.boolean().optional(),
-<<<<<<< HEAD
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-=======
     limit: z.coerce.number().int().min(1).max(2000).optional(),
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
     skip: z.coerce.number().int().min(0).optional(),
   }),
 };
@@ -221,11 +202,7 @@ export const listStudentsSchema = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-<<<<<<< HEAD
-                at 2026-06-19T04:46:02.845Z
-=======
-                at 2026-06-18T10:09:33.174Z
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                at 2026-06-22T08:11:20.094Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

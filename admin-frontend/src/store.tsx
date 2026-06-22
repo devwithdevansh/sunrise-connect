@@ -99,14 +99,21 @@ interface AppContextType {
   activateAcademicYear: (id: string) => Promise<boolean>;
   createFeeCategory: (data: Partial<FeeCategoryData>) => Promise<boolean>;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
-  login: (email: string, pass: string) => boolean;
+  login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentScreen, setScreen] = useState<ScreenType>('dashboard');
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: 'ADMIN' | 'STAFF' } | null>(() => {
+    const saved = localStorage.getItem('currentUser');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [currentScreen, setScreen] = useState<ScreenType>(() => {
+    const saved = localStorage.getItem('currentUser');
+    return saved ? 'dashboard' : 'login';
+  });
   const [students, setStudents] = useState<Student[]>([]);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
@@ -116,17 +123,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
+  // Authenticated fetch wrapper that appends Bearer token and handles auto-refresh on 401
+  const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    let token = localStorage.getItem('accessToken');
+    const headers = {
+      ...(options.headers || {}),
+    } as Record<string, string>;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    let res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+      const savedRefreshToken = localStorage.getItem('refreshToken');
+      const userId = localStorage.getItem('userId');
+      if (savedRefreshToken && userId) {
+        try {
+          const refreshRes = await fetch('/api/v1/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              domain: 'user',
+              userId,
+              refreshToken: savedRefreshToken
+            })
+          });
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
+            localStorage.setItem('accessToken', newAccessToken);
+            localStorage.setItem('refreshToken', newRefreshToken);
+            headers['Authorization'] = `Bearer ${newAccessToken}`;
+            res = await fetch(url, { ...options, headers });
+            return res;
+          }
+        } catch (refreshErr) {
+          console.error('Failed to auto-refresh token:', refreshErr);
+        }
+      }
+      logout();
+      throw new Error('Session expired. Please log in again.');
+    }
+    return res;
+  };
+
   // Fetch data from backend on mount and after mutations
   const fetchAll = async () => {
     try {
       const [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes] = await Promise.all([
-        fetch('/api/v1/students?limit=1000'),
-        fetch('/api/v1/ledgers?limit=1000'),
-        fetch('/api/v1/payments?limit=1000'),
-        fetch('/api/v1/fee-structures'),
-        fetch('/api/v1/audit?limit=100'),
-        fetch('/api/v1/academic-years'),
-        fetch('/api/v1/fee-categories')
+        authFetch('/api/v1/students?limit=1000'),
+        authFetch('/api/v1/ledgers?limit=1000'),
+        authFetch('/api/v1/payments?limit=1000'),
+        authFetch('/api/v1/fee-structures'),
+        authFetch('/api/v1/audit?limit=100'),
+        authFetch('/api/v1/academic-years'),
+        authFetch('/api/v1/fee-categories')
       ]);
       const [studResp, ledResp, txResp, feeResp, auditResp, ayResp, fcResp] = await Promise.all([
         studRes.json(),
@@ -228,28 +278,69 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   useEffect(() => {
-    fetchAll();
-  }, []);
-
-  const [currentUser, setCurrentUser] = useState<{ name: string; role: 'ADMIN' | 'STAFF' } | null>({
-    name: 'Admin User',
-    role: 'ADMIN'
-  });
-
-  const login = (email: string, pass: string): boolean => {
-    if (email === 'admin@school.com' && pass === 'secret123') {
-      setCurrentUser({ name: 'Admin User', role: 'ADMIN' });
-      setScreen('dashboard');
-      return true;
-    } else if (email === 'staff@school.com' && pass === 'secret123') {
-      setCurrentUser({ name: 'Staff User', role: 'STAFF' });
-      setScreen('dashboard');
-      return true;
+    if (currentUser) {
+      fetchAll();
     }
-    return false;
+  }, [currentUser]);
+
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/v1/auth/portal/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      if (!res.ok) {
+        return false;
+      }
+      const data = await res.json();
+      const { accessToken, refreshToken } = data.data;
+
+      // Decode JWT to get role and ID
+      const payloadBase64 = accessToken.split('.')[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      const userId = payload.id;
+      const role = payload.role; // 'ADMIN' or 'STAFF'
+
+      const namePrefix = email.split('@')[0];
+      const name = namePrefix.charAt(0).toUpperCase() + namePrefix.slice(1);
+
+      const userObj = { name, role };
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('currentUser', JSON.stringify(userObj));
+
+      setCurrentUser(userObj);
+      setScreen('dashboard');
+      return true;
+    } catch (err) {
+      console.error('Login error:', err);
+      return false;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (token && refreshToken) {
+      try {
+        await fetch('/api/v1/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ refreshToken })
+        });
+      } catch (err) {
+        console.error('Logout request failed:', err);
+      }
+    }
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('currentUser');
     setCurrentUser(null);
     setScreen('login');
   };
@@ -257,7 +348,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addStudent = async (newS: Omit<Student, 'id' | 'status'>) => {
     try {
       const payload = newS;
-      const res = await fetch('/api/v1/students', {
+      const res = await authFetch('/api/v1/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -322,7 +413,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (paymentApplied > 0) {
           // Case A: Payment (with optional embedded concession) - single Payment record that stores concessionAmount
           const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-          const payRes = await fetch('/api/v1/payments', {
+          const payRes = await authFetch('/api/v1/payments', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -341,7 +432,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
         } else if (concessionApplied > 0) {
           // Case B: Concession only (no payment portion) - use standalone concession endpoint
-          const concRes = await fetch(`/api/v1/ledgers/${ledgerId}/concession`, {
+          const concRes = await authFetch(`/api/v1/ledgers/${ledgerId}/concession`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: concessionApplied, reason: remark || 'Concession applied' })
@@ -360,7 +451,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const applyConcession = async (ledgerId: string, amount: number) => {
     try {
-      const res = await fetch(`/api/v1/ledgers/${ledgerId}/concession`, {
+      const res = await authFetch(`/api/v1/ledgers/${ledgerId}/concession`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, reason: 'Applied concession manually' })
@@ -375,7 +466,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Reverse a payment by calling the backend API
   const reversePayment = async (transactionId: string) => {
     try {
-      const res = await fetch(`/api/v1/payments/${transactionId}/reverse`, {
+      const res = await authFetch(`/api/v1/payments/${transactionId}/reverse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: 'Manual reversal by admin' })
@@ -391,7 +482,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Update a standard fee structure
   const updateFeeStructure = async (id: string, data: Partial<FeeStructureData>): Promise<boolean> => {
     try {
-      const res = await fetch(`/api/v1/fee-structures/${id}`, {
+      const res = await authFetch(`/api/v1/fee-structures/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -408,7 +499,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Update a transport fee structure
   const updateTransportFeeStructure = async (id: string, data: Partial<TransportFeeStructureData>): Promise<boolean> => {
     try {
-      const res = await fetch(`/api/v1/fee-structures/transport/${id}`, {
+      const res = await authFetch(`/api/v1/fee-structures/transport/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -424,7 +515,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const createFeeStructure = async (data: Partial<FeeStructureData>): Promise<boolean> => {
     try {
-      const res = await fetch('/api/v1/fee-structures', {
+      const res = await authFetch('/api/v1/fee-structures', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -440,7 +531,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const createTransportFeeStructure = async (data: Partial<TransportFeeStructureData>): Promise<boolean> => {
     try {
-      const res = await fetch('/api/v1/fee-structures/transport', {
+      const res = await authFetch('/api/v1/fee-structures/transport', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -456,7 +547,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const createAcademicYear = async (data: Partial<AcademicYearData>): Promise<boolean> => {
     try {
-      const res = await fetch('/api/v1/academic-years', {
+      const res = await authFetch('/api/v1/academic-years', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -472,7 +563,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const activateAcademicYear = async (id: string): Promise<boolean> => {
     try {
-      const res = await fetch(`/api/v1/academic-years/${id}`, {
+      const res = await authFetch(`/api/v1/academic-years/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: true })
@@ -488,7 +579,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const createFeeCategory = async (data: Partial<FeeCategoryData>): Promise<boolean> => {
     try {
-      const res = await fetch('/api/v1/fee-categories', {
+      const res = await authFetch('/api/v1/fee-categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

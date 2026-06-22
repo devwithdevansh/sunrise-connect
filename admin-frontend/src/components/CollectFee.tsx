@@ -55,6 +55,16 @@ export const CollectFee: React.FC = () => {
     }
   }, [students, selectedStudent]);
 
+  // Sync selected student when students list is refreshed
+  useEffect(() => {
+    if (selectedStudent && students.length > 0) {
+      const updated = students.find(s => s._id === selectedStudent._id || s.id === selectedStudent.id);
+      if (updated) {
+        setSelectedStudent(updated);
+      }
+    }
+  }, [students]);
+
   // -------------------------------------------------------------------
   // Dynamic fee amounts derived from DB-backed feeStructures
   // -------------------------------------------------------------------

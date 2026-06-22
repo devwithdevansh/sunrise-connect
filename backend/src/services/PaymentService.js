@@ -11,7 +11,7 @@ import AppError from '../utils/AppError.js';
 
 class PaymentService {
   /** Create a payment and atomically update the ledger paidAmount */
-  static async createPayment({ ledgerId, amount, method, details = {}, performedBy = null }) {
+  static async createPayment({ ledgerId, amount, concessionAmount = 0, method, details = {}, performedBy = null }) {
     if (amount <= 0) throw new AppError('Payment amount must be positive', 400);
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -21,23 +21,24 @@ class PaymentService {
       if (!ledger) throw new AppError('Ledger not found', 404);
 
       const newPaid = ledger.paidAmount + amount;
-      const remaining = ledger.totalAmount - newPaid - ledger.concessionAmount;
+      const newConcession = ledger.concessionAmount + concessionAmount;
+      const remaining = ledger.totalAmount - newPaid - newConcession;
       if (remaining < 0) throw new AppError('Over‑payment not allowed', 400);
 
       const status = remaining === 0 ? 'PAID' : 'PARTIAL';
       // Insert payment record
-      const payment = await paymentRepository.create({ ledgerId, amount, method, details }, { session });
+      const payment = await paymentRepository.create({ ledgerId, amount, concessionAmount, method, details }, { session });
 
       // Atomic OCC ledger update
       const updateResult = await ledgerRepository.updateOne(
         { _id: ledgerId, __v: ledger.__v },
-        { $set: { paidAmount: newPaid, remainingAmount: remaining, status }, $inc: { __v: 1 } },
+        { $set: { paidAmount: newPaid, concessionAmount: newConcession, remainingAmount: remaining, status }, $inc: { __v: 1 } },
         { session }
       );
       if (updateResult.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
 
       await AuditService.log(
-        { performedBy, targetLedgerId: ledgerId, action: 'PAYMENT_CREATED', details: { paymentId: payment._id, amount, method } },
+        { performedBy, targetLedgerId: ledgerId, action: 'PAYMENT_CREATED', details: { paymentId: payment._id, amount, concessionAmount, method } },
         session
       );
       await session.commitTransaction();

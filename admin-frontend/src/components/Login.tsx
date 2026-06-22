@@ -8,10 +8,10 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('secret123');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = login(email, password);
+    const success = await login(email, password);
     if (!success) {
       setError('Invalid email or password. Try admin@school.com / secret123');
     }

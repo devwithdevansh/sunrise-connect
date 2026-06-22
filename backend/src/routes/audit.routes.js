@@ -6,7 +6,7 @@ import authorize from '../middlewares/authorize.middleware.js';
 
 const router = Router();
 
-// router.use(authenticate, authorize('ADMIN'));
+router.use(authenticate, authorize('ADMIN'));
 
 router.get('/',    AuditController.search);
 router.get('/:id', AuditController.findById);

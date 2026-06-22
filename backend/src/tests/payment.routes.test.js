@@ -102,7 +102,7 @@ describe('POST /api/v1/payments/:id/reverse – role guard', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ reason: 'Mistake' });
     expect(res.status).toBe(200);
-    expect(spyReverse).toHaveBeenCalledWith({ paymentId: 'pay1', reason: 'Mistake' });
+    expect(spyReverse).toHaveBeenCalledWith({ paymentId: 'pay1', reason: 'Mistake', performedBy: 'testuser' });
   });
 });
 

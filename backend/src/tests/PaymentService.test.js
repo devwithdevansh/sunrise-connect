@@ -15,6 +15,7 @@ const makeLedgerData = () => ({
   academicYear: '2025-26',
   feeCategoryId: new mongoose.Types.ObjectId(),
   feePeriod: 'June',
+  feeType: 'EDUCATION',
   ledgerNumber: `LDG-${Date.now()}-${Math.random()}`,
   totalAmount: 5000,
   paidAmount: 0,

@@ -1,24 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../data/models/receipt_model.dart';
 import '../controllers/receipt_details_controller.dart';
 
 class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
   const ReceiptDetailsView({super.key});
+
+  String _fmt(double amount) {
+    final digits = amount.abs().round().toString();
+    if (digits.length <= 3) return '₹$digits';
+    final last3 = digits.substring(digits.length - 3);
+    var rest    = digits.substring(0, digits.length - 3);
+    final parts = <String>[];
+    while (rest.length > 2) {
+      parts.insert(0, rest.substring(rest.length - 2));
+      rest = rest.substring(0, rest.length - 2);
+    }
+    if (rest.isNotEmpty) parts.insert(0, rest);
+    return '₹${parts.join(',')},$last3';
+  }
+
+  String _fmtDateTime(DateTime dt) {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    final h   = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final min = dt.minute.toString().padLeft(2, '0');
+    final ap  = dt.hour >= 12 ? 'PM' : 'AM';
+    return '${dt.day} ${m[dt.month - 1]} ${dt.year}  ·  $h:$min $ap';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.navyDark,
         elevation: 0,
-        title: Text('Receipts', style: AppTextStyles.h2),
+        title: Text('Receipts', style: AppTextStyles.h2.copyWith(color: Colors.white)),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.ink, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           onPressed: () => Get.back(),
         ),
       ),
@@ -26,208 +48,289 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
         onRefresh: controller.loadReceipts,
         color: AppColors.primaryMid,
         child: Obx(() {
-          if (controller.isLoading.value && controller.receipts.isEmpty) {
+          // ── Loading ──────────────────────────────────────────────────────
+          if (controller.isLoading.value && controller.receiptGroups.isEmpty) {
             return const Center(child: CircularProgressIndicator(color: AppColors.primaryMid));
           }
 
-          if (controller.receipts.isEmpty) {
+          // ── Empty ────────────────────────────────────────────────────────
+          if (controller.receiptGroups.isEmpty) {
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.7,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.receipt_long_rounded, size: 64, color: AppColors.inkLight),
-                    const SizedBox(height: 16),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.72,
+                child: Center(
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Container(
+                      width: 84, height: 84,
+                      decoration: BoxDecoration(color: AppColors.purplePale, shape: BoxShape.circle),
+                      child: const Icon(Icons.receipt_long_rounded, size: 42, color: AppColors.purple),
+                    ),
+                    const SizedBox(height: 20),
                     Text('No Receipts Available', style: AppTextStyles.h2),
                     const SizedBox(height: 8),
-                    Text('Receipts will be generated once payments are made.', style: AppTextStyles.bodyMedium),
-                  ],
+                    Text('Receipts are generated after payments.', style: AppTextStyles.bodyMedium),
+                    const SizedBox(height: 6),
+                    Text('Pull down to refresh.', style: AppTextStyles.bodySmall),
+                  ]),
                 ),
               ),
             );
           }
 
-          final educationReceipts = controller.receipts.where((r) => !r.isTransport).toList();
-          final transportReceipts = controller.receipts.where((r) => r.isTransport).toList();
+          final groups = controller.receiptGroups;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (educationReceipts.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
-                  child: Text('Education Fees', style: AppTextStyles.h3),
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            itemCount: groups.length,
+            itemBuilder: (context, index) {
+              final group      = groups[index];
+              final isNewMonth = index == 0 || group.monthLabel != groups[index - 1].monthLabel;
+
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (isNewMonth) ...[
+                  if (index != 0) const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 10, top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.navyDark,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(group.monthLabel,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                    ),
+                  ),
+                ],
+                _ReceiptGroupCard(
+                  group: group,
+                  fmt: _fmt,
+                  fmtDateTime: _fmtDateTime,
+                  onTap: () => _showReceiptModal(context, group),
                 ),
-                ...educationReceipts.map((r) => _buildReceiptRow(context, r)),
-                const SizedBox(height: 16),
-              ],
-              if (transportReceipts.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
-                  child: Text('Transport Fees', style: AppTextStyles.h3),
-                ),
-                ...transportReceipts.map((r) => _buildReceiptRow(context, r)),
-                const SizedBox(height: 16),
-              ],
-            ],
+                const SizedBox(height: 12),
+              ]);
+            },
           );
         }),
       ),
     );
   }
 
-  Widget _buildReceiptRow(BuildContext context, ReceiptModel receipt) {
-    final dateStr = receipt.paymentDate.split('T').first;
-
-    return GestureDetector(
-      onTap: () => _showReceiptModal(context, receipt),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: AppColors.purplePale,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.receipt_rounded, color: AppColors.purple, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${receipt.categoryLabel} Receipt #${receipt.receiptNumber.substring(0, receipt.receiptNumber.length > 10 ? 10 : receipt.receiptNumber.length)}', style: AppTextStyles.labelLarge),
-                  if (receipt.termName.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(receipt.termName, style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryMid, fontWeight: FontWeight.w600)),
-                  ],
-                  const SizedBox(height: 2),
-                  Text('Date: $dateStr', style: AppTextStyles.bodySmall),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('₹${receipt.amount.toInt()}', style: AppTextStyles.h3.copyWith(color: AppColors.primaryMid)),
-                const SizedBox(height: 4),
-                Text('Tap to view', style: AppTextStyles.labelSmall.copyWith(color: AppColors.purple, fontSize: 9)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showReceiptModal(BuildContext context, ReceiptModel receipt) {
-    final dateStr = receipt.paymentDate.split('T').first;
+  // ─────────────────────────────────────────────────────────────────────────
+  // RECEIPT MODAL  — full digital receipt with line items
+  // ─────────────────────────────────────────────────────────────────────────
+  void _showReceiptModal(BuildContext context, ReceiptGroup group) {
+    final isMulti = group.items.length > 1;
+    final dtStr   = _fmtDateTime(group.paidAt);
 
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Colors.white,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          constraints: const BoxConstraints(maxHeight: 520),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Digital Receipt 🧾', style: AppTextStyles.h2),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 620),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                // ── Header ────────────────────────────────────────────────
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  const Text('🧾  Digital Receipt', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Get.back(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
+                ]),
+                const Divider(color: Color(0xFFE4E8F0)),
+                const SizedBox(height: 12),
+
+                // ── School info ───────────────────────────────────────────
+                const Text('SUNRISE CONVENT SCHOOL',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1B3A7A), letterSpacing: 0.5),
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 3),
+                const Text('Railnagar, Rajkot, Gujarat',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF9BA3B6)),
+                    textAlign: TextAlign.center),
+
+                const SizedBox(height: 18),
+
+                // ── Meta rows ─────────────────────────────────────────────
+                _row('Receipt No:', group.receiptNumber.isNotEmpty ? group.receiptNumber : '—'),
+                const SizedBox(height: 8),
+                _row('Student Name:', group.studentName),
+                const SizedBox(height: 8),
+                _row('Payment Date:', dtStr),
+                const SizedBox(height: 8),
+                _row('Payment Mode:', group.paymentMode.toUpperCase()),
+                const SizedBox(height: 8),
+                _row('Status:', 'PAID', valueColor: AppColors.teal),
+
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFFE4E8F0)),
+                const SizedBox(height: 8),
+
+                // ── Line items ────────────────────────────────────────────
+                if (isMulti) ...[
+                  const Text('Fee Breakdown',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
+                  const SizedBox(height: 10),
+                  ...group.items.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(children: [
+                      Container(
+                        width: 28, height: 28,
+                        decoration: BoxDecoration(color: AppColors.tealPale, borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.receipt_outlined, color: AppColors.teal, size: 14),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(item.termName.isNotEmpty ? item.termName : item.categoryLabel,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1E2E))),
+                        if (item.termName.isNotEmpty)
+                          Text(item.categoryLabel,
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF9BA3B6))),
+                      ])),
+                      Text(_fmt(item.amount),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
+                    ]),
+                  )),
+                  const Divider(color: Color(0xFFE4E8F0)),
+                ] else ...[
+                  _row('Category:', group.categoryLabel),
+                  const SizedBox(height: 8),
+                  if (group.termSummary.isNotEmpty) ...[
+                    _row('Term / Month:', group.termSummary),
+                    const SizedBox(height: 8),
+                  ],
+                  const Divider(color: Color(0xFFE4E8F0)),
                 ],
-              ),
-              const Divider(color: AppColors.border),
-              const SizedBox(height: 12),
-              // School details
-              Text('SUNRISE CONVENT SCHOOL', style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid, letterSpacing: 0.5), textAlign: TextAlign.center),
-              const SizedBox(height: 4),
-              Text('Railnagar, Rajkot, Gujarat', style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
-              const SizedBox(height: 20),
-              // Invoice detail rows
-              _buildDetailRow('Receipt No:', receipt.receiptNumber),
-              const SizedBox(height: 10),
-              _buildDetailRow('Student Name:', receipt.studentName),
-              const SizedBox(height: 10),
-              _buildDetailRow('Category:', receipt.categoryLabel),
-              const SizedBox(height: 10),
-              if (receipt.termName.isNotEmpty) ...[
-                _buildDetailRow('Term / Month:', receipt.termName),
-                const SizedBox(height: 10),
-              ],
-              _buildDetailRow('Payment Date:', dateStr),
-              const SizedBox(height: 10),
-              _buildDetailRow('Payment Mode:', receipt.paymentMode.toUpperCase()),
-              const SizedBox(height: 10),
-              _buildDetailRow('Status:', 'PAID', valueColor: AppColors.teal),
-              const SizedBox(height: 20),
-              const Divider(color: AppColors.border, thickness: 1.5),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total Paid', style: AppTextStyles.h2),
-                  Text('₹${receipt.amount.toInt()}', style: AppTextStyles.displayMedium.copyWith(color: AppColors.teal, fontSize: 22)),
-                ],
-              ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Get.back();
-                  Get.snackbar(
-                    'Success 🎉',
-                    'Receipt pdf downloaded successfully to your device.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColors.tealPale,
-                  );
-                },
-                icon: const Icon(Icons.download_rounded, color: Colors.white),
-                label: const Text('Download PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryMid,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+
+                // ── Total ─────────────────────────────────────────────────
+                const SizedBox(height: 12),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  const Text('Total Paid', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
+                  Text(_fmt(group.totalAmount),
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.teal, letterSpacing: -0.3)),
+                ]),
+
+                const SizedBox(height: 20),
+
+                // ── Download button ───────────────────────────────────────
+                ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    Get.back();
+                    Get.snackbar(
+                      '✅  Receipt Downloaded',
+                      'Receipt saved to your device.',
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: AppColors.tealPale,
+                      colorText: AppColors.teal,
+                      margin: const EdgeInsets.all(16),
+                      borderRadius: 14,
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded, color: Colors.white),
+                  label: const Text('Download PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navyDark,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+                    elevation: 0,
+                  ),
                 ),
-              ),
-            ],
+              ]),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {Color? valueColor}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: AppTextStyles.bodyMedium),
-        Expanded(
-          child: Text(
-            value,
-            style: AppTextStyles.labelLarge.copyWith(color: valueColor ?? AppColors.ink),
-            textAlign: TextAlign.right,
-            overflow: TextOverflow.ellipsis,
-          ),
+  Widget _row(String label, String value, {Color? valueColor}) {
+    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF5A6275))),
+      Flexible(child: Text(value,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: valueColor ?? const Color(0xFF1A1E2E)),
+          textAlign: TextAlign.right, overflow: TextOverflow.ellipsis)),
+    ]);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RECEIPT GROUP CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReceiptGroupCard extends StatelessWidget {
+  const _ReceiptGroupCard({
+    required this.group,
+    required this.fmt,
+    required this.fmtDateTime,
+    required this.onTap,
+  });
+  final ReceiptGroup group;
+  final String Function(double)   fmt;
+  final String Function(DateTime) fmtDateTime;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMulti = group.items.length > 1;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 3))],
         ),
-      ],
+        child: Row(children: [
+          // Receipt icon
+          Container(
+            width: 46, height: 46,
+            decoration: const BoxDecoration(color: AppColors.purplePale, shape: BoxShape.circle),
+            child: const Icon(Icons.receipt_rounded, color: AppColors.purple, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Title
+            Text(
+              isMulti ? '${group.items.length} Months Receipt' : '${group.categoryLabel} Receipt',
+              style: AppTextStyles.labelLarge,
+            ),
+            // Term summary
+            if (group.termSummary.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(group.termSummary,
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryMid, fontWeight: FontWeight.w600),
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+            ],
+            const SizedBox(height: 2),
+            Text(fmtDateTime(group.paidAt), style: AppTextStyles.bodySmall),
+            if (group.receiptNumber.isNotEmpty)
+              Text('Receipt #${group.receiptNumber.length > 12 ? group.receiptNumber.substring(0, 12) : group.receiptNumber}',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.inkLight)),
+          ])),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(fmt(group.totalAmount),
+                style: AppTextStyles.h3.copyWith(color: AppColors.primaryMid)),
+            const SizedBox(height: 4),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.visibility_outlined, size: 11, color: AppColors.purple),
+              const SizedBox(width: 3),
+              Text('View', style: AppTextStyles.labelSmall.copyWith(color: AppColors.purple, fontSize: 10)),
+            ]),
+          ]),
+        ]),
+      ),
     );
   }
 }

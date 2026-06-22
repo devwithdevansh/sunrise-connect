@@ -3,6 +3,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/glob
 import mongoose from 'mongoose';
 import { connect, disconnect, clearCollections } from './helpers/dbHelper.js';
 import studentRepository from '../repositories/studentRepository.js';
+import Parent from '../models/Parent.js';
 
 const validStudent = {
   parentId: new mongoose.Types.ObjectId(),

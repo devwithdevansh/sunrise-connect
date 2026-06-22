@@ -23,54 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
                 <span class="strong">84.61% </span>
                 <span class="quiet">Statements</span>
                 <span class='fraction'>11/13</span>
-=======
-                <span class="strong">30.76% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>4/13</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
-                <span class="strong">100% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
-=======
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                <span class='fraction'>4/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
                 <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
                 <span class='fraction'>3/4</span>
-=======
-                <span class="strong">0% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
                 <span class="strong">84.61% </span>
                 <span class="quiet">Lines</span>
                 <span class='fraction'>11/13</span>
-=======
-                <span class="strong">30.76% </span>
-                <span class="quiet">Lines</span>
-                <span class='fraction'>4/13</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
             </div>
         
             
@@ -85,11 +61,7 @@
             </div>
         </template>
     </div>
-<<<<<<< HEAD
     <div class='status-line high'></div>
-=======
-    <div class='status-line low'></div>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -131,51 +103,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<<<<<<< HEAD
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-=======
-<span class="cline-any cline-yes">1x</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<<<<<<< HEAD
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-=======
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -187,9 +136,8 @@ import sendResponse from '../utils/response.js';
 &nbsp;
 class PaymentController {
   /** POST /api/v1/payments */
-<<<<<<< HEAD
   static createPayment = catchAsync(async (req, res) =&gt; {
-    const payment = await PaymentService.createPayment(req.body);
+    const payment = await PaymentService.createPayment({ ...req.body, performedBy: req.user?.id ?? <span class="branch-1 cbranch-no" title="branch not covered" >null </span>});
     sendResponse(res, 201, payment);
   });
 &nbsp;
@@ -198,18 +146,6 @@ class PaymentController {
     const { limit = 20, skip = 0, ...filter } = req.query;
     const payments = await PaymentService.listPayments(filter, { limit: Number(limit), skip: Number(skip) });
     sendResponse(res, 200, payments);
-=======
-  static createPayment = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-    const payment = <span class="cstat-no" title="statement not covered" >await PaymentService.createPayment(req.body);</span>
-<span class="cstat-no" title="statement not covered" >    sendResponse(res, 201, payment);</span>
-  });
-&nbsp;
-  /** GET /api/v1/payments */
-  static listPayments = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-    const { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> ...filter } = <span class="cstat-no" title="statement not covered" >req.query;</span>
-    const payments = <span class="cstat-no" title="statement not covered" >await PaymentService.listPayments(filter, { limit: Number(limit), skip: Number(skip) });</span>
-<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, payments);</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   });
 &nbsp;
   /** GET /api/v1/payments/:id */
@@ -219,15 +155,9 @@ class PaymentController {
   });
 &nbsp;
   /** POST /api/v1/payments/:id/reverse (ADMIN only) */
-<<<<<<< HEAD
   static reversePayment = catchAsync(async (req, res) =&gt; {
-    const reversal = await PaymentService.reversePayment({ paymentId: req.params.id, ...req.body });
+    const reversal = await PaymentService.reversePayment({ paymentId: req.params.id, ...req.body, performedBy: req.user?.id ?? <span class="branch-1 cbranch-no" title="branch not covered" >null </span>});
     sendResponse(res, 200, reversal);
-=======
-  static reversePayment = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-    const reversal = <span class="cstat-no" title="statement not covered" >await PaymentService.reversePayment({ paymentId: req.params.id, ...req.body });</span>
-<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, reversal);</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
   });
 }
 &nbsp;
@@ -239,11 +169,7 @@ export default PaymentController;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-<<<<<<< HEAD
-                at 2026-06-19T04:46:02.845Z
-=======
-                at 2026-06-18T10:09:33.174Z
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                at 2026-06-22T08:11:20.094Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -9,6 +9,7 @@ const validLedger = () => ({
   academicYear: '2025-26',
   feeCategoryId: new mongoose.Types.ObjectId(),
   feePeriod: 'June',
+  feeType: 'EDUCATION',
   ledgerNumber: `LDG-${Date.now()}`,
   totalAmount: 5000,
   paidAmount: 0,

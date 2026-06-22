@@ -61,7 +61,7 @@ const paymentRepository = {
           as: 'ledger',
         },
       },
-      { $unwind: { path: '$ledger', preserveNullAndEmpty: true } },
+      { $unwind: { path: '$ledger', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 1,
