@@ -1,10 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../store';
-import { Search, ChevronDown, Plus, X, Trash2, Pencil } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, X, Trash2, Pencil, Phone, Users, Landmark, History } from 'lucide-react';
 
 export const Students: React.FC = () => {
-  const { students, addStudent, setScreen, checkMobile, deleteStudent, updateStudent } = useApp();
+  const {
+    students,
+    addStudent,
+    setScreen,
+    checkMobile,
+    deleteStudent,
+    updateStudent,
+    setSelectedStudentIdForFee,
+    ledgerEntries,
+    transactions,
+    reversePayment
+  } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'parent' | 'ledger' | 'history'>('parent');
   const [classFilter, setClassFilter] = useState('All Classes');
   const [divFilter, setDivFilter] = useState('All Divisions');
   const [medFilter, setMedFilter] = useState('All Mediums');
@@ -275,12 +288,38 @@ export const Students: React.FC = () => {
             No students found matching your criteria.
           </div>
         ) : (
-          filteredStudents.map((s) => {
+filteredStudents.map((s) => {
             const initials = (s.studentName ?? '')
               .split(' ')
               .map((n) => n[0])
               .join('');
-            const isRTE = s.isRTE;
+            const isExpanded = expandedStudentId === (s._id || s.id);
+            
+            // Look up parent ID string for sibling calculation
+            const getParentIdStr = (student: any) => {
+              if (!student.parentId) return null;
+              if (typeof student.parentId === 'object') return student.parentId._id || student.parentId.id;
+              return student.parentId;
+            };
+
+            const sParentId = getParentIdStr(s);
+            const siblings = students.filter((other) => {
+              if (other._id === s._id || other.id === s.id) return false;
+              const oParentId = getParentIdStr(other);
+              if (sParentId && oParentId && sParentId === oParentId) return true;
+              if (s.parentMobile && other.parentMobile && s.parentMobile === other.parentMobile) return true;
+              return false;
+            });
+
+            // Ledger entries for this student
+            const studentLedgers = ledgerEntries.filter((l) => l.studentId === (s._id || s.id));
+            const totalLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
+            const totalPaidLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
+            const totalConcessionLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.concessionAmount || 0), 0);
+            const totalRemainingLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.remainingAmount || 0), 0);
+
+            // Transactions for this student
+            const studentTransactions = transactions.filter((t) => t.studentId === (s._id || s.id));
 
             // Backend does not provide a `status` field; default to empty string.
             const status = s.status ?? '';
@@ -294,107 +333,388 @@ export const Students: React.FC = () => {
             return (
               <div
                 key={s._id}
-                className="bg-white border border-slate-100 rounded-2xl p-5 flex items-start justify-between shadow-sm hover:shadow-md transition-all duration-300 relative"
+                className={`bg-white border border-slate-100 rounded-2xl p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 relative ${
+                  isExpanded ? 'md:col-span-2 border-blue-200 shadow-md ring-1 ring-blue-500/10' : ''
+                }`}
               >
-                <div className="flex items-start gap-4">
-                  {/* Initials bubble */}
-                  <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 font-bold text-base flex items-center justify-center border border-amber-100 uppercase shrink-0">
-                    {initials}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-extrabold text-slate-800 text-base">{s.studentName}</h4>
-                      {isRTE && (
-                        <span className="bg-purple-100 text-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
-                          RTE
-                        </span>
-                      )}
-                      {s.isNewAdmission && (
-                        <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
-                          New
-                        </span>
-                      )}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 w-full">
+                  <div className="flex items-start gap-4">
+                    {/* Initials bubble */}
+                    <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 font-bold text-base flex items-center justify-center border border-amber-100 uppercase shrink-0">
+                      {initials}
                     </div>
-                    
-                    <p className="text-xs text-slate-500">
-                      Std {s.standard} · Division {s.division} ·{' '}
-                      <span className="font-medium">{s.medium} Medium</span>
-                    </p>
-                    
-                    <span className="text-slate-400 text-[10px] block font-mono">
-                      {s.studentCode}
-                    </span>
-                    
-                    <div className="pt-1.5 flex flex-wrap gap-2 items-center">
-                      <span className="text-[10px] text-slate-400 font-semibold">
-                        Parent: {s.parentMobile ?? 'N/A'}
-                      </span>
-                      {s.transportType !== 'None' && (
-                        <>
-                          <span className="h-1 w-1 rounded-full bg-slate-300"></span>
-                          <span className="text-[10px] text-blue-500 font-bold tracking-wide uppercase">
-                            {s.transportType} Transport
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-extrabold text-slate-800 text-base">{s.studentName}</h4>
+                        {s.isRTE && (
+                          <span className="bg-purple-100 text-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            RTE
                           </span>
-                        </>
+                        )}
+                        {s.isNewAdmission && (
+                          <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      
+                      <p className="text-xs text-slate-500">
+                        Std {s.standard} · Division {s.division} ·{' '}
+                        <span className="font-medium">{s.medium} Medium</span>
+                      </p>
+                      
+                      <span className="text-slate-400 text-[10px] block font-mono">
+                        {s.studentCode}
+                      </span>
+                      
+                      <div className="pt-1.5 flex flex-wrap gap-2 items-center">
+                        <span className="text-[10px] text-slate-400 font-semibold">
+                          Parent: {s.parentMobile ?? 'N/A'}
+                        </span>
+                        {s.transportType !== 'None' && (
+                          <>
+                            <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                            <span className="text-[10px] text-blue-500 font-bold tracking-wide uppercase">
+                              {s.transportType} Transport
+                            </span>
+                          </>
+                        )}
+                        {s.isRTE && (
+                          <>
+                            <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                            <span className="text-[10px] text-purple-500 font-bold uppercase">Govt pays</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right side stats & buttons */}
+                  <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 shrink-0 mt-2 md:mt-0">
+                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${badgeStyle}`}>
+                      {status === '3+ DUE' ? '3+ DUE' : status}
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (!isExpanded) {
+                            setActiveTab('parent');
+                          }
+                          setExpandedStudentId(isExpanded ? null : (s._id || s.id));
+                        }}
+                        className={`border font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1 ${
+                          isExpanded
+                            ? 'bg-slate-800 border-slate-800 text-white hover:bg-slate-700'
+                            : 'bg-white border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {isExpanded ? (
+                          <>
+                            Collapse
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </>
+                        ) : (
+                          <>
+                            View
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </>
+                        )}
+                      </button>
+                      {!s.isRTE && (
+                        <button
+                          onClick={() => {
+                            setSelectedStudentIdForFee(s._id || s.id);
+                            setScreen('collect-fee');
+                          }}
+                          className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
+                        >
+                          Collect
+                        </button>
                       )}
-                      {isRTE && (
-                        <>
-                          <span className="h-1 w-1 rounded-full bg-slate-300"></span>
-                          <span className="text-[10px] text-purple-500 font-bold uppercase">Govt pays</span>
-                        </>
-                      )}
+                      <button
+                        onClick={() => openEditModal(s)}
+                        className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                        title="Edit Student"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to permanently delete this student, their ledgers, and all their payments? This action cannot be undone.")) {
+                            deleteStudent(s._id || s.id);
+                          }
+                        }}
+                        className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                        title="Delete Student"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Right side stats & buttons */}
-                <div className="flex flex-col items-end justify-between h-full gap-8">
-                  <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${badgeStyle}`}>
-                    {s.status === '3+ DUE' ? '3+ DUE' : s.status}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setScreen('receipts')}
-                      className="bg-white border border-slate-200 hover:border-slate-300 text-slate-500 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
-                    >
-                      View
-                    </button>
-                    {!isRTE && (
+                {/* Expanded Details Section */}
+                {isExpanded && (
+                  <div className="w-full mt-4 border-t border-slate-100 pt-5 space-y-4">
+                    
+                    {/* Premium tab bar */}
+                    <div className="flex border-b border-slate-100/80 -mx-5 px-5 overflow-x-auto scrollbar-none">
                       <button
-                        onClick={() => setScreen('collect-fee')}
-                        className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
+                        onClick={() => setActiveTab('parent')}
+                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${
+                          activeTab === 'parent'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
                       >
-                        Collect
+                        <Users className="h-4 w-4" />
+                        Parent & Siblings
                       </button>
-                    )}
-                    <button
-                      onClick={() => openEditModal(s)}
-                      className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                      title="Edit Student"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm("Are you sure you want to permanently delete this student, their ledgers, and all their payments? This action cannot be undone.")) {
-                          deleteStudent(s._id || s.id);
-                        }
-                      }}
-                      className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                      title="Delete Student"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      <button
+                        onClick={() => setActiveTab('ledger')}
+                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${
+                          activeTab === 'ledger'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        <Landmark className="h-4 w-4" />
+                        Fee Balance Ledgers ({studentLedgers.length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${
+                          activeTab === 'history'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        <History className="h-4 w-4" />
+                        Payment History ({studentTransactions.length})
+                      </button>
+                    </div>
+
+                    <div className="pt-2">
+                      {/* Section 1: Parent & Sibling Info */}
+                      {activeTab === 'parent' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 border border-slate-100 rounded-2xl p-6">
+                          {/* Parent Details Card */}
+                          <div className="space-y-4">
+                            <h5 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 pb-2 border-b border-slate-200/60">
+                              <Users className="h-4 w-4 text-blue-500" />
+                              Parent Details
+                            </h5>
+                            <div className="space-y-3.5 text-xs">
+                              <div>
+                                <span className="text-slate-400 block font-bold uppercase tracking-wider text-[10px]">Parent Name</span>
+                                <span className="font-bold text-slate-700 text-sm">{s.parentName || 'N/A'}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block font-bold uppercase tracking-wider text-[10px]">Primary Mobile Number</span>
+                                <span className="font-bold text-slate-700 text-sm flex items-center gap-1.5 mt-0.5">
+                                  <Phone className="h-4 w-4 text-slate-400" />
+                                  {s.parentMobile || 'N/A'}
+                                </span>
+                              </div>
+                              {s.parentSecondaryMobile && (
+                                <div>
+                                  <span className="text-slate-400 block font-bold uppercase tracking-wider text-[10px]">Secondary Mobile Number</span>
+                                  <span className="font-bold text-slate-700 text-sm flex items-center gap-1.5 mt-0.5">
+                                    <Phone className="h-4 w-4 text-slate-400" />
+                                    {s.parentSecondaryMobile}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Siblings Card */}
+                          <div className="space-y-4">
+                            <h5 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 pb-2 border-b border-slate-200/60">
+                              <Users className="h-4 w-4 text-blue-500" />
+                              School Siblings
+                            </h5>
+                            {siblings.length === 0 ? (
+                              <span className="text-slate-400 text-xs italic block pt-2">No siblings registered under this parent's contact info.</span>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                {siblings.map((sib) => (
+                                  <div key={sib._id || sib.id} className="flex items-center justify-between bg-white border border-slate-200/65 rounded-xl p-3 hover:bg-slate-50/50 hover:shadow-sm transition-all">
+                                    <div>
+                                      <span className="font-bold text-slate-700 text-xs block">{sib.studentName}</span>
+                                      <span className="text-[10px] text-slate-400 block mt-0.5">Std {sib.standard} · Division {sib.division}</span>
+                                    </div>
+                                    <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                      sib.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                      sib.status === 'RTE' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                                      sib.status === '2 DUE' ? 'bg-red-50 text-red-500 border border-red-100' :
+                                      'bg-amber-50 text-amber-500 border border-amber-100'
+                                    }`}>
+                                      {sib.status}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 2: Fee Ledger Summary */}
+                      {activeTab === 'ledger' && (
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 flex flex-col space-y-4">
+                          <h5 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 pb-2 border-b border-slate-200/60">
+                            <Landmark className="h-4 w-4 text-blue-500" />
+                            Fee Ledger Balance Breakdown
+                          </h5>
+                          <div className="overflow-x-auto">
+                            {studentLedgers.length === 0 ? (
+                              <div className="text-slate-400 text-xs italic py-10 text-center">No fee ledgers have been generated for this student.</div>
+                            ) : (
+                              <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
+                                    <th className="py-2.5 pr-3">Category</th>
+                                    <th className="py-2.5 px-3">Fee Period / Slot</th>
+                                    <th className="py-2.5 px-3 text-right">Total Amount (₹)</th>
+                                    <th className="py-2.5 px-3 text-right">Paid Amount (₹)</th>
+                                    <th className="py-2.5 px-3 text-right">Concession (₹)</th>
+                                    <th className="py-2.5 px-3 text-right">Remaining Balance (₹)</th>
+                                    <th className="py-2.5 pl-3 text-center">Payment Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-slate-700">
+                                  {studentLedgers.map((l) => (
+                                    <tr key={l._id || l.id} className="hover:bg-slate-100/50 transition-colors">
+                                      <td className="py-3 pr-3 font-extrabold text-slate-800">
+                                        {(l.feeType as string) === 'EDUCATION' ? 'Education' :
+                                         (l.feeType as string) === 'TRANSPORT' ? 'Transport' :
+                                         (l.feeType as string) === 'TERM' ? 'Term' :
+                                         (l.feeType as string) === 'ADMISSION' ? 'Admission' :
+                                         (l.feeType as string) === 'BAG_KIT' ? 'Bag & Kit' : l.feeType}
+                                      </td>
+                                      <td className="py-3 px-3 text-slate-500 font-medium">{l.feePeriod}</td>
+                                      <td className="py-3 px-3 text-right font-semibold">₹{l.totalAmount.toLocaleString('en-IN')}</td>
+                                      <td className="py-3 px-3 text-right text-emerald-600 font-bold">₹{l.paidAmount.toLocaleString('en-IN')}</td>
+                                      <td className="py-3 px-3 text-right text-purple-600 font-semibold">₹{(l.concessionAmount || 0).toLocaleString('en-IN')}</td>
+                                      <td className={`py-3 px-3 text-right font-extrabold ${l.remainingAmount > 0 ? 'text-red-500' : 'text-slate-500'}`}>
+                                        ₹{l.remainingAmount.toLocaleString('en-IN')}
+                                      </td>
+                                      <td className="py-3 pl-3 text-center">
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                          l.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                          l.status === 'PARTIAL' ? 'bg-amber-50 text-amber-500 border border-amber-100' :
+                                          'bg-red-50 text-red-500 border border-red-100'
+                                        }`}>
+                                          {l.status}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                  <tr className="border-t-2 border-slate-200 bg-slate-100/60 font-extrabold text-slate-800 text-sm">
+                                    <td className="py-3.5 pr-3" colSpan={2}>Aggregate Outstanding</td>
+                                    <td className="py-3.5 px-3 text-right">₹{totalLedgerAmount.toLocaleString('en-IN')}</td>
+                                    <td className="py-3.5 px-3 text-right text-emerald-700">₹{totalPaidLedgerAmount.toLocaleString('en-IN')}</td>
+                                    <td className="py-3.5 px-3 text-right text-purple-700">₹{totalConcessionLedgerAmount.toLocaleString('en-IN')}</td>
+                                    <td className="py-3.5 px-3 text-right text-red-600">₹{totalRemainingLedgerAmount.toLocaleString('en-IN')}</td>
+                                    <td className="py-3.5 pl-3 text-center">
+                                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${
+                                        totalRemainingLedgerAmount === 0
+                                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                          : 'bg-red-100 text-red-800 border-red-200'
+                                      }`}>
+                                        {totalRemainingLedgerAmount === 0 ? 'NO BALANCE' : 'DUE FEES'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 3: Recent Transactions */}
+                      {activeTab === 'history' && (
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 flex flex-col space-y-4">
+                          <h5 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 pb-2 border-b border-slate-200/60">
+                            <History className="h-4 w-4 text-blue-500" />
+                            Recent Payments & Reversals History
+                          </h5>
+                          <div className="overflow-x-auto">
+                            {studentTransactions.length === 0 ? (
+                              <div className="text-slate-400 text-xs italic py-10 text-center">No payment transactions recorded for this student yet.</div>
+                            ) : (
+                              <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
+                                    <th className="py-2.5 pr-3">Payment Date</th>
+                                    <th className="py-2.5 px-3">Time</th>
+                                    <th className="py-2.5 px-3">Fee Type Details</th>
+                                    <th className="py-2.5 px-3 text-right">Paid Amount (₹)</th>
+                                    <th className="py-2.5 px-3 text-right">Concession (₹)</th>
+                                    <th className="py-2.5 px-3 text-center">Method</th>
+                                    <th className="py-2.5 px-3 text-center">Transaction Status</th>
+                                    <th className="py-2.5 pl-3 text-right">Reversal Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-slate-700">
+                                  {studentTransactions.map((tx) => (
+                                    <tr key={tx.id} className="hover:bg-slate-100/50 transition-colors">
+                                      <td className="py-3 pr-3 font-semibold text-slate-700">{tx.date}</td>
+                                      <td className="py-3 px-3 text-slate-400 font-medium">{tx.time}</td>
+                                      <td className="py-3 px-3 font-bold text-slate-800">{tx.feeType}</td>
+                                      <td className="py-3 px-3 text-right font-extrabold text-slate-800">₹{tx.amount.toLocaleString('en-IN')}</td>
+                                      <td className="py-3 px-3 text-right font-semibold text-purple-600">₹{(tx.concessionAmount || 0).toLocaleString('en-IN')}</td>
+                                      <td className="py-3 px-3 text-center">
+                                        <span className="bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">
+                                          {tx.method}
+                                        </span>
+                                      </td>
+                                      <td className="py-3 px-3 text-center">
+                                        <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                                          tx.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' :
+                                          tx.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'
+                                        }`}>
+                                          {tx.status}
+                                        </span>
+                                      </td>
+                                      <td className="py-3 pl-3 text-right">
+                                        {tx.status !== 'REVERSED' && tx.method !== 'GOVT' && (
+                                          <button
+                                            onClick={() => {
+                                              if (window.confirm(`Are you sure you want to reverse this payment of ₹${tx.amount.toLocaleString('en-IN')}? This will restore the balance back to the ledger.`)) {
+                                                reversePayment(tx.id);
+                                              }
+                                            }}
+                                            className="text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2.5 py-1 rounded-lg text-[10px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
+                                          >
+                                            Reverse Payment
+                                          </button>
+                                        )}
+                                        {(tx.status === 'REVERSED' || tx.method === 'GOVT') && (
+                                          <span className="text-slate-300 text-[10px] italic pr-2 font-medium">Not reversible</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                   </div>
-                </div>
+                )}
               </div>
             );
           })
         )}
       </section>
-
       {/* Add Student Modal Panel */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">

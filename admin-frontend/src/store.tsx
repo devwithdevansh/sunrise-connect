@@ -105,6 +105,8 @@ interface AppContextType {
   updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<boolean>;
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
+  selectedStudentIdForFee: string | null;
+  setSelectedStudentIdForFee: (id: string | null) => void;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
 }
 
@@ -127,6 +129,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
 
   // Authenticated fetch wrapper that appends Bearer token and handles auto-refresh on 401
   const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
@@ -711,7 +714,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         deleteStudent,
         updateStudent,
         regenerateLedgers,
-        addCustomFee
+        addCustomFee,
+        selectedStudentIdForFee,
+        setSelectedStudentIdForFee
       }}
     >
       {children}

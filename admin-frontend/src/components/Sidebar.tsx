@@ -64,14 +64,14 @@ export const Sidebar: React.FC = () => {
     {
       title: 'NOTIFY',
       items: [
-        { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
-        { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, disabled: true },
+        { id: 'notifications', label: 'Notifications', icon: Bell, disabled: true },
       ]
     },
     {
       title: 'APP',
       items: [
-        { id: 'parent-app', label: 'Parent App Preview', icon: Smartphone },
+        { id: 'parent-app', label: 'Parent App Preview', icon: Smartphone, disabled: true },
         { id: 'receipts', label: 'Receipts', icon: Receipt },
       ]
     },

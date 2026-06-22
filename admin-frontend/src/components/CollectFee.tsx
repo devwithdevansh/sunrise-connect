@@ -34,7 +34,17 @@ const MONTHS_CONFIG = COMBINED_EDU_TERM_CONFIG.filter(c => c.type === 'EDUCATION
 const STANDARD_MONTH_PERIODS = new Set(MONTHS_CONFIG.map(m => m.value));
 
 export const CollectFee: React.FC = () => {
-  const { students, ledgerEntries, recordPayment, feeStructures, transportFeeStructures, regenerateLedgers, addCustomFee } = useApp();
+  const {
+    students,
+    ledgerEntries,
+    recordPayment,
+    feeStructures,
+    transportFeeStructures,
+    regenerateLedgers,
+    addCustomFee,
+    selectedStudentIdForFee,
+    setSelectedStudentIdForFee
+  } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
@@ -57,12 +67,18 @@ export const CollectFee: React.FC = () => {
   const [customFeeAmount, setCustomFeeAmount] = useState('');
   const [isSubmittingCustomFee, setIsSubmittingCustomFee] = useState(false);
 
-  // Default select first student
+  // Handle student pre-selection if redirected from Students page
   useEffect(() => {
-    if (students.length > 0 && !selectedStudent) {
+    if (selectedStudentIdForFee && students.length > 0) {
+      const found = students.find(s => s._id === selectedStudentIdForFee || s.id === selectedStudentIdForFee);
+      if (found) {
+        setSelectedStudent(found);
+        setSelectedStudentIdForFee(null); // Clear it so subsequent loads don't override manually selected students
+      }
+    } else if (students.length > 0 && !selectedStudent) {
       setSelectedStudent(students[0]);
     }
-  }, [students, selectedStudent]);
+  }, [students, selectedStudent, selectedStudentIdForFee, setSelectedStudentIdForFee]);
 
   // Sync selected student when students list is refreshed
   useEffect(() => {
@@ -733,7 +749,6 @@ export const CollectFee: React.FC = () => {
                     .filter(l => l.studentId === selectedStudent.id && l.feeType === 'OTHER')
                     .map(ledger => {
                       const isPaid = ledger.status === 'PAID';
-                      const isPending = ledger.status !== 'PAID';
                       const isSelected = selectedFees.some(f => f.category === 'OTHER' && f.period === ledger.feePeriod);
 
                       return (
@@ -995,7 +1010,7 @@ export const CollectFee: React.FC = () => {
                 onClick={async () => {
                   if (selectedStudent && customFeeName && customFeeAmount) {
                     setIsSubmittingCustomFee(true);
-                    const ok = await addCustomFee(selectedStudent.id || selectedStudent._id, customFeeName.trim(), Number(customFeeAmount));
+                    const ok = await addCustomFee(selectedStudent.id || selectedStudent._id || '', customFeeName.trim(), Number(customFeeAmount));
                     setIsSubmittingCustomFee(false);
                     if (ok) {
                       setSuccessMsg(`✓ Custom fee '${customFeeName}' added successfully.`);
