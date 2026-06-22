@@ -58,6 +58,7 @@ export const Sidebar: React.FC = () => {
       title: 'STUDENTS',
       items: [
         { id: 'students', label: 'Students', icon: Users },
+        { id: 'promote-students', label: 'Promote', icon: Layers },
         { id: 'reports', label: 'Import Excel', icon: FileSpreadsheet, disabled: true },
       ]
     },

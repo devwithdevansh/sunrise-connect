@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from './store';
+import type { PaymentTransaction } from './mockData';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CollectFee } from './components/CollectFee';
@@ -8,13 +9,15 @@ import { Students } from './components/Students';
 import { FeeStructure } from './components/FeeStructure';
 import { Setup } from './components/Setup';
 import { Login } from './components/Login';
+import { PromoteStudents } from './components/PromoteStudents';
 import {
   MessageSquare,
   Bell,
   Sun
 } from 'lucide-react';
+import { PrintReceipt } from './components/PrintReceipt';
 
-const ScreenContent: React.FC = () => {
+const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = ({ onPrint }) => {
   const { currentScreen, transactions, reversePayment, auditLogs } = useApp();
 
   switch (currentScreen) {
@@ -30,7 +33,9 @@ const ScreenContent: React.FC = () => {
       return <Setup />;
     case 'students':
       return <Students />;
-    
+    case 'promote-students':
+      return <PromoteStudents />;
+
     // Fallback views with high-fidelity polish
     case 'whatsapp':
       return (
@@ -74,7 +79,7 @@ const ScreenContent: React.FC = () => {
           <div className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-2xl max-w-sm w-full border-t-8 border-t-slate-800 border-b-8 border-b-slate-800 relative">
             {/* Phone speaker/camera bar */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 h-4 w-24 bg-slate-800 rounded-full"></div>
-            
+
             <div className="pt-4 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <div className="bg-[#F59E0B] p-1.5 rounded-lg text-slate-900 shrink-0">
@@ -90,7 +95,7 @@ const ScreenContent: React.FC = () => {
               <div className="bg-blue-50/50 border border-blue-100/50 rounded-xl p-3 text-left">
                 <h5 className="font-bold text-xs text-slate-800">Priya Shah</h5>
                 <p className="text-[10px] text-slate-500">English Medium · Std 5</p>
-                
+
                 <div className="mt-3 pt-2 border-t border-blue-100/50 flex justify-between">
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Pending Due</span>
                   <span className="text-xs font-bold text-red-500">₹5,600</span>
@@ -185,10 +190,10 @@ const ScreenContent: React.FC = () => {
                         <td className="py-4 px-5 text-slate-400 text-xs font-semibold">{t.time || t.date}</td>
                         <td className="py-4 px-5 text-center">
                           <button
-                            onClick={() => alert(`Receipt PDF dynamically generated for ${t.studentName}!`)}
+                            onClick={() => onPrint(t)}
                             className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100/50"
                           >
-                            Download
+                            Print Receipt
                           </button>
                         </td>
                         <td className="py-4 px-5 text-center">
@@ -238,7 +243,7 @@ const ScreenContent: React.FC = () => {
                   } else {
                     detailStr = `Action performed on ${log.entityType}`;
                   }
-                  
+
                   return (
                     <div key={log._id} className="py-3 flex items-start gap-4 text-sm hover:bg-slate-50/50 transition-colors">
                       <span className="text-slate-400 text-xs shrink-0 font-semibold w-28">{dateStr}</span>
@@ -303,7 +308,7 @@ const ScreenContent: React.FC = () => {
   }
 };
 
-const MainAppLayout: React.FC = () => {
+const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = ({ onPrint }) => {
   const { currentScreen } = useApp();
 
   if (currentScreen === 'login') {
@@ -311,19 +316,40 @@ const MainAppLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans">
+    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans print:hidden">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
-        <ScreenContent />
+        <ScreenContent onPrint={onPrint} />
       </main>
     </div>
   );
 };
 
 export const App: React.FC = () => {
+  const [printingTx, setPrintingTx] = useState<PaymentTransaction | null>(null);
+
+  const handlePrint = (tx: PaymentTransaction) => {
+    setPrintingTx(tx);
+    // Give react time to render the print view before opening print dialog
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  // Listen for afterprint to hide the receipt again (optional, it's hidden by CSS print:block anyway)
+  useEffect(() => {
+    const afterPrint = () => setPrintingTx(null);
+    window.addEventListener('afterprint', afterPrint);
+    return () => window.removeEventListener('afterprint', afterPrint);
+  }, []);
+
   return (
     <React.StrictMode>
-      <MainAppLayout />
+      {/* The main app is hidden during print via print:hidden */}
+      <MainAppLayout onPrint={handlePrint} />
+
+      {/* The receipt is only visible during print via print:block */}
+      {printingTx && <PrintReceipt transaction={printingTx} />}
     </React.StrictMode>
   );
 };

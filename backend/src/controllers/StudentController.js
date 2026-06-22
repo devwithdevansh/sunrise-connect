@@ -44,11 +44,19 @@ class StudentController {
   /** POST /api/v1/students/:id/custom-fee */
   static addCustomFee = catchAsync(async (req, res) => {
     const { feeName, amount } = req.body;
-    if (!feeName || !amount || amount <= 0) {
-      return sendResponse(res, 400, null, 'Valid fee name and positive amount are required');
-    }
+    if (!feeName || !amount) throw new AppError('Fee name and amount required', 400);
     const ledger = await StudentService.addCustomFee(req.params.id, feeName, amount);
     sendResponse(res, 201, ledger, 'Custom fee successfully added');
+  });
+
+  /** POST /api/v1/students/promote */
+  static promoteStudents = catchAsync(async (req, res) => {
+    const { studentIds, targetStandard, targetDivision, targetAcademicYear } = req.body;
+    if (!studentIds || !Array.isArray(studentIds) || !targetStandard || !targetDivision || !targetAcademicYear) {
+      throw new AppError('Missing required fields for promotion', 400);
+    }
+    const result = await StudentService.promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, req.user.userId);
+    sendResponse(res, 200, result);
   });
 }
 

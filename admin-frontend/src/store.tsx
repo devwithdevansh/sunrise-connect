@@ -13,6 +13,7 @@ export type ScreenType =
   | 'unpaid-fees'
   | 'fee-structure'
   | 'students'
+  | 'promote-students'
   | 'whatsapp'
   | 'notifications'
   | 'parent-app'

@@ -534,6 +534,40 @@ class StudentService {
     }
   }
 
+  /** Promote students to a new standard */
+  static async promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, performedBy) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const students = await studentRepository.find({ _id: { $in: studentIds } }, null, { session });
+      if (!students.length) throw new AppError('No valid students found', 404);
+
+      const updatedStudentIds = [];
+      for (const student of students) {
+        await studentRepository.updateOne(
+          { _id: student._id },
+          { $set: { standard: targetStandard, division: targetDivision } },
+          { session }
+        );
+        updatedStudentIds.push(student._id);
+        
+        await AuditService.log(
+          { performedBy, targetStudentId: student._id, action: 'STUDENT_UPDATED', details: { reason: 'Promotion', targetStandard, targetDivision, targetAcademicYear } },
+          session
+        );
+      }
+
+      await session.commitTransaction();
+      return { message: `${updatedStudentIds.length} students promoted successfully` };
+    } catch (error) {
+      await session.abortTransaction();
+      logger.error('Error promoting students:', error);
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
   /** Regenerate missing fee ledgers for a student (backfill for legacy data) */
   static async regenerateMissingLedgers(studentId) {
     const session = await mongoose.startSession();

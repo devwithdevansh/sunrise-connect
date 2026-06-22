@@ -68,7 +68,10 @@ class PaymentService {
       const newPaid = ledger.paidAmount - payment.amount;
       if (newPaid < 0) throw new AppError('Ledger paid amount cannot become negative', 400);
 
-      const remaining = ledger.totalAmount - newPaid - ledger.concessionAmount;
+      const concessionToReverse = payment.concessionAmount || 0;
+      const newConcession = ledger.concessionAmount - concessionToReverse;
+      
+      const remaining = ledger.totalAmount - newPaid - newConcession;
       const status = remaining === 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'PENDING';
 
       // Create reversal record
@@ -83,7 +86,7 @@ class PaymentService {
       // OCC ledger decrement
       const result = await ledgerRepository.updateOne(
         { _id: ledger._id, __v: ledger.__v },
-        { $set: { paidAmount: newPaid, remainingAmount: remaining, status }, $inc: { __v: 1 } },
+        { $set: { paidAmount: newPaid, remainingAmount: remaining, concessionAmount: newConcession, status }, $inc: { __v: 1 } },
         { session }
       );
       if (result.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);

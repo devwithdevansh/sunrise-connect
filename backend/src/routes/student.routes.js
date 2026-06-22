@@ -16,6 +16,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/',     authorize('ADMIN', 'STAFF'), validate(createStudentSchema), StudentController.createStudent);
+router.post('/promote', authorize('ADMIN'), StudentController.promoteStudents);
 router.get('/',      authorize('ADMIN', 'STAFF'), validate(listStudentsSchema),  StudentController.listStudents);
 router.get('/:id',   authorize('ADMIN', 'STAFF'), StudentController.getStudent);
 router.patch('/:id', authorize('ADMIN', 'STAFF'), validate(updateStudentSchema), StudentController.updateStudent);
