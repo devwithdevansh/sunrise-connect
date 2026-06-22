@@ -8,6 +8,7 @@ import {
   createStudentSchema,
   updateStudentSchema,
   listStudentsSchema,
+  deleteStudentSchema,
 } from '../validations/student.schema.js';
 
 const router = Router();
@@ -18,5 +19,7 @@ router.post('/',     authorize('ADMIN', 'STAFF'), validate(createStudentSchema),
 router.get('/',      authorize('ADMIN', 'STAFF'), validate(listStudentsSchema),  StudentController.listStudents);
 router.get('/:id',   authorize('ADMIN', 'STAFF'), StudentController.getStudent);
 router.patch('/:id', authorize('ADMIN', 'STAFF'), validate(updateStudentSchema), StudentController.updateStudent);
+router.delete('/:id', authorize('ADMIN', 'STAFF'), validate(deleteStudentSchema), StudentController.deleteStudent);
+router.post('/:id/regenerate-ledgers', authorize('ADMIN'), StudentController.regenerateLedgers);
 
 export default router;

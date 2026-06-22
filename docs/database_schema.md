@@ -121,6 +121,14 @@ Core financial record representing a specific fee due for a student.
 
 *(Note: Unique on `studentId` + `feeCategoryId` + `feePeriod` + `academicYear`)*
 
+### Fee Period & Type Mapping Conventions
+To ensure consistency between the backend ledger generation and frontend fee collection grids, the following conventions are strictly enforced:
+- **EDUCATION**: Generated for 12 months. `feePeriod` MUST be the exact month name (e.g., `"June"`, `"July"`, `"August"`, etc.).
+- **TRANSPORT**: Generated for 12 months (or remaining months if added mid-year). `feePeriod` MUST be the exact month name (e.g., `"June"`). It does NOT use a lump-sum "Mid-Year" period.
+- **TERM**: Generated for 2 terms. `feePeriod` MUST be `"Term 1"` or `"Term 2"`.
+- **ADMISSION**: Generated once for new admissions. `feePeriod` MUST be `"One-time"`. (Legacy records may contain `"Admission"`).
+- **BAG_KIT**: Generated once for new admissions. `feeType` is `BAG_KIT` and `feePeriod` MUST be `"One-time"`. (Legacy records may contain `"Bag & Kit"`).
+
 ## 9. Payment
 Represents an individual payment or reversal transaction.
 

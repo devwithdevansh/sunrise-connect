@@ -43,3 +43,7 @@ export const listStudentsSchema = {
     skip: z.coerce.number().int().min(0).optional(),
   }),
 };
+
+export const deleteStudentSchema = {
+  params: z.object({ id: z.string().min(1) }),
+};

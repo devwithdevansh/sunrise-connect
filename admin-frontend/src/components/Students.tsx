@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../store';
-
-import { Search, ChevronDown, Plus, X } from 'lucide-react';
+import { Search, ChevronDown, Plus, X, Trash2, Pencil } from 'lucide-react';
 
 export const Students: React.FC = () => {
-  const { students, addStudent, setScreen, checkMobile } = useApp();
+  const { students, addStudent, setScreen, checkMobile, deleteStudent, updateStudent } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [classFilter, setClassFilter] = useState('All Classes');
   const [divFilter, setDivFilter] = useState('All Divisions');
@@ -25,6 +24,16 @@ export const Students: React.FC = () => {
   const [newSTransport, setNewSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
+
+  // Edit Student Modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [editSName, setEditSName] = useState('');
+  const [editSMedium, setEditSMedium] = useState<'English' | 'Gujarati'>('English');
+  const [editSStandard, setEditSStandard] = useState('5');
+  const [editSDivision, setEditSDivision] = useState('A');
+  const [editSTransport, setEditSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
+  const [originalTransport, setOriginalTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
 
   // Sibling Modal State
   const [siblingModalData, setSiblingModalData] = useState<{parentName: string, parentId: string} | null>(null);
@@ -95,6 +104,37 @@ export const Students: React.FC = () => {
     setNewSIsRTE(false);
     setNewSIsNewAdmission(true);
     setIsModalOpen(false);
+  };
+
+  const openEditModal = (s: any) => {
+    setEditingStudentId(s._id || s.id);
+    setEditSName(s.studentName);
+    setEditSMedium(s.medium);
+    setEditSStandard(s.standard);
+    setEditSDivision(s.division);
+    setEditSTransport(s.transportType || 'None');
+    setOriginalTransport(s.transportType || 'None');
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudentId) return;
+
+    const updates: any = {
+      studentName: editSName,
+      medium: editSMedium,
+      standard: editSStandard,
+      division: editSDivision,
+      transportType: editSTransport,
+    };
+
+    const success = await updateStudent(editingStudentId, updates);
+    if (success) {
+      setIsEditModalOpen(false);
+    } else {
+      alert("Failed to update student");
+    }
   };
 
   return (
@@ -329,6 +369,24 @@ export const Students: React.FC = () => {
                         Collect
                       </button>
                     )}
+                    <button
+                      onClick={() => openEditModal(s)}
+                      className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                      title="Edit Student"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to permanently delete this student, their ledgers, and all their payments? This action cannot be undone.")) {
+                          deleteStudent(s._id || s.id);
+                        }
+                      }}
+                      className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                      title="Delete Student"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -501,6 +559,117 @@ export const Students: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Student Modal Panel */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-100 shadow-2xl p-6 relative overflow-hidden animate-scale-up">
+            {/* Top title bar */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+              <h3 className="text-base font-extrabold text-slate-800">Edit Student Profile</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Student Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editSName}
+                    onChange={(e) => setEditSName(e.target.value)}
+                    placeholder="Enter student's full name"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Medium</label>
+                  <select
+                    value={editSMedium}
+                    onChange={(e) => setEditSMedium(e.target.value as 'English' | 'Gujarati')}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="English">English</option>
+                    <option value="Gujarati">Gujarati</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Standard (Class)</label>
+                  <select
+                    value={editSStandard}
+                    onChange={(e) => setEditSStandard(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((cls) => (
+                      <option key={cls} value={cls}>
+                        Class {cls}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Division</label>
+                  <select
+                    value={editSDivision}
+                    onChange={(e) => setEditSDivision(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="A">Division A</option>
+                    <option value="B">Division B</option>
+                    <option value="C">Division C</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
+                <select
+                  value={editSTransport}
+                  onChange={(e) => setEditSTransport(e.target.value as any)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                >
+                  <option value="None">None</option>
+                  <option value="Railnagar">Railnagar (+₹600)</option>
+                  <option value="Outside Railnagar">Outside Railnagar (+₹900)</option>
+                </select>
+              </div>
+
+              {editSTransport !== originalTransport && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                  <p className="text-xs text-blue-800 font-semibold">
+                    The transport fee will be automatically calculated based on the current active academic year and remaining months.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-2 rounded-xl text-xs transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Sibling Check Modal */}
       {siblingModalData && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-fade-in">

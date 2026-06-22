@@ -30,9 +30,10 @@ const COMBINED_EDU_TERM_CONFIG = [
 ];
 
 const MONTHS_CONFIG = COMBINED_EDU_TERM_CONFIG.filter(c => c.type === 'EDUCATION');
+const STANDARD_MONTH_PERIODS = new Set(MONTHS_CONFIG.map(m => m.value));
 
 export const CollectFee: React.FC = () => {
-  const { students, ledgerEntries, recordPayment, feeStructures, transportFeeStructures } = useApp();
+  const { students, ledgerEntries, recordPayment, feeStructures, transportFeeStructures, regenerateLedgers } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
@@ -47,6 +48,7 @@ export const CollectFee: React.FC = () => {
   const [payingNow, setPayingNow] = useState(0);
   const [remark, setRemark] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Default select first student
   useEffect(() => {
@@ -100,6 +102,18 @@ export const CollectFee: React.FC = () => {
     return { education, term, transport, admission, bagKit };
   }, [selectedStudent, feeStructures, transportFeeStructures]);
 
+  // Mid-year transport ledgers: TRANSPORT entries that don't map to a standard month slot
+  const midYearTransportLedgers = useMemo(() => {
+    if (!selectedStudent) return [];
+    const sId = selectedStudent._id || selectedStudent.id;
+    return ledgerEntries.filter(
+      (l) =>
+        l.studentId === sId &&
+        l.feeType === 'TRANSPORT' &&
+        !STANDARD_MONTH_PERIODS.has(l.feePeriod)
+    );
+  }, [selectedStudent, ledgerEntries]);
+
   // -------------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------------
@@ -117,20 +131,35 @@ export const CollectFee: React.FC = () => {
 
   /** What ledger entry exists for this student + category + period (any status) */
   const getLedger = (category: string, period: string) => {
-    // selectedStudent may have _id (from DB) or id (from mock). Match either.
     const sId = selectedStudent?._id || selectedStudent?.id;
+    // For one-time fees, also match legacy feePeriod names stored in DB
+    const legacyPeriods: Record<string, string[]> = {
+      ADMISSION: ['One-time', 'Admission'],
+      BAG_KIT: ['One-time', 'Bag & Kit'],
+    };
+    const periodsToMatch = legacyPeriods[category]
+      ? legacyPeriods[category]
+      : [period];
+
     return ledgerEntries.find(
       (l) =>
         (l.studentId === sId) &&
         l.feeType === category &&
-        l.feePeriod === period
+        periodsToMatch.includes(l.feePeriod)
     );
   };
 
   /** Amount still due for a period (0 if fully paid or no ledger = fresh) */
   const getDueAmount = (category: string, period: string): number => {
     const entry = getLedger(category, period);
-    if (!entry) return getStandardAmount(category, period); // no ledger yet → full amount due
+    // For mid-year / one-time entries the ledger IS the source of truth — never fall back to standard amount
+    if (!entry) {
+      // Only fall back for standard month slots
+      if (STANDARD_MONTH_PERIODS.has(period) || period === 'One-time') {
+        return getStandardAmount(category, period);
+      }
+      return 0;
+    }
     return entry.remainingAmount;
   };
 
@@ -449,7 +478,17 @@ export const CollectFee: React.FC = () => {
             </div>
 
             {/* ── EDUCATION / TRANSPORT: Full 12-month grid ─────── */}
-            {(feeCategory === 'EDUCATION' || feeCategory === 'TRANSPORT') && (
+            {(feeCategory === 'EDUCATION' || feeCategory === 'TRANSPORT') && (() => {
+              // Check if this student has missing ledgers for the current tab
+              const configToCheck = feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG;
+              const hasMissing = configToCheck.some(item => {
+                const cat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
+                return !getLedger(cat, item.value);
+              });
+              // For transport, skip showing the grid entirely if no transport AND no mid-year ledgers
+              const skipTransportGrid = feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0;
+
+              return (
               <div className={`border rounded-xl p-5 border-l-4 ${feeCategory === 'EDUCATION' ? 'border-blue-100 bg-blue-50/30 border-l-blue-500' : 'border-emerald-100 bg-emerald-50/30 border-l-emerald-500'}`}>
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-3">
@@ -482,13 +521,86 @@ export const CollectFee: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Missing ledgers warning + fix button */}
+                {hasMissing && !skipTransportGrid && (
+                  <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-amber-700">
+                      ⚠ Some fee entries are missing for this student. Click "Generate" to create them.
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isRegenerating}
+                      onClick={async () => {
+                        setIsRegenerating(true);
+                        const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
+                        setIsRegenerating(false);
+                        if (ok) {
+                          setSuccessMsg('✓ Missing ledgers generated successfully. You can now collect fees.');
+                          setTimeout(() => setSuccessMsg(''), 4000);
+                        } else {
+                          setSuccessMsg('⚠ Failed to generate ledgers. Please try again.');
+                          setTimeout(() => setSuccessMsg(''), 5000);
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
+                    >
+                      {isRegenerating ? 'Generating...' : 'Generate Missing Ledgers'}
+                    </button>
+                  </div>
+                )}
+
                 {/* No transport warning */}
-                {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && (
+                {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0 && (
                   <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs font-semibold text-amber-700">
                     This student has no transport subscription. Transport fee does not apply.
                   </div>
                 )}
 
+                {/* Mid-year transport ledgers (lump-sum, custom period) */}
+                {feeCategory === 'TRANSPORT' && midYearTransportLedgers.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mid-Year Transport</p>
+                    <div className="flex flex-col gap-2">
+                      {midYearTransportLedgers.map((ledger) => {
+                        const isPaid = ledger.status === 'PAID';
+                        const isSelected = selectedFees.some(f => f.category === 'TRANSPORT' && f.period === ledger.feePeriod);
+                        return (
+                          <button
+                            key={ledger._id || ledger.id}
+                            type="button"
+                            disabled={isPaid}
+                            onClick={() => {
+                              if (isPaid) return;
+                              setSelectedFees(prev => {
+                                const exists = prev.some(f => f.category === 'TRANSPORT' && f.period === ledger.feePeriod);
+                                if (exists) return prev.filter(f => !(f.category === 'TRANSPORT' && f.period === ledger.feePeriod));
+                                return [...prev, { category: 'TRANSPORT', period: ledger.feePeriod }];
+                              });
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl transition-all ${
+                              isPaid
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed'
+                                : isSelected
+                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                : 'bg-amber-50/40 border-amber-300 text-amber-700 hover:border-amber-400'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              <span className="text-sm font-bold">{ledger.feePeriod}</span>
+                            </div>
+                            <span className="text-sm font-extrabold">
+                              {isPaid ? 'PAID' : `₹${ledger.remainingAmount.toLocaleString('en-IN')} DUE`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Standard monthly transport grid — only show if student has active transport subscription */}
+                {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' ? null : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
                   {(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG).map((item) => {
                     const activeCat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
@@ -516,7 +628,7 @@ export const CollectFee: React.FC = () => {
                       <button
                         key={item.value}
                         type="button"
-                        disabled={isPaid || (activeCat === 'TRANSPORT' && selectedStudent.transportType === 'None')}
+                        disabled={isPaid || isNew || (activeCat === 'TRANSPORT' && selectedStudent.transportType === 'None')}
                         onClick={() => handlePeriodToggle(activeCat, item.value)}
                         className={`border rounded-xl py-2.5 text-center flex flex-col items-center justify-center transition-all relative select-none ${btnStyle} ${activeCat === 'TERM' ? 'col-span-1 md:col-span-2' : ''}`}
                       >
@@ -536,9 +648,11 @@ export const CollectFee: React.FC = () => {
                     );
                   })}
                 </div>
+                )}
 
               </div>
-            )}
+              );
+            })()}
 
 
 

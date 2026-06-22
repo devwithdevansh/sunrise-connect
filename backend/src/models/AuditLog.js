@@ -34,6 +34,7 @@ const auditLogSchema = new mongoose.Schema(
         'PARENT_PASSWORD_RESET',
         'STUDENT_CREATED',
         'STUDENT_UPDATED',
+        'STUDENT_DELETED',
         'LEDGER_CREATED',
         'LEDGER_PAYMENT_ADDED',
         'LEDGER_CONCESSION_APPLIED',

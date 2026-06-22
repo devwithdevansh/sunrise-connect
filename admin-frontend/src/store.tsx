@@ -101,6 +101,10 @@ interface AppContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   checkMobile: (primary: string, secondary: string) => Promise<any>;
+  deleteStudent: (id: string) => Promise<boolean>;
+  updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<boolean>;
+  regenerateLedgers: (id: string) => Promise<boolean>;
+  currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -608,6 +612,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteStudent = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/v1/students/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        console.error('Failed to delete student');
+        return false;
+      }
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const updateStudent = async (id: string, updates: Partial<Student> & { transportMonths?: number }) => {
+    try {
+      const res = await authFetch(`/api/v1/students/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (!res.ok) {
+        console.error('Failed to update student');
+        return false;
+      }
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const regenerateLedgers = async (id: string): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/students/${id}/regenerate-ledgers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) throw new Error('Failed to regenerate ledgers');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -635,7 +690,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         currentUser,
         login,
         logout,
-        checkMobile
+        checkMobile,
+        deleteStudent,
+        updateStudent,
+        regenerateLedgers
       }}
     >
       {children}

@@ -28,6 +28,18 @@ class StudentController {
     const student = await StudentService.updateStudent(req.params.id, req.body);
     sendResponse(res, 200, student);
   });
+
+  /** DELETE /api/v1/students/:id */
+  static deleteStudent = catchAsync(async (req, res) => {
+    await StudentService.deleteStudent(req.params.id, req.user.id);
+    sendResponse(res, 200, null, 'Student successfully deleted');
+  });
+
+  /** POST /api/v1/students/:id/regenerate-ledgers */
+  static regenerateLedgers = catchAsync(async (req, res) => {
+    const result = await StudentService.regenerateMissingLedgers(req.params.id);
+    sendResponse(res, 200, result, `Regenerated ${result.created} missing ledgers`);
+  });
 }
 
 export default StudentController;
