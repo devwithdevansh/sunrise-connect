@@ -171,6 +171,12 @@ Stores business-state change events for auditing purposes.
 | `PAYMENT_CREATED` | A payment record was created. |
 | `PAYMENT_REVERSED` | A payment was reversed. |
 | `MIGRATION_EXECUTED` | A bulk migration was run. |
+| `STAFF_CREATED` | A new clerk/staff account was created. |
+| `STAFF_ACTIVATED` | A staff account was activated. |
+| `STAFF_DEACTIVATED` | A staff account was deactivated. |
+| `STAFF_PASSWORD_RESET` | A staff account's password was reset. |
+| `STUDENTS_PROMOTED` | Bulk student promotion executed. |
+| `STUDENT_TRANSPORT_UPDATED` | Mid-year transport zone updated for a student. |
 | `REFRESH_ROTATED` | Auth refresh token was rotated (system/auth event — frozen). |
 
 > **Note:** Fee structure changes (create/update) are **not** currently logged in the AuditLog.

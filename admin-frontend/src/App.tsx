@@ -10,6 +10,7 @@ import { FeeStructure } from './components/FeeStructure';
 import { Setup } from './components/Setup';
 import { Login } from './components/Login';
 import { PromoteStudents } from './components/PromoteStudents';
+import { StaffManagement } from './components/StaffManagement';
 import {
   MessageSquare,
   Bell,
@@ -35,6 +36,8 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
       return <Students />;
     case 'promote-students':
       return <PromoteStudents />;
+    case 'staff-management':
+      return <StaffManagement />;
 
     // Fallback views with high-fidelity polish
     case 'whatsapp':

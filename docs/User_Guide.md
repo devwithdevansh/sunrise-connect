@@ -58,14 +58,20 @@ Once the Setup is complete, you can begin enrolling and managing students under 
    - **New Admission**: If ticked, this enables the Admission Fee and Bag & Kit Fee ledgers for the student.
 4. **Ledger Generation**: Upon saving, the system automatically creates a financial `Ledger` for the active Academic Year, generating all pending monthly and term invoices.
 
-### B. Interactive Student Cards (Inline Details)
+### B. Interactive Student Cards & Mid-Year Transport
 Instead of navigating away or redirecting to different screens, student details are managed inline on the **Students** page:
-- Click **"View"** on any student card to expand it. The card expands to full width, displaying a tabbed interface:
-  - **Parent & Siblings Tab**: Displays parent names, primary and secondary contacts, and lists siblings registered under the same parent.
-  - **Fee Balance Ledgers Tab**: Displays a detailed breakdown of all ledgers (Education, Transport, Admission, Bag & Kit, Custom) showing total fees, paid amounts, concessions, and outstanding balances, summed at the bottom.
-  - **Payment History Tab**: Displays recent transaction records, including payment dates, methods, amounts, and statuses. It features an inline **Reverse** button to instantly reverse active payments.
+- Click **"View"** on any student card to expand it. The card expands to full width, displaying a tabbed interface.
+- **Mid-Year Transport**: If a student changes their transport route midway through the year (e.g., from "None" to "Railnagar"), the system will automatically detect the upgrade and calculate the financial difference. It instantly updates all their remaining future transport ledgers to the new price, preserving any past payments.
 - Click **"Collapse"** to restore the card to its standard compact grid size.
 - Click **"Collect"** to store the student's ID, redirect to the **Collect Fee** page, and pre-select that student automatically.
+
+### C. Bulk Student Promotion Engine
+At the end of an academic year, you can promote entire classes in bulk rather than updating each student manually:
+1. Navigate to the **Promote** screen (available only to Admins).
+2. Select the current academic year, standard, and division of the students you wish to promote.
+3. Review the list of eligible students loaded by the system.
+4. Select the target standard, division, and the new academic year.
+5. Click **"Promote Students"**. The system instantly updates their class records and generates all new fee ledgers for the upcoming academic year!
 
 ---
 
@@ -103,6 +109,10 @@ At the bottom of the **Collect Fee** page, the **Fee Collection History** sectio
 
 Each group displays the item count, total collected, status badge (`PAID` or `REVERSED`), and expands to show transaction details and the **Reverse** action.
 
+### Printing Fee Receipts
+When viewing a student's payment history (either on the **Collect Fee** page or the expanded **Students** card), you can click the **Print Receipt** icon next to any completed transaction. 
+This instantly transforms the application into a beautiful, high-fidelity thermal/A4 receipt template containing the school's authorized details, payment method, concessions, and student info, ready for printing.
+
 ---
 
 ## 4. Analytics and Dashboard
@@ -124,6 +134,25 @@ Accountability is critical in financial systems. The **Audit Log** records key a
 - Payment collections and concessions.
 - Payment reversals.
 - Bulk migration execution.
+
+---
+
+## 5. Staff Management & Role-Based Access (RBAC)
+
+To protect sensitive configurations and student data, the system utilizes strict Role-Based Access Control.
+
+### Managing Clerks
+1. Admins can navigate to **Admin -> Staff Management** on the sidebar.
+2. From here, you can **Create** new clerk accounts (email & password).
+3. You can instantly **Activate/Deactivate** their access if they leave the school.
+4. You can click **Reset** to issue a new password.
+
+### Permission Distinctions
+- **ADMIN Role**: Has complete access to the system. Can manage Setup, Fee Structures, Academic Years, Staff, and use the Bulk Promotion engine. They can freely Add, Edit, and Delete students.
+- **STAFF Role**: Has restricted access optimized for counter operations. 
+  - They **cannot** access Setup, Fee Structures, Audit Logs, Staff Management, or the Promote screen.
+  - They **cannot** Add, Edit, or Delete students.
+  - They **can** view students, collect fees, reverse their own payments, and print receipts.
 
 ---
 

@@ -25,6 +25,7 @@ class AuthService {
   static async portalLogin({ email, password }) {
     const user = await userRepository.findByEmailWithPassword(email);
     if (!user) throw new AppError('Invalid credentials', 401);
+    if (!user.isActive) throw new AppError('Your account has been deactivated. Contact the administrator.', 403);
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) throw new AppError('Invalid credentials', 401);
 
@@ -36,8 +37,11 @@ class AuthService {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await userRepository.addRefreshToken(user._id, refreshHash, expiresAt);
 
+    // Update lastLogin timestamp
+    await userRepository.updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } });
+
     logger.info(`Portal login: ${user._id}`);
-    return { accessToken, refreshToken: refreshPlain };
+    return { accessToken, refreshToken: refreshPlain, user: { name: user.name, role: user.role } };
   }
 
   /* ----------------------------------------------------------------

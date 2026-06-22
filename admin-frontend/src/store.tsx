@@ -14,6 +14,7 @@ export type ScreenType =
   | 'fee-structure'
   | 'students'
   | 'promote-students'
+  | 'staff-management'
   | 'whatsapp'
   | 'notifications'
   | 'parent-app'
@@ -307,16 +308,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return false;
       }
       const data = await res.json();
-      const { accessToken, refreshToken } = data.data;
+      const { accessToken, refreshToken, user: userInfo } = data.data;
 
-      // Decode JWT to get role and ID
+      // Decode JWT to get user ID
       const payloadBase64 = accessToken.split('.')[1];
       const payload = JSON.parse(atob(payloadBase64));
       const userId = payload.id;
-      const role = payload.role; // 'ADMIN' or 'STAFF'
 
-      const namePrefix = email.split('@')[0];
-      const name = namePrefix.charAt(0).toUpperCase() + namePrefix.slice(1);
+      // Use the real name and role from the server response
+      const name = userInfo?.name || email.split('@')[0];
+      const role = userInfo?.role || payload.role;
 
       const userObj = { name, role };
       localStorage.setItem('accessToken', accessToken);

@@ -51,14 +51,14 @@ export const Sidebar: React.FC = () => {
       items: [
         { id: 'collect-fee', label: 'Collect Fee', icon: CreditCard },
         { id: 'unpaid-fees', label: 'Unpaid Fees', icon: AlertTriangle, badge: unpaidCount },
-        { id: 'fee-structure', label: 'Fee Structure', icon: Layers },
+        ...(currentUser?.role === 'ADMIN' ? [{ id: 'fee-structure' as ScreenType, label: 'Fee Structure', icon: Layers }] : []),
       ]
     },
     {
       title: 'STUDENTS',
       items: [
         { id: 'students', label: 'Students', icon: Users },
-        { id: 'promote-students', label: 'Promote', icon: Layers },
+        ...(currentUser?.role === 'ADMIN' ? [{ id: 'promote-students' as ScreenType, label: 'Promote', icon: Layers }] : []),
         { id: 'reports', label: 'Import Excel', icon: FileSpreadsheet, disabled: true },
       ]
     },
@@ -76,14 +76,15 @@ export const Sidebar: React.FC = () => {
         { id: 'receipts', label: 'Receipts', icon: Receipt },
       ]
     },
-    {
+    ...(currentUser?.role === 'ADMIN' ? [{
       title: 'ADMIN',
       items: [
-        { id: 'setup', label: 'Setup', icon: Settings },
-        { id: 'audit', label: 'Audit Log', icon: History },
-        { id: 'reports', label: 'Reports', icon: BarChart3 },
+        { id: 'setup' as ScreenType, label: 'Setup', icon: Settings },
+        { id: 'staff-management' as ScreenType, label: 'Staff Management', icon: Users },
+        { id: 'audit' as ScreenType, label: 'Audit Log', icon: History },
+        { id: 'reports' as ScreenType, label: 'Reports', icon: BarChart3 },
       ]
-    }
+    }] : [])
   ];
 
   return (
