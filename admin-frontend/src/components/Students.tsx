@@ -14,7 +14,8 @@ export const Students: React.FC = () => {
     ledgerEntries,
     transactions,
     reversePayment,
-    currentUser
+    currentUser,
+    academicYears
   } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
@@ -142,6 +143,25 @@ export const Students: React.FC = () => {
       division: editSDivision,
       transportType: editSTransport,
     };
+
+    // Calculate remaining months for transport adjustment (mirroring backend logic)
+    const activeYear = academicYears.find((y) => y.isActive);
+    let remainingMonths = 0;
+    if (activeYear) {
+      const now = new Date();
+      const end = new Date(activeYear.endDate);
+      if (now < end) {
+        const yearsDiff = end.getFullYear() - now.getFullYear();
+        const monthsDiff = end.getMonth() - now.getMonth();
+        remainingMonths = yearsDiff * 12 + monthsDiff + 1;
+        if (remainingMonths > 12) remainingMonths = 12;
+        if (remainingMonths < 0) remainingMonths = 0;
+      }
+    }
+    // Include remaining months for backend processing (optional)
+    if (remainingMonths > 0) {
+      updates.transportMonths = remainingMonths;
+    }
 
     const success = await updateStudent(editingStudentId, updates);
     if (success) {
