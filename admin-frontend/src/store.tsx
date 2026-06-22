@@ -9,20 +9,20 @@ import type {
 
 export type ScreenType =
   | 'dashboard'
+  | 'setup'
+  | 'students'
   | 'collect-fee'
   | 'unpaid-fees'
   | 'fee-structure'
-  | 'students'
   | 'promote-students'
   | 'staff-management'
   | 'whatsapp'
-  | 'notifications'
+  | 'login'
   | 'parent-app'
-  | 'receipts'
-  | 'audit'
+  | 'notifications'
   | 'reports'
-  | 'setup'
-  | 'login';
+  | 'receipts'
+  | 'audit-log';
 
 export interface AcademicYearData {
   _id: string;

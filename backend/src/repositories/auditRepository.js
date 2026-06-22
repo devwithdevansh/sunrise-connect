@@ -18,7 +18,9 @@ const auditRepository = {
 
   async find(filter = {}, opts = {}) {
     const { limit = 20, skip = 0, sort = { createdAt: -1 } } = opts;
-    return AuditLog.find(filter, null, { limit, skip, sort }).lean();
+    return AuditLog.find(filter, null, { limit, skip, sort })
+      .populate({ path: 'performedBy', select: 'name role email', model: 'User' })
+      .lean();
   },
 };
 

@@ -12,7 +12,7 @@ import {
   Bell,
   Smartphone,
   Receipt,
-  History,
+  Activity,
   BarChart3,
   LogOut,
   Sun,
@@ -81,7 +81,7 @@ export const Sidebar: React.FC = () => {
       items: [
         { id: 'setup' as ScreenType, label: 'Setup', icon: Settings },
         { id: 'staff-management' as ScreenType, label: 'Staff Management', icon: Users },
-        { id: 'audit' as ScreenType, label: 'Audit Log', icon: History },
+        { id: 'audit-log' as ScreenType, label: 'Audit Log', icon: Activity },
         { id: 'reports' as ScreenType, label: 'Reports', icon: BarChart3 },
       ]
     }] : [])

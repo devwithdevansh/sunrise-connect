@@ -11,6 +11,7 @@ import { Setup } from './components/Setup';
 import { Login } from './components/Login';
 import { PromoteStudents } from './components/PromoteStudents';
 import { StaffManagement } from './components/StaffManagement';
+import { AuditLogs } from './components/AuditLogs';
 import {
   MessageSquare,
   Bell,
@@ -223,45 +224,8 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
         </div>
       );
 
-    case 'audit':
-      return (
-        <div className="flex-1 p-6 space-y-6">
-          <header>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Audit Log</h2>
-            <p className="text-xs font-semibold text-slate-400">Admin-only portal logs satisfying security audit requirements</p>
-          </header>
-
-          <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="divide-y divide-slate-100">
-              {auditLogs.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">No audit logs found.</div>
-              ) : (
-                auditLogs.map((log) => {
-                  const dateStr = new Date(log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                  let detailStr = '';
-                  if (log.details?.remark) detailStr = log.details.remark;
-                  else if (log.details?.reason) detailStr = log.details.reason;
-                  else if (typeof log.details === 'object' && Object.keys(log.details).length > 0) {
-                    detailStr = JSON.stringify(log.details).substring(0, 100);
-                  } else {
-                    detailStr = `Action performed on ${log.entityType}`;
-                  }
-
-                  return (
-                    <div key={log._id} className="py-3 flex items-start gap-4 text-sm hover:bg-slate-50/50 transition-colors">
-                      <span className="text-slate-400 text-xs shrink-0 font-semibold w-28">{dateStr}</span>
-                      <div>
-                        <span className="font-bold text-slate-800">{log.action}</span>
-                        <p className="text-xs text-slate-500 mt-0.5">{detailStr}</p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      );
+    case 'audit-log':
+      return <AuditLogs />;
 
     case 'reports':
       return (
