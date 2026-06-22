@@ -335,29 +335,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
-    if (token && refreshToken) {
-      try {
-        await fetch('/api/v1/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ refreshToken })
-        });
-      } catch (err) {
-        console.error('Logout request failed:', err);
-      }
-    }
+    
+    // Clear local state instantly for snappy UX
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('currentUser');
     setCurrentUser(null);
     setScreen('login');
+
+    // Fire backend logout in the background
+    if (token && refreshToken) {
+      fetch('/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ refreshToken })
+      }).catch(err => {
+        console.error('Logout request failed:', err);
+      });
+    }
   };
 
   const addStudent = async (newS: Omit<Student, 'id' | 'status'>) => {
