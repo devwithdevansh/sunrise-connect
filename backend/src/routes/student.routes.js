@@ -21,5 +21,6 @@ router.get('/:id',   authorize('ADMIN', 'STAFF'), StudentController.getStudent);
 router.patch('/:id', authorize('ADMIN', 'STAFF'), validate(updateStudentSchema), StudentController.updateStudent);
 router.delete('/:id', authorize('ADMIN', 'STAFF'), validate(deleteStudentSchema), StudentController.deleteStudent);
 router.post('/:id/regenerate-ledgers', authorize('ADMIN'), StudentController.regenerateLedgers);
+router.post('/:id/custom-fee', authorize('ADMIN', 'STAFF'), StudentController.addCustomFee);
 
 export default router;

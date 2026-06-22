@@ -128,6 +128,7 @@ To ensure consistency between the backend ledger generation and frontend fee col
 - **TERM**: Generated for 2 terms. `feePeriod` MUST be `"Term 1"` or `"Term 2"`.
 - **ADMISSION**: Generated once for new admissions. `feePeriod` MUST be `"One-time"`. (Legacy records may contain `"Admission"`).
 - **BAG_KIT**: Generated once for new admissions. `feeType` is `BAG_KIT` and `feePeriod` MUST be `"One-time"`. (Legacy records may contain `"Bag & Kit"`).
+- **OTHER**: Used for temporary or custom fees (like fines or events). `feePeriod` is used dynamically as the exact custom name of the fee (e.g., `"Developer Fees"`, `"Annual Event"`).
 
 ## 9. Payment
 Represents an individual payment or reversal transaction.

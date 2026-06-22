@@ -40,6 +40,16 @@ class StudentController {
     const result = await StudentService.regenerateMissingLedgers(req.params.id);
     sendResponse(res, 200, result, `Regenerated ${result.created} missing ledgers`);
   });
+
+  /** POST /api/v1/students/:id/custom-fee */
+  static addCustomFee = catchAsync(async (req, res) => {
+    const { feeName, amount } = req.body;
+    if (!feeName || !amount || amount <= 0) {
+      return sendResponse(res, 400, null, 'Valid fee name and positive amount are required');
+    }
+    const ledger = await StudentService.addCustomFee(req.params.id, feeName, amount);
+    sendResponse(res, 201, ledger, 'Custom fee successfully added');
+  });
 }
 
 export default StudentController;

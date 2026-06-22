@@ -73,6 +73,13 @@ The core of Sunrise Connect is the financial engine.
 7. Review the **Fee Summary** cart at the bottom, which shows all selected fees and the total payable.
 8. Click **Collect Payment** to confirm. The system records the payment, updates the ledger status, and adds the transaction to the dashboard.
 
+### Adding Custom Fees (Temporary/Other Fees)
+If you need to charge a student for a one-off temporary fee (like an "Event Fee", "Late Fine", or "Damage Penalty"):
+1. In the **Collect Fee** screen, after selecting the student, click the blue **+ Add Custom Fee** button on the right.
+2. A popup will appear. Enter the **Fee Name / Description** and the **Amount (₹)**.
+3. Click **Save Fee**. The system will instantly create a temporary `OTHER` fee ledger for that student.
+4. An **OTHER** tab will appear next to the other fee categories. You can click on this tab to see the newly generated custom fee, and add it to your payment cart just like any other fee.
+
 ### Concessions & Discounts
 Concessions are applied **globally** during the payment flow, not per individual line item:
 1. In the **Fee Summary** section at the bottom of the Collect Fee screen, find the **Global Concession** field.

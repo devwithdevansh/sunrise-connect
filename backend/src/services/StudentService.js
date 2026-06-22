@@ -747,6 +747,74 @@ class StudentService {
       session.endSession();
     }
   }
+
+  /**
+   * Adds a custom fee ledger for a student.
+   * Uses the OTHER fee category type.
+   */
+  static async addCustomFee(studentId, feeName, amount) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const student = await mongoose.model('Student').findById(studentId).session(session);
+      if (!student) throw new ApiError(404, 'Student not found');
+
+      let otherCategory = await mongoose.model('FeeCategory').findOne({ type: 'OTHER' }).session(session);
+      if (!otherCategory) {
+        otherCategory = await mongoose.model('FeeCategory').create([{
+          name: 'Custom Fee',
+          type: 'OTHER',
+          isActive: true
+        }], { session }).then(res => res[0]);
+      }
+
+      const activeAcademicYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
+      const academicYearStr = activeAcademicYear ? activeAcademicYear.name : '2025-26';
+
+      const ledger = {
+        studentId: student._id,
+        feePeriod: feeName,
+        feeType: 'OTHER',
+        totalAmount: amount,
+        paidAmount: 0,
+        concessionAmount: 0,
+        remainingAmount: amount,
+        dueDate: new Date(),
+        status: 'PENDING',
+        feeCategoryId: otherCategory._id,
+        academicYear: academicYearStr,
+        source: 'MANUAL',
+        generatedFrom: 'FEE_STRUCTURE',
+        ledgerNumber: `LEDGER_CUST_${Date.now()}_${student.studentCode || student._id}`,
+        snapshot: {
+          studentName: student.studentName,
+          medium: student.medium,
+          standard: student.standard,
+          division: student.division,
+          transportType: student.transportType,
+          isRTE: student.isRTE
+        }
+      };
+
+      await mongoose.model('StudentFeeLedger').create([ledger], { session });
+
+      await AuditService.log({
+        performedBy: null,
+        targetStudentId: studentId,
+        action: 'LEDGER_CREATED',
+        details: { type: 'CUSTOM_FEE', name: feeName, amount }
+      }, session);
+
+      await session.commitTransaction();
+      return ledger;
+    } catch (error) {
+      await session.abortTransaction();
+      logger.error('StudentService.addCustomFee error', error);
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
 }
 
 export default StudentService;

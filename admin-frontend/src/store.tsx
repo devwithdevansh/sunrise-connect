@@ -104,6 +104,7 @@ interface AppContextType {
   deleteStudent: (id: string) => Promise<boolean>;
   updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<boolean>;
   regenerateLedgers: (id: string) => Promise<boolean>;
+  addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
 }
 
@@ -663,6 +664,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const addCustomFee = async (id: string, feeName: string, amount: number): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/students/${id}/custom-fee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feeName, amount })
+      });
+      if (!res.ok) throw new Error('Failed to add custom fee');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -693,7 +710,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         checkMobile,
         deleteStudent,
         updateStudent,
-        regenerateLedgers
+        regenerateLedgers,
+        addCustomFee
       }}
     >
       {children}

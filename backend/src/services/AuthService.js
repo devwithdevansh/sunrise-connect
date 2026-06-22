@@ -147,15 +147,12 @@ class AuthService {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const result = await Repo.updateOne(
-        { _id: userId, 'refreshTokens.tokenHash': tokenEntry.tokenHash },
-        {
-          $pull: { refreshTokens: { tokenHash: tokenEntry.tokenHash } },
-          $push: { refreshTokens: { tokenHash: newHash, expiresAt: newExpiresAt } },
-        },
-        { session }
-      );
-      if (result.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
+      // Mongoose 6+ throws if we $pull and $push on same array in one updateOne.
+      // Do it via document save.
+      const user = await Repo.findById(userId).session(session);
+      user.refreshTokens = user.refreshTokens.filter(t => t.tokenHash !== tokenEntry.tokenHash);
+      user.refreshTokens.push({ tokenHash: newHash, expiresAt: newExpiresAt });
+      await user.save({ session });
 
       const payload = { id: userId, role: entity.role || (domain === 'parent' ? 'parent' : 'user') };
       const accessToken = jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });

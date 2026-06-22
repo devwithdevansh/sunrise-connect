@@ -4,12 +4,13 @@ import type { Student } from '../mockData';
 import {
   Search,
   Plus,
-  Coins,  
+  Coins,
   FileText,
   CreditCard,
   Smartphone,
   Globe,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 
 const COMBINED_EDU_TERM_CONFIG = [
@@ -33,12 +34,12 @@ const MONTHS_CONFIG = COMBINED_EDU_TERM_CONFIG.filter(c => c.type === 'EDUCATION
 const STANDARD_MONTH_PERIODS = new Set(MONTHS_CONFIG.map(m => m.value));
 
 export const CollectFee: React.FC = () => {
-  const { students, ledgerEntries, recordPayment, feeStructures, transportFeeStructures, regenerateLedgers } = useApp();
+  const { students, ledgerEntries, recordPayment, feeStructures, transportFeeStructures, regenerateLedgers, addCustomFee } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   // Fee collection form states
-  const [feeCategory, setFeeCategory] = useState<'EDUCATION' | 'TRANSPORT' | 'ADMISSION' | 'BAG_KIT'>('EDUCATION');
+  const [feeCategory, setFeeCategory] = useState<'EDUCATION' | 'TRANSPORT' | 'ADMISSION' | 'BAG_KIT' | 'OTHER'>('EDUCATION');
   const [selectedFees, setSelectedFees] = useState<{ category: string; period: string }[]>([]);
   const [concessionType, setConcessionType] = useState<'None' | 'Fixed' | 'Percentage'>('None');
   const [concessionVal, setConcessionVal] = useState(0);
@@ -49,6 +50,12 @@ export const CollectFee: React.FC = () => {
   const [remark, setRemark] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
+
+  // Custom Fee Modal
+  const [isCustomFeeModalOpen, setIsCustomFeeModalOpen] = useState(false);
+  const [customFeeName, setCustomFeeName] = useState('');
+  const [customFeeAmount, setCustomFeeAmount] = useState('');
+  const [isSubmittingCustomFee, setIsSubmittingCustomFee] = useState(false);
 
   // Default select first student
   useEffect(() => {
@@ -171,8 +178,8 @@ export const CollectFee: React.FC = () => {
     const entry = getLedger(category, period);
     // Don't toggle already fully PAID periods
     if (entry && entry.status === 'PAID') return;
-    
-    if (category === 'ADMISSION' || category === 'BAG_KIT') {
+
+    if (category === 'ADMISSION' || category === 'BAG_KIT' || category === 'OTHER') {
       setSelectedFees((prev) => {
         const exists = prev.find((p) => p.category === category && p.period === period);
         if (exists) {
@@ -185,16 +192,16 @@ export const CollectFee: React.FC = () => {
     }
 
     // Determine the ordered list for sequential enforcement
-    const configList = (category === 'EDUCATION' || category === 'TERM') 
-      ? COMBINED_EDU_TERM_CONFIG 
+    const configList = (category === 'EDUCATION' || category === 'TERM')
+      ? COMBINED_EDU_TERM_CONFIG
       : MONTHS_CONFIG;
-    
+
     const clickedIndex = configList.findIndex(c => c.value === period);
 
     setSelectedFees((prev) => {
       const isCurrentlySelected = prev.some((p) => p.category === category && p.period === period);
       let newSelections = [...prev];
-      
+
       if (isCurrentlySelected) {
         // Deselecting: also deselect any unpaid periods AFTER this one in the sequence
         configList.forEach((c, idx) => {
@@ -211,7 +218,7 @@ export const CollectFee: React.FC = () => {
             const checkEntry = getLedger(cat, c.value);
             const isPaid = checkEntry?.status === 'PAID';
             const alreadySelected = newSelections.some(p => p.category === cat && p.period === c.value);
-            
+
             if (!isPaid && !alreadySelected) {
               newSelections.push({ category: cat, period: c.value });
             }
@@ -384,11 +391,10 @@ export const CollectFee: React.FC = () => {
                     setSelectedFees([]);
                     setFeeCategory('EDUCATION');
                   }}
-                  className={`p-4 border rounded-2xl cursor-pointer transition-all duration-200 ${
-                    isSelected
+                  className={`p-4 border rounded-2xl cursor-pointer transition-all duration-200 ${isSelected
                       ? 'bg-blue-50/50 border-blue-500 shadow-sm ring-1 ring-blue-500/20'
                       : 'bg-white border-slate-100 shadow-sm hover:border-slate-200'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
@@ -417,11 +423,14 @@ export const CollectFee: React.FC = () => {
           <h3 className="text-base font-bold text-slate-800">2. Payment Details</h3>
           <button
             type="button"
-            disabled
-            className="flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 cursor-not-allowed opacity-70"
+            onClick={() => {
+              if (selectedStudent) setIsCustomFeeModalOpen(true);
+            }}
+            disabled={!selectedStudent}
+            className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-3.5 w-3.5 stroke-[3]" />
-            Add Custom Fee (WIP)
+            Add Custom Fee
           </button>
         </div>
 
@@ -451,7 +460,7 @@ export const CollectFee: React.FC = () => {
               </div>
 
               <div className="flex bg-slate-200/50 p-0.5 rounded-lg border border-slate-200/20 flex-wrap">
-                {(['EDUCATION', 'TRANSPORT', 'ADMISSION', 'BAG_KIT'] as const)
+                {(['EDUCATION', 'TRANSPORT', 'ADMISSION', 'BAG_KIT', 'OTHER'] as const)
                   .filter((cat) => {
                     if ((cat === 'ADMISSION' || cat === 'BAG_KIT') && !selectedStudent.isNewAdmission) {
                       return false;
@@ -462,14 +471,13 @@ export const CollectFee: React.FC = () => {
                     <button
                       key={cat}
                       type="button"
-                      onClick={() => { 
-                        setFeeCategory(cat); 
+                      onClick={() => {
+                        setFeeCategory(cat);
                       }}
-                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
-                        feeCategory === cat
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${feeCategory === cat
                           ? 'bg-white text-slate-800 shadow-sm'
                           : 'text-slate-500 hover:text-slate-700'
-                      }`}
+                        }`}
                     >
                       {cat === 'EDUCATION' ? 'EDUCATION & TERM' : cat === 'BAG_KIT' ? 'BAG & KIT' : cat}
                     </button>
@@ -489,168 +497,167 @@ export const CollectFee: React.FC = () => {
               const skipTransportGrid = feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0;
 
               return (
-              <div className={`border rounded-xl p-5 border-l-4 ${feeCategory === 'EDUCATION' ? 'border-blue-100 bg-blue-50/30 border-l-blue-500' : 'border-emerald-100 bg-emerald-50/30 border-l-emerald-500'}`}>
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex items-center gap-3">
-                    <span className={`font-bold flex items-center gap-2 ${feeCategory === 'EDUCATION' ? 'text-blue-700' : 'text-emerald-700'}`}>
-                      {feeCategory === 'EDUCATION' ? '📚 Education & Term Fee' : '🚌 Transport Fee'}
+                <div className={`border rounded-xl p-5 border-l-4 ${feeCategory === 'EDUCATION' ? 'border-blue-100 bg-blue-50/30 border-l-blue-500' : 'border-emerald-100 bg-emerald-50/30 border-l-emerald-500'}`}>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-3">
+                      <span className={`font-bold flex items-center gap-2 ${feeCategory === 'EDUCATION' ? 'text-blue-700' : 'text-emerald-700'}`}>
+                        {feeCategory === 'EDUCATION' ? '📚 Education & Term Fee' : '🚌 Transport Fee'}
+                      </span>
+                    </div>
+                    <span className={`font-extrabold text-lg ${feeCategory === 'EDUCATION' ? 'text-blue-600' : 'text-emerald-600'}`}>
+                      ₹{(feeCategory === 'EDUCATION'
+                        ? studentFeeConfig.education
+                        : studentFeeConfig.transport
+                      ).toLocaleString('en-IN')}/month
                     </span>
                   </div>
-                  <span className={`font-extrabold text-lg ${feeCategory === 'EDUCATION' ? 'text-blue-600' : 'text-emerald-600'}`}>
-                    ₹{(feeCategory === 'EDUCATION'
-                      ? studentFeeConfig.education
-                      : studentFeeConfig.transport
-                    ).toLocaleString('en-IN')}/month
-                  </span>
-                </div>
 
-                <div className="flex justify-between items-center mb-4">
-                  <p className="text-xs text-slate-500">
-                    Select any month(s) — paid months are greyed, due months are highlighted
-                  </p>
-                  <div className="flex gap-3 text-[10px] uppercase font-bold text-blue-600 shrink-0">
-                    <button type="button" onClick={() => selectNextNMonths(1)} className="hover:underline">1 Pay</button>
-                    <span>·</span>
-                    <button type="button" onClick={() => selectNextNMonths(3)} className="hover:underline">3 Pay</button>
-                    <span>·</span>
-                    <button type="button" onClick={() => selectNextNMonths(6)} className="hover:underline">6 Pay</button>
-                    <span>·</span>
-                    <button type="button" onClick={selectAllPending} className="hover:underline">Select All Due</button>
-                    <span>·</span>
-                    <button type="button" onClick={() => setSelectedFees((prev) => prev.filter(p => feeCategory === 'EDUCATION' ? (p.category !== 'EDUCATION' && p.category !== 'TERM') : p.category !== feeCategory))} className="hover:underline">Clear</button>
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-xs text-slate-500">
+                      Select any month(s) — paid months are greyed, due months are highlighted
+                    </p>
+                    <div className="flex gap-3 text-[10px] uppercase font-bold text-blue-600 shrink-0">
+                      <button type="button" onClick={() => selectNextNMonths(1)} className="hover:underline">1 Pay</button>
+                      <span>·</span>
+                      <button type="button" onClick={() => selectNextNMonths(3)} className="hover:underline">3 Pay</button>
+                      <span>·</span>
+                      <button type="button" onClick={() => selectNextNMonths(6)} className="hover:underline">6 Pay</button>
+                      <span>·</span>
+                      <button type="button" onClick={selectAllPending} className="hover:underline">Select All Due</button>
+                      <span>·</span>
+                      <button type="button" onClick={() => setSelectedFees((prev) => prev.filter(p => feeCategory === 'EDUCATION' ? (p.category !== 'EDUCATION' && p.category !== 'TERM') : p.category !== feeCategory))} className="hover:underline">Clear</button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Missing ledgers warning + fix button */}
-                {hasMissing && !skipTransportGrid && (
-                  <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-amber-700">
-                      ⚠ Some fee entries are missing for this student. Click "Generate" to create them.
-                    </span>
-                    <button
-                      type="button"
-                      disabled={isRegenerating}
-                      onClick={async () => {
-                        setIsRegenerating(true);
-                        const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
-                        setIsRegenerating(false);
-                        if (ok) {
-                          setSuccessMsg('✓ Missing ledgers generated successfully. You can now collect fees.');
-                          setTimeout(() => setSuccessMsg(''), 4000);
-                        } else {
-                          setSuccessMsg('⚠ Failed to generate ledgers. Please try again.');
-                          setTimeout(() => setSuccessMsg(''), 5000);
+                  {/* Missing ledgers warning + fix button */}
+                  {hasMissing && !skipTransportGrid && (
+                    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-amber-700">
+                        ⚠ Some fee entries are missing for this student. Click "Generate" to create them.
+                      </span>
+                      <button
+                        type="button"
+                        disabled={isRegenerating}
+                        onClick={async () => {
+                          setIsRegenerating(true);
+                          const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
+                          setIsRegenerating(false);
+                          if (ok) {
+                            setSuccessMsg('✓ Missing ledgers generated successfully. You can now collect fees.');
+                            setTimeout(() => setSuccessMsg(''), 4000);
+                          } else {
+                            setSuccessMsg('⚠ Failed to generate ledgers. Please try again.');
+                            setTimeout(() => setSuccessMsg(''), 5000);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
+                      >
+                        {isRegenerating ? 'Generating...' : 'Generate Missing Ledgers'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* No transport warning */}
+                  {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0 && (
+                    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs font-semibold text-amber-700">
+                      This student has no transport subscription. Transport fee does not apply.
+                    </div>
+                  )}
+
+                  {/* Mid-year transport ledgers (lump-sum, custom period) */}
+                  {feeCategory === 'TRANSPORT' && midYearTransportLedgers.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mid-Year Transport</p>
+                      <div className="flex flex-col gap-2">
+                        {midYearTransportLedgers.map((ledger) => {
+                          const isPaid = ledger.status === 'PAID';
+                          const isSelected = selectedFees.some(f => f.category === 'TRANSPORT' && f.period === ledger.feePeriod);
+                          return (
+                            <button
+                              key={ledger._id || ledger.id}
+                              type="button"
+                              disabled={isPaid}
+                              onClick={() => {
+                                if (isPaid) return;
+                                setSelectedFees(prev => {
+                                  const exists = prev.some(f => f.category === 'TRANSPORT' && f.period === ledger.feePeriod);
+                                  if (exists) return prev.filter(f => !(f.category === 'TRANSPORT' && f.period === ledger.feePeriod));
+                                  return [...prev, { category: 'TRANSPORT', period: ledger.feePeriod }];
+                                });
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl transition-all ${isPaid
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed'
+                                  : isSelected
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                    : 'bg-amber-50/40 border-amber-300 text-amber-700 hover:border-amber-400'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                                <span className="text-sm font-bold">{ledger.feePeriod}</span>
+                              </div>
+                              <span className="text-sm font-extrabold">
+                                {isPaid ? 'PAID' : `₹${ledger.remainingAmount.toLocaleString('en-IN')} DUE`}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Standard monthly transport grid — only show if student has active transport subscription */}
+                  {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' ? null : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                      {(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG).map((item) => {
+                        const activeCat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
+                        const entry = getLedger(activeCat, item.value);
+                        const isPaid = entry?.status === 'PAID';
+                        const isPending = entry && entry.status !== 'PAID';
+                        const isNew = !entry; // no ledger yet
+                        const isSelected = selectedFees.some(f => f.category === activeCat && f.period === item.value);
+                        const dueAmt = getDueAmount(activeCat, item.value);
+
+                        let btnStyle = 'border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/30';
+                        if (isPaid) {
+                          btnStyle = 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed';
+                        } else if (isSelected) {
+                          btnStyle = activeCat === 'TERM'
+                            ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-500/20'
+                            : 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20';
+                        } else if (isPending) {
+                          btnStyle = 'border-amber-300 text-amber-700 bg-amber-50/40 hover:border-amber-400';
+                        } else if (isNew) {
+                          btnStyle = 'border-slate-200 bg-white text-slate-400 hover:border-blue-300 hover:bg-blue-50/20';
                         }
-                      }}
-                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
-                    >
-                      {isRegenerating ? 'Generating...' : 'Generate Missing Ledgers'}
-                    </button>
-                  </div>
-                )}
 
-                {/* No transport warning */}
-                {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0 && (
-                  <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs font-semibold text-amber-700">
-                    This student has no transport subscription. Transport fee does not apply.
-                  </div>
-                )}
-
-                {/* Mid-year transport ledgers (lump-sum, custom period) */}
-                {feeCategory === 'TRANSPORT' && midYearTransportLedgers.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mid-Year Transport</p>
-                    <div className="flex flex-col gap-2">
-                      {midYearTransportLedgers.map((ledger) => {
-                        const isPaid = ledger.status === 'PAID';
-                        const isSelected = selectedFees.some(f => f.category === 'TRANSPORT' && f.period === ledger.feePeriod);
                         return (
                           <button
-                            key={ledger._id || ledger.id}
+                            key={item.value}
                             type="button"
-                            disabled={isPaid}
-                            onClick={() => {
-                              if (isPaid) return;
-                              setSelectedFees(prev => {
-                                const exists = prev.some(f => f.category === 'TRANSPORT' && f.period === ledger.feePeriod);
-                                if (exists) return prev.filter(f => !(f.category === 'TRANSPORT' && f.period === ledger.feePeriod));
-                                return [...prev, { category: 'TRANSPORT', period: ledger.feePeriod }];
-                              });
-                            }}
-                            className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl transition-all ${
-                              isPaid
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed'
-                                : isSelected
-                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
-                                : 'bg-amber-50/40 border-amber-300 text-amber-700 hover:border-amber-400'
-                            }`}
+                            disabled={isPaid || isNew || (activeCat === 'TRANSPORT' && selectedStudent.transportType === 'None')}
+                            onClick={() => handlePeriodToggle(activeCat, item.value)}
+                            className={`border rounded-xl py-2.5 text-center flex flex-col items-center justify-center transition-all relative select-none ${btnStyle} ${activeCat === 'TERM' ? 'col-span-1 md:col-span-2' : ''}`}
                           >
-                            <div className="flex items-center gap-2">
-                              {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-                              <span className="text-sm font-bold">{ledger.feePeriod}</span>
-                            </div>
-                            <span className="text-sm font-extrabold">
-                              {isPaid ? 'PAID' : `₹${ledger.remainingAmount.toLocaleString('en-IN')} DUE`}
+                            {isSelected && (
+                              <Check className="absolute top-1 right-1 h-2.5 w-2.5 stroke-[3]" />
+                            )}
+                            <span className={`font-bold tracking-wide ${activeCat === 'TERM' ? 'text-sm' : 'text-xs'}`}>{item.label}</span>
+                            {item.year ? (
+                              <span className="text-[9px] mt-0.5 opacity-70">'{item.year}</span>
+                            ) : (
+                              <span className="text-[9px] mt-0.5 opacity-70 px-1">{item.sublabel}</span>
+                            )}
+                            <span className="text-[8px] font-extrabold uppercase mt-1 tracking-wide">
+                              {isPaid ? 'PAID' : isPending ? `₹${dueAmt.toLocaleString('en-IN')}` : isNew ? 'NEW' : ''}
                             </span>
                           </button>
                         );
                       })}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Standard monthly transport grid — only show if student has active transport subscription */}
-                {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' ? null : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                  {(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG).map((item) => {
-                    const activeCat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
-                    const entry = getLedger(activeCat, item.value);
-                    const isPaid = entry?.status === 'PAID';
-                    const isPending = entry && entry.status !== 'PAID';
-                    const isNew = !entry; // no ledger yet
-                    const isSelected = selectedFees.some(f => f.category === activeCat && f.period === item.value);
-                    const dueAmt = getDueAmount(activeCat, item.value);
-
-                    let btnStyle = 'border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/30';
-                    if (isPaid) {
-                      btnStyle = 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed';
-                    } else if (isSelected) {
-                      btnStyle = activeCat === 'TERM' 
-                        ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-500/20' 
-                        : 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20';
-                    } else if (isPending) {
-                      btnStyle = 'border-amber-300 text-amber-700 bg-amber-50/40 hover:border-amber-400';
-                    } else if (isNew) {
-                      btnStyle = 'border-slate-200 bg-white text-slate-400 hover:border-blue-300 hover:bg-blue-50/20';
-                    }
-
-                    return (
-                      <button
-                        key={item.value}
-                        type="button"
-                        disabled={isPaid || isNew || (activeCat === 'TRANSPORT' && selectedStudent.transportType === 'None')}
-                        onClick={() => handlePeriodToggle(activeCat, item.value)}
-                        className={`border rounded-xl py-2.5 text-center flex flex-col items-center justify-center transition-all relative select-none ${btnStyle} ${activeCat === 'TERM' ? 'col-span-1 md:col-span-2' : ''}`}
-                      >
-                        {isSelected && (
-                          <Check className="absolute top-1 right-1 h-2.5 w-2.5 stroke-[3]" />
-                        )}
-                        <span className={`font-bold tracking-wide ${activeCat === 'TERM' ? 'text-sm' : 'text-xs'}`}>{item.label}</span>
-                        {item.year ? (
-                          <span className="text-[9px] mt-0.5 opacity-70">'{item.year}</span>
-                        ) : (
-                          <span className="text-[9px] mt-0.5 opacity-70 px-1">{item.sublabel}</span>
-                        )}
-                        <span className="text-[8px] font-extrabold uppercase mt-1 tracking-wide">
-                          {isPaid ? 'PAID' : isPending ? `₹${dueAmt.toLocaleString('en-IN')}` : isNew ? 'NEW' : ''}
-                        </span>
-                      </button>
-                    );
-                  })}
                 </div>
-                )}
-
-              </div>
               );
             })()}
 
@@ -664,12 +671,11 @@ export const CollectFee: React.FC = () => {
                     {feeCategory === 'ADMISSION' ? 'Admission' : 'Bag & Kit'} fee has already been paid for this student.
                   </div>
                 )}
-                
-                <div className={`border rounded-xl p-5 border-l-4 ${
-                  feeCategory === 'ADMISSION' 
-                    ? 'border-orange-100 bg-orange-50/50 border-l-orange-500' 
+
+                <div className={`border rounded-xl p-5 border-l-4 ${feeCategory === 'ADMISSION'
+                    ? 'border-orange-100 bg-orange-50/50 border-l-orange-500'
                     : 'border-slate-200 bg-slate-50 border-l-slate-600'
-                }`}>
+                  }`}>
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
                       <span className={`font-bold flex items-center gap-2 ${feeCategory === 'ADMISSION' ? 'text-orange-600' : 'text-slate-700'}`}>
@@ -680,29 +686,28 @@ export const CollectFee: React.FC = () => {
                       ₹{getStandardAmount(feeCategory, 'One-time').toLocaleString('en-IN')}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       <label className="text-slate-500 text-sm w-24 text-right">Amount:</label>
-                      <input 
-                        type="number" 
-                        readOnly 
-                        className="border border-slate-200 rounded-lg px-3 py-1.5 w-40 bg-white font-bold text-slate-800 outline-none" 
-                        value={getStandardAmount(feeCategory, 'One-time')} 
+                      <input
+                        type="number"
+                        readOnly
+                        className="border border-slate-200 rounded-lg px-3 py-1.5 w-40 bg-white font-bold text-slate-800 outline-none"
+                        value={getStandardAmount(feeCategory, 'One-time')}
                       />
                       <span className="text-slate-400 text-sm">(one-time)</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 mt-6">
                       <label className="text-slate-500 text-sm w-24 text-right">Action:</label>
                       <button
                         type="button"
                         onClick={() => handlePeriodToggle(feeCategory, 'One-time')}
-                        className={`px-4 py-2 rounded-lg font-bold transition-all shadow-sm ${
-                          selectedFees.some(f => f.category === feeCategory && f.period === 'One-time')
+                        className={`px-4 py-2 rounded-lg font-bold transition-all shadow-sm ${selectedFees.some(f => f.category === feeCategory && f.period === 'One-time')
                             ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
                             : 'bg-blue-600 text-white border border-blue-600 hover:bg-blue-700'
-                        }`}
+                          }`}
                       >
                         {selectedFees.some(f => f.category === feeCategory && f.period === 'One-time')
                           ? 'Remove from Payment'
@@ -711,6 +716,57 @@ export const CollectFee: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ── CUSTOM FEES (OTHER) ─────────────────────── */}
+            {feeCategory === 'OTHER' && (
+              <div className="space-y-4">
+                {ledgerEntries
+                  .filter(l => l.studentId === selectedStudent.id && l.feeType === 'OTHER')
+                  .length === 0 ? (
+                  <div className="bg-slate-50 border border-slate-200 text-slate-500 p-6 rounded-xl text-center text-sm font-bold">
+                    No custom fees found for this student. Click "+ Add Custom Fee" to create one.
+                  </div>
+                ) : (
+                  ledgerEntries
+                    .filter(l => l.studentId === selectedStudent.id && l.feeType === 'OTHER')
+                    .map(ledger => {
+                      const isPaid = ledger.status === 'PAID';
+                      const isPending = ledger.status !== 'PAID';
+                      const isSelected = selectedFees.some(f => f.category === 'OTHER' && f.period === ledger.feePeriod);
+
+                      return (
+                        <div key={ledger._id} className="border border-slate-200 bg-white rounded-xl p-5 flex items-center justify-between shadow-sm">
+                          <div>
+                            <span className="font-bold text-slate-700 flex items-center gap-2">
+                              🏷️ {ledger.feePeriod}
+                            </span>
+                            <span className="text-xs text-slate-400 mt-1 block">
+                              Total: ₹{ledger.totalAmount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className={`font-extrabold text-lg ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`}>
+                              {isPaid ? 'PAID' : `₹${ledger.remainingAmount.toLocaleString('en-IN')} DUE`}
+                            </span>
+                            {!isPaid && (
+                              <button
+                                type="button"
+                                onClick={() => handlePeriodToggle('OTHER', ledger.feePeriod)}
+                                className={`px-4 py-2 rounded-lg font-bold transition-all shadow-sm ${isSelected
+                                    ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
+                                    : 'bg-blue-600 text-white border border-blue-600 hover:bg-blue-700'
+                                  }`}
+                              >
+                                {isSelected ? 'Remove' : 'Add to Payment'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
               </div>
             )}
 
@@ -732,11 +788,10 @@ export const CollectFee: React.FC = () => {
                       key={method.id}
                       type="button"
                       onClick={() => setPaymentMethod(method.id as typeof paymentMethod)}
-                      className={`border rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all text-center ${
-                        isActive
+                      className={`border rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all text-center ${isActive
                           ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-500/20'
                           : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-700'
-                      }`}
+                        }`}
                     >
                       <Icon className="h-5 w-5" />
                       <span className="text-[11px] font-bold">{method.label}</span>
@@ -783,7 +838,7 @@ export const CollectFee: React.FC = () => {
             <div className="bg-[#1E3A5F] rounded-2xl p-5 text-white shadow-lg mt-6">
               <div className="pb-4 border-b border-white/10 space-y-3">
                 <h4 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">Fee Summary</h4>
-                
+
                 {selectedFees.length === 0 ? (
                   <div className="text-sm opacity-50 italic">No fees selected</div>
                 ) : (
@@ -861,11 +916,10 @@ export const CollectFee: React.FC = () => {
             <button
               type="submit"
               disabled={selectedFees.length === 0}
-              className={`w-full py-3.5 rounded-xl font-bold tracking-wide transition-all text-center flex items-center justify-center gap-2 ${
-                selectedFees.length === 0
+              className={`w-full py-3.5 rounded-xl font-bold tracking-wide transition-all text-center flex items-center justify-center gap-2 ${selectedFees.length === 0
                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                   : 'bg-[#F59E0B] hover:bg-amber-600 text-slate-900 shadow-lg shadow-amber-500/10 hover:scale-[1.01] active:scale-[0.99]'
-              }`}
+                }`}
             >
               {selectedFees.length === 0
                 ? 'Select a fee above to collect'
@@ -879,6 +933,90 @@ export const CollectFee: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* ── CUSTOM FEE MODAL ───────────────────────── */}
+      {isCustomFeeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                <Plus className="h-5 w-5 text-blue-600" />
+                Add Custom Fee
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsCustomFeeModalOpen(false)}
+                className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                  Fee Name / Description
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Annual Event, Late Fine, Transport Damage"
+                  value={customFeeName}
+                  onChange={(e) => setCustomFeeName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none text-sm font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                  Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min="1"
+                  value={customFeeAmount}
+                  onChange={(e) => setCustomFeeAmount(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none text-sm font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsCustomFeeModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingCustomFee || !customFeeName.trim() || !customFeeAmount || Number(customFeeAmount) <= 0}
+                onClick={async () => {
+                  if (selectedStudent && customFeeName && customFeeAmount) {
+                    setIsSubmittingCustomFee(true);
+                    const ok = await addCustomFee(selectedStudent.id || selectedStudent._id, customFeeName.trim(), Number(customFeeAmount));
+                    setIsSubmittingCustomFee(false);
+                    if (ok) {
+                      setSuccessMsg(`✓ Custom fee '${customFeeName}' added successfully.`);
+                      setIsCustomFeeModalOpen(false);
+                      setCustomFeeName('');
+                      setCustomFeeAmount('');
+                      setFeeCategory('OTHER');
+                      setTimeout(() => setSuccessMsg(''), 4000);
+                    } else {
+                      alert('Failed to add custom fee. Please try again.');
+                    }
+                  }
+                }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSubmittingCustomFee ? 'Saving...' : 'Save Fee'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
