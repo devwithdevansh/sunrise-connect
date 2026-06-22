@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import type { FeeStructureData, TransportFeeStructureData } from '../store';
-import { AlertCircle, Bus, ChevronDown, Award, Pencil, X, Check, Loader2, Plus } from 'lucide-react';
+import { AlertCircle, Bus, ChevronDown, Award, Pencil, X, Check, Loader2, Plus, Trash2 } from 'lucide-react';
 
 /* ─── Create Modal for Standard Fee ───────────────────────────────── */
 interface CreateFeeModalProps {
@@ -413,6 +413,20 @@ export const FeeStructure: React.FC = () => {
   const [isCreatingFee, setIsCreatingFee] = useState(false);
   const [isCreatingTransport, setIsCreatingTransport] = useState(false);
 
+  const handleDeleteFee = async (structure: FeeStructureData) => {
+    if (window.confirm(`Are you sure you want to deactivate the fee structure for Standard ${structure.standard} (${structure.medium} Medium)?\nNew students will not be able to assign this structure.`)) {
+      const ok = await updateFeeStructure(structure._id, { isActive: false });
+      if (!ok) alert("Failed to deactivate fee structure.");
+    }
+  };
+
+  const handleDeleteTransport = async (trans: TransportFeeStructureData) => {
+    if (window.confirm(`Are you sure you want to deactivate the transport rate for ${trans.transportType} zone?`)) {
+      const ok = await updateTransportFeeStructure(trans._id, { isActive: false });
+      if (!ok) alert("Failed to deactivate transport rate.");
+    }
+  };
+
   // Get unique sorted standards
   const standards = useMemo(() => {
     const stdSet = new Set(feeStructures.map((f) => f.standard));
@@ -549,13 +563,22 @@ export const FeeStructure: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">Std {selectedStandard}</span>
                 {englishStructure && (
-                  <button
-                    onClick={() => setEditingFee(englishStructure)}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 transition-all group"
-                    title="Edit Fee Structure"
-                  >
-                    <Pencil className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setEditingFee(englishStructure)}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 transition-all group"
+                      title="Edit Fee Structure"
+                    >
+                      <Pencil className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFee(englishStructure)}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 hover:text-red-200 border border-white/10 transition-all group"
+                      title="Deactivate Fee Structure"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -622,13 +645,22 @@ export const FeeStructure: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">Std {selectedStandard}</span>
                 {gujaratiStructure && (
-                  <button
-                    onClick={() => setEditingFee(gujaratiStructure)}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 transition-all group"
-                    title="Edit Fee Structure"
-                  >
-                    <Pencil className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setEditingFee(gujaratiStructure)}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 transition-all group"
+                      title="Edit Fee Structure"
+                    >
+                      <Pencil className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFee(gujaratiStructure)}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 hover:text-red-200 border border-white/10 transition-all group"
+                      title="Deactivate Fee Structure"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -719,13 +751,22 @@ export const FeeStructure: React.FC = () => {
                   <span className="text-base font-black text-slate-800">₹{trans.amount.toLocaleString('en-IN')}</span>
                   <span className="text-[10px] text-slate-400 font-bold block">/month</span>
                 </div>
-                <button
-                  onClick={() => setEditingTransport(trans)}
-                  className="p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-600 transition-all group"
-                  title="Edit Transport Rate"
-                >
-                  <Pencil className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setEditingTransport(trans)}
+                    className="p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-600 transition-all group"
+                    title="Edit Transport Rate"
+                  >
+                    <Pencil className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTransport(trans)}
+                    className="p-2 rounded-lg bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 transition-all group"
+                    title="Deactivate Transport Rate"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}

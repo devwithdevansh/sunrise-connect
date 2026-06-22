@@ -96,8 +96,12 @@ interface AppContextType {
   createFeeStructure: (data: Partial<FeeStructureData>) => Promise<boolean>;
   createTransportFeeStructure: (data: Partial<TransportFeeStructureData>) => Promise<boolean>;
   createAcademicYear: (data: Partial<AcademicYearData>) => Promise<boolean>;
+  updateAcademicYear: (id: string, data: Partial<AcademicYearData>) => Promise<boolean>;
+  deleteAcademicYear: (id: string) => Promise<boolean>;
   activateAcademicYear: (id: string) => Promise<boolean>;
   createFeeCategory: (data: Partial<FeeCategoryData>) => Promise<boolean>;
+  updateFeeCategory: (id: string, data: Partial<FeeCategoryData>) => Promise<boolean>;
+  deleteFeeCategory: (id: string) => Promise<boolean>;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   checkMobile: (primary: string, secondary: string) => Promise<any>;
@@ -600,6 +604,66 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const updateAcademicYear = async (id: string, data: Partial<AcademicYearData>): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/academic-years/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update academic year');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const deleteAcademicYear = async (id: string): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/academic-years/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete academic year');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const updateFeeCategory = async (id: string, data: Partial<FeeCategoryData>): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/fee-categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update fee category');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const deleteFeeCategory = async (id: string): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/fee-categories/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete fee category');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   const checkMobile = async (primary: string, secondary: string) => {
     try {
       const params = new URLSearchParams();
@@ -705,8 +769,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createFeeStructure,
         createTransportFeeStructure,
         createAcademicYear,
+        updateAcademicYear,
+        deleteAcademicYear,
         activateAcademicYear,
         createFeeCategory,
+        updateFeeCategory,
+        deleteFeeCategory,
         currentUser,
         login,
         logout,

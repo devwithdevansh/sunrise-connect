@@ -22,6 +22,13 @@ export const createAcademicYear = catchAsync(async (req, res, next) => {
 });
 
 export const updateAcademicYear = catchAsync(async (req, res, next) => {
+  if (req.body.isActive === true) {
+    await AcademicYear.updateMany(
+      { _id: { $ne: req.params.id } },
+      { $set: { isActive: false } }
+    );
+  }
+
   const year = await AcademicYear.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,

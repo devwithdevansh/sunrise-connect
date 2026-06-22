@@ -1,135 +1,135 @@
 # Sunrise Connect: Complete User Guide
 
-Welcome to **Sunrise Connect**, a comprehensive School Management System designed to handle student registrations, fee configurations, ledger management, and payment collections. This guide will walk you through the proper workflow to use the system effectively.
+Welcome to **Sunrise Connect**, a comprehensive School Management System designed to handle student registrations, fee configurations, ledger management, and payment collections. This guide will walk you through the proper workflow to use the system effectively, including all the latest features.
 
 ---
 
 ## 1. Initial System Setup (The Foundation)
 
-Before you can register students or collect fees, you must configure the core financial rules of the school. All of this is done in the **Setup** section of the admin panel.
+Before you can register students or collect fees, you must configure the core financial rules of the school. All of this is done in the **Setup** section of the admin panel, which now supports full **CRUD (Create, Read, Update, Delete)** operations.
 
 ### A. Academic Years
 - **What it is**: Defines the current operational year of the school (e.g., `2026-2027`).
-- **How to use**: Ensure you have an active academic year. Only one year can be active at a time. The active year dictates which ledger records are updated when payments are made.
+- **Single Active Year**: Only **one** academic year can be active at a time. The active year dictates which ledger records are updated when payments are made.
+- **How to manage**:
+  - **Create**: Click **"+ Add Year"** to add a new academic year.
+  - **Activate**: Click **"Set Active"** on any year card. The system automatically deactivates all other academic years in the database to guarantee database consistency.
+  - **Edit**: Click the **Pencil icon** on any academic year card to modify its name, start date, or end date in a modal.
+  - **Delete**: Click the **Trash icon** to delete a year. Note that you cannot delete the currently active academic year; you must set another year active first.
 
 ### B. Fee Categories
 - **What it is**: The different *types* of fees the school collects (e.g., Monthly Tuition Fee, Term Fee, Admission Fee, Transport Fee).
-- **How to use**: You can view and manage these categories under the **Fee Categories** tab inside Setup. They are essential because they categorize every payment transaction in the system for accounting purposes.
 - **Supported types**: `EDUCATION`, `TERM`, `TRANSPORT`, `ADMISSION`, `OTHER`.
-
-> **Note:** `BAG_KIT` is a separate fee type used inside student ledgers for Bag & Kit charges. It is **not** a Fee Category type and should not be created as one.
+- **How to manage**:
+  - **Create**: Click **"+ Add Category"** to define a new fee category.
+  - **Edit**: Click the **Pencil icon** in the Actions column of a category row to edit its name, type, description, or toggle its status between Active and Inactive.
+  - **Delete**: Click the **Trash icon** to remove a category.
+  
+> [!NOTE]
+> `BAG_KIT` is a separate fee type used inside student ledgers for Bag & Kit charges. It is managed automatically by the system and should **not** be created manually as a standard Fee Category.
 
 ### C. Master Fee Structures (Standards)
 - **What it is**: The base pricing templates for every class and medium combination.
-- **How to use**:
-  1. Go to the **Fee Structure** tab under Setup.
-  2. Each row represents a unique **Medium + Standard** combination (e.g., English – Std 5 is a separate record from Gujarati – Std 5).
-  3. To add a new class, click the **"+ Add Standard"** button, select the medium, and enter the Annual Fee. The system will automatically calculate the monthly and term breakdowns.
-  4. Click the **Pencil icon** to edit the exact breakdown of any existing class (e.g., adjust the Admission Fee, Bag & Kit Fee, Term Fee, or monthly Education Fee).
+- **How to manage**:
+  - **Add Standard**: Click the **"+ Add Standard"** button, select the class level and medium (English or Gujarati), and enter the Annual Tuition Fee.
+  - **Edit Breakdown**: Click the **Pencil icon** on the standard's card to adjust the monthly Education Fee, Term Fee, Admission Fee, or Bag & Kit Fee.
+  - **Deactivate**: Click the **Trash icon** to deactivate the standard. Setting `isActive: false` immediately hides the standard from registration selectors while preserving historical records.
 
 ### D. Transport Configuration
 - **What it is**: The fee charged to students who use the school bus, based on their pickup zone.
-- **Supported Zones**: The system supports exactly **two transport zones**: `Railnagar` and `Outside Railnagar`. Custom zones cannot be added.
-- **How to use**: Under the Transport section of the Fee Structure tab, set or update the monthly transport fee amount for each of the two zones. Only one active rate per zone is allowed at any time.
+- **Supported Zones**: The system supports exactly **two transport zones**: `Railnagar` and `Outside Railnagar`.
+- **How to manage**:
+  - **Add Zone**: Click **"+ Add Zone"** to configure transport rates.
+  - **Edit**: Click the **Pencil icon** to modify the monthly amount for a zone.
+  - **Deactivate**: Click the **Trash icon** to soft-delete/deactivate a zone rate. Deactivated rates are hidden from student setup screens but preserve existing student ledger data.
 
 ---
 
-## 2. Student Registration
+## 2. Student Registration & Inline Details
 
-Once the Setup is complete, you can begin enrolling students.
+Once the Setup is complete, you can begin enrolling and managing students under the **Students** section.
 
-1. Navigate to the **Students** section.
-2. Click **Add Student**.
-3. Fill in the student's personal details.
-4. **Critical Fields**:
-   - **Standard & Medium**: These determine exactly which `Fee Structure` is applied to the student.
-   - **Transport Zone**: If the student uses the school bus, select `Railnagar` or `Outside Railnagar`. If they don't use transport, select `None` (this is the default).
-   - **New Admission**: If this is a newly admitted student, tick the **New Admission** checkbox. This enables the Admission Fee and Bag & Kit fee tabs in the Collect Fee screen for that student.
-5. **Ledger Generation**: When you click Save, the system automatically creates a financial `Ledger` for the student for the active Academic Year, generating all their pending invoices (12 months of tuition, 2 terms, admission fee, transport fees, etc.) based on the Master Fee Structures configured in Step 1.
+### A. Registering a Student
+1. Navigate to the **Students** page and click **Add Student**.
+2. Fill in the student's personal details.
+3. **Critical Fields**:
+   - **Standard & Medium**: Determines which `Fee Structure` is applied to the student.
+   - **Transport Zone**: Select `Railnagar` or `Outside Railnagar` (or `None` if they don't use the bus).
+   - **New Admission**: If ticked, this enables the Admission Fee and Bag & Kit Fee ledgers for the student.
+4. **Ledger Generation**: Upon saving, the system automatically creates a financial `Ledger` for the active Academic Year, generating all pending monthly and term invoices.
+
+### B. Interactive Student Cards (Inline Details)
+Instead of navigating away or redirecting to different screens, student details are managed inline on the **Students** page:
+- Click **"View"** on any student card to expand it. The card expands to full width, displaying a tabbed interface:
+  - **Parent & Siblings Tab**: Displays parent names, primary and secondary contacts, and lists siblings registered under the same parent.
+  - **Fee Balance Ledgers Tab**: Displays a detailed breakdown of all ledgers (Education, Transport, Admission, Bag & Kit, Custom) showing total fees, paid amounts, concessions, and outstanding balances, summed at the bottom.
+  - **Payment History Tab**: Displays recent transaction records, including payment dates, methods, amounts, and statuses. It features an inline **Reverse** button to instantly reverse active payments.
+- Click **"Collapse"** to restore the card to its standard compact grid size.
+- Click **"Collect"** to store the student's ID, redirect to the **Collect Fee** page, and pre-select that student automatically.
 
 ---
 
 ## 3. Fee Collection & Ledgers
 
-The core of Sunrise Connect is the financial engine.
+The **Collect Fee** section is where counter staff manage payments.
 
-### Viewing a Student's Ledger
-1. Go to the **Collect Fee** section.
-2. Search for a student by **name** or **student code** (the system code assigned at registration) in the left panel.
-3. Click on the student to load their full fee breakdown on the right. You will see tabs for **Education & Term Fees**, **Transport Fee**, and — for new admissions only — **Admission** and **Bag & Kit** fees.
+### Selecting a Student
+- Staff can search for a student by **name** or **student code** in the left search panel.
+- Clicking a student loads their due fees and payment panel. Alternatively, clicking **"Collect"** on the **Students** card pre-selects the student automatically.
 
 ### Recording a Payment
-1. Select the student from the left panel in **Collect Fee**.
-2. Choose the fee tab you want to collect for (e.g., **Education & Term**).
-3. Click the month or term tiles to select which periods the parent is paying. The system enforces sequential order — you cannot pay a later month without clearing earlier dues.
-4. Use the quick-select shortcuts: **1 Pay**, **3 Pay**, **6 Pay**, or **Select All Due** to speed up selection.
-5. Select the **Payment Method**:
-   - **Cash** — physical cash received at counter
-   - **Cheque** — enter Cheque No. and Bank Name when prompted
-   - **Card** — 2% MDR surcharge note is displayed
-   - **Online / UPI** — for UPI and online transfers
-   - **Net Banking** — for direct bank transfers
-6. Optionally enter a **Remark** (e.g., "June advance").
-7. Review the **Fee Summary** cart at the bottom, which shows all selected fees and the total payable.
-8. Click **Collect Payment** to confirm. The system records the payment, updates the ledger status, and adds the transaction to the dashboard.
+1. Select the student and choose the fee category tab (e.g. **Education & Term**).
+2. Click the month or term tiles to select which periods are being paid. The system enforces sequential order (earlier months must be cleared first).
+3. Use the quick-select shortcuts: **1 Pay**, **3 Pay**, **6 Pay**, or **Select All Due**.
+4. Select the **Payment Method** (Cash, Cheque, Card, Online/UPI, Net Banking).
+5. Optionally enter a **Remark** (e.g. "Paid by Uncle").
+6. Click **Collect Payment** to confirm. The system records the payment, updates the ledger status, and adds the transaction to the database.
 
-### Adding Custom Fees (Temporary/Other Fees)
-If you need to charge a student for a one-off temporary fee (like an "Event Fee", "Late Fine", or "Damage Penalty"):
-1. In the **Collect Fee** screen, after selecting the student, click the blue **+ Add Custom Fee** button on the right.
-2. A popup will appear. Enter the **Fee Name / Description** and the **Amount (₹)**.
-3. Click **Save Fee**. The system will instantly create a temporary `OTHER` fee ledger for that student.
-4. An **OTHER** tab will appear next to the other fee categories. You can click on this tab to see the newly generated custom fee, and add it to your payment cart just like any other fee.
+### Adding Custom Fees (Temporary Fees)
+1. Click the blue **"+ Add Custom Fee"** button.
+2. Enter the **Fee Name / Description** and the **Amount (₹)**.
+3. Click **Save Fee**. The system instantly creates an `OTHER` fee ledger for that student, which can then be selected and collected like any other fee.
 
 ### Concessions & Discounts
-Concessions are applied **globally** during the payment flow, not per individual line item:
-1. In the **Fee Summary** section at the bottom of the Collect Fee screen, find the **Global Concession** field.
-2. Choose the concession type:
-   - **Fixed Amount** — deducts a fixed rupee amount from the total.
-   - **Percentage** — deducts a percentage of the total selected fees.
-3. Enter the value. The **Total Payable** will update instantly.
-4. Proceed to click **Collect Payment** — the concession is recorded alongside the payment in the database for accurate reporting.
+- In the **Fee Summary** section at the bottom of the screen, select the **Global Concession** field.
+- Choose between a **Fixed Amount** (flat discount in ₹) or a **Percentage** discount.
+- Enter the value, and the total payable updates instantly before payment collection.
+
+### Grouped Fee Collection History
+At the bottom of the **Collect Fee** page, the **Fee Collection History** section organizes the student's payment records into three collapsible accordion sections:
+1. **Other Fees** (Admission Fee, Bag & Kit Fee, and Custom/Other Fees)
+2. **Education & Term Fees** (Education Fee and Term Fee)
+3. **Transport Fees** (Transport Fee)
+
+Each group displays the item count, total collected, status badge (`PAID` or `REVERSED`), and expands to show transaction details and the **Reverse** action.
 
 ---
 
 ## 4. Analytics and Dashboard
 
-To see how the school is performing financially:
-1. Navigate to the **Dashboard**.
-2. **Today's Total Collection**: The banner card shows today's total cash collected, split by English Medium and Gujarati Medium, along with total concessions given today.
-3. **Payment Mode Breakdown**: Five cards show today's collection broken down by method — Cash, Online/UPI, Cheque, Card, and Net Banking.
-4. **Summary Statistics**: Four cards give a snapshot of:
-   - Total students enrolled (with English/Gujarati split)
-   - Unpaid ledger count and total outstanding amount
-   - Transport students (Railnagar vs. Outside breakdown)
-   - RTE students (government-funded, excluded from reminders)
-5. **Recent Payments**: A live table of the latest payment transactions recorded by staff, searchable by student name or code.
+To monitor financial performance, the **Dashboard** displays:
+- **Today's Total Collection**: Total cash collected today, split by English and Gujarati mediums, along with total concessions given today.
+- **Payment Mode Breakdown**: Collection breakdown by Cash, Online/UPI, Cheque, Card, and Net Banking.
+- **Summary Statistics**: Student enrollment count, unpaid ledgers, transport students, and RTE student stats.
+- **Recent Payments**: A live, searchable list of the latest payment transactions.
 
 ---
 
 ## 5. Security & Auditing
 
-Accountability is critical in financial systems.
-- **Audit Logs**: Key business events are securely logged and visible in the **Audit Log** section.
-- You can filter logs to see exactly *who* performed an action, *what* changed, and *when*.
-
-**Events that are audited include:**
-- Parent account created, updated, or password set/reset
-- Student created or updated
-- Ledger entry created
-- Payment recorded against a ledger
-- Concession applied to a ledger
-- Ledger status updated manually
-- Payment reversed
-- Bulk migration executed
-
-> **Note:** Fee structure configuration changes (creating or editing standards and transport rates) are **not** currently captured in the Audit Log.
+Accountability is critical in financial systems. The **Audit Log** records key actions:
+- Parent account creation, modification, or password resets.
+- Student creation and updates.
+- Ledger entry generation.
+- Payment collections and concessions.
+- Payment reversals.
+- Bulk migration execution.
 
 ---
 
 ## Quick Summary Workflow
-1. **Setup** your Academic Year, Fee Categories, Class Pricing, and Transport Zone rates.
-2. **Register** a student (which auto-generates their pending bills for the active year).
-3. **Find** their record in Collect Fee by searching by name or student code.
-4. **Select** the fees being paid and apply any concessions.
-5. **Collect Payment** to clear their dues.
-6. **Check the Dashboard** at the end of the day to reconcile collections by payment mode.
+1. **Setup**: Configure your Academic Year (set active), Fee Categories, Master Class pricing, and Transport zone rates.
+2. **Register**: Enroll a student, which auto-generates their bills for the active year.
+3. **Find**: Search/select the student on the Collect Fee page.
+4. **Pay**: Select the due fee tiles, choose a payment method, apply concessions, and click Collect.
+5. **Dashboard**: Reconcile daily collections by payment mode.
