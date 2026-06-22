@@ -82,6 +82,7 @@ interface AppContextType {
   academicYears: AcademicYearData[];
   feeCategories: FeeCategoryData[];
   auditLogs: AuditLog[];
+  authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
   recordPayment: (
     studentId: string,
@@ -762,6 +763,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         academicYears,
         feeCategories,
         auditLogs,
+        authFetch,
         addStudent,
         recordPayment,
         applyConcession,

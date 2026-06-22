@@ -153,7 +153,7 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={logout}
+            onClick={(e) => { e.preventDefault(); logout(); }}
             title="Log Out"
             className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
           >

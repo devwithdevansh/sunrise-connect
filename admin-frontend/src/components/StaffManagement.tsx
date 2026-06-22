@@ -13,7 +13,7 @@ interface StaffUser {
 }
 
 export const StaffManagement: React.FC = () => {
-  const { currentUser } = useApp();
+  const { currentUser, authFetch } = useApp();
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,13 +30,13 @@ export const StaffManagement: React.FC = () => {
   const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [resetPassword, setResetNewPassword] = useState('');
 
-  const token = localStorage.getItem('accessToken');
-  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+  // Headers are automatically handled by authFetch, but we still need Content-Type for POST/PATCH
+  const defaultHeaders = { 'Content-Type': 'application/json' };
 
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/users', { headers });
+      const res = await authFetch('/api/v1/users');
       const data = await res.json();
       setStaffList(data.data || []);
     } catch (err) {
@@ -60,9 +60,9 @@ export const StaffManagement: React.FC = () => {
     }
     setCreating(true);
     try {
-      const res = await fetch('/api/v1/users', {
+      const res = await authFetch('/api/v1/users', {
         method: 'POST',
-        headers,
+        headers: defaultHeaders,
         body: JSON.stringify({ name: formName.trim(), email: formEmail.trim().toLowerCase(), password: formPassword })
       });
       if (!res.ok) {
@@ -81,15 +81,15 @@ export const StaffManagement: React.FC = () => {
   };
 
   const handleToggle = async (userId: string) => {
-    await fetch(`/api/v1/users/${userId}/toggle-status`, { method: 'PATCH', headers });
+    await authFetch(`/api/v1/users/${userId}/toggle-status`, { method: 'PATCH' });
     fetchStaff();
   };
 
   const handleResetPassword = async () => {
     if (!resetUserId || resetPassword.length < 6) return;
-    await fetch(`/api/v1/users/${resetUserId}/reset-password`, {
+    await authFetch(`/api/v1/users/${resetUserId}/reset-password`, {
       method: 'PATCH',
-      headers,
+      headers: defaultHeaders,
       body: JSON.stringify({ newPassword: resetPassword })
     });
     setResetUserId(null);
