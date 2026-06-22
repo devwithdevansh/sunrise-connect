@@ -907,11 +907,14 @@ class _PayBar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(11),
                           border: Border.all(color: Colors.white.withOpacity(0.2)),
                         ),
-                        child: const Row(children: [
-                          Text('Pay Now', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-                          SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 15),
-                        ]),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Pay Now', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+                            SizedBox(width: 6),
+                            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 15),
+                          ],
+                        ),
                       ),
                     ]),
                   ),

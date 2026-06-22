@@ -76,6 +76,8 @@ const paymentRepository = {
           feeType: '$ledger.feeType',
           studentName: '$ledger.snapshot.studentName',
           academicYear: '$ledger.academicYear',
+          concessionAmount: '$ledger.concessionAmount',
+          totalAmount: '$ledger.totalAmount',
         },
       },
     ]);
