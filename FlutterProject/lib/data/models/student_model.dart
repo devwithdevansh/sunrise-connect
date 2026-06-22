@@ -8,6 +8,7 @@ class StudentModel {
   final String photoUrl;
   final String studentCode;
   final String transportType;
+  final bool isRTE;
 
   final String parentName;
 
@@ -21,6 +22,7 @@ class StudentModel {
     required this.photoUrl,
     required this.studentCode,
     required this.transportType,
+    this.isRTE = false,
     this.parentName = '',
   });
 
@@ -42,6 +44,7 @@ class StudentModel {
       photoUrl: json['photoUrl'] as String? ?? 'assets/images/student.png',
       studentCode: json['studentCode'] as String? ?? '',
       transportType: json['transportType'] as String? ?? 'None',
+      isRTE: json['isRTE'] == true,
       parentName: pName,
     );
   }
@@ -56,6 +59,7 @@ class StudentModel {
         'photoUrl': photoUrl,
         'studentCode': studentCode,
         'transportType': transportType,
+        'isRTE': isRTE,
         'parentName': parentName,
       };
 
@@ -66,4 +70,8 @@ class StudentModel {
   }
 
   String get classLabel => 'Std $standard · $division · $medium Medium';
+
+  bool get hasTransport =>
+      transportType.isNotEmpty &&
+      transportType.toLowerCase() != 'none';
 }

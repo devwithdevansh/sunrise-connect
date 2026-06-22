@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../data/repositories/fee_repository.dart';
-import '../../../../data/models/fee_model.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,45 +11,28 @@ import '../../../dashboard/controllers/dashboard_controller.dart';
 
 enum FeeStatus { overdue, dueSoon, upcoming }
 
-/// Academic term grouping.
-/// Term 1 = July – November
-/// Term 2 = December – May (next calendar year)
-/// Annual = admission, bag & kit, one-time fees
-enum FeePeriod { term1, term2, transport }
+enum TermGroup { term1, term2 }
 
-extension FeePeriodX on FeePeriod {
+extension TermGroupX on TermGroup {
   String get label {
     switch (this) {
-      case FeePeriod.term1:     return 'Term 1  (Jul – Nov)';
-      case FeePeriod.term2:     return 'Term 2  (Dec – May)';
-      case FeePeriod.transport: return 'Transportation';
+      case TermGroup.term1: return 'Term 1  (Jun – Nov)';
+      case TermGroup.term2: return 'Term 2  (Dec – May)';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case TermGroup.term1: return Icons.wb_sunny_rounded;
+      case TermGroup.term2: return Icons.ac_unit_rounded;
     }
   }
 }
 
-/// Month order within the academic year (July = 1, June = 12).
+/// Month order within the academic year (June = 1, May = 12).
 int _academicMonthOrder(int calendarMonth) {
-  // Jul=1, Aug=2, Sep=3, Oct=4, Nov=5, Dec=6, Jan=7, Feb=8, Mar=9, Apr=10, May=11, Jun=12
-  if (calendarMonth >= 7) return calendarMonth - 6;   // Jul(7)→1 … Dec(12)→6
-  return calendarMonth + 6;                            // Jan(1)→7 … Jun(6)→12
-}
-
-/// Determine the period for a fee given its name.
-FeePeriod inferPeriod(String termName, DateTime dueDate) {
-  final t = termName.toLowerCase();
-  if (t.contains('transport')) {
-    return FeePeriod.transport;
-  }
-  if (t.contains('term') || t.contains('teerm') || t.contains('semester') || t.contains('half')) {
-    if (t.contains('1')) return FeePeriod.term1;
-    if (t.contains('2')) return FeePeriod.term2;
-  }
-  // Month-name based (July, August, …)
-  final m = dueDate.month;
-  // Term 1: Jul–Nov (calendar months 7-11)
-  if (m >= 7 && m <= 11) return FeePeriod.term1;
-  // Term 2: Dec–May, June (calendar months 12, 1-6)
-  return FeePeriod.term2;
+  if (calendarMonth >= 6) return calendarMonth - 5;
+  return calendarMonth + 7;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,21 +40,30 @@ FeePeriod inferPeriod(String termName, DateTime dueDate) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class FeeItem {
-  final String   id;
-  final String   termName;
-  final double   amount;
+  final String id;
+  final String termName;
+  final String feeType;
+  final double amount;
+  final double paidAmount;
+  final double concessionAmount;
+  final double remainingAmount;
   final DateTime dueDate;
-  final bool     isPaid;
+  final String status;
 
   const FeeItem({
     required this.id,
     required this.termName,
+    required this.feeType,
     required this.amount,
+    required this.paidAmount,
+    required this.concessionAmount,
+    required this.remainingAmount,
     required this.dueDate,
-    this.isPaid = false,
+    required this.status,
   });
 
-  bool get isOverdue => dueDate.isBefore(DateTime.now());
+  bool get isPaid => status == 'PAID' || remainingAmount <= 0;
+  bool get isOverdue => !isPaid && dueDate.isBefore(DateTime.now());
 
   int get daysOverdueOrRemaining =>
       DateTime.now().difference(dueDate).inDays;
@@ -84,17 +75,42 @@ class FeeItem {
     return 'Due in ${-d} day${-d == 1 ? '' : 's'}';
   }
 
-  FeeStatus get status {
+  FeeStatus get statusEnum {
     if (isOverdue) return FeeStatus.overdue;
     final d = -daysOverdueOrRemaining;
     if (d <= 30) return FeeStatus.dueSoon;
     return FeeStatus.upcoming;
   }
 
-  FeePeriod get period => inferPeriod(termName, dueDate);
+  bool get isEducation => feeType == 'EDUCATION';
+  bool get isTransport => feeType == 'TRANSPORT';
+  bool get isTerm => feeType == 'TERM';
 
-  /// Sort key: academic-year order (Jul=0 … Jun=11), then by date within month.
+  bool get isRTEConcession => concessionAmount > 0 && isEducation;
+
   int get academicSortKey => _academicMonthOrder(dueDate.month);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MONTH GROUP
+// ─────────────────────────────────────────────────────────────────────────────
+
+class MonthGroup {
+  final String monthName;
+  final DateTime dueDate;
+  final List<FeeItem> subFees;
+
+  MonthGroup({
+    required this.monthName,
+    required this.dueDate,
+    required this.subFees,
+  });
+
+  bool get isFullyPaid => subFees.every((f) => f.isPaid);
+  bool get isOverdue => subFees.any((f) => !f.isPaid && f.isOverdue);
+
+  double get totalAmount => subFees.fold(0.0, (sum, f) => sum + f.amount);
+  double get pendingAmount => subFees.where((f) => !f.isPaid).fold(0.0, (sum, f) => sum + f.remainingAmount);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,45 +122,51 @@ class PendingFeesController extends GetxController
   final FeeRepository _feeRepo = FeeRepository();
 
   // ── Observable state ──────────────────────────────────────────────────────
-  final RxList<FeeItem>          fees             = <FeeItem>[].obs;
-  final RxSet<String>            selectedIds      = <String>{}.obs;
-  final RxBool                   isLoading        = false.obs;
-  final RxBool                   isRefreshing     = false.obs;
-  final RxBool                   hasLoadedOnce    = false.obs;
-  final RxInt                    activeQuickSelect = (-1).obs;
-  final RxMap<FeePeriod, bool>   sectionExpanded  = <FeePeriod, bool>{
-    FeePeriod.term1:     true,
-    FeePeriod.term2:     true,
-    FeePeriod.transport: true,
+  final RxList<FeeItem> fees = <FeeItem>[].obs;
+  final RxSet<String> selectedIds = <String>{}.obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isRefreshing = false.obs;
+  final RxBool hasLoadedOnce = false.obs;
+  final RxInt activeQuickSelect = (-1).obs;
+  
+  final RxMap<TermGroup, bool> sectionExpanded = <TermGroup, bool>{
+    TermGroup.term1: true,
+    TermGroup.term2: true,
   }.obs;
+
+  final RxSet<String> expandedMonths = <String>{}.obs;
 
   // ── Animation ─────────────────────────────────────────────────────────────
   late final AnimationController payBarController;
-  late final Animation<double>   payBarSlide;
-  late final Animation<double>   payBarFade;
+  late final Animation<double> payBarSlide;
+  late final Animation<double> payBarFade;
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  List<FeeItem> get pendingFees  => fees.where((f) => !f.isPaid).toList();
-  List<FeeItem> get overdueFees  => pendingFees.where((f) => f.isOverdue).toList();
+  List<FeeItem> get pendingFees => fees.where((f) => !f.isPaid).toList();
+  List<FeeItem> get overdueFees => pendingFees.where((f) => f.isOverdue).toList();
   List<FeeItem> get selectedFees => pendingFees.where((f) => selectedIds.contains(f.id)).toList();
 
-  double get selectedTotal    => selectedFees.fold(0.0, (s, f) => s + f.amount);
-  double get totalOutstanding => pendingFees.fold(0.0, (s, f) => s + f.amount);
-  double get overdueTotal     => overdueFees.fold(0.0, (s, f) => s + f.amount);
-  double get paidTotal        => fees.where((f) => f.isPaid).fold(0.0, (s, f) => s + f.amount);
-  double get grandTotal       => paidTotal + totalOutstanding;
+  double get selectedTotal => selectedFees.fold(0.0, (s, f) => s + f.remainingAmount);
+  double get totalOutstanding => pendingFees.fold(0.0, (s, f) => s + f.remainingAmount);
+  double get overdueTotal => overdueFees.fold(0.0, (s, f) => s + f.remainingAmount);
+  double get paidTotal => fees.where((f) => f.isPaid).fold(0.0, (s, f) => s + f.amount);
+  double get grandTotal => paidTotal + totalOutstanding;
 
   bool get hasSelection => selectedIds.isNotEmpty;
 
-  /// Monthly fees sorted chronologically in academic order (Jul → Jun).
+  bool get isStudentRTE {
+    if (Get.isRegistered<DashboardController>()) {
+      return Get.find<DashboardController>().student.value?.isRTE ?? false;
+    }
+    return false;
+  }
+
   List<FeeItem> get sortedMonthlyFees {
     final monthly = pendingFees
-        .where((f) => f.period == FeePeriod.term1 || f.period == FeePeriod.term2)
+        .where((f) => f.isEducation || f.isTransport)
         .toList()
       ..sort((a, b) {
-        // Overdue items always come first so parents see them immediately
         if (a.isOverdue != b.isOverdue) return a.isOverdue ? -1 : 1;
-        // Then sort by academic month (Jul=1 … Jun=12)
         final ak = a.academicSortKey, bk = b.academicSortKey;
         if (ak != bk) return ak.compareTo(bk);
         return a.dueDate.compareTo(b.dueDate);
@@ -152,24 +174,63 @@ class PendingFeesController extends GetxController
     return monthly;
   }
 
-  /// Fees grouped by term, each group sorted in academic order.
-  Map<FeePeriod, List<FeeItem>> get groupedFees {
-    final map = <FeePeriod, List<FeeItem>>{};
-    for (final fee in pendingFees) {
-      map.putIfAbsent(fee.period, () => []).add(fee);
+  // ── Grouping logic for View ───────────────────────────────────────────────
+
+  List<MonthGroup> monthGroupsForTerm(TermGroup term) {
+    final monthlyFees = fees.where((f) => f.isEducation || f.isTransport).toList();
+    final Map<String, List<FeeItem>> groupedByMonth = {};
+    for (final fee in monthlyFees) {
+      final name = fee.termName;
+      groupedByMonth.putIfAbsent(name, () => []).add(fee);
     }
-    const termOrder = [FeePeriod.term1, FeePeriod.term2, FeePeriod.transport];
-    for (final period in termOrder) {
-      final list = map[period];
-      if (list == null) continue;
-      list.sort((a, b) {
-        if (a.isOverdue != b.isOverdue) return a.isOverdue ? -1 : 1;
-        final ak = a.academicSortKey, bk = b.academicSortKey;
-        if (ak != bk) return ak.compareTo(bk);
-        return a.dueDate.compareTo(b.dueDate);
-      });
+
+    final List<MonthGroup> result = [];
+    final termMonths = term == TermGroup.term1
+        ? ['June', 'July', 'August', 'September', 'October', 'November']
+        : ['December', 'January', 'February', 'March', 'April', 'May'];
+
+    for (final monthName in termMonths) {
+      List<FeeItem> monthFees = [];
+      for (final entry in groupedByMonth.entries) {
+        if (entry.key.toLowerCase() == monthName.toLowerCase()) {
+          monthFees = entry.value;
+          break;
+        }
+      }
+
+      if (monthFees.isEmpty) continue;
+
+      final dueDate = monthFees.isNotEmpty 
+          ? monthFees.first.dueDate 
+          : DateTime.now();
+
+      final group = MonthGroup(
+        monthName: monthName,
+        dueDate: dueDate,
+        subFees: monthFees,
+      );
+
+      // Display month only if it has at least one unpaid sub-fee
+      if (!group.isFullyPaid) {
+        result.add(group);
+      }
     }
-    return map;
+    return result;
+  }
+
+  FeeItem? termFeeForTerm(TermGroup term) {
+    final termName = term == TermGroup.term1 ? 'Term 1' : 'Term 2';
+    FeeItem? fee;
+    for (final f in fees) {
+      if (f.isTerm && f.termName.toLowerCase() == termName.toLowerCase()) {
+        fee = f;
+        break;
+      }
+    }
+    if (fee != null && !fee.isPaid) {
+      return fee;
+    }
+    return null;
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -209,16 +270,19 @@ class PendingFeesController extends GetxController
         
         // Filter out Bag & Kit and Admission fees
         final filteredData = data.where((f) {
-          final t = f.termName.toLowerCase();
-          return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+          return !f.isAdmission && !f.isBagKit;
         }).toList();
 
         final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,
           termName: f.termName,
-          amount:   f.isPaid ? f.amount : f.remainingAmount,
+          feeType:  f.feeType,
+          amount:   f.amount,
+          paidAmount: f.paidAmount,
+          concessionAmount: f.concessionAmount,
+          remainingAmount: f.remainingAmount,
           dueDate:  DateTime.tryParse(f.dueDate) ?? DateTime.now(),
-          isPaid:   f.isPaid,
+          status:   f.status,
         )).toList();
         fees.assignAll(mapped);
       }
@@ -230,6 +294,7 @@ class PendingFeesController extends GetxController
     }
   }
 
+  @override
   Future<void> refresh() async {
     isRefreshing.value = true;
     try {
@@ -240,16 +305,19 @@ class PendingFeesController extends GetxController
         
         // Filter out Bag & Kit and Admission fees
         final filteredData = data.where((f) {
-          final t = f.termName.toLowerCase();
-          return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+          return !f.isAdmission && !f.isBagKit;
         }).toList();
 
         final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,
           termName: f.termName,
-          amount:   f.isPaid ? f.amount : f.remainingAmount,
+          feeType:  f.feeType,
+          amount:   f.amount,
+          paidAmount: f.paidAmount,
+          concessionAmount: f.concessionAmount,
+          remainingAmount: f.remainingAmount,
           dueDate:  DateTime.tryParse(f.dueDate) ?? DateTime.now(),
-          isPaid:   f.isPaid,
+          status:   f.status,
         )).toList();
         fees.assignAll(mapped);
       }
@@ -261,7 +329,7 @@ class PendingFeesController extends GetxController
     }
   }
 
-  // ── Selection ─────────────────────────────────────────────────────────────
+  // ── Selection & Expansion ─────────────────────────────────────────────────
   void toggleFee(FeeItem fee) {
     activeQuickSelect.value = -1;
     selectedIds.contains(fee.id)
@@ -269,25 +337,88 @@ class PendingFeesController extends GetxController
         : selectedIds.add(fee.id);
   }
 
-  void selectAllInSection(FeePeriod period) {
-    final list     = pendingFees.where((f) => f.period == period).toList();
-    final allSel   = list.every((f) => selectedIds.contains(f.id));
-    if (allSel) {
-      for (final f in list) selectedIds.remove(f.id);
+  bool isMonthExpanded(String monthName) {
+    return expandedMonths.contains(monthName);
+  }
+
+  void toggleMonthExpanded(String monthName) {
+    if (expandedMonths.contains(monthName)) {
+      expandedMonths.remove(monthName);
     } else {
-      for (final f in list) selectedIds.add(f.id);
+      expandedMonths.add(monthName);
+    }
+  }
+
+  bool isMonthGroupFullySelected(MonthGroup group) {
+    final unpaidSubFees = group.subFees.where((f) => !f.isPaid).toList();
+    if (unpaidSubFees.isEmpty) return false;
+    return unpaidSubFees.every((f) => selectedIds.contains(f.id));
+  }
+
+  bool isMonthGroupPartiallySelected(MonthGroup group) {
+    final unpaidSubFees = group.subFees.where((f) => !f.isPaid).toList();
+    if (unpaidSubFees.isEmpty) return false;
+    final selCount = unpaidSubFees.where((f) => selectedIds.contains(f.id)).length;
+    return selCount > 0 && selCount < unpaidSubFees.length;
+  }
+
+  void toggleMonthGroup(MonthGroup group) {
+    final unpaidSubFees = group.subFees.where((f) => !f.isPaid).toList();
+    final allSel = isMonthGroupFullySelected(group);
+    if (allSel) {
+      for (final f in unpaidSubFees) {
+        selectedIds.remove(f.id);
+      }
+    } else {
+      for (final f in unpaidSubFees) {
+        selectedIds.add(f.id);
+      }
     }
     activeQuickSelect.value = -1;
   }
 
-  bool isSectionFullySelected(FeePeriod period) {
-    final list = pendingFees.where((f) => f.period == period).toList();
-    return list.isNotEmpty && list.every((f) => selectedIds.contains(f.id));
+  List<FeeItem> _unpaidFeesForTerm(TermGroup term) {
+    final List<FeeItem> list = [];
+    final termFee = termFeeForTerm(term);
+    if (termFee != null) {
+      list.add(termFee);
+    }
+    final groups = monthGroupsForTerm(term);
+    for (final g in groups) {
+      list.addAll(g.subFees.where((f) => !f.isPaid));
+    }
+    return list;
   }
 
-  /// Quick-select the first [n] monthly fees in academic order (Jul → Jun).
-  /// Overdue ones are always included first because sortedMonthlyFees puts
-  /// them at the top. n == 9999 means select all.
+  bool isTermFullySelected(TermGroup term) {
+    final unpaid = _unpaidFeesForTerm(term);
+    if (unpaid.isEmpty) return false;
+    return unpaid.every((f) => selectedIds.contains(f.id));
+  }
+
+  int overdueCountForTerm(TermGroup term) {
+    return _unpaidFeesForTerm(term).where((f) => f.isOverdue).length;
+  }
+
+  int unpaidCountForTerm(TermGroup term) {
+    return _unpaidFeesForTerm(term).length;
+  }
+
+  void selectAllInTerm(TermGroup term) {
+    final unpaid = _unpaidFeesForTerm(term);
+    final allSel = unpaid.every((f) => selectedIds.contains(f.id));
+    if (allSel) {
+      for (final f in unpaid) {
+        selectedIds.remove(f.id);
+      }
+    } else {
+      for (final f in unpaid) {
+        selectedIds.add(f.id);
+      }
+    }
+    activeQuickSelect.value = -1;
+  }
+
   void quickSelectMonths(int n) {
     selectedIds.clear();
     final monthly = sortedMonthlyFees;
@@ -297,21 +428,18 @@ class PendingFeesController extends GetxController
     }
   }
 
-  /// Quick-select all fees in a specific term.
-  void quickSelectTerm(FeePeriod period) {
+  void quickSelectTerm(TermGroup term) {
     selectedIds.clear();
-    final list = pendingFees.where((f) => f.period == period).toList()
-      ..sort((a, b) {
-        if (a.isOverdue != b.isOverdue) return a.isOverdue ? -1 : 1;
-        final ak = a.academicSortKey, bk = b.academicSortKey;
-        if (ak != bk) return ak.compareTo(bk);
-        return a.dueDate.compareTo(b.dueDate);
-      });
-    for (final f in list) selectedIds.add(f.id);
+    final unpaid = _unpaidFeesForTerm(term);
+    for (final f in unpaid) {
+      selectedIds.add(f.id);
+    }
   }
 
   void selectAllOverdue() {
-    for (final f in overdueFees) selectedIds.add(f.id);
+    for (final f in overdueFees) {
+      selectedIds.add(f.id);
+    }
     activeQuickSelect.value = -1;
   }
 
@@ -320,9 +448,8 @@ class PendingFeesController extends GetxController
     activeQuickSelect.value = -1;
   }
 
-  void toggleSection(FeePeriod period) {
-    sectionExpanded[period] = !(sectionExpanded[period] ?? true);
-    // ignore: invalid_use_of_protected_member
+  void toggleSection(TermGroup term) {
+    sectionExpanded[term] = !(sectionExpanded[term] ?? true);
     sectionExpanded.refresh();
   }
 
@@ -337,15 +464,23 @@ class PendingFeesController extends GetxController
     try {
       bool allSuccess = true;
       for (final fee in toPayItems) {
-        final ok = await _feeRepo.payFee(fee.id, fee.amount, 'online');
+        final ok = await _feeRepo.payFee(fee.id, fee.remainingAmount, 'online');
         if (!ok) allSuccess = false;
       }
 
       if (allSuccess) {
         final updated = fees.map((f) => selectedIds.contains(f.id)
             ? FeeItem(
-                id: f.id, termName: f.termName,
-                amount: f.amount, dueDate: f.dueDate, isPaid: true)
+                id: f.id,
+                termName: f.termName,
+                feeType: f.feeType,
+                amount: f.amount,
+                paidAmount: f.amount,
+                concessionAmount: f.concessionAmount,
+                remainingAmount: 0.0,
+                dueDate: f.dueDate,
+                status: 'PAID',
+              )
             : f).toList();
         fees.assignAll(updated);
         selectedIds.clear();

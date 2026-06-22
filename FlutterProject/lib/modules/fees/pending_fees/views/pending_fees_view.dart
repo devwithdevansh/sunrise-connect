@@ -119,7 +119,7 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 20),
             ])),
           ),
-          _Sections(c: c),
+          _TermSections(c: c),
           const SliverToBoxAdapter(child: SizedBox(height: 130)),
         ],
       ),
@@ -190,10 +190,14 @@ class _SummaryCard extends StatelessWidget {
         Row(children: [
           const Text('Fee Summary', style: _T.h1),
           const Spacer(),
-          GestureDetector(
-            onTap: () {},
-            child: const Text('View All', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.accent)),
-          ),
+          if (c.isStudentRTE)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: _C.greenBg, borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _C.tealBorder)),
+              child: const Text('RTE Student',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _C.teal)),
+            ),
         ]),
         const SizedBox(height: 14),
         Row(children: [
@@ -296,7 +300,7 @@ class _QuickSelect extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(color: _C.accentBg, borderRadius: BorderRadius.circular(6)),
-          child: const Text('Monthly (Jul → Jun)',
+          child: const Text('Monthly (Jun → May)',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _C.accent)),
         ),
       ]),
@@ -318,13 +322,11 @@ class _QuickSelect extends StatelessWidget {
             const SizedBox(width: 8),
             _QChip(label: '6 Months',   idx: 6,  c: c, onTap: () { c.activeQuickSelect.value = 6;  c.quickSelectMonths(6);    }),
             const SizedBox(width: 8),
-            _QChip(label: 'Term 1',     idx: 11, c: c, onTap: () { c.activeQuickSelect.value = 11; c.quickSelectTerm(FeePeriod.term1); }),
+            _QChip(label: 'Term 1',     idx: 11, c: c, onTap: () { c.activeQuickSelect.value = 11; c.quickSelectTerm(TermGroup.term1); }),
             const SizedBox(width: 8),
-            _QChip(label: 'Term 2',     idx: 12, c: c, onTap: () { c.activeQuickSelect.value = 12; c.quickSelectTerm(FeePeriod.term2); }),
+            _QChip(label: 'Term 2',     idx: 12, c: c, onTap: () { c.activeQuickSelect.value = 12; c.quickSelectTerm(TermGroup.term2); }),
             const SizedBox(width: 8),
-            _QChip(label: 'Transport',  idx: 13, c: c, onTap: () { c.activeQuickSelect.value = 13; c.quickSelectTerm(FeePeriod.transport); }),
-            const SizedBox(width: 8),
-            _QChip(label: 'All Monthly', idx: 99, c: c, onTap: () { c.activeQuickSelect.value = 99; c.quickSelectMonths(9999); }),
+            _QChip(label: 'All', idx: 99, c: c, onTap: () { c.activeQuickSelect.value = 99; c.quickSelectMonths(9999); }),
           ],
         ),
       ),
@@ -372,24 +374,23 @@ class _QChip extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTIONS SLIVER
+// TERM SECTIONS SLIVER
 // ─────────────────────────────────────────────────────────────────────────────
-class _Sections extends StatelessWidget {
-  const _Sections({required this.c});
+class _TermSections extends StatelessWidget {
+  const _TermSections({required this.c});
   final PendingFeesController c;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final grouped = c.groupedFees;
-      const order   = [FeePeriod.term1, FeePeriod.term2, FeePeriod.transport];
-      final widgets  = <Widget>[];
-      for (final p in order) {
-        final fees = grouped[p];
-        if (fees == null || fees.isEmpty) continue;
+      final widgets = <Widget>[];
+      for (final term in [TermGroup.term1, TermGroup.term2]) {
+        final groups = c.monthGroupsForTerm(term);
+        final termFee = c.termFeeForTerm(term);
+        if (groups.isEmpty && termFee == null) continue;
         widgets.add(Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-          child: _SectionCard(period: p, fees: fees, c: c),
+          child: _TermCard(term: term, monthGroups: groups, termFee: termFee, c: c),
         ));
       }
       return SliverList(delegate: SliverChildListDelegate(widgets));
@@ -398,12 +399,13 @@ class _Sections extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION CARD
+// TERM CARD
 // ─────────────────────────────────────────────────────────────────────────────
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.period, required this.fees, required this.c});
-  final FeePeriod period;
-  final List<FeeItem> fees;
+class _TermCard extends StatelessWidget {
+  const _TermCard({required this.term, required this.monthGroups, required this.termFee, required this.c});
+  final TermGroup term;
+  final List<MonthGroup> monthGroups;
+  final FeeItem? termFee;
   final PendingFeesController c;
 
   @override
@@ -416,11 +418,11 @@ class _SectionCard extends StatelessWidget {
       ),
       clipBehavior: Clip.hardEdge,
       child: Column(children: [
-        _SectionHeader(period: period, fees: fees, c: c),
+        _TermHeader(term: term, c: c),
         Obx(() {
-          final expanded = c.sectionExpanded[period] ?? true;
+          final expanded = c.sectionExpanded[term] ?? true;
           return AnimatedCrossFade(
-            firstChild:  _SectionRows(fees: fees, c: c),
+            firstChild:  _TermContent(monthGroups: monthGroups, termFee: termFee, c: c),
             secondChild: const SizedBox(width: double.infinity, height: 0),
             crossFadeState: expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
             duration: const Duration(milliseconds: 280),
@@ -432,45 +434,35 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.period, required this.fees, required this.c});
-  final FeePeriod period;
-  final List<FeeItem> fees;
+class _TermHeader extends StatelessWidget {
+  const _TermHeader({required this.term, required this.c});
+  final TermGroup term;
   final PendingFeesController c;
 
-  IconData get _icon {
-    switch (period) {
-      case FeePeriod.term1:     return Icons.wb_sunny_rounded;
-      case FeePeriod.term2:     return Icons.ac_unit_rounded;
-      case FeePeriod.transport: return Icons.directions_bus_rounded;
-    }
-  }
-
   Color get _iconColor {
-    switch (period) {
-      case FeePeriod.term1:     return _C.amber;
-      case FeePeriod.term2:     return _C.accent;
-      case FeePeriod.transport: return _C.teal;
+    switch (term) {
+      case TermGroup.term1: return _C.amber;
+      case TermGroup.term2: return _C.accent;
     }
   }
 
   Color get _iconBg {
-    switch (period) {
-      case FeePeriod.term1:     return _C.amberBg;
-      case FeePeriod.term2:     return _C.accentBg;
-      case FeePeriod.transport: return _C.tealBg;
+    switch (term) {
+      case TermGroup.term1: return _C.amberBg;
+      case TermGroup.term2: return _C.accentBg;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final expanded    = c.sectionExpanded[period] ?? true;
-      final allSelected = c.isSectionFullySelected(period);
-      final overdueN    = fees.where((f) => f.isOverdue).length;
+      final expanded    = c.sectionExpanded[term] ?? true;
+      final allSelected = c.isTermFullySelected(term);
+      final overdueN    = c.overdueCountForTerm(term);
+      final unpaidN     = c.unpaidCountForTerm(term);
 
       return GestureDetector(
-        onTap: () => c.toggleSection(period),
+        onTap: () => c.toggleSection(term),
         behavior: HitTestBehavior.opaque,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -478,10 +470,10 @@ class _SectionHeader extends StatelessWidget {
           child: Row(children: [
             Container(width: 38, height: 38,
               decoration: BoxDecoration(color: _iconBg, borderRadius: BorderRadius.circular(11)),
-              child: Icon(_icon, color: _iconColor, size: 20)),
+              child: Icon(term.icon, color: _iconColor, size: 20)),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(period.label, style: _T.label),
+              Text(term.label, style: _T.label),
               if (overdueN > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
@@ -489,25 +481,26 @@ class _SectionHeader extends StatelessWidget {
                       style: const TextStyle(fontSize: 11, color: _C.red, fontWeight: FontWeight.w500)),
                 ),
             ])),
-            GestureDetector(
-              onTap: () { HapticFeedback.selectionClick(); c.selectAllInSection(period); },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: allSelected ? _C.navy : _C.accentBg,
-                  borderRadius: BorderRadius.circular(20),
+            if (unpaidN > 0)
+              GestureDetector(
+                onTap: () { HapticFeedback.selectionClick(); c.selectAllInTerm(term); },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: allSelected ? _C.navy : _C.accentBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(allSelected ? 'Deselect all' : 'Select all',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                          color: allSelected ? Colors.white : _C.accent)),
                 ),
-                child: Text(allSelected ? 'Deselect all' : 'Select all',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                        color: allSelected ? Colors.white : _C.accent)),
               ),
-            ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(color: _C.pageBg, borderRadius: BorderRadius.circular(20)),
-              child: Text('${fees.length}', style: _T.caption),
+              child: Text('$unpaidN', style: _T.caption),
             ),
             const SizedBox(width: 4),
             AnimatedRotation(
@@ -523,98 +516,78 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _SectionRows extends StatelessWidget {
-  const _SectionRows({required this.fees, required this.c});
-  final List<FeeItem> fees;
+// ─────────────────────────────────────────────────────────────────────────────
+// TERM CONTENT (term fee + month groups)
+// ─────────────────────────────────────────────────────────────────────────────
+class _TermContent extends StatelessWidget {
+  const _TermContent({required this.monthGroups, required this.termFee, required this.c});
+  final List<MonthGroup> monthGroups;
+  final FeeItem? termFee;
   final PendingFeesController c;
 
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      for (int i = 0; i < fees.length; i++) ...[
-        _FeeRow(fee: fees[i], c: c),
-        if (i < fees.length - 1)
-          const Divider(height: 1, color: _C.border, indent: 70, endIndent: 16),
+      // Term fee row (standalone, at the top)
+      if (termFee != null) ...[
+        _TermFeeRow(fee: termFee!, c: c),
+        if (monthGroups.isNotEmpty)
+          const Divider(height: 1, color: _C.border),
+      ],
+      // Month groups
+      for (int i = 0; i < monthGroups.length; i++) ...[
+        _MonthGroupRow(group: monthGroups[i], c: c),
+        if (i < monthGroups.length - 1)
+          const Divider(height: 1, color: _C.border, indent: 16, endIndent: 16),
       ],
     ]);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FEE ROW
+// STANDALONE TERM FEE ROW
 // ─────────────────────────────────────────────────────────────────────────────
-class _FeeRow extends StatelessWidget {
-  const _FeeRow({required this.fee, required this.c});
+class _TermFeeRow extends StatelessWidget {
+  const _TermFeeRow({required this.fee, required this.c});
   final FeeItem fee;
   final PendingFeesController c;
 
-  Color get _statusColor {
-    switch (fee.status) {
-      case FeeStatus.overdue:  return _C.red;
-      case FeeStatus.dueSoon:  return _C.amber;
-      case FeeStatus.upcoming: return _C.accent;
-    }
-  }
-
-  Color get _statusBg {
-    switch (fee.status) {
-      case FeeStatus.overdue:  return _C.redBg;
-      case FeeStatus.dueSoon:  return _C.amberBg;
-      case FeeStatus.upcoming: return _C.accentBg;
-    }
-  }
-
-  Color get _statusBorder {
-    switch (fee.status) {
-      case FeeStatus.overdue:  return _C.redBorder;
-      case FeeStatus.dueSoon:  return _C.amberBorder;
-      case FeeStatus.upcoming: return _C.border;
-    }
-  }
-
-  String get _statusLabel {
-    switch (fee.status) {
-      case FeeStatus.overdue:  return 'Overdue';
-      case FeeStatus.dueSoon:  return 'Due Soon';
-      case FeeStatus.upcoming: return 'Upcoming';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isPaid = fee.isPaid;
+    final isRTE = fee.isRTEConcession;
+
     return Obx(() {
       final selected = c.selectedIds.contains(fee.id);
       return GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); c.toggleFee(fee); },
+        onTap: isPaid || isRTE ? null : () { HapticFeedback.selectionClick(); c.toggleFee(fee); },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           color: selected ? _C.navy.withOpacity(0.05) : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(children: [
-            // Checkbox
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutBack,
-              width: 22, height: 22,
-              decoration: BoxDecoration(
-                color: selected ? _C.navy : Colors.transparent,
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: selected ? _C.navy : _C.borderMid, width: 2),
-                boxShadow: selected
-                    ? [BoxShadow(color: _C.navy.withOpacity(0.25), blurRadius: 6, offset: const Offset(0, 2))]
-                    : [],
+            // Checkbox or paid indicator
+            if (isPaid || isRTE)
+              Container(width: 22, height: 22,
+                decoration: BoxDecoration(color: _C.teal, borderRadius: BorderRadius.circular(7)),
+                child: const Icon(Icons.check_rounded, color: Colors.white, size: 13))
+            else
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutBack,
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  color: selected ? _C.navy : Colors.transparent,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: selected ? _C.navy : _C.borderMid, width: 2),
+                ),
+                child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 13) : null,
               ),
-              child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 13) : null,
-            ),
             const SizedBox(width: 12),
-            // Icon
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: _statusBg, borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.calendar_today_rounded, color: _statusColor, size: 18),
-            ),
+            Container(width: 40, height: 40,
+              decoration: BoxDecoration(color: _C.purpleBg, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.bookmark_rounded, color: _C.purple, size: 18)),
             const SizedBox(width: 12),
-            // Name + date
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(fee.termName, style: _T.label),
               const SizedBox(height: 3),
@@ -622,25 +595,260 @@ class _FeeRow extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: _C.inkMid, fontWeight: FontWeight.w400)),
             ])),
             const SizedBox(width: 8),
-            // Amount + badge
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(_fmt(fee.amount),
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _statusColor, letterSpacing: -0.2)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800,
+                      color: isPaid ? _C.teal : _C.ink, letterSpacing: -0.2)),
               const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _statusBg, borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _statusBorder),
-                ),
-                child: Text(_statusLabel,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _statusColor)),
-              ),
+              if (isPaid)
+                _StatusPill(label: isRTE ? 'RTE Concession' : 'Paid', color: _C.teal, bg: _C.tealBg, border: _C.tealBorder)
+              else if (fee.isOverdue)
+                const _StatusPill(label: 'Overdue', color: _C.red, bg: _C.redBg, border: _C.redBorder)
+              else
+                const _StatusPill(label: 'Pending', color: _C.amber, bg: _C.amberBg, border: _C.amberBorder),
             ]),
           ]),
         ),
       );
     });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MONTH GROUP ROW (parent row + expandable sub-fees)
+// ─────────────────────────────────────────────────────────────────────────────
+class _MonthGroupRow extends StatelessWidget {
+  const _MonthGroupRow({required this.group, required this.c});
+  final MonthGroup group;
+  final PendingFeesController c;
+
+  @override
+  Widget build(BuildContext context) {
+    final isFullyPaid = group.isFullyPaid;
+
+    return Column(children: [
+      // Parent row
+      Obx(() {
+        final fullySelected = c.isMonthGroupFullySelected(group);
+        final partiallySelected = c.isMonthGroupPartiallySelected(group);
+        final isExpanded = c.isMonthExpanded(group.monthName);
+
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            if (!isFullyPaid) c.toggleMonthGroup(group);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            color: fullySelected ? _C.navy.withOpacity(0.05) : Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Row(children: [
+              // Checkbox
+              if (isFullyPaid)
+                Container(width: 22, height: 22,
+                  decoration: BoxDecoration(color: _C.teal, borderRadius: BorderRadius.circular(7)),
+                  child: const Icon(Icons.check_rounded, color: Colors.white, size: 13))
+              else
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutBack,
+                  width: 22, height: 22,
+                  decoration: BoxDecoration(
+                    color: fullySelected ? _C.navy : Colors.transparent,
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
+                        color: fullySelected ? _C.navy : (partiallySelected ? _C.navy.withOpacity(0.5) : _C.borderMid),
+                        width: 2),
+                  ),
+                  child: fullySelected
+                      ? const Icon(Icons.check_rounded, color: Colors.white, size: 13)
+                      : partiallySelected
+                          ? Container(width: 10, height: 10,
+                              decoration: BoxDecoration(color: _C.navy, borderRadius: BorderRadius.circular(2)))
+                          : null,
+                ),
+              const SizedBox(width: 12),
+              // Month icon
+              Container(width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: group.isOverdue ? _C.redBg : _C.accentBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.calendar_today_rounded,
+                    color: group.isOverdue ? _C.red : _C.accent, size: 18)),
+              const SizedBox(width: 12),
+              // Month name + due date
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(group.monthName, style: _T.label),
+                const SizedBox(height: 3),
+                Text('Due: ${_fmtDate(group.dueDate)}',
+                    style: const TextStyle(fontSize: 12, color: _C.inkMid, fontWeight: FontWeight.w400)),
+              ])),
+              const SizedBox(width: 8),
+              // Amount + expand button
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text(_fmt(isFullyPaid ? group.totalAmount : group.pendingAmount),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800,
+                        color: isFullyPaid ? _C.teal : (group.isOverdue ? _C.red : _C.ink),
+                        letterSpacing: -0.2)),
+                const SizedBox(height: 4),
+                if (isFullyPaid)
+                  const _StatusPill(label: 'Paid', color: _C.teal, bg: _C.tealBg, border: _C.tealBorder)
+                else if (group.isOverdue)
+                  const _StatusPill(label: 'Overdue', color: _C.red, bg: _C.redBg, border: _C.redBorder)
+                else
+                  const _StatusPill(label: 'Pending', color: _C.amber, bg: _C.amberBg, border: _C.amberBorder),
+              ]),
+              const SizedBox(width: 4),
+              // Expand sub-fees button
+              if (group.subFees.length > 1)
+                GestureDetector(
+                  onTap: () => c.toggleMonthExpanded(group.monthName),
+                  child: AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.expand_more_rounded, color: _C.inkLight, size: 22),
+                  ),
+                ),
+            ]),
+          ),
+        );
+      }),
+      // Sub-fee rows (expanded)
+      Obx(() {
+        final isExpanded = c.isMonthExpanded(group.monthName);
+        return AnimatedCrossFade(
+          firstChild: _SubFeeList(fees: group.subFees, c: c),
+          secondChild: const SizedBox(width: double.infinity, height: 0),
+          crossFadeState: isExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+          duration: const Duration(milliseconds: 220),
+          sizeCurve: Curves.easeInOut,
+        );
+      }),
+    ]);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-FEE LIST (education + transport breakdown)
+// ─────────────────────────────────────────────────────────────────────────────
+class _SubFeeList extends StatelessWidget {
+  const _SubFeeList({required this.fees, required this.c});
+  final List<FeeItem> fees;
+  final PendingFeesController c;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _C.pageBg.withOpacity(0.5),
+      child: Column(children: [
+        for (final fee in fees)
+          _SubFeeRow(fee: fee, c: c),
+      ]),
+    );
+  }
+}
+
+class _SubFeeRow extends StatelessWidget {
+  const _SubFeeRow({required this.fee, required this.c});
+  final FeeItem fee;
+  final PendingFeesController c;
+
+  String get _icon {
+    if (fee.isEducation) return '📚';
+    if (fee.isTransport) return '🚌';
+    return '📋';
+  }
+
+  String get _typeLabel {
+    if (fee.isEducation) return 'Education Fee';
+    if (fee.isTransport) return 'Transport Fee';
+    return fee.termName;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPaid = fee.isPaid;
+    final isRTE = fee.isRTEConcession;
+
+    return Obx(() {
+      final selected = c.selectedIds.contains(fee.id);
+      return GestureDetector(
+        onTap: isPaid || isRTE ? null : () { HapticFeedback.selectionClick(); c.toggleFee(fee); },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          decoration: BoxDecoration(
+            color: selected ? _C.navy.withOpacity(0.06) : _C.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: selected ? _C.navy.withOpacity(0.15) : _C.border.withOpacity(0.6)),
+          ),
+          child: Row(children: [
+            // Sub-checkbox
+            if (isPaid || isRTE)
+              Container(width: 18, height: 18,
+                decoration: BoxDecoration(
+                  color: isRTE ? _C.teal : _C.teal,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: const Icon(Icons.check_rounded, color: Colors.white, size: 11))
+            else
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 18, height: 18,
+                decoration: BoxDecoration(
+                  color: selected ? _C.navy : Colors.transparent,
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: selected ? _C.navy : _C.borderMid, width: 1.5),
+                ),
+                child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 11) : null,
+              ),
+            const SizedBox(width: 10),
+            Text(_icon, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(_typeLabel,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500,
+                    color: isPaid ? _C.inkLight : _C.ink))),
+            if (isRTE)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: _C.greenBg, borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: _C.tealBorder),
+                ),
+                child: const Text('RTE',
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: _C.teal)),
+              ),
+            Text(_fmt(fee.amount),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                    color: isPaid ? _C.teal : _C.ink)),
+          ]),
+        ),
+      );
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATUS PILL
+// ─────────────────────────────────────────────────────────────────────────────
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color, required this.bg, required this.border});
+  final String label;
+  final Color color, bg, border;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg, borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
+      ),
+      child: Text(label,
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+    );
   }
 }
 
@@ -777,6 +985,8 @@ class _PaySheet extends StatelessWidget {
                 itemBuilder: (_, i) {
                   final f    = fees[i];
                   final isOD = f.isOverdue;
+                  final icon = f.isTransport ? '🚌' : (f.isTerm ? '📋' : '📚');
+                  final typeLabel = f.isTransport ? 'Transport' : (f.isTerm ? f.termName : 'Education');
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     child: Row(children: [
@@ -784,10 +994,10 @@ class _PaySheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isOD ? _C.redBg : _C.accentBg,
                           borderRadius: BorderRadius.circular(10)),
-                        child: Icon(Icons.calendar_today_rounded, color: isOD ? _C.red : _C.accent, size: 16)),
+                        child: Center(child: Text(icon, style: const TextStyle(fontSize: 16)))),
                       const SizedBox(width: 12),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(f.termName, style: _T.label),
+                        Text('$typeLabel · ${f.termName}', style: _T.label),
                         Text('Due: ${_fmtDate(f.dueDate)}', style: _T.caption),
                       ])),
                       Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

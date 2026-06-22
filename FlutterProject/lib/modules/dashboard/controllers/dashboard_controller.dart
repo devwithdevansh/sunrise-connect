@@ -78,10 +78,9 @@ class DashboardController extends GetxController {
             final decodedFees = json.decode(cachedFeesStr) as List;
             final cachedFees = decodedFees.map((item) => FeeModel.fromJson(item as Map<String, dynamic>)).toList();
             
-            // Filter out Bag & Kit and Admission fees
+            // Filter: keep only EDUCATION, TRANSPORT, TERM fees
             final filteredFees = cachedFees.where((f) {
-              final t = f.termName.toLowerCase();
-              return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+              return f.isEducation || f.isTransport || f.isTerm;
             }).toList();
 
             fees.assignAll(filteredFees);
@@ -123,10 +122,9 @@ class DashboardController extends GetxController {
         final sId = activeStudent.id;
         final allFees = await _feeRepo.getFees(sId);
         
-        // Filter out Bag & Kit and Admission fees
+        // Filter: keep only EDUCATION, TRANSPORT, TERM fees
         final filteredFees = allFees.where((f) {
-          final t = f.termName.toLowerCase();
-          return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+          return f.isEducation || f.isTransport || f.isTerm;
         }).toList();
 
         fees.assignAll(filteredFees);
@@ -158,10 +156,9 @@ class DashboardController extends GetxController {
       final sId = selected.id;
       final allFees = await _feeRepo.getFees(sId);
       
-      // Filter out Bag & Kit and Admission fees
+      // Filter: keep only EDUCATION, TRANSPORT, TERM fees
       final filteredFees = allFees.where((f) {
-        final t = f.termName.toLowerCase();
-        return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+        return f.isEducation || f.isTransport || f.isTerm;
       }).toList();
       
       fees.assignAll(filteredFees);
@@ -190,7 +187,8 @@ class DashboardController extends GetxController {
     double pending = 0;
     for (final f in allFees) {
       total += f.amount;
-      paid += f.paidAmount;
+      // Treat concession as effectively paid (for RTE students)
+      paid += f.paidAmount + f.concessionAmount;
       pending += f.remainingAmount;
     }
     totalFees.value = total;
@@ -224,8 +222,10 @@ class DashboardController extends GetxController {
             id: f.id,
             studentId: f.studentId,
             termName: f.termName,
+            feeType: f.feeType,
             amount: f.amount,
             paidAmount: f.amount,       // fully paid
+            concessionAmount: f.concessionAmount,
             remainingAmount: 0,          // nothing left
             dueDate: f.dueDate,
             status: 'PAID',

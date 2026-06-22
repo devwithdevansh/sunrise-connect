@@ -6,7 +6,7 @@ import '../models/fee_model.dart';
 class FeeRepository {
   Future<List<FeeModel>> getFees(String studentId) async {
     try {
-      final response = await ApiClient.get('/ledgers?studentId=$studentId', useStaffToken: true);
+      final response = await ApiClient.get('/ledgers?studentId=$studentId&limit=100', useStaffToken: true);
       if (response.statusCode == 200) {
         final body = json.decode(response.body);
         final list = body['data'] as List;
