@@ -457,7 +457,7 @@ class DashboardView extends GetView<DashboardController> {
 
   Widget _buildQuickActionsGrid() {
     final pending = controller.totalPending.value.toInt();
-    final paidCount = controller.fees.where((f) => f.isPaid).length;
+    final paidCount = controller.mainFees.where((f) => f.isPaid).length;
     final unreadCount = controller.notifications.where((n) => !n.isRead).length;
 
     return Padding(
@@ -585,51 +585,63 @@ class DashboardView extends GetView<DashboardController> {
 
   Widget _buildFeesList() {
     return Obx(() {
-    final pending = controller.fees.where((f) => !f.isPaid).take(3).toList();
-    if (pending.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      final pending = controller.mainFees.where((f) => !f.isPaid).take(3).toList();
+      if (pending.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Upcoming Dues', style: AppTextStyles.h3),
-            TextButton(
-              onPressed: () => Get.toNamed(AppRoutes.pendingFees),
-              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), minimumSize: Size.zero),
-              child: Text('See All', style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Upcoming Dues', style: AppTextStyles.h3),
+                TextButton(
+                  onPressed: () => Get.toNamed(AppRoutes.pendingFees),
+                  style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero),
+                  child: Text('See All',
+                      style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid)),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+            ...pending.map((f) => _FeeRowCard(fee: f, controller: controller)),
           ],
         ),
-        const SizedBox(height: 8),
-        ...pending.map((f) => _FeeRowCard(fee: f, controller: controller)),
-      ],
-    );
+      );
     });
   }
 
   Widget _buildNotifications() {
     return Obx(() {
-    final list = controller.notifications.take(2).toList();
-    if (list.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      final list = controller.notifications.take(2).toList();
+      if (list.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Notifications', style: AppTextStyles.h3),
-            TextButton(
-              onPressed: () => Get.toNamed(AppRoutes.notifications),
-              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), minimumSize: Size.zero),
-              child: Text('See All', style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Notifications', style: AppTextStyles.h3),
+                TextButton(
+                  onPressed: () => Get.toNamed(AppRoutes.notifications),
+                  style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero),
+                  child: Text('See All',
+                      style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid)),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+            ...list.map((n) => _NotifCard(notif: n)),
           ],
         ),
-        const SizedBox(height: 8),
-        ...list.map((n) => _NotifCard(notif: n)),
-      ],
-    );
+      );
     });
   }
 }

@@ -26,6 +26,8 @@ class DashboardController extends GetxController {
   final totalPaid = 0.0.obs;
   final totalPending = 0.0.obs;
 
+  List<FeeModel> get mainFees => fees.where((f) => f.isEducation || f.isTransport || f.isTerm).toList();
+
   @override
   void onInit() {
     super.onInit();
@@ -78,12 +80,12 @@ class DashboardController extends GetxController {
             final decodedFees = json.decode(cachedFeesStr) as List;
             final cachedFees = decodedFees.map((item) => FeeModel.fromJson(item as Map<String, dynamic>)).toList();
             
-            // Filter: keep only EDUCATION, TRANSPORT, TERM fees
+            // Filter: keep only EDUCATION, TRANSPORT, TERM fees for aggregates
             final filteredFees = cachedFees.where((f) {
               return f.isEducation || f.isTransport || f.isTerm;
             }).toList();
 
-            fees.assignAll(filteredFees);
+            fees.assignAll(cachedFees);
             _calculateAggregates(filteredFees);
             
             final notifs = await _notificationRepo.getNotifications(filteredFees);
@@ -122,12 +124,12 @@ class DashboardController extends GetxController {
         final sId = activeStudent.id;
         final allFees = await _feeRepo.getFees(sId);
         
-        // Filter: keep only EDUCATION, TRANSPORT, TERM fees
+        // Filter: keep only EDUCATION, TRANSPORT, TERM fees for aggregates
         final filteredFees = allFees.where((f) {
           return f.isEducation || f.isTransport || f.isTerm;
         }).toList();
 
-        fees.assignAll(filteredFees);
+        fees.assignAll(allFees);
         
         final feesCacheKey = 'fees_cache_$sId';
         await prefs.setString(feesCacheKey, json.encode(allFees.map((f) => f.toJson()).toList()));
@@ -156,12 +158,12 @@ class DashboardController extends GetxController {
       final sId = selected.id;
       final allFees = await _feeRepo.getFees(sId);
       
-      // Filter: keep only EDUCATION, TRANSPORT, TERM fees
+      // Filter: keep only EDUCATION, TRANSPORT, TERM fees for aggregates
       final filteredFees = allFees.where((f) {
         return f.isEducation || f.isTransport || f.isTerm;
       }).toList();
       
-      fees.assignAll(filteredFees);
+      fees.assignAll(allFees);
       
       final feesCacheKey = 'fees_cache_$sId';
       await prefs.setString(feesCacheKey, json.encode(allFees.map((f) => f.toJson()).toList()));

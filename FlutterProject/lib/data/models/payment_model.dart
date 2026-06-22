@@ -9,6 +9,8 @@ class PaymentModel {
   final String feeType;        // feeType from ledger e.g. "TRANSPORT", "TERM", "EDUCATION"
   final String studentName;    // snapshot.studentName from ledger
   final bool isReversal;
+  final double concessionAmount;
+  final double totalAmount;
 
   const PaymentModel({
     required this.id,
@@ -21,6 +23,8 @@ class PaymentModel {
     this.feeType = 'EDUCATION',
     this.studentName = '',
     this.isReversal = false,
+    this.concessionAmount = 0.0,
+    this.totalAmount = 0.0,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
@@ -34,6 +38,8 @@ class PaymentModel {
         feeType: json['feeType'] as String? ?? 'EDUCATION',
         studentName: json['studentName'] as String? ?? '',
         isReversal: json['isReversal'] as bool? ?? false,
+        concessionAmount: ((json['concessionAmount'] ?? 0) as num).toDouble(),
+        totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
       );
 
   static String _extractTxnId(Map<String, dynamic> json) {
@@ -80,5 +86,7 @@ class PaymentModel {
         'feeType': feeType,
         'studentName': studentName,
         'isReversal': isReversal,
+        'concessionAmount': concessionAmount,
+        'totalAmount': totalAmount,
       };
 }

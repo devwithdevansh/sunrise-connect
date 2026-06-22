@@ -8,6 +8,8 @@ class ReceiptModel {
   final String pdfUrl;
   final String termName;   // e.g. "June", "Term 1"
   final String feeType;    // e.g. "TRANSPORT", "TERM", "EDUCATION"
+  final double concessionAmount;
+  final double totalAmount;
 
   const ReceiptModel({
     required this.id,
@@ -19,6 +21,8 @@ class ReceiptModel {
     required this.pdfUrl,
     this.termName = '',
     this.feeType = 'EDUCATION',
+    this.concessionAmount = 0.0,
+    this.totalAmount = 0.0,
   });
 
   factory ReceiptModel.fromJson(Map<String, dynamic> json) => ReceiptModel(
@@ -34,6 +38,8 @@ class ReceiptModel {
         pdfUrl: json['pdfUrl'] as String? ?? 'receipt.pdf',
         termName: json['termName'] as String? ?? '',
         feeType: json['feeType'] as String? ?? 'EDUCATION',
+        concessionAmount: ((json['concessionAmount'] ?? 0) as num).toDouble(),
+        totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
       );
 
   /// Whether this is a TRANSPORT receipt
@@ -61,5 +67,7 @@ class ReceiptModel {
         'pdfUrl': pdfUrl,
         'termName': termName,
         'feeType': feeType,
+        'concessionAmount': concessionAmount,
+        'totalAmount': totalAmount,
       };
 }

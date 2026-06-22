@@ -16,21 +16,10 @@ class NotificationRepository {
           createdAt: f.dueDate,
           isRead: true,
         ));
-      } else {
-        final dueDate = DateTime.tryParse(f.dueDate) ?? now;
-        final isOverdue = dueDate.isBefore(now);
-        list.add(NotificationModel(
-          id: 'pending-${f.id}',
-          title: isOverdue ? 'Fee Overdue Alert ⚠️' : 'Fee Due Reminder 🔔',
-          message: 'Your fee of ₹${f.remainingAmount.toInt()} for ${f.termName} is due on ${f.dueDate}. Please pay in full.',
-          type: isOverdue ? 'ALERT' : 'REMINDER',
-          createdAt: f.dueDate,
-          isRead: false,
-        ));
       }
     }
-    // Sort unread first
-    list.sort((a, b) => (a.isRead ? 1 : 0).compareTo(b.isRead ? 1 : 0));
+    // Sort newest first by due/payment date
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }
 }

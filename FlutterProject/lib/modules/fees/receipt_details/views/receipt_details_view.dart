@@ -63,7 +63,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Container(
                       width: 84, height: 84,
-                      decoration: BoxDecoration(color: AppColors.purplePale, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: AppColors.purplePale, shape: BoxShape.circle),
                       child: const Icon(Icons.receipt_long_rounded, size: 42, color: AppColors.purple),
                     ),
                     const SizedBox(height: 20),
@@ -125,6 +125,10 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
     final isMulti = group.items.length > 1;
     final dtStr   = _fmtDateTime(group.paidAt);
 
+    final totalLedgerAmt = group.items.fold<double>(0.0, (s, item) => s + (item.totalAmount > 0 ? item.totalAmount : item.amount + item.concessionAmount));
+    final totalConcession = group.items.fold<double>(0.0, (s, item) => s + item.concessionAmount);
+    final totalPaid = group.totalAmount;
+
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -164,6 +168,10 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                 const SizedBox(height: 8),
                 _row('Student Name:', group.studentName),
                 const SizedBox(height: 8),
+                if (isMulti && group.monthRangeSummary.isNotEmpty) ...[
+                  _row('Period:', group.monthRangeSummary),
+                  const SizedBox(height: 8),
+                ],
                 _row('Payment Date:', dtStr),
                 const SizedBox(height: 8),
                 _row('Payment Mode:', group.paymentMode.toUpperCase()),
@@ -191,9 +199,28 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(item.termName.isNotEmpty ? item.termName : item.categoryLabel,
                             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1E2E))),
-                        if (item.termName.isNotEmpty)
-                          Text(item.categoryLabel,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF9BA3B6))),
+                        Row(
+                          children: [
+                            if (item.termName.isNotEmpty)
+                              Text(item.categoryLabel,
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF9BA3B6))),
+                            if (item.concessionAmount > 0) ...[
+                              if (item.termName.isNotEmpty) const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8FAF5),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text('Concession: -₹${item.concessionAmount.toInt()}',
+                                    style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF0FB893))),
+                              ),
+                            ],
+                          ],
+                        ),
                       ])),
                       Text(_fmt(item.amount),
                           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
@@ -207,33 +234,63 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                     _row('Term / Month:', group.termSummary),
                     const SizedBox(height: 8),
                   ],
+                  if (totalConcession > 0) ...[
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      const Text('Concession:', style: TextStyle(fontSize: 13, color: Color(0xFF5A6275))),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8FAF5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('ALLOWED',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0FB893))),
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
+                  ],
                   const Divider(color: Color(0xFFE4E8F0)),
                 ],
 
-                // ── Total ─────────────────────────────────────────────────
+                // ── Concession Summary ────────────────────────────────────
+                if (totalConcession > 0) ...[
+                  const SizedBox(height: 8),
+                  _row('Original Due:', _fmt(totalLedgerAmt)),
+                  const SizedBox(height: 6),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    const Text('Concession Deducted:', style: TextStyle(fontSize: 13, color: Color(0xFF5A6275))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8FAF5),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text('-${_fmt(totalConcession)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0FB893))),
+                    ),
+                  ]),
+                  const SizedBox(height: 10),
+                  const Divider(color: Color(0xFFE4E8F0)),
+                ],
+
+                // ── Total Paid ────────────────────────────────────────────
                 const SizedBox(height: 12),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   const Text('Total Paid', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
-                  Text(_fmt(group.totalAmount),
+                  Text(_fmt(totalPaid),
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.teal, letterSpacing: -0.3)),
                 ]),
 
                 const SizedBox(height: 20),
 
-                // ── Download button ───────────────────────────────────────
+                 // ── Download button ───────────────────────────────────────
                 ElevatedButton.icon(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
                     Get.back();
-                    Get.snackbar(
-                      '✅  Receipt Downloaded',
-                      'Receipt saved to your device.',
-                      snackPosition: SnackPosition.TOP,
-                      backgroundColor: AppColors.tealPale,
-                      colorText: AppColors.teal,
-                      margin: const EdgeInsets.all(16),
-                      borderRadius: 14,
-                    );
+                    controller.downloadReceiptPdf(group);
                   },
                   icon: const Icon(Icons.download_rounded, color: Colors.white),
                   label: const Text('Download PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
@@ -281,6 +338,7 @@ class _ReceiptGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMulti = group.items.length > 1;
+    final subtitleText = isMulti ? group.categoriesSummary : group.termSummary;
 
     return GestureDetector(
       onTap: onTap,
@@ -303,15 +361,23 @@ class _ReceiptGroupCard extends StatelessWidget {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Title
             Text(
-              isMulti ? '${group.items.length} Months Receipt' : '${group.categoryLabel} Receipt',
+              group.monthRangeSummary.isNotEmpty
+                  ? '${group.monthRangeSummary} Paid'
+                  : (isMulti ? 'Multiple Fees Paid' : '${group.categoryLabel} Receipt'),
               style: AppTextStyles.labelLarge,
             ),
-            // Term summary
-            if (group.termSummary.isNotEmpty) ...[
+            // Term summary / Categories
+            if (subtitleText.isNotEmpty) ...[
               const SizedBox(height: 2),
-              Text(group.termSummary,
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryMid, fontWeight: FontWeight.w600),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(
+                subtitleText,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primaryMid,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: 2),
             Text(fmtDateTime(group.paidAt), style: AppTextStyles.bodySmall),

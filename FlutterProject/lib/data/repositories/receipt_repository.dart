@@ -47,6 +47,8 @@ class ReceiptRepository {
               pdfUrl: 'receipt.pdf',
               termName: p.termName,
               feeType: p.feeType,
+              concessionAmount: p.concessionAmount,
+              totalAmount: p.totalAmount,
             ))
         .toList();
   }

@@ -37,10 +37,13 @@ class FeeSummaryView extends StatelessWidget {
 
         // Group fees by month
         final allFees = controller.fees;
+        final mainFees = allFees.where((f) => f.isEducation || f.isTransport || f.isTerm).toList();
+        final otherFees = allFees.where((f) => !f.isEducation && !f.isTransport && !f.isTerm).toList();
+
         final term1Fees = <FeeModel>[];
         final term2Fees = <FeeModel>[];
 
-        for (final f in allFees) {
+        for (final f in mainFees) {
           if (f.isTerm) {
             if (f.termName.toLowerCase().contains('1')) {
               term1Fees.add(f);
@@ -182,6 +185,14 @@ class FeeSummaryView extends StatelessWidget {
                 _buildTermHeader('Term 2  (Dec – May)', Icons.ac_unit_rounded, const Color(0xFF2563EB)),
                 const SizedBox(height: 12),
                 ..._buildMonthCards(term2Months),
+              ],
+
+              // Other & Additional Fees Breakdown
+              if (otherFees.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                _buildTermHeader('Other & Additional Fees', Icons.receipt_long_rounded, AppColors.purple),
+                const SizedBox(height: 12),
+                _buildOtherFeesCard(otherFees),
               ],
             ],
           ),
@@ -344,6 +355,115 @@ class FeeSummaryView extends StatelessWidget {
               : AppTextStyles.bodyMedium.copyWith(color: color),
         ),
       ],
+    );
+  }
+
+  Widget _buildOtherFeesCard(List<FeeModel> otherFees) {
+    final totalAmt = otherFees.fold<double>(0, (s, f) => s + f.amount);
+    final paidAmt = otherFees.fold<double>(0, (s, f) => s + f.paidAmount + f.concessionAmount);
+    final remainAmt = otherFees.fold<double>(0, (s, f) => s + f.remainingAmount);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...otherFees.map((fee) {
+            final isPaid = fee.isPaid;
+            final hasConcession = fee.concessionAmount > 0;
+            final isLast = otherFees.last == fee;
+
+            // Format type label
+            String typeLabel = fee.feeType;
+            if (fee.feeType == 'ADMISSION') {
+              typeLabel = 'Admission Fee';
+            } else if (fee.feeType == 'BAG_KIT') {
+              typeLabel = 'Bag & Kit Fee';
+            } else {
+              // Format camel case/spaced
+              typeLabel = fee.feeType.split('_').map((str) {
+                if (str.isEmpty) return '';
+                return str[0].toUpperCase() + str.substring(1).toLowerCase();
+              }).join(' ');
+            }
+
+            final statusColor = isPaid ? AppColors.teal : AppColors.red;
+            final statusBg = isPaid ? const Color(0xFFE8FAF5) : const Color(0xFFFFF0F0);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(typeLabel, style: AppTextStyles.labelLarge),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(8)),
+                      child: Text(
+                        fee.status,
+                        style: AppTextStyles.labelSmall.copyWith(color: statusColor),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (fee.dueDate.isNotEmpty) ...[
+                  Text('Due: ${fee.dueDate.split('T').first}', style: AppTextStyles.bodySmall),
+                  const SizedBox(height: 8),
+                ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total Amount:', style: AppTextStyles.bodyMedium),
+                    Text('₹${fee.amount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                if (hasConcession) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Concession Deducted:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal)),
+                      Text('-₹${fee.concessionAmount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Paid:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal)),
+                    Text('₹${fee.paidAmount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Remaining:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.red)),
+                    Text('₹${fee.remainingAmount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.red, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                if (!isLast) ...[
+                  const Divider(height: 24, color: AppColors.border),
+                ],
+              ],
+            );
+          }),
+          const Divider(height: 24, color: AppColors.border),
+          _buildRow('Total Additional', '₹${totalAmt.toInt()}'),
+          const SizedBox(height: 4),
+          _buildRow('Total Paid', '₹${paidAmt.toInt()}', color: AppColors.teal),
+          const SizedBox(height: 4),
+          _buildRow('Total Remaining', '₹${remainAmt.toInt()}', color: AppColors.red, bold: true),
+        ],
+      ),
     );
   }
 }
