@@ -322,6 +322,8 @@ class _QuickSelect extends StatelessWidget {
             const SizedBox(width: 8),
             _QChip(label: 'Term 2',     idx: 12, c: c, onTap: () { c.activeQuickSelect.value = 12; c.quickSelectTerm(FeePeriod.term2); }),
             const SizedBox(width: 8),
+            _QChip(label: 'Transport',  idx: 13, c: c, onTap: () { c.activeQuickSelect.value = 13; c.quickSelectTerm(FeePeriod.transport); }),
+            const SizedBox(width: 8),
             _QChip(label: 'All Monthly', idx: 99, c: c, onTap: () { c.activeQuickSelect.value = 99; c.quickSelectMonths(9999); }),
           ],
         ),
@@ -380,7 +382,7 @@ class _Sections extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final grouped = c.groupedFees;
-      const order   = [FeePeriod.term1, FeePeriod.term2, FeePeriod.annual, FeePeriod.other];
+      const order   = [FeePeriod.term1, FeePeriod.term2, FeePeriod.transport];
       final widgets  = <Widget>[];
       for (final p in order) {
         final fees = grouped[p];
@@ -438,28 +440,25 @@ class _SectionHeader extends StatelessWidget {
 
   IconData get _icon {
     switch (period) {
-      case FeePeriod.term1:  return Icons.wb_sunny_rounded;
-      case FeePeriod.term2:  return Icons.ac_unit_rounded;
-      case FeePeriod.annual: return Icons.school_rounded;
-      case FeePeriod.other:  return Icons.receipt_long_rounded;
+      case FeePeriod.term1:     return Icons.wb_sunny_rounded;
+      case FeePeriod.term2:     return Icons.ac_unit_rounded;
+      case FeePeriod.transport: return Icons.directions_bus_rounded;
     }
   }
 
   Color get _iconColor {
     switch (period) {
-      case FeePeriod.term1:  return _C.amber;
-      case FeePeriod.term2:  return _C.accent;
-      case FeePeriod.annual: return _C.purple;
-      case FeePeriod.other:  return _C.teal;
+      case FeePeriod.term1:     return _C.amber;
+      case FeePeriod.term2:     return _C.accent;
+      case FeePeriod.transport: return _C.teal;
     }
   }
 
   Color get _iconBg {
     switch (period) {
-      case FeePeriod.term1:  return _C.amberBg;
-      case FeePeriod.term2:  return _C.accentBg;
-      case FeePeriod.annual: return _C.purpleBg;
-      case FeePeriod.other:  return _C.tealBg;
+      case FeePeriod.term1:     return _C.amberBg;
+      case FeePeriod.term2:     return _C.accentBg;
+      case FeePeriod.transport: return _C.tealBg;
     }
   }
 

@@ -88,7 +88,12 @@ class AuthService {
    * 4. Parent login (password-based, no audit – application event)
    * ---------------------------------------------------------------- */
   static async parentLogin({ primaryMobileNumber, password }) {
-    const parent = await parentRepository.findOneWithPassword({ primaryMobileNumber });
+    const parent = await parentRepository.findOneWithPassword({
+      $or: [
+        { primaryMobileNumber },
+        { secondaryMobileNumber: primaryMobileNumber }
+      ]
+    });
     if (!parent) throw new AppError('Parent not found', 404);
     const match = await bcrypt.compare(password, parent.passwordHash);
     if (!match) throw new AppError('Invalid credentials', 401);

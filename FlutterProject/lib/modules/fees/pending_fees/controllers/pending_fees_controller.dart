@@ -16,15 +16,14 @@ enum FeeStatus { overdue, dueSoon, upcoming }
 /// Term 1 = July – November
 /// Term 2 = December – May (next calendar year)
 /// Annual = admission, bag & kit, one-time fees
-enum FeePeriod { term1, term2, annual, other }
+enum FeePeriod { term1, term2, transport }
 
 extension FeePeriodX on FeePeriod {
   String get label {
     switch (this) {
-      case FeePeriod.term1:   return 'Term 1  (Jul – Nov)';
-      case FeePeriod.term2:   return 'Term 2  (Dec – May)';
-      case FeePeriod.annual:  return 'Annual / One-Time Fees';
-      case FeePeriod.other:   return 'Other Fees';
+      case FeePeriod.term1:     return 'Term 1  (Jul – Nov)';
+      case FeePeriod.term2:     return 'Term 2  (Dec – May)';
+      case FeePeriod.transport: return 'Transportation';
     }
   }
 }
@@ -36,37 +35,22 @@ int _academicMonthOrder(int calendarMonth) {
   return calendarMonth + 6;                            // Jan(1)→7 … Jun(6)→12
 }
 
-/// Which term does a calendar-month fee belong to?
-FeePeriod _termForMonth(int calendarMonth) {
-  // Term 1: Jul–Nov (calendar months 7-11)
-  if (calendarMonth >= 7 && calendarMonth <= 11) return FeePeriod.term1;
-  // Term 2: Dec–May (calendar months 12 and 1-5)
-  if (calendarMonth == 12 || calendarMonth <= 5)  return FeePeriod.term2;
-  // June is end-of-year, treat as Term 2 tail
-  return FeePeriod.term2;
-}
-
 /// Determine the period for a fee given its name.
-/// Annual/one-time items are detected by keyword; otherwise we look at the
-/// due-date month (passed separately because FeeItem carries it).
 FeePeriod inferPeriod(String termName, DateTime dueDate) {
   final t = termName.toLowerCase();
-  if (t.contains('admission') ||
-      t.contains('annual')    ||
-      t.contains('bag')       ||
-      t.contains('kit')       ||
-      t.contains('one-time')  ||
-      t.contains('registration')) {
-    return FeePeriod.annual;
+  if (t.contains('transport')) {
+    return FeePeriod.transport;
   }
   if (t.contains('term') || t.contains('teerm') || t.contains('semester') || t.contains('half')) {
-    // explicit "Term 1" / "Term 2" labels
     if (t.contains('1')) return FeePeriod.term1;
     if (t.contains('2')) return FeePeriod.term2;
-    return FeePeriod.other;
   }
   // Month-name based (July, August, …)
-  return _termForMonth(dueDate.month);
+  final m = dueDate.month;
+  // Term 1: Jul–Nov (calendar months 7-11)
+  if (m >= 7 && m <= 11) return FeePeriod.term1;
+  // Term 2: Dec–May, June (calendar months 12, 1-6)
+  return FeePeriod.term2;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,10 +113,9 @@ class PendingFeesController extends GetxController
   final RxBool                   hasLoadedOnce    = false.obs;
   final RxInt                    activeQuickSelect = (-1).obs;
   final RxMap<FeePeriod, bool>   sectionExpanded  = <FeePeriod, bool>{
-    FeePeriod.term1:  true,
-    FeePeriod.term2:  true,
-    FeePeriod.annual: true,
-    FeePeriod.other:  true,
+    FeePeriod.term1:     true,
+    FeePeriod.term2:     true,
+    FeePeriod.transport: true,
   }.obs;
 
   // ── Animation ─────────────────────────────────────────────────────────────
@@ -175,7 +158,7 @@ class PendingFeesController extends GetxController
     for (final fee in pendingFees) {
       map.putIfAbsent(fee.period, () => []).add(fee);
     }
-    const termOrder = [FeePeriod.term1, FeePeriod.term2, FeePeriod.annual, FeePeriod.other];
+    const termOrder = [FeePeriod.term1, FeePeriod.term2, FeePeriod.transport];
     for (final period in termOrder) {
       final list = map[period];
       if (list == null) continue;
@@ -223,7 +206,14 @@ class PendingFeesController extends GetxController
       final studentId = prefs.getString(StorageKeys.studentId) ?? '';
       if (studentId.isNotEmpty) {
         final data   = await _feeRepo.getFees(studentId);
-        final mapped = data.map((f) => FeeItem(
+        
+        // Filter out Bag & Kit and Admission fees
+        final filteredData = data.where((f) {
+          final t = f.termName.toLowerCase();
+          return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+        }).toList();
+
+        final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,
           termName: f.termName,
           amount:   f.isPaid ? f.amount : f.remainingAmount,
@@ -247,7 +237,14 @@ class PendingFeesController extends GetxController
       final studentId = prefs.getString(StorageKeys.studentId) ?? '';
       if (studentId.isNotEmpty) {
         final data   = await _feeRepo.getFees(studentId);
-        final mapped = data.map((f) => FeeItem(
+        
+        // Filter out Bag & Kit and Admission fees
+        final filteredData = data.where((f) {
+          final t = f.termName.toLowerCase();
+          return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+        }).toList();
+
+        final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,
           termName: f.termName,
           amount:   f.isPaid ? f.amount : f.remainingAmount,

@@ -17,6 +17,7 @@ class DashboardController extends GetxController {
   final NotificationRepository _notificationRepo = NotificationRepository();
 
   final isLoading = true.obs;
+  final students = <StudentModel>[].obs;
   final student = Rxn<StudentModel>();
   final fees = <FeeModel>[].obs;
   final notifications = <NotificationModel>[].obs;
@@ -43,39 +44,57 @@ class DashboardController extends GetxController {
 
   Future<void> loadDashboardData(String parentId, {bool forceRefresh = false}) async {
     final prefs = await SharedPreferences.getInstance();
-    final studentCacheKey = 'student_cache_$parentId';
+    final studentsCacheKey = 'students_list_cache_$parentId';
     final studentTimeKey = 'student_time_$parentId';
 
-    final cachedStudentStr = prefs.getString(studentCacheKey);
+    final cachedStudentsStr = prefs.getString(studentsCacheKey);
     final cachedStudentTime = prefs.getInt(studentTimeKey) ?? 0;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     
-    // Check if cache is fresh (less than 5 mins old)
     final isCacheFresh = (nowMs - cachedStudentTime) < 5 * 60 * 1000;
 
-    if (!forceRefresh && cachedStudentStr != null && cachedStudentStr.isNotEmpty) {
+    if (!forceRefresh && cachedStudentsStr != null && cachedStudentsStr.isNotEmpty) {
       try {
-        final decoded = json.decode(cachedStudentStr);
-        final cachedStudent = StudentModel.fromJson(decoded);
-        student.value = cachedStudent;
-        await prefs.setString(StorageKeys.studentId, cachedStudent.id);
+        final decodedList = json.decode(cachedStudentsStr) as List;
+        final cachedStudents = decodedList.map((s) => StudentModel.fromJson(s as Map<String, dynamic>)).toList();
+        students.assignAll(cachedStudents);
         
-        final sId = cachedStudent.id;
-        final feesCacheKey = 'fees_cache_$sId';
-        final cachedFeesStr = prefs.getString(feesCacheKey);
-        if (cachedFeesStr != null && cachedFeesStr.isNotEmpty) {
-          final decodedFees = json.decode(cachedFeesStr) as List;
-          final cachedFees = decodedFees.map((item) => FeeModel.fromJson(item as Map<String, dynamic>)).toList();
-          fees.assignAll(cachedFees);
-          _calculateAggregates(cachedFees);
-          
-          final notifs = await _notificationRepo.getNotifications(cachedFees);
-          notifications.assignAll(notifs);
+        if (cachedStudents.isNotEmpty) {
+          final activeId = prefs.getString(StorageKeys.studentId) ?? '';
+          StudentModel activeStudent = cachedStudents.first;
+          if (activeId.isNotEmpty) {
+            final matched = cachedStudents.firstWhereOrNull((s) => s.id == activeId);
+            if (matched != null) {
+              activeStudent = matched;
+            }
+          }
+          student.value = activeStudent;
+          await prefs.setString(StorageKeys.studentId, activeStudent.id);
+
+          final sId = activeStudent.id;
+          final feesCacheKey = 'fees_cache_$sId';
+          final cachedFeesStr = prefs.getString(feesCacheKey);
+          if (cachedFeesStr != null && cachedFeesStr.isNotEmpty) {
+            final decodedFees = json.decode(cachedFeesStr) as List;
+            final cachedFees = decodedFees.map((item) => FeeModel.fromJson(item as Map<String, dynamic>)).toList();
+            
+            // Filter out Bag & Kit and Admission fees
+            final filteredFees = cachedFees.where((f) {
+              final t = f.termName.toLowerCase();
+              return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+            }).toList();
+
+            fees.assignAll(filteredFees);
+            _calculateAggregates(filteredFees);
+            
+            final notifs = await _notificationRepo.getNotifications(filteredFees);
+            notifications.assignAll(notifs);
+          }
         }
         
         if (isCacheFresh) {
           isLoading.value = false;
-          return; // Skip network fetch
+          return;
         }
       } catch (e) {
         print('Error loading from cache: $e');
@@ -85,31 +104,81 @@ class DashboardController extends GetxController {
     isLoading.value = true;
     try {
       final studentsList = await _studentRepo.getStudentsForParent(parentId);
+      students.assignAll(studentsList);
       if (studentsList.isNotEmpty) {
-        final newStudent = studentsList.first;
-        student.value = newStudent;
-        await prefs.setString(StorageKeys.studentId, newStudent.id);
-        
-        // Cache student data
-        await prefs.setString(studentCacheKey, json.encode(newStudent.toJson()));
+        await prefs.setString(studentsCacheKey, json.encode(studentsList.map((s) => s.toJson()).toList()));
         await prefs.setInt(studentTimeKey, nowMs);
 
-        final sId = newStudent.id;
+        final activeId = prefs.getString(StorageKeys.studentId) ?? '';
+        StudentModel activeStudent = studentsList.first;
+        if (activeId.isNotEmpty) {
+          final matched = studentsList.firstWhereOrNull((s) => s.id == activeId);
+          if (matched != null) {
+            activeStudent = matched;
+          }
+        }
+        student.value = activeStudent;
+        await prefs.setString(StorageKeys.studentId, activeStudent.id);
+
+        final sId = activeStudent.id;
         final allFees = await _feeRepo.getFees(sId);
-        fees.assignAll(allFees);
         
-        // Cache fees data
+        // Filter out Bag & Kit and Admission fees
+        final filteredFees = allFees.where((f) {
+          final t = f.termName.toLowerCase();
+          return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+        }).toList();
+
+        fees.assignAll(filteredFees);
+        
         final feesCacheKey = 'fees_cache_$sId';
         await prefs.setString(feesCacheKey, json.encode(allFees.map((f) => f.toJson()).toList()));
 
-        _calculateAggregates(allFees);
+        _calculateAggregates(filteredFees);
 
-        // Load notifications
-        final notifs = await _notificationRepo.getNotifications(allFees);
+        final notifs = await _notificationRepo.getNotifications(filteredFees);
         notifications.assignAll(notifs);
       }
     } catch (e) {
       print('Error loading dashboard data: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> switchStudent(StudentModel selected) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(StorageKeys.studentId, selected.id);
+    student.value = selected;
+    
+    await prefs.remove('fees_cache_${selected.id}');
+    
+    isLoading.value = true;
+    try {
+      final sId = selected.id;
+      final allFees = await _feeRepo.getFees(sId);
+      
+      // Filter out Bag & Kit and Admission fees
+      final filteredFees = allFees.where((f) {
+        final t = f.termName.toLowerCase();
+        return !(t.contains('admission') || t.contains('bag') || t.contains('kit'));
+      }).toList();
+      
+      fees.assignAll(filteredFees);
+      
+      final feesCacheKey = 'fees_cache_$sId';
+      await prefs.setString(feesCacheKey, json.encode(allFees.map((f) => f.toJson()).toList()));
+
+      _calculateAggregates(filteredFees);
+      
+      final notifs = await _notificationRepo.getNotifications(filteredFees);
+      notifications.assignAll(notifs);
+      
+      if (Get.isRegistered<PaymentHistoryController>()) {
+        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
+      }
+    } catch (e) {
+      print('Error switching student: $e');
     } finally {
       isLoading.value = false;
     }
