@@ -99,7 +99,7 @@ interface AppContextType {
     }[]
   ) => void;
   applyConcession: (ledgerId: string, amount: number) => void;
-  reversePayment: (transactionId: string) => void;
+  reversePayment: (paymentId: string) => Promise<boolean>;
   updateFeeStructure: (id: string, data: Partial<FeeStructureData>) => Promise<boolean>;
   updateTransportFeeStructure: (id: string, data: Partial<TransportFeeStructureData>) => Promise<boolean>;
   createFeeStructure: (data: Partial<FeeStructureData>) => Promise<boolean>;
@@ -115,7 +115,7 @@ interface AppContextType {
   logout: () => void;
   checkMobile: (primary: string, secondary: string) => Promise<any>;
   deleteStudent: (id: string) => Promise<boolean>;
-  updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<boolean>;
+  updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<{ success: boolean; error?: string }>;
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
   importStudents: (students: any[]) => Promise<any>;
@@ -283,11 +283,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         groupedTxns.get(groupId)!.push(tx);
       });
 
+      const reversedIds = new Set(
+        rawTransactions
+          .filter((tx: any) => tx.isReversal && tx.details?.reversalOf)
+          .map((tx: any) => String(tx.details.reversalOf))
+      );
+
       const mappedTransactions: any[] = [];
       groupedTxns.forEach((txGroup, groupId) => {
         let totalAmount = 0;
         let totalConcession = 0;
-        const subItems: { description: string; amount: number; concessionAmount: number }[] = [];
+        const subItems: { id: string; description: string; amount: number; concessionAmount: number; method: string; status: string }[] = [];
         const feeTypes: string[] = [];
         const reversalIds: string[] = [];
         
@@ -306,8 +312,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           const desc = getFeeTypeFormatted(ledger);
           feeTypes.push(desc);
           
-          const isReversal = tx.isReversal;
-          const status = isReversal ? 'REVERSED' : (ledger?.status || 'PAID');
+          const isReversed = tx.isReversal || reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString());
+          const status = isReversed ? 'REVERSED' : (ledger?.status || 'PAID');
           
           subItems.push({
             id: tx._id,
@@ -319,8 +325,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           });
         });
 
-        const isReversal = firstTx.isReversal;
-        const status = isReversal ? 'REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
+        const groupIsReversal = firstTx.isReversal || txGroup.every(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
+        const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
+        const status = groupIsReversal ? 'REVERSED' : groupIsPartiallyReversed ? 'PARTIALLY_REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
 
         mappedTransactions.push({
           id: groupId,
@@ -336,7 +343,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: status,
           date: firstTx.createdAt ? firstTx.createdAt.split('T')[0] : '',
           remark: firstTx.details?.remark || firstTx.details?.reason || '',
-          subItems: subItems.length > 1 ? subItems : undefined,
+          subItems: subItems,
           reversalIds: reversalIds.join(',')
         });
       });
@@ -528,22 +535,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Reverse a payment by calling the backend API
-  const reversePayment = async (transactionId: string) => {
+  const reversePayment = async (paymentId: string): Promise<boolean> => {
     try {
-      const ids = transactionId.split(',');
-      for (const id of ids) {
-        if (!id.trim()) continue;
-        const res = await authFetch(`/api/v1/payments/${id.trim()}/reverse`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason: 'Manual reversal by admin' })
-        });
-        if (!res.ok) console.error(`Failed to reverse payment ${id}`);
+      const res = await authFetch(`/api/v1/payments/${paymentId}/reverse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Manual reversal by admin' })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || `Failed to reverse payment ${paymentId}`);
+        return false;
       }
-      // Refresh all data after reversal
       await fetchAll();
-    } catch (err) {
+      return true;
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || 'Network error occurred during reversal');
+      return false;
     }
   };
 
@@ -753,22 +762,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const updateStudent = async (id: string, updates: Partial<Student> & { transportMonths?: number }) => {
+  const updateStudent = async (id: string, updates: Partial<Student> & { transportMonths?: number }): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await authFetch(`/api/v1/students/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        console.error('Failed to update student');
-        return false;
+        console.error('Failed to update student:', data);
+        return { success: false, error: data.message || 'Failed to update student' };
       }
       await fetchAll();
-      return true;
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       console.error(err);
-      return false;
+      return { success: false, error: err.message || 'Network error occurred' };
     }
   };
 

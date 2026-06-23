@@ -71,6 +71,25 @@ const paymentRepository = {
       },
       { $unwind: { path: '$ledger', preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: 'payments',
+          let: { paymentId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [
+                    { $toString: '$details.reversalOf' },
+                    { $toString: '$$paymentId' }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'reversals'
+        }
+      },
+      {
         $project: {
           _id: 1,
           ledgerId: 1,
@@ -86,6 +105,19 @@ const paymentRepository = {
           academicYear: '$ledger.academicYear',
           concessionAmount: '$ledger.concessionAmount',
           totalAmount: '$ledger.totalAmount',
+          isReversed: {
+            $cond: {
+              if: {
+                $or: [
+                  { $eq: ['$isReversal', true] },
+                  { $gt: [{ $size: '$reversals' }, 0] }
+                ]
+              },
+              then: true,
+              else: false
+            }
+          },
+          reversalOf: '$details.reversalOf'
         },
       },
     ]);

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, jest } from '@jest/globals';
 import mongoose from 'mongoose';
 import { connectReplica, disconnectReplica, clearCollections } from './helpers/replicaHelper.js';
 import StudentService from '../services/StudentService.js';
@@ -24,39 +24,41 @@ beforeAll(connectReplica);
 afterAll(disconnectReplica);
 afterEach(clearCollections);
 
+beforeEach(async () => {
+  await mongoose.model('AcademicYear').create({
+    name: '2025-26',
+    startDate: new Date('2025-06-01'),
+    endDate: new Date('2026-05-31'),
+    isActive: true
+  });
+
+  await mongoose.model('FeeCategory').create({
+    name: 'Transport',
+    type: 'TRANSPORT',
+    isActive: true
+  });
+
+  await mongoose.model('FeeCategory').create({
+    name: 'Education',
+    type: 'EDUCATION',
+    isActive: true
+  });
+
+  await mongoose.model('FeeCategory').create({
+    name: 'Term',
+    type: 'TERM',
+    isActive: true
+  });
+
+  await mongoose.model('TransportFeeStructure').create([
+    { transportType: 'Railnagar', amount: 600, isActive: true },
+    { transportType: 'Outside Railnagar', amount: 900, isActive: true }
+  ]);
+});
+
 describe('Transport status reactivation & payments batch query tests', () => {
   it('updates transport status and reactivates cancelled/pending ledgers properly', async () => {
-    // 1. Setup AcademicYear and FeeCategory
-    await mongoose.model('AcademicYear').create({
-      name: '2025-26',
-      startDate: new Date('2025-06-01'),
-      endDate: new Date('2026-05-31'),
-      isActive: true
-    });
 
-    const transportCategory = await mongoose.model('FeeCategory').create({
-      name: 'Transport',
-      type: 'TRANSPORT',
-      isActive: true
-    });
-
-    await mongoose.model('FeeCategory').create({
-      name: 'Education',
-      type: 'EDUCATION',
-      isActive: true
-    });
-
-    await mongoose.model('FeeCategory').create({
-      name: 'Term',
-      type: 'TERM',
-      isActive: true
-    });
-
-    // 2. Setup Transport structures
-    await mongoose.model('TransportFeeStructure').create([
-      { transportType: 'Railnagar', amount: 600, isActive: true },
-      { transportType: 'Outside Railnagar', amount: 900, isActive: true }
-    ]);
 
     // 3. Create a parent
     const parent = await mongoose.model('Parent').create({
@@ -112,6 +114,63 @@ describe('Transport status reactivation & payments batch query tests', () => {
     expect(transportLedgers.length).toBe(12);
     expect(transportLedgers.every(l => l.totalAmount === 900)).toBe(true);
     expect(transportLedgers.every(l => l.status === 'PENDING')).toBe(true);
+  });
+
+  it('supports None to Railnagar mid-year transport upgrade and respects transportMonths and academicYear scoping', async () => {
+
+
+    // 3. Create parent and student with 'None' transport
+    const parent = await mongoose.model('Parent').create({
+      parentName: 'Test Parent 2',
+      primaryMobileNumber: '9876543211',
+      passwordHash: 'hash',
+      isActive: true
+    });
+
+    const student = await StudentService.createStudent({
+      parentId: parent._id,
+      studentName: 'Vihaan Mehta',
+      medium: 'English',
+      standard: '5',
+      division: 'A',
+      transportType: 'None',
+      isNewAdmission: false,
+      admissionMonth: 'June'
+    });
+
+    expect(student.transportType).toBe('None');
+
+    // 4. Verify no transport ledgers exist
+    let transportLedgers = await mongoose.model('StudentFeeLedger').find({
+      studentId: student._id,
+      feeType: 'TRANSPORT'
+    });
+    expect(transportLedgers.length).toBe(0);
+
+    // 5. Update student to Railnagar transport with 5 months remaining
+    const updated = await StudentService.updateStudent(student._id, {
+      transportType: 'Railnagar',
+      transportMonths: 5
+    });
+
+    expect(updated.transportType).toBe('Railnagar');
+
+    // Verify exactly 5 months of transport ledgers are created (from Jan to May)
+    transportLedgers = await mongoose.model('StudentFeeLedger').find({
+      studentId: student._id,
+      feeType: 'TRANSPORT',
+      academicYear: '2025-26'
+    });
+    expect(transportLedgers.length).toBe(5);
+    expect(transportLedgers.every(l => l.totalAmount === 600)).toBe(true);
+
+    const periods = transportLedgers.map(l => l.feePeriod);
+    expect(periods).toContain('January');
+    expect(periods).toContain('February');
+    expect(periods).toContain('March');
+    expect(periods).toContain('April');
+    expect(periods).toContain('May');
+    expect(periods).not.toContain('December');
   });
 
   it('supports query batching for payments by ledgerIds', async () => {
@@ -193,8 +252,13 @@ describe('Transport status reactivation & payments batch query tests', () => {
       return res;
     };
     const mockNext = (expectedErrText) => jest.fn((err) => {
-      if (expectedErrText && err) {
-        expect(err.message).toContain(expectedErrText);
+      if (err) {
+        console.error('TEST ERROR CAPTURED:', err);
+        if (expectedErrText) {
+          expect(err.message).toContain(expectedErrText);
+        } else {
+          throw err;
+        }
       }
     });
 

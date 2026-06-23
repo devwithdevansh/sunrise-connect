@@ -45,7 +45,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: controller.loadReceipts,
+        onRefresh: () => controller.loadReceipts(forceRefresh: true),
         color: AppColors.primaryMid,
         child: Obx(() {
           // ── Loading ──────────────────────────────────────────────────────
@@ -122,11 +122,11 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
   // RECEIPT MODAL  — full digital receipt with line items
   // ─────────────────────────────────────────────────────────────────────────
   void _showReceiptModal(BuildContext context, ReceiptGroup group) {
-    final isMulti = group.items.length > 1;
+    final isMulti = group.activeItems.length > 1;
     final dtStr   = _fmtDateTime(group.paidAt);
 
-    final totalLedgerAmt = group.items.fold<double>(0.0, (s, item) => s + (item.totalAmount > 0 ? item.totalAmount : item.amount + item.concessionAmount));
-    final totalConcession = group.items.fold<double>(0.0, (s, item) => s + item.concessionAmount);
+    final totalLedgerAmt = group.activeItems.fold<double>(0.0, (s, item) => s + (item.totalAmount > 0 ? item.totalAmount : item.amount + item.concessionAmount));
+    final totalConcession = group.activeItems.fold<double>(0.0, (s, item) => s + item.concessionAmount);
     final totalPaid = group.totalAmount;
 
     Get.dialog(
@@ -187,7 +187,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                   const Text('Fee Breakdown',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
                   const SizedBox(height: 10),
-                  ...group.items.map((item) => Padding(
+                  ...group.activeItems.map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(children: [
                       Container(
@@ -337,7 +337,7 @@ class _ReceiptGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMulti = group.items.length > 1;
+    final isMulti = group.activeItems.length > 1;
     final subtitleText = isMulti ? group.categoriesSummary : group.termSummary;
 
     return GestureDetector(

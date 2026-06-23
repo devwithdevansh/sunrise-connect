@@ -19,28 +19,33 @@ class ReceiptGroup {
   final String receiptNumber;
   final DateTime paidAt;
 
-  double get totalAmount => items.fold(0.0, (s, r) => s + r.amount);
+  List<ReceiptModel> get activeItems => items.where((item) => !item.isReversed).toList();
+  bool get isPartiallyReversed => items.any((item) => item.isReversed) && items.any((item) => !item.isReversed);
+  double get revisedTotal => activeItems.fold(0.0, (s, r) => s + r.amount);
 
-  String get termSummary => items
+  double get totalAmount => revisedTotal;
+
+  String get termSummary => activeItems
       .map((r) => r.termName)
       .where((t) => t.isNotEmpty)
       .toSet()
       .join(', ');
 
   String get categoryLabel {
-    final labels = items.map((r) => r.categoryLabel).toSet();
+    final labels = activeItems.map((r) => r.categoryLabel).toSet();
+    if (labels.isEmpty) return 'Reversed';
     return labels.length == 1 ? labels.first : 'Multiple';
   }
 
   String get categoriesSummary {
-    final cats = items.map((r) => r.categoryLabel).toSet().toList();
+    final cats = activeItems.map((r) => r.categoryLabel).toSet().toList();
     return cats.join(' & ');
   }
 
-  bool get isTransport => items.every((r) => r.isTransport);
+  bool get isTransport => activeItems.isNotEmpty && activeItems.every((r) => r.isTransport);
 
-  String get studentName => items.first.studentName;
-  String get paymentMode => items.first.paymentMode;
+  String get studentName => items.isNotEmpty ? items.first.studentName : 'Student';
+  String get paymentMode => items.isNotEmpty ? items.first.paymentMode : '';
 
   String get monthLabel {
     const months = ['January','February','March','April','May','June',
@@ -49,7 +54,7 @@ class ReceiptGroup {
   }
 
   String get monthRangeSummary {
-    final terms = items.map((item) => item.termName).where((t) => t.isNotEmpty).toSet().toList();
+    final terms = activeItems.map((item) => item.termName).where((t) => t.isNotEmpty).toSet().toList();
     if (terms.isEmpty) return '';
 
     final monthOrderMap = {
@@ -176,7 +181,7 @@ class ReceiptDetailsController extends GetxController {
         receiptNumber: receiptNumber,
         paidAt:        dt,
       );
-    }).toList()
+    }).where((group) => group.activeItems.isNotEmpty).toList()
       ..sort((a, b) => b.paidAt.compareTo(a.paidAt));
   }
 
@@ -190,6 +195,14 @@ class ReceiptDetailsController extends GetxController {
     final prefs        = await SharedPreferences.getInstance();
     final cacheKey     = 'receipts_cache_$sId';
     final timeKey      = 'receipts_time_$sId';
+
+    if (forceRefresh) {
+      await prefs.remove(cacheKey);
+      await prefs.remove(timeKey);
+      // Invalidate dashboard caches and sync outstanding fees in the background
+      dashCtrl.refreshData();
+    }
+
     final cachedStr    = prefs.getString(cacheKey);
     final cachedTime   = prefs.getInt(timeKey) ?? 0;
     final nowMs        = DateTime.now().millisecondsSinceEpoch;
@@ -230,8 +243,8 @@ class ReceiptDetailsController extends GetxController {
     try {
       final pdf = pw.Document();
 
-      final totalLedgerAmt = group.items.fold<double>(0.0, (s, item) => s + (item.totalAmount > 0 ? item.totalAmount : item.amount + item.concessionAmount));
-      final totalConcession = group.items.fold<double>(0.0, (s, item) => s + item.concessionAmount);
+      final totalLedgerAmt = group.activeItems.fold<double>(0.0, (s, item) => s + (item.totalAmount > 0 ? item.totalAmount : item.amount + item.concessionAmount));
+      final totalConcession = group.activeItems.fold<double>(0.0, (s, item) => s + item.concessionAmount);
       final totalPaid = group.totalAmount;
 
       String formatPdfDateTime(DateTime dt) {
@@ -279,7 +292,7 @@ class ReceiptDetailsController extends GetxController {
                       style: const pw.TextStyle(
                           fontSize: 14, fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(height: 6),
-                  ...group.items.map((item) {
+                  ...group.activeItems.map((item) {
                     return pw.Padding(
                       padding: const pw.EdgeInsets.only(bottom: 4),
                       child: pw.Row(

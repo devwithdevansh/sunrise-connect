@@ -24,7 +24,7 @@ class StudentService {
         if (!/^[6-9]\d{9}$/.test(mobile)) {
           mobile = '9' + mobile.padEnd(9, '0').slice(0, 9);
         }
-        
+
         let parent = await mongoose.model('Parent').findOne({ primaryMobileNumber: mobile }, null, { session });
         if (!parent) {
           const newParent = {
@@ -150,7 +150,7 @@ class StudentService {
       const annualFee = feeStruct?.annualFee || (student.medium === 'English' ? 36000 : 30000);
       const totalParts = eduPartCount + termPartCount; // 12 + 2 = 14 parts
       const eduAmount = Math.round(annualFee / totalParts);
-      
+
       // Term fee, Admission fee, Bag & Kit fee are now admin-editable fields stored in FeeStructure.
       // We check if they are set (greater than 0), otherwise we fall back to proportional calculations for backward compatibility.
       const termAmount = (feeStruct?.termFee !== undefined && feeStruct?.termFee > 0)
@@ -341,6 +341,14 @@ class StudentService {
 
   /** Update mutable fields */
   static async updateStudent(studentId, updates) {
+    const newTransport = updates.transportType;
+    if (newTransport && newTransport !== 'None') {
+      const activeStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true });
+      if (!activeStruct) {
+        throw new AppError(`Active transport fee structure not found for ${newTransport}`, 404);
+      }
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -348,7 +356,6 @@ class StudentService {
       if (!student) throw new AppError('Student not found', 404);
 
       const oldTransport = student.transportType;
-      const newTransport = updates.transportType;
       const transportMonths = updates.transportMonths;
       delete updates.transportMonths;
 
@@ -360,119 +367,130 @@ class StudentService {
 
       // We only do transport adjustments if transportType changed
       if (newTransport && newTransport !== oldTransport) {
-        const transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }).session(session);
+        let transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }).session(session);
+        if (!transportCategory) {
+          transportCategory = await mongoose.model('FeeCategory').create([{
+            name: 'Transport',
+            type: 'TRANSPORT',
+            description: 'Transport fee category',
+            isActive: true
+          }], { session }).then(docs => docs[0]);
+        }
 
-        if (transportCategory) {
-          let oldRate = 0;
-          let newRate = 0;
+        let oldRate = 0;
+        let newRate = 0;
 
-          if (oldTransport !== 'None') {
-            const oldStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: oldTransport }).session(session);
-            if (!oldStruct) {
-              throw new AppError(`Transport fee structure not found for ${oldTransport}`, 404);
-            }
-            oldRate = oldStruct.amount;
+        if (oldTransport !== 'None') {
+          const oldStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: oldTransport }).session(session);
+          if (!oldStruct) {
+            throw new AppError(`Transport fee structure not found for ${oldTransport}`, 404);
           }
+          oldRate = oldStruct.amount;
+        }
+        if (newTransport !== 'None') {
+          const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true }).session(session);
+          if (!newStruct) {
+            throw new AppError(`Active transport fee structure not found for ${newTransport}`, 404);
+          }
+          newRate = newStruct.amount;
+        }
+
+        const months = [
+          { name: 'June', dueDate: '2026-06-15' },
+          { name: 'July', dueDate: '2026-07-15' },
+          { name: 'August', dueDate: '2026-08-15' },
+          { name: 'September', dueDate: '2026-09-15' },
+          { name: 'October', dueDate: '2026-10-15' },
+          { name: 'November', dueDate: '2026-11-15' },
+          { name: 'December', dueDate: '2026-12-15' },
+          { name: 'January', dueDate: '2027-01-15' },
+          { name: 'February', dueDate: '2027-02-15' },
+          { name: 'March', dueDate: '2027-03-15' },
+          { name: 'April', dueDate: '2027-04-15' },
+          { name: 'May', dueDate: '2027-05-15' }
+        ];
+
+        const allMonthsStr = months.map(m => m.name);
+        const admissionIdx = allMonthsStr.indexOf(student.admissionMonth || 'June');
+        let startIndex = Math.max(0, admissionIdx);
+
+        if (newTransport !== 'None' && oldTransport === 'None' && transportMonths !== undefined) {
+          startIndex = Math.max(0, Math.min(11, 12 - transportMonths));
+        }
+
+        const existingLedgers = await mongoose.model('StudentFeeLedger').find({
+          studentId: student._id,
+          feeType: 'TRANSPORT',
+          academicYear: currentAcademicYearName
+        }).session(session);
+
+        const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));
+        const ledgersToCreate = [];
+
+        for (let i = startIndex; i < 12; i++) {
+          const m = months[i];
+
           if (newTransport !== 'None') {
-            const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true }).session(session);
-            if (!newStruct) {
-              throw new AppError(`Active transport fee structure not found for ${newTransport}`, 404);
-            }
-            newRate = newStruct.amount;
-          }
-
-          const months = [
-            { name: 'June', dueDate: '2026-06-15' },
-            { name: 'July', dueDate: '2026-07-15' },
-            { name: 'August', dueDate: '2026-08-15' },
-            { name: 'September', dueDate: '2026-09-15' },
-            { name: 'October', dueDate: '2026-10-15' },
-            { name: 'November', dueDate: '2026-11-15' },
-            { name: 'December', dueDate: '2026-12-15' },
-            { name: 'January', dueDate: '2027-01-15' },
-            { name: 'February', dueDate: '2027-02-15' },
-            { name: 'March', dueDate: '2027-03-15' },
-            { name: 'April', dueDate: '2027-04-15' },
-            { name: 'May', dueDate: '2027-05-15' }
-          ];
-
-          const allMonthsStr = months.map(m => m.name);
-          const admissionIdx = allMonthsStr.indexOf(student.admissionMonth || 'June');
-          const startIndex = Math.max(0, admissionIdx);
-
-          const existingLedgers = await mongoose.model('StudentFeeLedger').find({
-            studentId: student._id,
-            feeType: 'TRANSPORT'
-          }).session(session);
-
-          const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));
-          const ledgersToCreate = [];
-
-          for (let i = startIndex; i < 12; i++) {
-            const m = months[i];
-            
-            if (newTransport !== 'None') {
-              if (existingPeriods.has(m.name)) {
-                // UPDATE existing pending ledger for this month
-                const ledger = existingLedgers.find(l => l.feePeriod === m.name);
-                if (ledger && ledger.status !== 'PAID') {
-                  const paidSoFar = ledger.paidAmount || 0;
-                  ledger.totalAmount = newRate;
-                  ledger.remainingAmount = Math.max(0, newRate - paidSoFar - (ledger.concessionAmount || 0));
-                  if (ledger.remainingAmount === 0) {
-                    ledger.status = 'PAID';
-                  } else if (paidSoFar > 0) {
-                    ledger.status = 'PARTIAL';
-                  } else {
-                    ledger.status = 'PENDING';
-                  }
-                  await ledger.save({ session });
+            if (existingPeriods.has(m.name)) {
+              // UPDATE existing pending ledger for this month
+              const ledger = existingLedgers.find(l => l.feePeriod === m.name);
+              if (ledger && ledger.status !== 'PAID') {
+                const paidSoFar = ledger.paidAmount || 0;
+                ledger.totalAmount = newRate;
+                ledger.remainingAmount = Math.max(0, newRate - paidSoFar - (ledger.concessionAmount || 0));
+                if (ledger.remainingAmount === 0) {
+                  ledger.status = 'PAID';
+                } else if (paidSoFar > 0) {
+                  ledger.status = 'PARTIAL';
+                } else {
+                  ledger.status = 'PENDING';
                 }
-              } else {
-                // CREATE new ledger for this month
-                ledgersToCreate.push({
-                  studentId: student._id,
-                  feePeriod: m.name,
-                  feeType: 'TRANSPORT',
-                  totalAmount: newRate,
-                  paidAmount: 0,
-                  concessionAmount: 0,
-                  remainingAmount: newRate,
-                  dueDate: new Date(m.dueDate),
-                  status: 'PENDING',
-                  feeCategoryId: transportCategory._id,
-                  academicYear: currentAcademicYearName,
-                  source: 'MANUAL',
-                  generatedFrom: 'TRANSPORT_STRUCTURE',
-                  ledgerNumber: `LEDGER_TRA_MID_${m.name.toUpperCase()}_${student.studentCode || student._id}_${Date.now()}`,
-                  snapshot: {
-                    studentName: student.studentName,
-                    medium: student.medium,
-                    standard: student.standard,
-                    division: student.division,
-                    transportType: newTransport,
-                    isRTE: student.isRTE
-                  }
-                });
+                await ledger.save({ session });
               }
             } else {
-              // STOP transport: cancel remaining unpaid ledgers
-              if (existingPeriods.has(m.name)) {
-                const ledger = existingLedgers.find(l => l.feePeriod === m.name);
-                if (ledger && ledger.status !== 'PAID') {
-                  ledger.status = 'CANCELLED';
-                  ledger.remainingAmount = 0;
-                  await ledger.save({ session });
+              // CREATE new ledger for this month
+              ledgersToCreate.push({
+                studentId: student._id,
+                feePeriod: m.name,
+                feeType: 'TRANSPORT',
+                totalAmount: newRate,
+                paidAmount: 0,
+                concessionAmount: 0,
+                remainingAmount: newRate,
+                dueDate: new Date(m.dueDate),
+                status: 'PENDING',
+                feeCategoryId: transportCategory._id,
+                academicYear: currentAcademicYearName,
+                source: 'MANUAL',
+                generatedFrom: 'TRANSPORT_STRUCTURE',
+                ledgerNumber: `LEDGER_TRA_MID_${m.name.toUpperCase()}_${student.studentCode || student._id}_${Date.now()}`,
+                snapshot: {
+                  studentName: student.studentName,
+                  medium: student.medium,
+                  standard: student.standard,
+                  division: student.division,
+                  transportType: newTransport,
+                  isRTE: student.isRTE
                 }
+              });
+            }
+          } else {
+            // STOP transport: cancel remaining unpaid ledgers
+            if (existingPeriods.has(m.name)) {
+              const ledger = existingLedgers.find(l => l.feePeriod === m.name);
+              if (ledger && ledger.status !== 'PAID') {
+                ledger.status = 'CANCELLED';
+                ledger.remainingAmount = 0;
+                await ledger.save({ session });
               }
             }
           }
-
-          if (ledgersToCreate.length > 0) {
-            await mongoose.model('StudentFeeLedger').create(ledgersToCreate, { session });
-          }
-          await AuditService.log({ performedBy: null, targetStudentId: studentId, action: 'LEDGER_CREATED', details: { type: 'TRANSPORT_MID_YEAR_SYNC' } }, session);
         }
+
+        if (ledgersToCreate.length > 0) {
+          await mongoose.model('StudentFeeLedger').create(ledgersToCreate, { session, ordered: true });
+        }
+        await AuditService.log({ performedBy: null, targetStudentId: studentId, action: 'LEDGER_CREATED', details: { type: 'TRANSPORT_MID_YEAR_SYNC' } }, session);
       }
 
       await AuditService.log(
@@ -496,6 +514,7 @@ class StudentService {
     if (!student) throw new AppError('Student not found', 404);
     return student;
   }
+  /** Retrieve a student (read‑only) */
 
   /** List students with optional filtering */
   static async listStudents(filter = {}, pagination = { limit: 20, skip: 0 }) {
@@ -558,7 +577,7 @@ class StudentService {
           { session }
         );
         updatedStudentIds.push(student._id);
-        
+
         await AuditService.log(
           { performedBy, targetStudentId: student._id, action: 'STUDENT_UPDATED', details: { reason: 'Promotion', targetStandard, targetDivision, targetAcademicYear } },
           session
@@ -891,7 +910,7 @@ class StudentService {
         if (!data.division) {
           throw new Error('Division is required');
         }
-        
+
         data.studentName = data.studentName.trim();
         data.standard = String(data.standard).trim();
         data.division = String(data.division).trim().toUpperCase();

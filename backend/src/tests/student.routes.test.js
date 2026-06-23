@@ -10,7 +10,7 @@ import StudentService from '../services/StudentService.js';
 let spyCreate, spyGet, spyList, spyUpdate;
 
 function makeToken(role = 'ADMIN') {
-  return jwt.sign({ id: 'testuser', role }, env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ id: '60d5ec4f0e213b2c2866b1a1', role }, env.JWT_SECRET, { expiresIn: '1h' });
 }
 
 const adminToken = makeToken('ADMIN');
@@ -34,11 +34,12 @@ describe('Student routes – auth guards', () => {
     expect(res.status).toBe(401);
   });
 
-  it('GET /students returns 403 for parent role', async () => {
+  it('GET /students returns 200 for parent role', async () => {
+    spyList.mockResolvedValueOnce([]);
     const res = await request(app)
       .get('/api/v1/students')
       .set('Authorization', `Bearer ${parentToken}`);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 });
 

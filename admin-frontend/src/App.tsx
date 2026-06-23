@@ -16,12 +16,16 @@ import { ImportExcel } from './components/ImportExcel';
 import {
   MessageSquare,
   Bell,
-  Sun
+  Sun,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import { PrintReceipt } from './components/PrintReceipt';
 
 const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = ({ onPrint }) => {
   const { currentScreen, transactions, reversePayment } = useApp();
+  const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
 
   switch (currentScreen) {
     case 'dashboard':
@@ -149,76 +153,146 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
               <table className="w-full text-left text-sm border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase bg-slate-50/50">
+                    <th className="py-3.5 px-5 w-[10px]"></th>
                     <th className="py-3.5 px-5">Student</th>
-                    <th className="py-3.5 px-5">Fee Detail</th>
+                    <th className="py-3.5 px-5">Fee Detail Summary</th>
                     <th className="py-3.5 px-5">Paid Amount</th>
                     <th className="py-3.5 px-5">Mode</th>
                     <th className="py-3.5 px-5">Time</th>
                     <th className="py-3.5 px-5 text-center">Receipt</th>
-                    <th className="py-3.5 px-5 text-center">Reversal</th>
+                    <th className="py-3.5 px-5 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                   {transactions.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                      <td colSpan={8} className="py-12 text-center text-sm text-slate-400">
                         No transactions recorded yet. Collect fees to see receipts here.
                       </td>
                     </tr>
                   ) : (
-                    transactions.map((t) => (
-                      <tr key={t.id} className="hover:bg-slate-50/30 transition-colors">
-                        <td className="py-4 px-5">
-                          <span className="font-bold text-slate-800 block">{t.studentName}</span>
-                          <span className="text-[10px] text-slate-400 block font-mono">{t.studentCode}</span>
-                        </td>
-                        <td className="py-4 px-5">
-                          <div className="text-slate-500 font-semibold space-y-1">
-                            {t.feeType.split('\n').map((line, i) => (
-                              <span key={i} className="block">{line}</span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-4 px-5 font-bold text-slate-800">
-                          {t.amount < 0 ? (
-                            <span className="text-red-500">-₹{Math.abs(t.amount).toLocaleString('en-IN')}</span>
-                          ) : (
-                            <span>₹{t.amount.toLocaleString('en-IN')}</span>
+                    transactions.map((t) => {
+                      const isExpanded = expandedTxId === t.id;
+                      return (
+                        <React.Fragment key={t.id}>
+                          <tr className="hover:bg-slate-50/30 transition-colors">
+                            <td className="py-4 px-5">
+                              <button
+                                onClick={() => setExpandedTxId(isExpanded ? null : t.id)}
+                                className="p-1 hover:bg-slate-100 rounded-lg transition-colors flex items-center justify-center"
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4 text-slate-500" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-slate-500" />
+                                )}
+                              </button>
+                            </td>
+                            <td className="py-4 px-5">
+                              <span className="font-bold text-slate-800 block">{t.studentName}</span>
+                              <span className="text-[10px] text-slate-400 block font-mono">{t.studentCode} · {t.classInfo}</span>
+                            </td>
+                            <td className="py-4 px-5">
+                              <div className="text-slate-500 font-semibold text-xs max-w-[200px] truncate">
+                                {t.feeType.split('\n').join(', ')}
+                              </div>
+                            </td>
+                            <td className="py-4 px-5 font-bold text-slate-800">
+                              {t.amount < 0 ? (
+                                <span className="text-red-500">-₹{Math.abs(t.amount).toLocaleString('en-IN')}</span>
+                              ) : (
+                                <span>₹{t.amount.toLocaleString('en-IN')}</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-5">
+                              <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-200/50 uppercase">
+                                {t.method}
+                              </span>
+                            </td>
+                            <td className="py-4 px-5 text-slate-400 text-xs font-semibold">{t.time || t.date}</td>
+                            <td className="py-4 px-5 text-center">
+                              <button
+                                onClick={() => onPrint(t)}
+                                className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100/50"
+                              >
+                                Print Receipt
+                              </button>
+                            </td>
+                            <td className="py-4 px-5 text-center">
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+                                t.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' :
+                                t.status === 'PARTIALLY_REVERSED' ? 'bg-amber-50 text-amber-500 border-amber-100' :
+                                'bg-emerald-50 text-emerald-600 border-emerald-100'
+                              }`}>
+                                {t.status}
+                              </span>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr className="bg-slate-50/50">
+                              <td colSpan={8} className="py-4 px-8 border-t border-b border-slate-100/80">
+                                <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm">
+                                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                                    <span>Receipt Line Items</span>
+                                    <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200">{t.subItems.length} fee item{t.subItems.length !== 1 ? 's' : ''}</span>
+                                  </h4>
+                                  <table className="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                      <tr className="border-b border-slate-200/60 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
+                                        <th className="py-2 px-3">Fee Type Details</th>
+                                        <th className="py-2 px-3 text-right">Amount (₹)</th>
+                                        <th className="py-2 px-3 text-right">Concession (₹)</th>
+                                        <th className="py-2 px-3 text-center">Method</th>
+                                        <th className="py-2 px-3 text-center">Status</th>
+                                        <th className="py-2 px-3 text-right">Reversal Action</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                                      {t.subItems.map((sub: any) => (
+                                        <tr key={sub.id} className="hover:bg-slate-50/30 transition-colors">
+                                          <td className="py-3 px-3 font-bold text-slate-800">{sub.description}</td>
+                                          <td className="py-3 px-3 text-right font-extrabold text-slate-800">₹{sub.amount.toLocaleString('en-IN')}</td>
+                                          <td className="py-3 px-3 text-right font-semibold text-purple-600">₹{(sub.concessionAmount || 0).toLocaleString('en-IN')}</td>
+                                          <td className="py-3 px-3 text-center">
+                                            <span className="bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.5 rounded border border-slate-200/50 uppercase">
+                                              {sub.method}
+                                            </span>
+                                          </td>
+                                          <td className="py-3 px-3 text-center">
+                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                                              sub.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                            }`}>
+                                              {sub.status}
+                                            </span>
+                                          </td>
+                                          <td className="py-3 px-3 text-right">
+                                            {sub.status !== 'REVERSED' && sub.method !== 'GOVT' ? (
+                                              <button
+                                                onClick={async () => {
+                                                  if (window.confirm(`Are you sure you want to reverse payment of ₹${sub.amount.toLocaleString('en-IN')} for ${sub.description}? This will restore the balance back to the ledger.`)) {
+                                                    await reversePayment(sub.id);
+                                                  }
+                                                }}
+                                                className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2.5 py-1 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
+                                              >
+                                                <RotateCcw className="h-2.5 w-2.5" />
+                                                Reverse Item
+                                              </button>
+                                            ) : (
+                                              <span className="text-slate-300 text-[9px] italic pr-2 font-medium">Not reversible</span>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                        <td className="py-4 px-5">
-                          <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-200/50">
-                            {t.method}
-                          </span>
-                          {(t as any).isReversal && (
-                            <span className="ml-1 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-red-200/50">REVERSED</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-5 text-slate-400 text-xs font-semibold">{t.time || t.date}</td>
-                        <td className="py-4 px-5 text-center">
-                          <button
-                            onClick={() => onPrint(t)}
-                            className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100/50"
-                          >
-                            Print Receipt
-                          </button>
-                        </td>
-                        <td className="py-4 px-5 text-center">
-                          {t.amount > 0 && !(t as any).isReversal && (
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Are you sure you want to reverse payment of ₹${t.amount} for ${t.studentName}?`)) {
-                                  reversePayment(t.reversalIds || t.id);
-                                }
-                              }}
-                              className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg border border-red-100/50"
-                            >
-                              Reverse
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                        </React.Fragment>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

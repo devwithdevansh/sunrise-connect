@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
-import { Search, ChevronDown, ChevronUp, Plus, X, Trash2, Pencil, Phone, Users, Landmark, History } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, X, Trash2, Pencil, Phone, Users, Landmark, History, RotateCcw } from 'lucide-react';
 
 export const Students: React.FC = () => {
   const {
@@ -20,6 +20,7 @@ export const Students: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'parent' | 'ledger' | 'history'>('parent');
+  const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [classFilter, setClassFilter] = useState('All Classes');
   const [divFilter, setDivFilter] = useState('All Divisions');
   const [medFilter, setMedFilter] = useState('All Mediums');
@@ -166,11 +167,11 @@ export const Students: React.FC = () => {
       updates.transportMonths = remainingMonths;
     }
 
-    const success = await updateStudent(editingStudentId, updates);
-    if (success) {
+    const result = await updateStudent(editingStudentId, updates);
+    if (result.success) {
       setIsEditModalOpen(false);
     } else {
-      alert("Failed to update student");
+      alert(result.error || "Failed to update student");
     }
   };
 
@@ -680,56 +681,123 @@ filteredStudents.map((s) => {
                               <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                   <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
-                                    <th className="py-2.5 pr-3">Payment Date</th>
+                                    <th className="py-2.5 px-3 w-[10px]"></th>
+                                    <th className="py-2.5 px-3">Payment Date</th>
                                     <th className="py-2.5 px-3">Time</th>
-                                    <th className="py-2.5 px-3">Fee Type Details</th>
+                                    <th className="py-2.5 px-3">Fee Type Details Summary</th>
                                     <th className="py-2.5 px-3 text-right">Paid Amount (₹)</th>
                                     <th className="py-2.5 px-3 text-right">Concession (₹)</th>
                                     <th className="py-2.5 px-3 text-center">Method</th>
-                                    <th className="py-2.5 px-3 text-center">Transaction Status</th>
-                                    <th className="py-2.5 pl-3 text-right">Reversal Action</th>
+                                    <th className="py-2.5 px-3 text-center">Status</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                                  {studentTransactions.map((tx) => (
-                                    <tr key={tx.id} className="hover:bg-slate-100/50 transition-colors">
-                                      <td className="py-3 pr-3 font-semibold text-slate-700">{tx.date}</td>
-                                      <td className="py-3 px-3 text-slate-400 font-medium">{tx.time}</td>
-                                      <td className="py-3 px-3 font-bold text-slate-800">{tx.feeType}</td>
-                                      <td className="py-3 px-3 text-right font-extrabold text-slate-800">₹{tx.amount.toLocaleString('en-IN')}</td>
-                                      <td className="py-3 px-3 text-right font-semibold text-purple-600">₹{(tx.concessionAmount || 0).toLocaleString('en-IN')}</td>
-                                      <td className="py-3 px-3 text-center">
-                                        <span className="bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">
-                                          {tx.method}
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-3 text-center">
-                                        <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
-                                          tx.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' :
-                                          tx.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'
-                                        }`}>
-                                          {tx.status}
-                                        </span>
-                                      </td>
-                                      <td className="py-3 pl-3 text-right">
-                                        {tx.status !== 'REVERSED' && tx.method !== 'GOVT' && (
-                                          <button
-                                            onClick={() => {
-                                              if (window.confirm(`Are you sure you want to reverse this payment of ₹${tx.amount.toLocaleString('en-IN')}? This will restore the balance back to the ledger.`)) {
-                                                reversePayment(tx.reversalIds || tx.id);
-                                              }
-                                            }}
-                                            className="text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2.5 py-1 rounded-lg text-[10px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
-                                          >
-                                            Reverse Payment
-                                          </button>
+                                  {studentTransactions.map((tx) => {
+                                    const isTxExpanded = expandedTxId === tx.id;
+                                    return (
+                                      <React.Fragment key={tx.id}>
+                                        <tr className="hover:bg-slate-100/50 transition-colors">
+                                          <td className="py-3 px-3">
+                                            <button
+                                              onClick={() => setExpandedTxId(isTxExpanded ? null : tx.id)}
+                                              className="p-1 hover:bg-slate-200 rounded-lg transition-colors flex items-center justify-center"
+                                            >
+                                              {isTxExpanded ? (
+                                                <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
+                                              ) : (
+                                                <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+                                              )}
+                                            </button>
+                                          </td>
+                                          <td className="py-3 px-3 font-semibold text-slate-700">{tx.date}</td>
+                                          <td className="py-3 px-3 text-slate-400 font-medium">{tx.time}</td>
+                                          <td className="py-3 px-3 font-bold text-slate-800">
+                                            <div className="max-w-[180px] truncate">
+                                              {tx.feeType.split('\n').join(', ')}
+                                            </div>
+                                          </td>
+                                          <td className="py-3 px-3 text-right font-extrabold text-slate-800">₹{tx.amount.toLocaleString('en-IN')}</td>
+                                          <td className="py-3 px-3 text-right font-semibold text-purple-600">₹{(tx.concessionAmount || 0).toLocaleString('en-IN')}</td>
+                                          <td className="py-3 px-3 text-center">
+                                            <span className="bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">
+                                              {tx.method}
+                                            </span>
+                                          </td>
+                                          <td className="py-3 px-3 text-center">
+                                            <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                                              tx.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' :
+                                              tx.status === 'PARTIALLY_REVERSED' ? 'bg-amber-50 text-amber-500 border-amber-100' :
+                                              tx.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'
+                                            }`}>
+                                              {tx.status}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                        {isTxExpanded && (
+                                          <tr className="bg-slate-100/30">
+                                            <td colSpan={8} className="py-3 px-6 border-t border-b border-slate-200/50">
+                                              <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-sm">
+                                                <h6 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                                  <span>Payment Items</span>
+                                                  <span className="bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200">{tx.subItems.length} item{tx.subItems.length !== 1 ? 's' : ''}</span>
+                                                </h6>
+                                                <table className="w-full text-left text-[11px] border-collapse">
+                                                  <thead>
+                                                    <tr className="border-b border-slate-200/60 text-slate-400 font-bold uppercase tracking-wider text-[8px]">
+                                                      <th className="py-1.5 px-2">Fee Type Details</th>
+                                                      <th className="py-1.5 px-2 text-right">Amount (₹)</th>
+                                                      <th className="py-1.5 px-2 text-right">Concession (₹)</th>
+                                                      <th className="py-1.5 px-2 text-center">Method</th>
+                                                      <th className="py-1.5 px-2 text-center">Status</th>
+                                                      <th className="py-1.5 px-2 text-right">Reversal Action</th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                                                    {tx.subItems.map((sub: any) => (
+                                                      <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="py-2 px-2 font-bold text-slate-800">{sub.description}</td>
+                                                        <td className="py-2 px-2 text-right font-extrabold text-slate-800">₹{sub.amount.toLocaleString('en-IN')}</td>
+                                                        <td className="py-2 px-2 text-right font-semibold text-purple-600">₹{(sub.concessionAmount || 0).toLocaleString('en-IN')}</td>
+                                                        <td className="py-2 px-2 text-center">
+                                                          <span className="bg-slate-100 text-slate-600 text-[8px] font-bold px-1.5 py-0.5 rounded border border-slate-200/50 uppercase">
+                                                            {sub.method}
+                                                          </span>
+                                                        </td>
+                                                        <td className="py-2 px-2 text-center">
+                                                          <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                                                            sub.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                          }`}>
+                                                            {sub.status}
+                                                          </span>
+                                                        </td>
+                                                        <td className="py-2 px-2 text-right">
+                                                          {sub.status !== 'REVERSED' && sub.method !== 'GOVT' ? (
+                                                            <button
+                                                              onClick={async () => {
+                                                                if (window.confirm(`Are you sure you want to reverse payment of ₹${sub.amount.toLocaleString('en-IN')} for ${sub.description}? This will restore the balance back to the ledger.`)) {
+                                                                  await reversePayment(sub.id);
+                                                                }
+                                                              }}
+                                                              className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2 py-0.5 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
+                                                            >
+                                                              <RotateCcw className="h-2 w-2" />
+                                                              Reverse Item
+                                                            </button>
+                                                          ) : (
+                                                            <span className="text-slate-300 text-[9px] italic pr-2 font-medium">Not reversible</span>
+                                                          )}
+                                                        </td>
+                                                      </tr>
+                                                    ))}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </td>
+                                          </tr>
                                         )}
-                                        {(tx.status === 'REVERSED' || tx.method === 'GOVT') && (
-                                          <span className="text-slate-300 text-[10px] italic pr-2 font-medium">Not reversible</span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
+                                      </React.Fragment>
+                                    );
+                                  })}
                                 </tbody>
                               </table>
                             )}

@@ -2,6 +2,10 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/globals';
 import { connect, disconnect, clearCollections } from './helpers/dbHelper.js';
 import auditRepository from '../repositories/auditRepository.js';
+import '../models/User.js';
+import '../models/Parent.js';
+import '../models/Student.js';
+import '../models/StudentFeeLedger.js';
 
 beforeAll(connect);
 afterAll(disconnect);

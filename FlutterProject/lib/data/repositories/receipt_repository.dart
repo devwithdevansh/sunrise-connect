@@ -48,6 +48,8 @@ class ReceiptRepository {
               feeType: p.feeType,
               concessionAmount: p.concessionAmount,
               totalAmount: p.totalAmount,
+              isReversed: p.isReversed,
+              reversalOf: p.reversalOf,
             ))
         .toList();
   }

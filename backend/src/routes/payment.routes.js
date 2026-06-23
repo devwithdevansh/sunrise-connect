@@ -21,6 +21,6 @@ router.use(authenticate);
 router.post('/', authorize('ADMIN', 'STAFF', 'parent'), idempotency, validate(createPaymentSchema), PaymentController.createPayment);
 router.get('/', authorize('ADMIN', 'STAFF', 'parent'), validate(listPaymentsSchema), PaymentController.listPayments);
 router.get('/:id', authorize('ADMIN', 'STAFF'), PaymentController.getPayment);
-router.post('/:id/reverse', authorize('ADMIN'), validate(reversePaymentSchema), PaymentController.reversePayment);
+router.post('/:id/reverse', authorize('ADMIN', 'STAFF'), validate(reversePaymentSchema), PaymentController.reversePayment);
 
 export default router;

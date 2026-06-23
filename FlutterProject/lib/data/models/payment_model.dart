@@ -11,6 +11,8 @@ class PaymentModel {
   final bool isReversal;
   final double concessionAmount;
   final double totalAmount;
+  final bool isReversed;
+  final String? reversalOf;
 
   const PaymentModel({
     required this.id,
@@ -25,6 +27,8 @@ class PaymentModel {
     this.isReversal = false,
     this.concessionAmount = 0.0,
     this.totalAmount = 0.0,
+    this.isReversed = false,
+    this.reversalOf,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
@@ -40,6 +44,8 @@ class PaymentModel {
         isReversal: json['isReversal'] as bool? ?? false,
         concessionAmount: ((json['concessionAmount'] ?? 0) as num).toDouble(),
         totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
+        isReversed: json['isReversed'] as bool? ?? false,
+        reversalOf: json['reversalOf'] as String?,
       );
 
   static String _extractTxnId(Map<String, dynamic> json) {
@@ -88,5 +94,7 @@ class PaymentModel {
         'isReversal': isReversal,
         'concessionAmount': concessionAmount,
         'totalAmount': totalAmount,
+        'isReversed': isReversed,
+        'reversalOf': reversalOf,
       };
 }

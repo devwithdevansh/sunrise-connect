@@ -61,6 +61,15 @@ class PaymentService {
       if (!payment) throw new AppError('Payment not found', 404);
       if (payment.isReversal) throw new AppError('Cannot reverse a reversal', 400);
 
+      // Check if this payment is already reversed
+      const existingReversal = await paymentRepository.findOne({
+        $or: [
+          { 'details.reversalOf': paymentId },
+          { 'details.reversalOf': paymentId.toString() }
+        ]
+      }, null, { session });
+      if (existingReversal) throw new AppError('Already reversed', 400);
+
       // OCC: read ledger inside transaction
       const ledger = await ledgerRepository.findById(payment.ledgerId, null, { session });
       if (!ledger) throw new AppError('Ledger not found', 404);

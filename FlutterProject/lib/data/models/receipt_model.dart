@@ -10,6 +10,8 @@ class ReceiptModel {
   final String feeType;    // e.g. "TRANSPORT", "TERM", "EDUCATION"
   final double concessionAmount;
   final double totalAmount;
+  final bool isReversed;
+  final String? reversalOf;
 
   const ReceiptModel({
     required this.id,
@@ -23,6 +25,8 @@ class ReceiptModel {
     this.feeType = 'EDUCATION',
     this.concessionAmount = 0.0,
     this.totalAmount = 0.0,
+    this.isReversed = false,
+    this.reversalOf,
   });
 
   factory ReceiptModel.fromJson(Map<String, dynamic> json) => ReceiptModel(
@@ -40,6 +44,8 @@ class ReceiptModel {
         feeType: json['feeType'] as String? ?? 'EDUCATION',
         concessionAmount: ((json['concessionAmount'] ?? 0) as num).toDouble(),
         totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
+        isReversed: json['isReversed'] as bool? ?? false,
+        reversalOf: json['reversalOf'] as String?,
       );
 
   /// Whether this is a TRANSPORT receipt
@@ -57,6 +63,10 @@ class ReceiptModel {
     }
   }
 
+  bool get isPartiallyReversed => false;
+  List<ReceiptModel> get activeItems => [this];
+  double get revisedTotal => isReversed ? 0.0 : amount;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'receiptNumber': receiptNumber,
@@ -69,5 +79,7 @@ class ReceiptModel {
         'feeType': feeType,
         'concessionAmount': concessionAmount,
         'totalAmount': totalAmount,
+        'isReversed': isReversed,
+        'reversalOf': reversalOf,
       };
 }

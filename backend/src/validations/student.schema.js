@@ -26,6 +26,7 @@ export const updateStudentSchema = {
     standard: z.string().optional(),
     division: z.string().optional(),
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
+    transportMonths: z.coerce.number().int().min(0).max(12).optional(),
     isRTE: z.boolean().optional(),
     isNewAdmission: z.boolean().optional(),
     admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),

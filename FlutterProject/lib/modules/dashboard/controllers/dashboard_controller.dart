@@ -202,7 +202,20 @@ class DashboardController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     final pId = prefs.getString(StorageKeys.parentId);
     if (pId != null && pId.isNotEmpty) {
+      // Invalidate all caches for all students under this parent
+      for (final s in students) {
+        await prefs.remove('fees_cache_${s.id}');
+        await prefs.remove('payments_cache_${s.id}');
+        await prefs.remove('payments_time_${s.id}');
+        await prefs.remove('receipts_cache_${s.id}');
+        await prefs.remove('receipts_time_${s.id}');
+      }
       await loadDashboardData(pId, forceRefresh: true);
+      
+      // Sync payment history if controller is registered
+      if (Get.isRegistered<PaymentHistoryController>()) {
+        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
+      }
     }
   }
 

@@ -1,10 +1,18 @@
 // src/tests/feeStructure.routes.test.js
 import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/globals';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { connect, disconnect, clearCollections } from './helpers/dbHelper.js';
 import app from '../app.js';
+import env from '../config/env.js';
 import FeeStructure from '../models/FeeStructure.js';
 import TransportFeeStructure from '../models/TransportFeeStructure.js';
+
+function makeToken(role = 'ADMIN') {
+  return jwt.sign({ id: '60d5ec4f0e213b2c2866b1a1', role }, env.JWT_SECRET, { expiresIn: '1h' });
+}
+
+const adminToken = makeToken('ADMIN');
 
 beforeAll(async () => {
   await connect();
@@ -35,7 +43,9 @@ describe('GET /api/v1/fee-structures', () => {
       isActive: true,
     });
 
-    const res = await request(app).get('/api/v1/fee-structures');
+    const res = await request(app)
+      .get('/api/v1/fee-structures')
+      .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
     expect(res.body.data.feeStructures).toHaveLength(1);
     expect(res.body.data.transportStructures).toHaveLength(1);
@@ -56,6 +66,7 @@ describe('PUT /api/v1/fee-structures/:id – update standard fee', () => {
 
     const res = await request(app)
       .put(`/api/v1/fee-structures/${created._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ annualFee: 32000, educationPartCount: 12, termPartCount: 2 });
 
     expect(res.status).toBe(200);
@@ -79,6 +90,7 @@ describe('PUT /api/v1/fee-structures/:id – update standard fee', () => {
 
     const res = await request(app)
       .put(`/api/v1/fee-structures/${created._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ annualFee: -5000 });
 
     expect(res.status).toBe(400);
@@ -88,6 +100,7 @@ describe('PUT /api/v1/fee-structures/:id – update standard fee', () => {
     const fakeId = '000000000000000000000001';
     const res = await request(app)
       .put(`/api/v1/fee-structures/${fakeId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ annualFee: 40000 });
 
     expect(res.status).toBe(404);
@@ -105,6 +118,7 @@ describe('PUT /api/v1/fee-structures/transport/:id – update transport fee', ()
 
     const res = await request(app)
       .put(`/api/v1/fee-structures/transport/${created._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ amount: 1000 });
 
     expect(res.status).toBe(200);
@@ -125,6 +139,7 @@ describe('PUT /api/v1/fee-structures/transport/:id – update transport fee', ()
 
     const res = await request(app)
       .put(`/api/v1/fee-structures/transport/${created._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ amount: -200 });
 
     expect(res.status).toBe(400);
@@ -134,6 +149,7 @@ describe('PUT /api/v1/fee-structures/transport/:id – update transport fee', ()
     const fakeId = '000000000000000000000002';
     const res = await request(app)
       .put(`/api/v1/fee-structures/transport/${fakeId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ amount: 800 });
 
     expect(res.status).toBe(404);

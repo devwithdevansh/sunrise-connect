@@ -86,13 +86,14 @@ describe('POST /api/v1/payments – idempotency enforcement', () => {
 });
 
 describe('POST /api/v1/payments/:id/reverse – role guard', () => {
-  it('returns 403 for STAFF role', async () => {
+  it('calls reversePayment and returns 200 for STAFF role', async () => {
+    spyReverse.mockResolvedValueOnce({ _id: 'rev1', amount: -100 });
     const res = await request(app)
       .post('/api/v1/payments/pay1/reverse')
       .set('Authorization', `Bearer ${staffToken}`)
       .send({ reason: 'Mistake' });
-    expect(res.status).toBe(403);
-    expect(spyReverse).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(spyReverse).toHaveBeenCalledWith({ paymentId: 'pay1', reason: 'Mistake', performedBy: 'testuser' });
   });
 
   it('calls reversePayment and returns 200 for ADMIN', async () => {
