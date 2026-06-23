@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store';
-import { UserPlus, Users, ShieldCheck, ShieldOff, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Users, ShieldCheck, ShieldOff, KeyRound, Eye, EyeOff, Trash2 } from 'lucide-react';
 
 interface StaffUser {
   _id: string;
@@ -95,6 +95,17 @@ export const StaffManagement: React.FC = () => {
     setResetUserId(null);
     setResetNewPassword('');
     alert('Password reset successfully!');
+  };
+
+  const handleDelete = async (userId: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete the account for "${name}"? This action cannot be undone.`)) return;
+    const res = await authFetch(`/api/v1/users/${userId}`, { method: 'DELETE' });
+    if (res.ok) {
+      fetchStaff();
+    } else {
+      const data = await res.json();
+      alert(data.message || 'Failed to delete staff account');
+    }
   };
 
   if (currentUser?.role !== 'ADMIN') {
@@ -219,6 +230,13 @@ export const StaffManagement: React.FC = () => {
                       className="text-xs font-bold px-3 py-1.5 rounded-lg border text-amber-600 bg-amber-50 border-amber-100 hover:bg-amber-100 transition-colors"
                     >
                       <KeyRound className="h-3 w-3 inline mr-1" />Reset
+                    </button>
+                    <button
+                      onClick={() => handleDelete(staff._id, staff.name)}
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg border text-rose-600 bg-rose-50 border-rose-100 hover:bg-rose-100 transition-colors"
+                      title="Permanently remove this staff member"
+                    >
+                      <Trash2 className="h-3 w-3 inline mr-1" />Remove
                     </button>
                   </td>
                 </tr>

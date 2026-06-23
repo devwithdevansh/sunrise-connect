@@ -46,6 +46,7 @@ const auditLogSchema = new mongoose.Schema(
         'STAFF_ACTIVATED',
         'STAFF_DEACTIVATED',
         'STAFF_PASSWORD_RESET',
+        'STAFF_DELETED',
         'STUDENTS_PROMOTED',
         'STUDENT_TRANSPORT_UPDATED',
         'REFRESH_ROTATED', // kept for AuthService compatibility (frozen)

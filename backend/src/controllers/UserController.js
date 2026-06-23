@@ -34,6 +34,12 @@ class UserController {
     const result = await UserService.resetStaffPassword(req.params.id, newPassword);
     sendResponse(res, 200, result);
   });
+
+  /** DELETE /api/v1/users/:id — Permanently delete a staff account */
+  static deleteStaff = catchAsync(async (req, res) => {
+    const result = await UserService.deleteStaff(req.params.id);
+    sendResponse(res, 200, result, 'Staff account deleted successfully');
+  });
 }
 
 export default UserController;

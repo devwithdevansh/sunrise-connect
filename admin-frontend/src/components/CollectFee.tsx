@@ -277,13 +277,17 @@ export const CollectFee: React.FC = () => {
   // Fee collection form states
   const [feeCategory, setFeeCategory] = useState<'EDUCATION' | 'TRANSPORT' | 'ADMISSION' | 'BAG_KIT' | 'OTHER'>('EDUCATION');
   const [selectedFees, setSelectedFees] = useState<{ category: string; period: string }[]>([]);
-  const [concessionType, setConcessionType] = useState<'None' | 'Fixed' | 'Percentage'>('None');
-  const [concessionVal, setConcessionVal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CHEQUE' | 'ONLINE' | 'CARD' | 'NET BANKING'>('CASH');
+  
+  interface LineItemConfig {
+    paymentAmount: number;
+    concessionAmount: number;
+    paymentMethod: 'CASH' | 'CHEQUE' | 'ONLINE' | 'CARD' | 'NET BANKING' | 'CONCESSION';
+    remark: string;
+  }
+  const [lineItems, setLineItems] = useState<Record<string, LineItemConfig>>({});
+
   const [chequeNo, setChequeNo] = useState('');
   const [bankName, setBankName] = useState('');
-  const [payingNow, setPayingNow] = useState(0);
-  const [remark, setRemark] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
 
@@ -532,17 +536,35 @@ export const CollectFee: React.FC = () => {
   };
 
   // -------------------------------------------------------------------
-  // Auto-calculate payingNow from selected fees
+  // Initialize lineItems when selectedFees changes
   // -------------------------------------------------------------------
   useEffect(() => {
     if (!selectedStudent) return;
-    const rawSum = selectedFees.reduce((sum, f) => sum + getDueAmount(f.category, f.period), 0);
-    let total = rawSum;
-    if (concessionType === 'Fixed') total = Math.max(0, rawSum - concessionVal);
-    else if (concessionType === 'Percentage') total = Math.max(0, rawSum - (rawSum * concessionVal) / 100);
-    setPayingNow(Math.round(total));
+    setLineItems((prev) => {
+      const next: Record<string, LineItemConfig> = {};
+      selectedFees.forEach((f) => {
+        const key = `${f.category}|${f.period}`;
+        if (prev[key]) {
+          next[key] = prev[key];
+        } else {
+          // Initialize new item
+          const due = getDueAmount(f.category, f.period);
+          next[key] = {
+            paymentAmount: due,
+            concessionAmount: 0,
+            paymentMethod: 'CASH',
+            remark: ''
+          };
+        }
+      });
+      return next;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFees, selectedStudent, concessionType, concessionVal, ledgerEntries]);
+  }, [selectedFees, selectedStudent, ledgerEntries]);
+
+  // Derived totals
+  const totalPayableFees = selectedFees.reduce((sum, f) => sum + getDueAmount(f.category, f.period), 0);
+  const totalPayingNow = Object.values(lineItems).reduce((sum, item) => sum + item.paymentAmount, 0);
 
   // -------------------------------------------------------------------
   // Search filter
@@ -573,44 +595,44 @@ export const CollectFee: React.FC = () => {
     e.preventDefault();
     if (!selectedStudent || selectedFees.length === 0) return;
 
-    // Prepare fees to pay — only include entries backed by an actual ledger ID
-    const feesToPay = selectedFees.map((f) => {
+    // Prepare fees to pay
+    const lineItemsArray = selectedFees.map((f) => {
       const entry = getLedger(f.category, f.period);
+      const key = `${f.category}|${f.period}`;
+      const config = lineItems[key];
+
+      let finalRemark = config.remark;
+      if (config.paymentMethod === 'CHEQUE' && (chequeNo || bankName)) {
+        const chequeInfo = [chequeNo && `No: ${chequeNo}`, bankName && `Bank: ${bankName}`].filter(Boolean).join(', ');
+        finalRemark = config.remark ? `${config.remark} (Cheque - ${chequeInfo})` : `Cheque - ${chequeInfo}`;
+      }
+
       return {
         category: f.category,
         period: f.period,
         ledgerId: entry?.id || entry?._id,
-        totalAmount: getStandardAmount(f.category, f.period)
+        totalAmount: getStandardAmount(f.category, f.period),
+        paymentAmount: config.paymentAmount,
+        concessionAmount: config.concessionAmount,
+        paymentMethod: config.paymentMethod,
+        remark: finalRemark
       };
     });
 
-    const feesWithLedger = feesToPay.filter(f => f.ledgerId);
+    const feesWithLedger = lineItemsArray.filter(f => f.ledgerId);
     if (feesWithLedger.length === 0) {
       setSuccessMsg('⚠ No valid ledger entries found for selected fees. Please refresh and try again.');
       setTimeout(() => setSuccessMsg(''), 5000);
       return;
     }
 
-    let finalConcession = 0;
-    const rawSum = selectedFees.reduce((sum, f) => sum + getDueAmount(f.category, f.period), 0);
-    if (concessionType === 'Fixed') finalConcession = concessionVal;
-    else if (concessionType === 'Percentage') finalConcession = (rawSum * concessionVal) / 100;
+    await recordPayment(selectedStudent._id || selectedStudent.id, lineItemsArray);
 
-    let finalRemark = remark;
-    if (paymentMethod === 'CHEQUE' && (chequeNo || bankName)) {
-      const chequeInfo = [chequeNo && `No: ${chequeNo}`, bankName && `Bank: ${bankName}`].filter(Boolean).join(', ');
-      finalRemark = remark ? `${remark} (Cheque - ${chequeInfo})` : `Cheque - ${chequeInfo}`;
-    }
-
-    await recordPayment(selectedStudent._id || selectedStudent.id, feesToPay, payingNow, paymentMethod, finalConcession, finalRemark);
-
-    setSuccessMsg(`✓ Collected ₹${payingNow.toLocaleString('en-IN')} for ${selectedStudent.studentName}`);
+    setSuccessMsg(`✓ Collected ₹${totalPayingNow.toLocaleString('en-IN')} for ${selectedStudent.studentName}`);
     setSelectedFees([]);
-    setRemark('');
+    setLineItems({});
     setChequeNo('');
     setBankName('');
-    setConcessionVal(0);
-    setConcessionType('None');
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
@@ -1031,147 +1053,152 @@ export const CollectFee: React.FC = () => {
               </div>
             )}
 
-            {/* Payment Method */}
-            <div className="space-y-2.5">
-              <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Payment Method</span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                {[
-                  { id: 'CASH', label: 'Cash', icon: Coins },
-                  { id: 'CHEQUE', label: 'Cheque', icon: FileText },
-                  { id: 'CARD', label: 'Card', icon: CreditCard },
-                  { id: 'ONLINE', label: 'Online/UPI', icon: Smartphone },
-                  { id: 'NET BANKING', label: 'Net Banking', icon: Globe }
-                ].map((method) => {
-                  const Icon = method.icon;
-                  const isActive = paymentMethod === method.id;
-                  return (
-                    <button
-                      key={method.id}
-                      type="button"
-                      onClick={() => setPaymentMethod(method.id as typeof paymentMethod)}
-                      className={`border rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all text-center ${isActive
-                          ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-500/20'
-                          : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-700'
-                        }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-[11px] font-bold">{method.label}</span>
-                    </button>
-                  );
-                })}
+            {/* ── LINE ITEM FEE SUMMARY ─────────────────────── */}
+            <div className="mt-8 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-slate-50 border-b border-slate-200 px-5 py-4">
+                <h4 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Fee Summary & Payment</h4>
               </div>
+
+              {selectedFees.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 font-semibold text-sm">
+                  No fees selected. Please select fees above.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
+                        <th className="px-4 py-3">Fee Name (Total Due)</th>
+                        <th className="px-4 py-3 w-40">Payment (₹)</th>
+                        <th className="px-4 py-3 w-32">Concession (₹)</th>
+                        <th className="px-4 py-3">Payment Mode</th>
+                        <th className="px-4 py-3">Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {selectedFees.map((f, i) => {
+                        const key = `${f.category}|${f.period}`;
+                        const due = getDueAmount(f.category, f.period);
+                        const config = lineItems[key];
+                        if (!config) return null;
+
+                        return (
+                          <tr key={key} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-semibold text-slate-700">
+                              <div className="flex flex-col">
+                                <span>{f.category === 'BAG_KIT' ? 'BAG & KIT' : f.category} - {f.period}</span>
+                                <span className="text-xs text-amber-600">Due: ₹{due.toLocaleString('en-IN')}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={config.paymentAmount === 0 ? '' : config.paymentAmount}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setLineItems(prev => ({
+                                    ...prev,
+                                    [key]: { ...prev[key], paymentAmount: val }
+                                  }));
+                                }}
+                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={config.concessionAmount === 0 ? '' : config.concessionAmount}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setLineItems(prev => ({
+                                    ...prev,
+                                    [key]: { ...prev[key], concessionAmount: val }
+                                  }));
+                                }}
+                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-4 text-xs font-semibold">
+                                {['CASH', 'CHEQUE', 'ONLINE', 'CARD'].map((mode) => (
+                                  <label key={mode} className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`mode-${key}`}
+                                      value={mode}
+                                      checked={config.paymentMethod === mode}
+                                      onChange={() => {
+                                        setLineItems(prev => ({
+                                          ...prev,
+                                          [key]: { ...prev[key], paymentMethod: mode as any }
+                                        }));
+                                      }}
+                                      className="accent-blue-600"
+                                    />
+                                    {mode}
+                                  </label>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={config.remark}
+                                onChange={(e) => {
+                                  setLineItems(prev => ({
+                                    ...prev,
+                                    [key]: { ...prev[key], remark: e.target.value }
+                                  }));
+                                }}
+                                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                placeholder="Optional remark"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot className="bg-[#1E3A5F] text-white">
+                      <tr>
+                        <td className="px-4 py-4 font-bold text-right" colSpan={1}>Total Payable</td>
+                        <td className="px-4 py-4 font-extrabold text-lg">₹{totalPayingNow.toLocaleString('en-IN')}</td>
+                        <td colSpan={3}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
 
-            {/* Cheque Info */}
-            {paymentMethod === 'CHEQUE' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Global Cheque Info if any line item has CHEQUE selected */}
+            {Object.values(lineItems).some(item => item.paymentMethod === 'CHEQUE') && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 p-4 bg-purple-50 border border-purple-100 rounded-xl">
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Cheque No.</label>
+                  <label className="block text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Global Cheque No.</label>
                   <input
                     type="text"
                     value={chequeNo}
                     onChange={(e) => setChequeNo(e.target.value)}
                     placeholder="123456"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 shadow-sm"
+                    className="w-full bg-white border border-purple-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Bank Name</label>
+                  <label className="block text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Global Bank Name</label>
                   <input
                     type="text"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     placeholder="SBI, HDFC..."
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 shadow-sm"
+                    className="w-full bg-white border border-purple-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 shadow-sm"
                   />
                 </div>
               </div>
             )}
-
-            {/* Card Info Banner */}
-            {paymentMethod === 'CARD' && (
-              <div className="bg-[#FFF9C4] border border-[#FDE047] text-amber-800 text-sm py-3 px-4 rounded-xl flex items-center gap-2">
-                <span className="font-semibold">💳 Card charges (2% MDR) added</span>
-              </div>
-            )}
-
-            {/* Global Concession & Summary Cart */}
-            <div className="bg-[#1E3A5F] rounded-2xl p-5 text-white shadow-lg mt-6">
-              <div className="pb-4 border-b border-white/10 space-y-3">
-                <h4 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">Fee Summary</h4>
-
-                {selectedFees.length === 0 ? (
-                  <div className="text-sm opacity-50 italic">No fees selected</div>
-                ) : (
-                  <div className="space-y-2">
-                    {selectedFees.map((f, i) => (
-                      <div key={i} className="flex justify-between items-center text-sm">
-                        <span className="opacity-90">{f.category === 'BAG_KIT' ? 'BAG & KIT' : f.category} - {f.period}</span>
-                        <span className="font-semibold">₹{getDueAmount(f.category, f.period).toLocaleString('en-IN')}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Concession section */}
-              <div className="py-4 border-b border-white/10 flex items-center justify-between gap-4">
-                <label className="text-slate-300 text-sm font-bold shrink-0">Global Concession:</label>
-                <div className="flex gap-2">
-                  <select
-                    value={concessionType}
-                    onChange={(e) => { setConcessionType(e.target.value as 'None' | 'Fixed' | 'Percentage'); setConcessionVal(0); }}
-                    className="bg-white/10 border border-white/20 text-white rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-white/40 shadow-sm"
-                  >
-                    <option value="None" className="text-slate-800">None</option>
-                    <option value="Fixed" className="text-slate-800">Fixed Amount</option>
-                    <option value="Percentage" className="text-slate-800">Percentage</option>
-                  </select>
-                  {concessionType !== 'None' && (
-                    <input
-                      type="number"
-                      min="0"
-                      value={concessionVal}
-                      onChange={(e) => setConcessionVal(parseFloat(e.target.value) || 0)}
-                      className="bg-white/10 border border-white/20 text-white rounded-lg px-3 py-1.5 w-24 text-sm focus:outline-none focus:border-white/40 shadow-sm placeholder:text-white/30"
-                      placeholder="0"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-4">
-                <span className="font-bold text-lg">Total Payable</span>
-                <span className="font-extrabold text-3xl">₹{payingNow.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-
-            {/* Paying Now + Remark */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-                  Paying Now
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={payingNow}
-                  onChange={(e) => setPayingNow(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Remark (Optional)</label>
-                <input
-                  type="text"
-                  value={remark}
-                  onChange={(e) => setRemark(e.target.value)}
-                  placeholder="e.g. June advance"
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 shadow-sm"
-                />
-              </div>
-            </div>
 
             {/* Submit */}
             <button
@@ -1184,7 +1211,7 @@ export const CollectFee: React.FC = () => {
             >
               {selectedFees.length === 0
                 ? 'Select a fee above to collect'
-                : `Collect Payment of ₹${payingNow.toLocaleString('en-IN')}`}
+                : `Collect Payment of ₹${totalPayingNow.toLocaleString('en-IN')}`}
             </button>
 
           </form>
@@ -1194,6 +1221,21 @@ export const CollectFee: React.FC = () => {
             const studentId = selectedStudent._id || selectedStudent.id;
             const studentTxs = transactions
               .filter(tx => tx.studentId === studentId)
+              .flatMap(tx => {
+                if (tx.subItems && tx.subItems.length > 0) {
+                  return tx.subItems.map(sub => ({
+                    ...tx,
+                    id: sub.id || tx.id,
+                    feeType: sub.description,
+                    amount: sub.amount,
+                    concessionAmount: sub.concessionAmount,
+                    method: sub.method || tx.method,
+                    status: sub.status || tx.status,
+                    subItems: undefined
+                  }));
+                }
+                return [tx];
+              })
               .sort((a, b) => {
                 const dateCompare = b.date.localeCompare(a.date);
                 if (dateCompare !== 0) return dateCompare;

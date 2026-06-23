@@ -87,11 +87,16 @@ interface AppContextType {
   addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
   recordPayment: (
     studentId: string,
-    feesToPay: { category: string; period: string; ledgerId?: string; totalAmount: number }[],
-    amountPaid: number,
-    paymentMethod: PaymentTransaction['method'],
-    concessionAmount: number,
-    remark: string
+    lineItems: {
+      category: string;
+      period: string;
+      ledgerId?: string;
+      totalAmount: number;
+      paymentAmount: number;
+      concessionAmount: number;
+      paymentMethod: string;
+      remark: string;
+    }[]
   ) => void;
   applyConcession: (ledgerId: string, amount: number) => void;
   reversePayment: (transactionId: string) => void;
@@ -300,10 +305,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
           const desc = getFeeTypeFormatted(ledger);
           feeTypes.push(desc);
+          
+          const isReversal = tx.isReversal;
+          const status = isReversal ? 'REVERSED' : (ledger?.status || 'PAID');
+          
           subItems.push({
+            id: tx._id,
             description: desc,
             amount: tx.amount || 0,
-            concessionAmount: tx.concessionAmount || 0
+            concessionAmount: tx.concessionAmount || 0,
+            method: tx.method,
+            status: status
           });
         });
 
@@ -429,26 +441,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const recordPayment = async (
     _studentId: string,
-    feesToPay: { category: string; period: string; ledgerId?: string; totalAmount: number }[],
-    amountPaid: number,
-    paymentMethod: PaymentTransaction['method'],
-    concessionAmount: number,
-    remark: string
+    lineItems: {
+      category: string;
+      period: string;
+      ledgerId?: string;
+      totalAmount: number;
+      paymentAmount: number;
+      concessionAmount: number;
+      paymentMethod: string;
+      remark: string;
+    }[]
   ) => {
     try {
-      let concessionRemaining = concessionAmount;
-      let paymentRemaining = amountPaid;
-
-      // Map paymentMethod to allowed backend values
-      let methodMapped = paymentMethod;
-      if ((methodMapped as string) === 'CARD' || (methodMapped as string) === 'NET BANKING') {
-        methodMapped = 'ONLINE';
-      } else if ((methodMapped as string) === 'GOVT') {
-        methodMapped = 'CASH';
-      }
-
       // Filter out fees without a valid ledgerId
-      const validFees = feesToPay.filter(f => f.ledgerId);
+      const validFees = lineItems.filter(f => f.ledgerId);
 
       const batchTxnId = crypto.randomUUID ? crypto.randomUUID() : `TXN${Date.now()}${Math.random().toString(36).substring(2, 6)}`;
 
@@ -457,25 +463,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const ledger = ledgerEntries.find(l => l.id === ledgerId || l._id === ledgerId);
         if (!ledger) continue;
 
-        const currentRemaining = ledger.remainingAmount;
-
-        // Calculate concession for this ledger slot
-        let concessionApplied = 0;
-        if (concessionRemaining > 0) {
-          concessionApplied = Math.min(currentRemaining, concessionRemaining);
-          concessionRemaining -= concessionApplied;
+        let methodMapped = fee.paymentMethod;
+        if (methodMapped === 'CARD' || methodMapped === 'NET BANKING') {
+          methodMapped = 'ONLINE';
+        } else if (methodMapped === 'GOVT') {
+          methodMapped = 'CASH';
         }
 
-        // Calculate payment after concession
-        const remainingAfterConcession = currentRemaining - concessionApplied;
-        let paymentApplied = 0;
-        if (paymentRemaining > 0 && remainingAfterConcession > 0) {
-          paymentApplied = Math.min(remainingAfterConcession, paymentRemaining);
-          paymentRemaining -= paymentApplied;
-        }
+        const paymentApplied = fee.paymentAmount;
+        const concessionApplied = fee.concessionAmount;
+        const remark = fee.remark;
 
         if (paymentApplied > 0) {
-          // Case A: Payment (with optional embedded concession) - single Payment record that stores concessionAmount
+          // Case A: Payment (with optional embedded concession)
           const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
           const payRes = await authFetch('/api/v1/payments', {
             method: 'POST',
@@ -495,7 +495,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.error(`Failed to record payment for ledger ${ledgerId}`);
           }
         } else if (concessionApplied > 0) {
-          // Case B: Concession only (no payment portion) - use standalone concession endpoint
+          // Case B: Concession only (no payment portion)
           const concRes = await authFetch(`/api/v1/ledgers/${ledgerId}/concession`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -77,6 +77,30 @@ class UserService {
     logger.info(`Password reset for staff: ${userId}`);
     return { message: 'Password reset successfully' };
   }
+
+  /**
+   * Permanently delete a staff user.
+   */
+  static async deleteStaff(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw new AppError('User not found', 404);
+    if (user.role === 'ADMIN') throw new AppError('Cannot delete an admin account', 403);
+
+    await userRepository.deleteOne({ _id: userId });
+
+    try {
+      await AuditService.log({
+        performedBy: null,
+        action: 'STAFF_DELETED',
+        details: { userId, name: user.name, email: user.email }
+      });
+    } catch (err) {
+      logger.error(`Failed to write audit log for deleted staff user: ${userId}`);
+    }
+
+    logger.info(`Staff user deleted: ${userId}`);
+    return { message: 'Staff account deleted successfully' };
+  }
 }
 
 export default UserService;
