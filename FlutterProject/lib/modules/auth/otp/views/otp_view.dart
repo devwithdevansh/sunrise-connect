@@ -54,7 +54,7 @@ class _OtpViewState extends State<OtpView> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Create Password 🔑'),
+        title: const Text('Create Password'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +119,7 @@ class _OtpViewState extends State<OtpView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                Text('Account Setup 🔐', style: AppTextStyles.displayMedium),
+                Text('Account Setup', style: AppTextStyles.displayMedium),
                 const SizedBox(height: 8),
                 Text(
                   isPhoneEmpty

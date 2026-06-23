@@ -68,15 +68,6 @@ class DashboardView extends GetView<DashboardController> {
     final s = controller.student.value;
     final unread = controller.notifications.where((n) => !n.isRead).length;
 
-    // Extract family name
-    String familyName = 'Family';
-    if (s != null && s.parentName.isNotEmpty) {
-      final parts = s.parentName.trim().split(' ');
-      if (parts.isNotEmpty) {
-        familyName = parts.last;
-      }
-    }
-
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -102,7 +93,7 @@ class DashboardView extends GetView<DashboardController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$familyName Parivaar 👋',
+                          s?.name ?? 'Sunrise Student',
                           style: AppTextStyles.h1.copyWith(
                             color: Colors.white,
                             fontSize: 22,
@@ -234,7 +225,7 @@ class DashboardView extends GetView<DashboardController> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    student.name.split(' ').first,
+                    student.name,
                     style: AppTextStyles.labelLarge.copyWith(
                       color: isSelected ? AppColors.primaryMid : Colors.white,
                       fontSize: 13,
@@ -390,34 +381,55 @@ class DashboardView extends GetView<DashboardController> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        child: Row(
-          children: [
-            _buildDetailChip(
-              icon: Icons.school_rounded,
-              label: 'Std ${s.standard} - ${s.division}',
-              color: AppColors.primaryMid,
-              bgColor: AppColors.primaryLight,
-            ),
-            const SizedBox(width: 8),
-            _buildDetailChip(
-              icon: Icons.g_translate_rounded,
-              label: '${s.medium} Medium',
-              color: AppColors.dawn,
-              bgColor: AppColors.dawn.withOpacity(0.12),
-            ),
-            const SizedBox(width: 8),
-            _buildDetailChip(
-              icon: Icons.directions_bus_rounded,
-              label: s.transportType != 'None'
-                  ? 'Transport: ${s.transportType}'
-                  : 'No Transport',
-              color: s.transportType != 'None' ? AppColors.teal : AppColors.inkLight,
-              bgColor: s.transportType != 'None'
-                  ? AppColors.tealPale
-                  : AppColors.border.withOpacity(0.5),
-            ),
-          ],
-        ),
+        child: Obx(() {
+          final pending = controller.totalPending.value;
+          final allPaid = pending <= 0;
+
+          return Row(
+            children: [
+              _buildDetailChip(
+                icon: Icons.school_rounded,
+                label: 'Std ${s.standard} - ${s.division}',
+                color: AppColors.primaryMid,
+                bgColor: AppColors.primaryLight,
+              ),
+              const SizedBox(width: 8),
+              _buildDetailChip(
+                icon: Icons.g_translate_rounded,
+                label: '${s.medium} Medium',
+                color: AppColors.dawn,
+                bgColor: AppColors.dawn.withOpacity(0.12),
+              ),
+              const SizedBox(width: 8),
+              _buildDetailChip(
+                icon: Icons.directions_bus_rounded,
+                label: s.transportType != 'None'
+                    ? 'Transport: ${s.transportType}'
+                    : 'No Transport',
+                color: s.transportType != 'None' ? AppColors.teal : AppColors.inkLight,
+                bgColor: s.transportType != 'None'
+                    ? AppColors.tealPale
+                    : AppColors.border.withOpacity(0.5),
+              ),
+              if (s.isRTE) ...[
+                const SizedBox(width: 8),
+                _buildDetailChip(
+                  icon: Icons.verified_user_rounded,
+                  label: 'RTE Student',
+                  color: const Color(0xFF0FB893),
+                  bgColor: const Color(0xFFE8FAF5),
+                ),
+              ],
+              const SizedBox(width: 8),
+              _buildDetailChip(
+                icon: allPaid ? Icons.check_circle_rounded : Icons.pending_rounded,
+                label: allPaid ? 'Fees: All Paid' : 'Fees: Pending',
+                color: allPaid ? AppColors.teal : AppColors.red,
+                bgColor: allPaid ? AppColors.tealPale : AppColors.redPale,
+              ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -586,7 +598,37 @@ class DashboardView extends GetView<DashboardController> {
   Widget _buildFeesList() {
     return Obx(() {
       final pending = controller.mainFees.where((f) => !f.isPaid).take(3).toList();
-      if (pending.isEmpty) return const SizedBox.shrink();
+      if (pending.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Upcoming Dues', style: AppTextStyles.h3),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8FAF5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFB0EDD9)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'All Fees Paid',
+                      style: AppTextStyles.labelLarge.copyWith(color: AppColors.teal),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -717,7 +759,7 @@ class _FeeRowCard extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Pay Fees 💳', style: AppTextStyles.h2),
+        title: Text('Pay Fees', style: AppTextStyles.h2),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

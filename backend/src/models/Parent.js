@@ -14,12 +14,12 @@ const parentSchema = new mongoose.Schema(
       required: [true, 'Primary mobile number is required'],
       unique: true,
       trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit primary mobile number'],
+      match: [/^[6-9]\d{9}$/, 'Enter Indian number or invalid number'],
     },
     secondaryMobileNumber: {
       type: String,
       trim: true,
-      match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian 10‑digit secondary mobile number'],
+      match: [/^[6-9]\d{9}$/, 'Enter Indian number or invalid number'],
       default: null,
     },
     email: {

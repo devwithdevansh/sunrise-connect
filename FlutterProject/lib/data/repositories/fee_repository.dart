@@ -41,12 +41,14 @@ class FeeRepository {
   }
 
   /// Pay fee in full
-  Future<bool> payFee(String ledgerId, double amount, String method) async {
+  Future<bool> payFee(String ledgerId, double amount, String method, {String? transactionId}) async {
     try {
       // Generate a random idempotency key to prevent duplicate charge replays
       final random = Random.secure();
       final bytes = List<int>.generate(16, (_) => random.nextInt(256));
       final idempotencyKey = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+      final txnId = transactionId ?? 'TXN${DateTime.now().millisecondsSinceEpoch}';
 
       final response = await ApiClient.post(
         '/payments',
@@ -55,7 +57,7 @@ class FeeRepository {
           'amount': amount,
           'method': method.toUpperCase(),
           'details': {
-            'transactionId': 'TXN${DateTime.now().millisecondsSinceEpoch}',
+            'transactionId': txnId,
             'bankName': 'Online Gateway'
           }
         },

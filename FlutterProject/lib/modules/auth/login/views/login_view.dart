@@ -66,7 +66,7 @@ class _LoginViewState extends State<LoginView> {
                     child: const Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 34),
                   ),
                   const SizedBox(height: 32),
-                  Text('Parent Portal 👋', style: AppTextStyles.displayMedium),
+                  Text('Parent Portal', style: AppTextStyles.displayMedium),
                   const SizedBox(height: 8),
                   Text(
                     'Enter your mobile number and password to log in.',

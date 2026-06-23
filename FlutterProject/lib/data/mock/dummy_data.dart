@@ -112,7 +112,7 @@ class DummyData {
   static final List<NotificationModel> notifications = [
     NotificationModel.fromJson({
       'id': 1,
-      'title': 'Fee Due Reminder 🔔',
+      'title': 'Fee Due Reminder',
       'message': 'Your July 2026 fee of ₹3,000 is due on 15 July. Please pay on time to avoid late charges.',
       'type': 'REMINDER',
       'createdAt': '2026-07-10',
@@ -120,7 +120,7 @@ class DummyData {
     }),
     NotificationModel.fromJson({
       'id': 2,
-      'title': 'Payment Received ✅',
+      'title': 'Payment Received',
       'message': 'Payment of ₹3,000 for June 2026 received successfully via UPI. Receipt #REC260610003.',
       'type': 'SUCCESS',
       'createdAt': '2026-06-10',
@@ -128,7 +128,7 @@ class DummyData {
     }),
     NotificationModel.fromJson({
       'id': 3,
-      'title': 'Partial Payment Alert ⚠️',
+      'title': 'Partial Payment Alert',
       'message': 'Partial payment of ₹1,500 recorded for September 2026. Remaining ₹1,500 is still pending.',
       'type': 'ALERT',
       'createdAt': '2026-09-03',
@@ -136,7 +136,7 @@ class DummyData {
     }),
     NotificationModel.fromJson({
       'id': 4,
-      'title': 'Academic Year Update 📋',
+      'title': 'Academic Year Update',
       'message': 'Fee structure for 2026-27 academic year has been updated. Visit Fee Summary for details.',
       'type': 'INFO',
       'createdAt': '2026-04-01',

@@ -754,10 +754,22 @@ class _SubFeeRow extends StatelessWidget {
   final FeeItem fee;
   final PendingFeesController c;
 
-  String get _icon {
-    if (fee.isEducation) return '📚';
-    if (fee.isTransport) return '🚌';
-    return '📋';
+  IconData get _iconData {
+    if (fee.isEducation) return Icons.menu_book_rounded;
+    if (fee.isTransport) return Icons.directions_bus_rounded;
+    return Icons.assignment_rounded;
+  }
+
+  Color get _iconColor {
+    if (fee.isTransport) return _C.teal;
+    if (fee.isEducation) return _C.accent;
+    return _C.purple;
+  }
+
+  Color get _iconBg {
+    if (fee.isTransport) return _C.tealBg;
+    if (fee.isEducation) return _C.accentBg;
+    return _C.purpleBg;
   }
 
   String get _typeLabel {
@@ -804,7 +816,15 @@ class _SubFeeRow extends StatelessWidget {
                 child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 11) : null,
               ),
             const SizedBox(width: 10),
-            Text(_icon, style: const TextStyle(fontSize: 16)),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: _iconBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(_iconData, color: _iconColor, size: 13),
+            ),
             const SizedBox(width: 8),
             Expanded(child: Text(_typeLabel,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500,
@@ -988,16 +1008,18 @@ class _PaySheet extends StatelessWidget {
                 itemBuilder: (_, i) {
                   final f    = fees[i];
                   final isOD = f.isOverdue;
-                  final icon = f.isTransport ? '🚌' : (f.isTerm ? '📋' : '📚');
+                  final iconData = f.isTransport ? Icons.directions_bus_rounded : (f.isTerm ? Icons.assignment_rounded : Icons.menu_book_rounded);
+                  final iconColor = isOD ? _C.red : (f.isTransport ? _C.teal : (f.isTerm ? _C.purple : _C.accent));
+                  final iconBg = isOD ? _C.redBg : (f.isTransport ? _C.tealBg : (f.isTerm ? _C.purpleBg : _C.accentBg));
                   final typeLabel = f.isTransport ? 'Transport' : (f.isTerm ? f.termName : 'Education');
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     child: Row(children: [
                       Container(width: 36, height: 36,
                         decoration: BoxDecoration(
-                          color: isOD ? _C.redBg : _C.accentBg,
+                          color: iconBg,
                           borderRadius: BorderRadius.circular(10)),
-                        child: Center(child: Text(icon, style: const TextStyle(fontSize: 16)))),
+                        child: Center(child: Icon(iconData, color: iconColor, size: 18))),
                       const SizedBox(width: 12),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('$typeLabel · ${f.termName}', style: _T.label),
@@ -1059,7 +1081,7 @@ class _PaySheet extends StatelessWidget {
                     Get.back();
                     HapticFeedback.mediumImpact();
                     await c.paySelected();
-                    Get.snackbar('✅  Payment Successful',
+                    Get.snackbar('Payment Successful',
                         '${fees.length} fee${fees.length == 1 ? '' : 's'} · ${_fmt(total)}',
                         backgroundColor: _C.green, colorText: Colors.white,
                         snackPosition: SnackPosition.TOP,
@@ -1170,7 +1192,7 @@ class _EmptyState extends StatelessWidget {
             decoration: const BoxDecoration(color: _C.tealBg, shape: BoxShape.circle),
             child: const Icon(Icons.check_circle_outline_rounded, size: 46, color: _C.teal)),
           const SizedBox(height: 24),
-          const Text('All Fees Paid! 🎉', style: _T.h1),
+          const Text('All Fees Paid!', style: _T.h1),
           const SizedBox(height: 8),
           const Text('No outstanding dues on this account.', style: _T.body, textAlign: TextAlign.center),
           const SizedBox(height: 28),

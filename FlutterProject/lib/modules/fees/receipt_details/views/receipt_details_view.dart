@@ -141,7 +141,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 // ── Header ────────────────────────────────────────────────
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text('🧾  Digital Receipt', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
+                  const Text('Digital Receipt', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1A1E2E))),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Get.back(),
@@ -359,11 +359,12 @@ class _ReceiptGroupCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Title
             Text(
               group.monthRangeSummary.isNotEmpty
-                  ? '${group.monthRangeSummary} Paid'
-                  : (isMulti ? 'Multiple Fees Paid' : '${group.categoryLabel} Receipt'),
+                  ? '${group.monthRangeSummary} paid on ${group.paidAt.day}-${group.paidAt.month}-${group.paidAt.year % 100}'
+                  : (isMulti
+                      ? 'Multiple Fees paid on ${group.paidAt.day}-${group.paidAt.month}-${group.paidAt.year % 100}'
+                      : '${group.categoryLabel} paid on ${group.paidAt.day}-${group.paidAt.month}-${group.paidAt.year % 100}'),
               style: AppTextStyles.labelLarge,
             ),
             // Term summary / Categories

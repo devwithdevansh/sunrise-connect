@@ -86,7 +86,7 @@ class FeeItem {
   bool get isTransport => feeType == 'TRANSPORT';
   bool get isTerm => feeType == 'TERM';
 
-  bool get isRTEConcession => concessionAmount > 0 && isEducation;
+  bool get isRTEConcession => concessionAmount > 0 && (isEducation || isTerm);
 
   int get academicSortKey => _academicMonthOrder(dueDate.month);
 }
@@ -462,9 +462,10 @@ class PendingFeesController extends GetxController
 
     isLoading.value = true;
     try {
+      final batchTxnId = 'TXN${DateTime.now().millisecondsSinceEpoch}';
       bool allSuccess = true;
       for (final fee in toPayItems) {
-        final ok = await _feeRepo.payFee(fee.id, fee.remainingAmount, 'online');
+        final ok = await _feeRepo.payFee(fee.id, fee.remainingAmount, 'online', transactionId: batchTxnId);
         if (!ok) allSuccess = false;
       }
 
@@ -503,13 +504,13 @@ class PendingFeesController extends GetxController
           Get.find<DashboardController>().refreshData();
         }
       } else {
-        Get.snackbar('Payment Failed ❌',
+        Get.snackbar('Payment Failed',
             'Unable to process one or more fees. Please try again.',
             snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
       debugPrint('Error in paySelected: $e');
-      Get.snackbar('Payment Error ❌',
+      Get.snackbar('Payment Error',
           'An error occurred. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
     } finally {

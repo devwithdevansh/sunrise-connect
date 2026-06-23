@@ -159,13 +159,9 @@ class ReceiptDetailsController extends GetxController {
     for (final r in sorted) {
       final String key;
       if (r.receiptNumber.isNotEmpty) {
-        // Same receipt number → one group
         key = 'rcpt:${r.receiptNumber}';
       } else {
-        // Fallback: same minute
-        final dt        = DateTime.tryParse(r.paymentDate) ?? DateTime.now();
-        final minuteKey = '${dt.year}-${dt.month}-${dt.day}-${dt.hour}-${dt.minute}';
-        key = 'min:$minuteKey';
+        key = 'id:${r.id}';
       }
       buckets.putIfAbsent(key, () => []).add(r);
     }
@@ -173,9 +169,11 @@ class ReceiptDetailsController extends GetxController {
     return buckets.entries.map((e) {
       final items = e.value;
       final dt    = DateTime.tryParse(items.first.paymentDate) ?? DateTime.now();
+      final receiptNumber = items.first.receiptNumber;
+
       return ReceiptGroup(
         items:         items,
-        receiptNumber: items.first.receiptNumber,
+        receiptNumber: receiptNumber,
         paidAt:        dt,
       );
     }).toList()
@@ -335,11 +333,12 @@ class ReceiptDetailsController extends GetxController {
       );
 
       final pdfBytes = await pdf.save();
-      final fileName = "receipt_${group.receiptNumber.isNotEmpty ? group.receiptNumber : group.paidAt.millisecondsSinceEpoch}.pdf";
+      final safeRcptNum = group.receiptNumber.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+      final fileName = "receipt_${safeRcptNum.isNotEmpty ? safeRcptNum : group.paidAt.millisecondsSinceEpoch}.pdf";
       await saveAndOpenPdf(pdfBytes, fileName);
 
       Get.snackbar(
-        '✅  Receipt Downloaded',
+        'Receipt Downloaded',
         'Receipt saved and opened successfully.',
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFE8FAF5),
@@ -350,7 +349,7 @@ class ReceiptDetailsController extends GetxController {
     } catch (e) {
       debugPrint('Error downloading PDF: $e');
       Get.snackbar(
-        '❌  Error',
+        'Error',
         'Failed to download PDF receipt: $e',
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFFFF0F0),

@@ -910,7 +910,7 @@ class StudentService {
             data.parentMobile = data.parentMobile.slice(-10);
           }
           if (!/^[6-9]\d{9}$/.test(data.parentMobile)) {
-            throw new Error(`Invalid Indian 10-digit primary mobile number: ${data.parentMobile}`);
+            throw new Error('Enter Indian number or invalid number');
           }
         } else {
           throw new Error('Parent mobile number is required');
@@ -922,7 +922,7 @@ class StudentService {
             data.parentSecondaryMobile = data.parentSecondaryMobile.slice(-10);
           }
           if (!/^[6-9]\d{9}$/.test(data.parentSecondaryMobile)) {
-            throw new Error(`Invalid Indian 10-digit secondary mobile number: ${data.parentSecondaryMobile}`);
+            throw new Error('Enter Indian number or invalid number');
           }
         }
 

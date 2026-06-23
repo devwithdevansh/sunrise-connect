@@ -288,16 +288,26 @@ class FeeSummaryView extends StatelessWidget {
             const Divider(height: 20, color: AppColors.border),
             // Sub-fee breakdown
             ...fees.map((fee) {
-              final icon = fee.isTransport ? '🚌' : (fee.isTerm ? '📋' : '📚');
+              final iconData = fee.isTransport ? Icons.directions_bus_rounded : (fee.isTerm ? Icons.assignment_rounded : Icons.menu_book_rounded);
+              final iconColor = fee.isTransport ? AppColors.teal : (fee.isTerm ? AppColors.purple : AppColors.primaryMid);
+              final iconBg = fee.isTransport ? AppColors.tealPale : (fee.isTerm ? AppColors.purple.withOpacity(0.12) : AppColors.primaryLight);
               final typeLabel = fee.isTransport ? 'Transport' : (fee.isTerm ? fee.termName : 'Education');
               final feeIsPaid = fee.isPaid;
-              final isRTEWaived = fee.isEducation && fee.concessionAmount >= fee.amount && fee.concessionAmount > 0;
+              final isRTEWaived = (fee.isEducation || fee.isTerm) && fee.concessionAmount >= fee.amount && fee.concessionAmount > 0;
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Text(icon, style: const TextStyle(fontSize: 14)),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(iconData, color: iconColor, size: 13),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(child: Text(typeLabel, style: AppTextStyles.bodyMedium)),
                     if (isRTEWaived)

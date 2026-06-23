@@ -10,7 +10,7 @@ export const portalLoginSchema = {
 
 export const verifyParentSchema = {
   body: z.object({
-    primaryMobileNumber: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian mobile number'),
+    primaryMobileNumber: z.string().regex(/^[6-9]\d{9}$/, 'Enter Indian number or invalid number'),
     lastFourDigits: z.string().length(4).regex(/^\d{4}$/),
   }),
 };
@@ -24,7 +24,7 @@ export const setPasswordSchema = {
 
 export const parentLoginSchema = {
   body: z.object({
-    primaryMobileNumber: z.string().regex(/^[6-9]\d{9}$/),
+    primaryMobileNumber: z.string().regex(/^[6-9]\d{9}$/, 'Enter Indian number or invalid number'),
     password: z.string().min(1),
   }),
 };

@@ -15,8 +15,12 @@ class OtpController extends GetxController {
   }
 
   void startVerification(String inputPhone) {
-    if (inputPhone.length != 10) {
-      errorMsg.value = 'Please enter a valid 10-digit mobile number';
+    if (inputPhone.isEmpty) {
+      errorMsg.value = 'Phone number is required';
+      return;
+    }
+    if (inputPhone.length != 10 || !RegExp(r'^[6-9]\d{9}$').hasMatch(inputPhone)) {
+      errorMsg.value = 'Enter Indian number or invalid number';
       return;
     }
     phone.value = inputPhone;
@@ -64,7 +68,7 @@ class OtpController extends GetxController {
 
       if (response.statusCode == 200) {
         Get.snackbar(
-          'Onboarding Complete 🎉',
+          'Onboarding Complete',
           'Your password has been set. Please login now.',
           snackPosition: SnackPosition.BOTTOM,
         );

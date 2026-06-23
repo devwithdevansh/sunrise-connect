@@ -37,7 +37,7 @@ class LoginController extends GetxController {
         final body = json.decode(response.body);
         final msg = body['message'] ?? 'Invalid credentials';
         Get.snackbar(
-          'Login Failed ❌',
+          'Login Failed',
           msg.toString(),
           snackPosition: SnackPosition.BOTTOM,
         );
@@ -45,7 +45,7 @@ class LoginController extends GetxController {
     } catch (e) {
       print('Error during login: $e');
       Get.snackbar(
-        'Error ⚠️',
+        'Error',
         'Could not connect to the server. Please verify the backend is running.',
         snackPosition: SnackPosition.BOTTOM,
       );

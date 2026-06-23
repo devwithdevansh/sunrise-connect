@@ -31,7 +31,7 @@ class NotificationsView extends StatelessWidget {
               children: [
                 const Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.inkLight),
                 const SizedBox(height: 16),
-                Text('All caught up! 🎉', style: AppTextStyles.h2),
+                Text('All caught up!', style: AppTextStyles.h2),
                 const SizedBox(height: 8),
                 Text('No new notifications for your account.', style: AppTextStyles.bodyMedium),
               ],

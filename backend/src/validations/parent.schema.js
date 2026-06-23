@@ -6,8 +6,8 @@ const mobileRegex = /^[6-9]\d{9}$/;
 export const createParentSchema = {
   body: z.object({
     parentName: z.string().min(1).max(100),
-    primaryMobileNumber: z.string().regex(mobileRegex),
-    secondaryMobileNumber: z.string().regex(mobileRegex).optional().nullable(),
+    primaryMobileNumber: z.string().regex(mobileRegex, 'Enter Indian number or invalid number'),
+    secondaryMobileNumber: z.string().regex(mobileRegex, 'Enter Indian number or invalid number').optional().nullable(),
     email: z.string().email().optional().nullable(),
     address: z.string().max(500).optional().nullable(),
   }),
@@ -16,7 +16,7 @@ export const createParentSchema = {
 export const updateParentSchema = {
   body: z.object({
     parentName: z.string().min(1).max(100).optional(),
-    secondaryMobileNumber: z.string().regex(mobileRegex).optional().nullable(),
+    secondaryMobileNumber: z.string().regex(mobileRegex, 'Enter Indian number or invalid number').optional().nullable(),
     email: z.string().email().optional().nullable(),
     address: z.string().max(500).optional().nullable(),
   }),
@@ -25,7 +25,7 @@ export const updateParentSchema = {
 
 export const resetPasswordSchema = {
   body: z.object({
-    primaryMobileNumber: z.string().regex(mobileRegex),
+    primaryMobileNumber: z.string().regex(mobileRegex, 'Enter Indian number or invalid number'),
     lastFourDigits: z.string().length(4).regex(/^\d{4}$/),
   }),
 };

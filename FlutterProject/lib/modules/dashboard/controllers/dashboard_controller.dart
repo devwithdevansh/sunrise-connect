@@ -241,7 +241,7 @@ class DashboardController extends GetxController {
       // ───────────────────────────────────────────────────────────────────
 
       Get.snackbar(
-        'Payment Successful ✅',
+        'Payment Successful',
         'Your payment of ₹${fee.remainingAmount.toInt()} for ${fee.termName} has been processed.',
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -269,7 +269,7 @@ class DashboardController extends GetxController {
       }
     } else {
       Get.snackbar(
-        'Payment Failed ❌',
+        'Payment Failed',
         'Unable to process payment. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );

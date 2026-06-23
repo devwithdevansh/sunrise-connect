@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/102</span>
+                <span class='fraction'>0/107</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/87</span>
+                <span class='fraction'>0/91</span>
             </div>
         
             
@@ -265,7 +265,8 @@
 <a name='L200'></a><a href='#L200'>200</a>
 <a name='L201'></a><a href='#L201'>201</a>
 <a name='L202'></a><a href='#L202'>202</a>
-<a name='L203'></a><a href='#L203'>203</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -294,6 +295,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -301,6 +303,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -414,14 +419,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -494,6 +496,7 @@ class AuthService {
 <span class="fstat-no" title="function not covered" >  st</span>atic async portalLogin({ email, password }) {
     const user = <span class="cstat-no" title="statement not covered" >await userRepository.findByEmailWithPassword(email);</span>
 <span class="cstat-no" title="statement not covered" >    if (!user) <span class="cstat-no" title="statement not covered" >throw new AppError('Invalid credentials', 401);</span></span>
+<span class="cstat-no" title="statement not covered" >    if (!user.isActive) <span class="cstat-no" title="statement not covered" >throw new AppError('Your account has been deactivated. Contact the administrator.', 403);</span></span>
     const match = <span class="cstat-no" title="statement not covered" >await bcrypt.compare(password, user.passwordHash);</span>
 <span class="cstat-no" title="statement not covered" >    if (!match) <span class="cstat-no" title="statement not covered" >throw new AppError('Invalid credentials', 401);</span></span>
 &nbsp;
@@ -505,8 +508,11 @@ class AuthService {
     const expiresAt = <span class="cstat-no" title="statement not covered" >new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);</span>
 <span class="cstat-no" title="statement not covered" >    await userRepository.addRefreshToken(user._id, refreshHash, expiresAt);</span>
 &nbsp;
+    // Update lastLogin timestamp
+<span class="cstat-no" title="statement not covered" >    await userRepository.updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } });</span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    logger.info(`Portal login: ${user._id}`);</span>
-<span class="cstat-no" title="statement not covered" >    return { accessToken, refreshToken: refreshPlain };</span>
+<span class="cstat-no" title="statement not covered" >    return { accessToken, refreshToken: refreshPlain, user: { name: user.name, role: user.role } };</span>
   }
 &nbsp;
   /* ----------------------------------------------------------------
@@ -616,15 +622,12 @@ class AuthService {
     const session = <span class="cstat-no" title="statement not covered" >await mongoose.startSession();</span>
 <span class="cstat-no" title="statement not covered" >    session.startTransaction();</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const result = <span class="cstat-no" title="statement not covered" >await Repo.updateOne(</span>
-        { _id: userId, 'refreshTokens.tokenHash': tokenEntry.tokenHash },
-        {
-          $pull: { refreshTokens: { tokenHash: tokenEntry.tokenHash } },
-          $push: { refreshTokens: { tokenHash: newHash, expiresAt: newExpiresAt } },
-        },
-        { session }
-      );
-<span class="cstat-no" title="statement not covered" >      if (result.modifiedCount !== 1) <span class="cstat-no" title="statement not covered" >throw new AppError('Concurrency conflict', 409);</span></span>
+      // Mongoose 6+ throws if we $pull and $push on same array in one updateOne.
+      // Do it via document save.
+      const user = <span class="cstat-no" title="statement not covered" >await Repo.findById(userId).session(session);</span>
+<span class="cstat-no" title="statement not covered" >      user.refreshTokens = user.refreshTokens.filter(<span class="fstat-no" title="function not covered" >t </span>=&gt; <span class="cstat-no" title="statement not covered" >t.tokenHash !== tokenEntry.tokenHash)</span>;</span>
+<span class="cstat-no" title="statement not covered" >      user.refreshTokens.push({ tokenHash: newHash, expiresAt: newExpiresAt });</span>
+<span class="cstat-no" title="statement not covered" >      await user.save({ session });</span>
 &nbsp;
       const payload = <span class="cstat-no" title="statement not covered" >{ id: userId, role: entity.role || (domain === 'parent' ? 'parent' : 'user') };</span>
       const accessToken = <span class="cstat-no" title="statement not covered" >jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });</span>
@@ -676,7 +679,7 @@ export default AuthService;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-22T12:22:37.385Z
+                at 2026-06-23T15:01:46.986Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
