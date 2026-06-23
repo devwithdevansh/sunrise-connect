@@ -295,7 +295,7 @@ export const Students: React.FC = () => {
             </button>
           </div>
 
-          {currentUser?.role === 'ADMIN' && (
+          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'STAFF') && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all active:scale-[0.98]"
