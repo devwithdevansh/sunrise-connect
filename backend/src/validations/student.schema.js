@@ -15,6 +15,7 @@ export const createStudentSchema = {
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
     isNewAdmission: z.boolean().optional(),
+    admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
   }),
 };
 
@@ -27,6 +28,7 @@ export const updateStudentSchema = {
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
     isNewAdmission: z.boolean().optional(),
+    admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
     isActive: z.boolean().optional(),
   }),
   params: z.object({ id: z.string().min(1) }),

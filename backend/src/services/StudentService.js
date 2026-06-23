@@ -118,7 +118,7 @@ class StudentService {
       }
 
       const ledgersToCreate = [];
-      const months = [
+      const allMonths = [
         { name: 'June', dueDate: '2026-06-15' },
         { name: 'July', dueDate: '2026-07-15' },
         { name: 'August', dueDate: '2026-08-15' },
@@ -132,6 +132,11 @@ class StudentService {
         { name: 'April', dueDate: '2027-04-15' },
         { name: 'May', dueDate: '2027-05-15' }
       ];
+
+      const admissionMonth = student.admissionMonth || 'June';
+      const startMonthIndex = allMonths.findIndex(m => m.name === admissionMonth);
+      const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
+      const months = allMonths.slice(startIndex);
 
       // --- Fetch dynamic fee amounts from FeeStructure collection ---
       const feeStruct = await mongoose.model('FeeStructure').findOne(
@@ -232,10 +237,11 @@ class StudentService {
       }
 
       // 3. Term ledgers (Term 1 & Term 2)
-      const terms = [
+      const allTerms = [
         { name: 'Term 1', dueDate: '2026-06-15' },
         { name: 'Term 2', dueDate: '2026-10-15' }
       ];
+      const terms = startIndex > 5 ? [allTerms[1]] : allTerms;
       for (const t of terms) {
         ledgersToCreate.push({
           studentId: student._id,
@@ -347,25 +353,10 @@ class StudentService {
 
       // Fetch Active Academic Year
       const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
-      let remainingMonths = 0;
-      let currentAcademicYearName = '2025-26'; // fallback
+      let currentAcademicYearName = activeYear ? activeYear.name : '2025-26';
 
-      if (activeYear) {
-        currentAcademicYearName = activeYear.name;
-        const now = new Date();
-        const end = new Date(activeYear.endDate);
-        if (now < end) {
-          // Calculate months remaining (including current month)
-          const yearsDiff = end.getFullYear() - now.getFullYear();
-          const monthsDiff = end.getMonth() - now.getMonth();
-          remainingMonths = yearsDiff * 12 + monthsDiff + 1;
-          if (remainingMonths > 12) remainingMonths = 12;
-          if (remainingMonths < 0) remainingMonths = 0;
-        }
-      }
-
-      // We only do transport adjustments if transportType changed and remainingMonths > 0
-      if (newTransport && newTransport !== oldTransport && remainingMonths > 0) {
+      // We only do transport adjustments if transportType changed
+      if (newTransport && newTransport !== oldTransport) {
         const transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }).session(session);
 
         if (transportCategory) {
@@ -396,7 +387,9 @@ class StudentService {
             { name: 'May', dueDate: '2027-05-15' }
           ];
 
-          const remainingStartIndex = 12 - remainingMonths; // If 12 left, start at 0 (June). If 5 left, start at 7 (January)
+          const allMonthsStr = months.map(m => m.name);
+          const admissionIdx = allMonthsStr.indexOf(student.admissionMonth || 'June');
+          const startIndex = Math.max(0, admissionIdx);
 
           const existingLedgers = await mongoose.model('StudentFeeLedger').find({
             studentId: student._id,
@@ -406,7 +399,7 @@ class StudentService {
           const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));
           const ledgersToCreate = [];
 
-          for (let i = remainingStartIndex; i < 12; i++) {
+          for (let i = startIndex; i < 12; i++) {
             const m = months[i];
             
             if (newTransport !== 'None') {
@@ -610,7 +603,7 @@ class StudentService {
       const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id }).session(session);
       const existingKey = (feeType, feePeriod) => existingLedgers.some(l => l.feeType === feeType && l.feePeriod === feePeriod);
 
-      const months = [
+      const allMonths = [
         { name: 'June', dueDate: '2026-06-15' },
         { name: 'July', dueDate: '2026-07-15' },
         { name: 'August', dueDate: '2026-08-15' },
@@ -625,10 +618,16 @@ class StudentService {
         { name: 'May', dueDate: '2027-05-15' }
       ];
 
-      const terms = [
+      const admissionMonth = student.admissionMonth || 'June';
+      const startMonthIndex = allMonths.findIndex(m => m.name === admissionMonth);
+      const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
+      const months = allMonths.slice(startIndex);
+
+      const allTerms = [
         { name: 'Term 1', dueDate: '2026-06-15' },
         { name: 'Term 2', dueDate: '2026-12-15' }
       ];
+      const terms = startIndex > 5 ? [allTerms[1]] : allTerms;
 
       const snapshot = {
         studentName: student.studentName,
