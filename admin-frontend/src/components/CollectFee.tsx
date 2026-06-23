@@ -416,6 +416,25 @@ export const CollectFee: React.FC = () => {
   // Period selection
   // -------------------------------------------------------------------
 
+  const getApplicablePeriods = (config: typeof COMBINED_EDU_TERM_CONFIG) => {
+    if (!selectedStudent || !selectedStudent.admissionMonth) return config;
+    const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const startIdx = allMonths.indexOf(selectedStudent.admissionMonth);
+    if (startIdx <= 0) return config;
+
+    return config.filter(item => {
+      if (item.type === 'EDUCATION' || item.type === 'TRANSPORT') {
+        const itemIdx = allMonths.indexOf(item.value);
+        return itemIdx >= startIdx;
+      }
+      if (item.type === 'TERM') {
+        if (item.value === 'Term 1') return startIdx <= 5;
+        if (item.value === 'Term 2') return true;
+      }
+      return true;
+    });
+  };
+
   const handlePeriodToggle = (category: string, period: string) => {
     const entry = getLedger(category, period);
     // Don't toggle already fully PAID periods
@@ -434,9 +453,9 @@ export const CollectFee: React.FC = () => {
     }
 
     // Determine the ordered list for sequential enforcement
-    const configList = (category === 'EDUCATION' || category === 'TERM')
+    const configList = getApplicablePeriods(category === 'EDUCATION' || category === 'TERM'
       ? COMBINED_EDU_TERM_CONFIG
-      : MONTHS_CONFIG;
+      : MONTHS_CONFIG);
 
     const clickedIndex = configList.findIndex(c => c.value === period);
 
@@ -474,14 +493,14 @@ export const CollectFee: React.FC = () => {
   // Select All Pending = all periods with remaining > 0
   const selectAllPending = () => {
     if (feeCategory === 'EDUCATION') {
-      const pending = COMBINED_EDU_TERM_CONFIG.filter((p) => getDueAmount(p.type, p.value) > 0);
+      const pending = getApplicablePeriods(COMBINED_EDU_TERM_CONFIG).filter((p) => getDueAmount(p.type, p.value) > 0);
       setSelectedFees((prev) => {
         const otherCategories = prev.filter((p) => p.category !== 'EDUCATION' && p.category !== 'TERM');
         const newSelections = pending.map((p) => ({ category: p.type, period: p.value }));
         return [...otherCategories, ...newSelections];
       });
     } else {
-      const periods = MONTHS_CONFIG.map((m) => m.value);
+      const periods = getApplicablePeriods(MONTHS_CONFIG).map((m) => m.value);
       const pending = periods.filter((p) => getDueAmount(feeCategory, p) > 0);
       setSelectedFees((prev) => {
         const otherCategories = prev.filter((p) => p.category !== feeCategory);
@@ -493,7 +512,7 @@ export const CollectFee: React.FC = () => {
 
   const selectNextNMonths = (n: number) => {
     if (feeCategory === 'EDUCATION') {
-      const pendingItems = COMBINED_EDU_TERM_CONFIG.filter(c => getDueAmount(c.type, c.value) > 0);
+      const pendingItems = getApplicablePeriods(COMBINED_EDU_TERM_CONFIG).filter(c => getDueAmount(c.type, c.value) > 0);
       const toSelect = pendingItems.slice(0, n);
       setSelectedFees((prev) => {
         const otherCategories = prev.filter((p) => p.category !== 'EDUCATION' && p.category !== 'TERM');
@@ -501,7 +520,7 @@ export const CollectFee: React.FC = () => {
         return [...otherCategories, ...newSelections];
       });
     } else if (feeCategory === 'TRANSPORT') {
-      const periods = MONTHS_CONFIG.map((m) => m.value);
+      const periods = getApplicablePeriods(MONTHS_CONFIG).map((m) => m.value);
       const pending = periods.filter((p) => getDueAmount(feeCategory, p) > 0);
       const toSelect = pending.slice(0, n);
       setSelectedFees((prev) => {
@@ -731,7 +750,7 @@ export const CollectFee: React.FC = () => {
             {/* ── EDUCATION / TRANSPORT: Full 12-month grid ─────── */}
             {(feeCategory === 'EDUCATION' || feeCategory === 'TRANSPORT') && (() => {
               // Check if this student has missing ledgers for the current tab
-              const configToCheck = feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG;
+              const configToCheck = getApplicablePeriods(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG);
               const hasMissing = configToCheck.some(item => {
                 const cat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
                 return !getLedger(cat, item.value);
@@ -852,7 +871,7 @@ export const CollectFee: React.FC = () => {
                   {/* Standard monthly transport grid — only show if student has active transport subscription */}
                   {feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' ? null : (
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
-                      {(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG).map((item) => {
+                      {getApplicablePeriods(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG).map((item) => {
                         const activeCat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
                         const entry = getLedger(activeCat, item.value);
                         const isPaid = entry?.status === 'PAID';

@@ -54,6 +54,14 @@ const studentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    admissionMonth: {
+      type: String,
+      default: 'June',
+      enum: {
+        values: ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'],
+        message: '{VALUE} is not a valid month',
+      },
+    },
     isActive: {
       type: Boolean,
       default: true,

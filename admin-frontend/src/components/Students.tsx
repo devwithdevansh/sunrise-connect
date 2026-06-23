@@ -39,6 +39,7 @@ export const Students: React.FC = () => {
   const [newSTransport, setNewSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
+  const [newSAdmissionMonth, setNewSAdmissionMonth] = useState('June');
 
   // Edit Student Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -104,6 +105,7 @@ export const Students: React.FC = () => {
       transportType: newSTransport,
       isRTE: newSIsRTE,
       isNewAdmission: newSIsNewAdmission,
+      admissionMonth: newSAdmissionMonth,
       isActive: true
     });
 
@@ -118,6 +120,7 @@ export const Students: React.FC = () => {
     setNewSTransport('None');
     setNewSIsRTE(false);
     setNewSIsNewAdmission(true);
+    setNewSAdmissionMonth('June');
     setIsModalOpen(false);
   };
 
@@ -857,6 +860,19 @@ filteredStudents.map((s) => {
                     <option value="None">None</option>
                     <option value="Railnagar">Railnagar (+₹600)</option>
                     <option value="Outside Railnagar">Outside Railnagar (+₹900)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Fee Starting Month</label>
+                  <select
+                    value={newSAdmissionMonth}
+                    onChange={(e) => setNewSAdmissionMonth(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
                   </select>
                 </div>
               </div>

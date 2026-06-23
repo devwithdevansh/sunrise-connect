@@ -118,7 +118,7 @@ class StudentService {
       }
 
       const ledgersToCreate = [];
-      const months = [
+      const allMonths = [
         { name: 'June', dueDate: '2026-06-15' },
         { name: 'July', dueDate: '2026-07-15' },
         { name: 'August', dueDate: '2026-08-15' },
@@ -132,6 +132,11 @@ class StudentService {
         { name: 'April', dueDate: '2027-04-15' },
         { name: 'May', dueDate: '2027-05-15' }
       ];
+
+      const admissionMonth = student.admissionMonth || 'June';
+      const startMonthIndex = allMonths.findIndex(m => m.name === admissionMonth);
+      const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
+      const months = allMonths.slice(startIndex);
 
       // --- Fetch dynamic fee amounts from FeeStructure collection ---
       const feeStruct = await mongoose.model('FeeStructure').findOne(
@@ -232,10 +237,11 @@ class StudentService {
       }
 
       // 3. Term ledgers (Term 1 & Term 2)
-      const terms = [
+      const allTerms = [
         { name: 'Term 1', dueDate: '2026-06-15' },
         { name: 'Term 2', dueDate: '2026-10-15' }
       ];
+      const terms = startIndex > 5 ? [allTerms[1]] : allTerms;
       for (const t of terms) {
         ledgersToCreate.push({
           studentId: student._id,
@@ -610,7 +616,7 @@ class StudentService {
       const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id }).session(session);
       const existingKey = (feeType, feePeriod) => existingLedgers.some(l => l.feeType === feeType && l.feePeriod === feePeriod);
 
-      const months = [
+      const allMonths = [
         { name: 'June', dueDate: '2026-06-15' },
         { name: 'July', dueDate: '2026-07-15' },
         { name: 'August', dueDate: '2026-08-15' },
@@ -625,10 +631,16 @@ class StudentService {
         { name: 'May', dueDate: '2027-05-15' }
       ];
 
-      const terms = [
+      const admissionMonth = student.admissionMonth || 'June';
+      const startMonthIndex = allMonths.findIndex(m => m.name === admissionMonth);
+      const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
+      const months = allMonths.slice(startIndex);
+
+      const allTerms = [
         { name: 'Term 1', dueDate: '2026-06-15' },
         { name: 'Term 2', dueDate: '2026-12-15' }
       ];
+      const terms = startIndex > 5 ? [allTerms[1]] : allTerms;
 
       const snapshot = {
         studentName: student.studentName,
