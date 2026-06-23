@@ -10,15 +10,17 @@ import {
   reversePaymentSchema,
   listPaymentsSchema,
 } from '../validations/payment.schema.js';
+// src/routes/payment.routes.js
+
 
 const router = Router();
 
 router.use(authenticate);
 
 // Idempotency enforced on payment creation to prevent duplicate charges
-router.post('/',           authorize('ADMIN', 'STAFF'), idempotency, validate(createPaymentSchema), PaymentController.createPayment);
-router.get('/',            authorize('ADMIN', 'STAFF'), validate(listPaymentsSchema), PaymentController.listPayments);
-router.get('/:id',         authorize('ADMIN', 'STAFF'), PaymentController.getPayment);
+router.post('/', authorize('ADMIN', 'STAFF', 'parent'), idempotency, validate(createPaymentSchema), PaymentController.createPayment);
+router.get('/', authorize('ADMIN', 'STAFF', 'parent'), validate(listPaymentsSchema), PaymentController.listPayments);
+router.get('/:id', authorize('ADMIN', 'STAFF'), PaymentController.getPayment);
 router.post('/:id/reverse', authorize('ADMIN'), validate(reversePaymentSchema), PaymentController.reversePayment);
 
 export default router;

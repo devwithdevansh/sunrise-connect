@@ -173,7 +173,10 @@ class StudentService {
           null,
           { session }
         );
-        transportAmount = transportStruct?.amount || (student.transportType === 'Railnagar' ? 600 : 900);
+        if (!transportStruct) {
+          throw new AppError(`Active transport fee structure not found for ${student.transportType}`, 404);
+        }
+        transportAmount = transportStruct.amount;
       }
 
       const isRTE = student.isRTE || false;
@@ -365,11 +368,17 @@ class StudentService {
 
           if (oldTransport !== 'None') {
             const oldStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: oldTransport }).session(session);
-            if (oldStruct) oldRate = oldStruct.amount;
+            if (!oldStruct) {
+              throw new AppError(`Transport fee structure not found for ${oldTransport}`, 404);
+            }
+            oldRate = oldStruct.amount;
           }
           if (newTransport !== 'None') {
-            const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport }).session(session);
-            if (newStruct) newRate = newStruct.amount;
+            const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true }).session(session);
+            if (!newStruct) {
+              throw new AppError(`Active transport fee structure not found for ${newTransport}`, 404);
+            }
+            newRate = newStruct.amount;
           }
 
           const months = [
@@ -410,7 +419,13 @@ class StudentService {
                   const paidSoFar = ledger.paidAmount || 0;
                   ledger.totalAmount = newRate;
                   ledger.remainingAmount = Math.max(0, newRate - paidSoFar - (ledger.concessionAmount || 0));
-                  if (ledger.remainingAmount === 0) ledger.status = 'PAID';
+                  if (ledger.remainingAmount === 0) {
+                    ledger.status = 'PAID';
+                  } else if (paidSoFar > 0) {
+                    ledger.status = 'PARTIAL';
+                  } else {
+                    ledger.status = 'PENDING';
+                  }
                   await ledger.save({ session });
                 }
               } else {

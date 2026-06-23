@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">41.17% </span>
+                <span class="strong">69.56% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/17</span>
+                <span class='fraction'>16/23</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">36.36% </span>
+                <span class="strong">39.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/22</span>
+                <span class='fraction'>11/28</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">70% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/8</span>
+                <span class='fraction'>7/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">41.17% </span>
+                <span class="strong">68.18% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/17</span>
+                <span class='fraction'>15/22</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -150,12 +150,20 @@
 <a name='L85'></a><a href='#L85'>85</a>
 <a name='L86'></a><a href='#L86'>86</a>
 <a name='L87'></a><a href='#L87'>87</a>
-<a name='L88'></a><a href='#L88'>88</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">12x</span>
@@ -191,16 +199,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -277,17 +293,25 @@ const paymentRepository = {
    * List payments joined with their ledger for full context (feePeriod, feeType, studentName).
    * Used by the parent-facing payment history &amp; receipts endpoints.
    */
-<span class="fstat-no" title="function not covered" >  as</span>ync findWithLedger(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>} = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
-    const matchStage = <span class="cstat-no" title="statement not covered" >{};</span>
-<span class="cstat-no" title="statement not covered" >    if (filter.ledgerId) {</span>
+  async findWithLedger(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>} = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    const matchStage = {};
+    if (filter.ledgerIds) {
+      const mongoose = await import('mongoose');
+      const ids = typeof filter.ledgerIds === 'string'
+        ? filter.ledgerIds.split(',').map(id =&gt; id.trim()).filter(Boolean)
+        : <span class="branch-1 cbranch-no" title="branch not covered" >Array.isArray(filter.ledgerIds)</span>
+          ? filter.ledgerIds
+          : [];
+      matchStage.ledgerId = { $in: ids.map(id =&gt; new mongoose.default.Types.ObjectId(id)) };
+    } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>if (filter.ledgerId) {</span>
       const mongoose = <span class="cstat-no" title="statement not covered" >await import('mongoose');</span>
 <span class="cstat-no" title="statement not covered" >      matchStage.ledgerId = new mongoose.default.Types.ObjectId(filter.ledgerId);</span>
     }
-<span class="cstat-no" title="statement not covered" >    if (filter.isReversal !== undefined) {</span>
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (filter.isReversal !== undefined) {
 <span class="cstat-no" title="statement not covered" >      matchStage.isReversal = filter.isReversal;</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return Payment.aggregate([</span>
+    return Payment.aggregate([
       { $match: matchStage },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
@@ -331,7 +355,7 @@ export default paymentRepository;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-23T15:01:46.986Z
+                at 2026-06-23T18:09:28.833Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

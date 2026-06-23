@@ -23,54 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
-                <span class="strong">100% </span>
+                <span class="strong">57.14% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/7</span>
-=======
-                <span class="strong">14.28% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>1/7</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                <span class='fraction'>4/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
-                <span class="strong">75% </span>
+                <span class="strong">12.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/8</span>
-=======
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/8</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                <span class='fraction'>1/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
-                <span class="strong">100% </span>
+                <span class="strong">33.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
-=======
-                <span class="strong">0% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                <span class='fraction'>1/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-<<<<<<< HEAD
-                <span class="strong">100% </span>
+                <span class="strong">57.14% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
-=======
-                <span class="strong">14.28% </span>
-                <span class="quiet">Lines</span>
-                <span class='fraction'>1/7</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                <span class='fraction'>4/7</span>
             </div>
         
             
@@ -85,11 +61,7 @@
             </div>
         </template>
     </div>
-<<<<<<< HEAD
-    <div class='status-line high'></div>
-=======
-    <div class='status-line low'></div>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -116,32 +88,20 @@
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
 <a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<<<<<<< HEAD
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-=======
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -151,7 +111,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -164,25 +125,10 @@ import AuditLog from '../models/AuditLog.js';
 &nbsp;
 const auditRepository = {
   /** Create an audit entry. session can be a Mongoose ClientSession or null. */
-<<<<<<< HEAD
-  async create(data, session = null) {
-    const opts = session ? <span class="branch-0 cbranch-no" title="branch not covered" >{ session } </span>: {};
+  async create(data, session = <span class="branch-0 cbranch-no" title="branch not covered" >null)</span> {
+    const opts = session ? { session } : <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
     const [doc] = await AuditLog.create([data], opts);
     return doc;
-  },
-&nbsp;
-  async findById(id) {
-    return AuditLog.findById(id).lean();
-  },
-&nbsp;
-  async find(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> opts = {}) {
-    const { limit = 20, skip = 0, sort = { createdAt: -1 } } = opts;
-    return AuditLog.find(filter, null, { limit, skip, sort }).lean();
-=======
-<span class="fstat-no" title="function not covered" >  as</span>ync create(data, session = <span class="branch-0 cbranch-no" title="branch not covered" >null)</span> {
-    const opts = <span class="cstat-no" title="statement not covered" >session ? { session } : {};</span>
-    const [doc] = <span class="cstat-no" title="statement not covered" >await AuditLog.create([data], opts);</span>
-<span class="cstat-no" title="statement not covered" >    return doc;</span>
   },
 &nbsp;
 <span class="fstat-no" title="function not covered" >  as</span>ync findById(id) {
@@ -191,8 +137,9 @@ const auditRepository = {
 &nbsp;
 <span class="fstat-no" title="function not covered" >  as</span>ync find(filter = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> opts = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
     const { limit = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span> skip = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span> sort = <span class="branch-0 cbranch-no" title="branch not covered" >{ createdAt: -1 } </span>} = <span class="cstat-no" title="statement not covered" >opts;</span>
-<span class="cstat-no" title="statement not covered" >    return AuditLog.find(filter, null, { limit, skip, sort }).lean();</span>
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+<span class="cstat-no" title="statement not covered" >    return AuditLog.find(filter, null, { limit, skip, sort })</span>
+      .populate({ path: 'performedBy', select: 'name role email', model: 'User' })
+      .lean();
   },
 };
 &nbsp;
@@ -204,11 +151,7 @@ export default auditRepository;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-<<<<<<< HEAD
-                at 2026-06-11T06:34:43.079Z
-=======
-                at 2026-06-11T09:12:46.341Z
->>>>>>> 337b42c6f1d9d161086b52ec041b8582336972bc
+                at 2026-06-23T17:33:09.853Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -21,6 +21,7 @@ export const reversePaymentSchema = {
 export const listPaymentsSchema = {
   query: z.object({
     ledgerId: z.string().optional(),
+    ledgerIds: z.string().optional(),
     isReversal: z.coerce.boolean().optional(),
     limit: z.coerce.number().int().min(1).max(2000).optional(),
     skip: z.coerce.number().int().min(0).optional(),

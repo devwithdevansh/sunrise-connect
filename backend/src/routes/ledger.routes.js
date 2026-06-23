@@ -16,7 +16,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/',                authorize('ADMIN', 'STAFF'), validate(createLedgerSchema), LedgerController.createLedger);
-router.get('/',                 authorize('ADMIN', 'STAFF'), validate(listLedgersSchema),  LedgerController.listLedgers);
+router.get('/',                 authorize('ADMIN', 'STAFF', 'parent'), validate(listLedgersSchema),  LedgerController.listLedgers);
 router.get('/:id',              authorize('ADMIN', 'STAFF', 'parent'), LedgerController.getLedger);
 
 export default router;

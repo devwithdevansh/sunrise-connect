@@ -40,7 +40,15 @@ const paymentRepository = {
    */
   async findWithLedger(filter = {}, { limit = 20, skip = 0 } = {}) {
     const matchStage = {};
-    if (filter.ledgerId) {
+    if (filter.ledgerIds) {
+      const mongoose = await import('mongoose');
+      const ids = typeof filter.ledgerIds === 'string'
+        ? filter.ledgerIds.split(',').map(id => id.trim()).filter(Boolean)
+        : Array.isArray(filter.ledgerIds)
+          ? filter.ledgerIds
+          : [];
+      matchStage.ledgerId = { $in: ids.map(id => new mongoose.default.Types.ObjectId(id)) };
+    } else if (filter.ledgerId) {
       const mongoose = await import('mongoose');
       matchStage.ledgerId = new mongoose.default.Types.ObjectId(filter.ledgerId);
     }

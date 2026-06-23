@@ -9,18 +9,17 @@ class ReceiptRepository {
     if (ledgerIds.isEmpty) return [];
     final allPayments = <PaymentModel>[];
     try {
-      for (final ledgerId in ledgerIds) {
-        final response = await ApiClient.get(
-          '/payments?ledgerId=$ledgerId&limit=500',
-          useStaffToken: true,
+      final idsParam = ledgerIds.join(',');
+      final response = await ApiClient.get(
+        '/payments?ledgerIds=$idsParam&limit=500',
+        useStaffToken: false,
+      );
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body);
+        final list = body['data'] as List;
+        allPayments.addAll(
+          list.map((item) => PaymentModel.fromJson(item as Map<String, dynamic>)),
         );
-        if (response.statusCode == 200) {
-          final body = json.decode(response.body);
-          final list = body['data'] as List;
-          allPayments.addAll(
-            list.map((item) => PaymentModel.fromJson(item as Map<String, dynamic>)),
-          );
-        }
       }
     } catch (e) {
       print('Error in getPaymentsForLedgers: $e');

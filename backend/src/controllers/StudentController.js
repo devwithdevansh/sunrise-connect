@@ -14,6 +14,9 @@ class StudentController {
   /** GET /api/v1/students */
   static listStudents = catchAsync(async (req, res) => {
     const { limit = 20, skip = 0, ...filter } = req.query;
+    if (req.user?.role === 'parent') {
+      filter.parentId = req.user.id;
+    }
     const students = await StudentService.listStudents(filter, { limit: Number(limit), skip: Number(skip) });
     sendResponse(res, 200, students);
   });
@@ -21,6 +24,10 @@ class StudentController {
   /** GET /api/v1/students/:id */
   static getStudent = catchAsync(async (req, res) => {
     const student = await StudentService.getStudent(req.params.id);
+    const parentIdStr = student.parentId?._id ? student.parentId._id.toString() : student.parentId?.toString();
+    if (req.user?.role === 'parent' && parentIdStr !== req.user.id) {
+      throw new AppError('You do not have permission to view this student', 403);
+    }
     sendResponse(res, 200, student);
   });
 
