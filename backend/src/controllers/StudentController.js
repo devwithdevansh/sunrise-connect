@@ -2,6 +2,7 @@
 import StudentService from '../services/StudentService.js';
 import catchAsync from '../utils/catchAsync.js';
 import sendResponse from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 class StudentController {
   /** POST /api/v1/students */
@@ -56,6 +57,16 @@ class StudentController {
       throw new AppError('Missing required fields for promotion', 400);
     }
     const result = await StudentService.promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, req.user.userId);
+    sendResponse(res, 200, result);
+  });
+
+  /** POST /api/v1/students/import */
+  static importStudents = catchAsync(async (req, res) => {
+    const { students } = req.body;
+    if (!students || !Array.isArray(students)) {
+      throw new AppError('Missing students array in request body', 400);
+    }
+    const result = await StudentService.importStudents(students);
     sendResponse(res, 200, result);
   });
 }

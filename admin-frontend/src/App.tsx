@@ -12,6 +12,7 @@ import { Login } from './components/Login';
 import { PromoteStudents } from './components/PromoteStudents';
 import { StaffManagement } from './components/StaffManagement';
 import { AuditLogs } from './components/AuditLogs';
+import { ImportExcel } from './components/ImportExcel';
 import {
   MessageSquare,
   Bell,
@@ -20,7 +21,7 @@ import {
 import { PrintReceipt } from './components/PrintReceipt';
 
 const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = ({ onPrint }) => {
-  const { currentScreen, transactions, reversePayment, auditLogs } = useApp();
+  const { currentScreen, transactions, reversePayment } = useApp();
 
   switch (currentScreen) {
     case 'dashboard':
@@ -37,6 +38,8 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
       return <Students />;
     case 'promote-students':
       return <PromoteStudents />;
+    case 'import-excel':
+      return <ImportExcel />;
     case 'staff-management':
       return <StaffManagement />;
 

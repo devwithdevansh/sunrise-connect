@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store';
-import { Users, ArrowRight, CheckCircle, Search } from 'lucide-react';
+import { Users, ArrowRight, CheckCircle } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
   const { students, setScreen } = useApp();

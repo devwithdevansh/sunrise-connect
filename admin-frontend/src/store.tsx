@@ -22,6 +22,7 @@ export type ScreenType =
   | 'notifications'
   | 'reports'
   | 'receipts'
+  | 'import-excel'
   | 'audit-log';
 
 export interface AcademicYearData {
@@ -112,6 +113,7 @@ interface AppContextType {
   updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<boolean>;
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
+  importStudents: (students: any[]) => Promise<any>;
   selectedStudentIdForFee: string | null;
   setSelectedStudentIdForFee: (id: string | null) => void;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
@@ -752,6 +754,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const importStudents = async (studentsList: any[]) => {
+    try {
+      const res = await authFetch('/api/v1/students/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ students: studentsList })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Import failed');
+      }
+      await fetchAll();
+      return data.data;
+    } catch (err: any) {
+      console.error(err);
+      throw err;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -789,6 +810,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateStudent,
         regenerateLedgers,
         addCustomFee,
+        importStudents,
         selectedStudentIdForFee,
         setSelectedStudentIdForFee
       }}

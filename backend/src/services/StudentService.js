@@ -849,6 +849,118 @@ class StudentService {
       session.endSession();
     }
   }
+
+  /** Bulk import students from excel data */
+  static async importStudents(studentsArray) {
+    if (!Array.isArray(studentsArray)) {
+      throw new Error('Invalid input data format: expected an array of students');
+    }
+
+    const results = [];
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < studentsArray.length; i++) {
+      const rowNum = i + 1;
+      const data = studentsArray[i];
+
+      try {
+        if (!data.studentName || typeof data.studentName !== 'string' || !data.studentName.trim()) {
+          throw new Error('Student name is required');
+        }
+        if (!data.medium || !['English', 'Gujarati'].includes(data.medium)) {
+          throw new Error(`Medium must be 'English' or 'Gujarati' (got '${data.medium || ''}')`);
+        }
+        if (!data.standard) {
+          throw new Error('Standard is required');
+        }
+        if (!data.division) {
+          throw new Error('Division is required');
+        }
+        
+        data.studentName = data.studentName.trim();
+        data.standard = String(data.standard).trim();
+        data.division = String(data.division).trim().toUpperCase();
+
+        if (data.transportType) {
+          data.transportType = String(data.transportType).trim();
+          if (!['Railnagar', 'Outside Railnagar', 'None'].includes(data.transportType)) {
+            throw new Error(`Transport Type must be 'Railnagar', 'Outside Railnagar', or 'None'`);
+          }
+        } else {
+          data.transportType = 'None';
+        }
+
+        const parseBool = (val) => {
+          if (typeof val === 'boolean') return val;
+          if (typeof val === 'string') {
+            const normalized = val.toLowerCase().trim();
+            return normalized === 'true' || normalized === 'yes' || normalized === '1';
+          }
+          if (typeof val === 'number') return val === 1;
+          return false;
+        };
+
+        data.isRTE = parseBool(data.isRTE);
+        data.isNewAdmission = parseBool(data.isNewAdmission);
+
+        if (data.parentMobile) {
+          data.parentMobile = String(data.parentMobile).replace(/\D/g, '');
+          if (data.parentMobile.length > 10) {
+            data.parentMobile = data.parentMobile.slice(-10);
+          }
+          if (!/^[6-9]\d{9}$/.test(data.parentMobile)) {
+            throw new Error(`Invalid Indian 10-digit primary mobile number: ${data.parentMobile}`);
+          }
+        } else {
+          throw new Error('Parent mobile number is required');
+        }
+
+        if (data.parentSecondaryMobile) {
+          data.parentSecondaryMobile = String(data.parentSecondaryMobile).replace(/\D/g, '');
+          if (data.parentSecondaryMobile.length > 10) {
+            data.parentSecondaryMobile = data.parentSecondaryMobile.slice(-10);
+          }
+          if (!/^[6-9]\d{9}$/.test(data.parentSecondaryMobile)) {
+            throw new Error(`Invalid Indian 10-digit secondary mobile number: ${data.parentSecondaryMobile}`);
+          }
+        }
+
+        const student = await StudentService.createStudent(data);
+
+        results.push({
+          row: rowNum,
+          studentName: data.studentName,
+          status: 'success',
+          studentCode: student.studentCode,
+          id: student._id
+        });
+        successCount++;
+      } catch (err) {
+        let errMsg = err.message;
+        if (err.code === 11000) {
+          if (err.keyPattern && err.keyPattern.studentCode) {
+            errMsg = 'Duplicate student code';
+          } else {
+            errMsg = 'Duplicate student: this parent already has a student with the same name and medium';
+          }
+        }
+        results.push({
+          row: rowNum,
+          studentName: data.studentName || `Row ${rowNum}`,
+          status: 'failed',
+          error: errMsg
+        });
+        failCount++;
+      }
+    }
+
+    return {
+      successCount,
+      failCount,
+      results
+    };
+  }
 }
 
 export default StudentService;

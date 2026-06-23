@@ -58,8 +58,10 @@ export const Sidebar: React.FC = () => {
       title: 'STUDENTS',
       items: [
         { id: 'students', label: 'Students', icon: Users },
-        ...(currentUser?.role === 'ADMIN' ? [{ id: 'promote-students' as ScreenType, label: 'Promote', icon: Layers }] : []),
-        { id: 'reports', label: 'Import Excel', icon: FileSpreadsheet, disabled: true },
+        ...(currentUser?.role === 'ADMIN' ? [
+          { id: 'promote-students' as ScreenType, label: 'Promote', icon: Layers },
+          { id: 'import-excel' as ScreenType, label: 'Import Excel', icon: FileSpreadsheet }
+        ] : []),
       ]
     },
     {
