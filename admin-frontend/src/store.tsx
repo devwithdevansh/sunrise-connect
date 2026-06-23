@@ -253,37 +253,80 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
 
       // Map transactions to fit PaymentTransaction interface
-      const mappedTransactions = rawTransactions.map((tx: any) => {
-        const ledger = mappedLedgers.find((l: any) => l._id === tx.ledgerId);
-        const student = ledger ? mappedStudents.find((s: any) => s._id === ledger.studentId) : null;
+      const mappedLedgersMap = new Map<string, any>(mappedLedgers.map((l: any) => [l._id || l.id, l]));
+      const mappedStudentsMap = new Map<string, any>(mappedStudents.map((s: any) => [s._id || s.id, s]));
+
+      const getFeeTypeFormatted = (ledger: any) => {
+        if (!ledger) return 'General Fee';
+        const type = ledger.feeType;
+        let formatted = type;
+        if (type === 'EDUCATION') formatted = 'Education';
+        else if (type === 'TRANSPORT') formatted = 'Transport';
+        else if (type === 'TERM') formatted = 'Term';
+        else if (type === 'ADMISSION') formatted = 'Admission';
+        else if (type === 'BAG_KIT') formatted = 'Bag & Kit';
+        else formatted = type.charAt(0) + type.slice(1).toLowerCase();
+        return `${formatted} Fee - ${ledger.feePeriod}`;
+      };
+
+      const groupedTxns = new Map<string, any[]>();
+      rawTransactions.forEach((tx: any) => {
+        const groupId = tx.details?.transactionId || tx._id;
+        if (!groupedTxns.has(groupId)) {
+          groupedTxns.set(groupId, []);
+        }
+        groupedTxns.get(groupId)!.push(tx);
+      });
+
+      const mappedTransactions: any[] = [];
+      groupedTxns.forEach((txGroup, groupId) => {
+        let totalAmount = 0;
+        let totalConcession = 0;
+        const subItems: { description: string; amount: number; concessionAmount: number }[] = [];
+        const feeTypes: string[] = [];
+        const reversalIds: string[] = [];
         
-        return {
-          id: tx._id,
+        let firstTx = txGroup[0];
+        let student: any = null;
+        
+        txGroup.forEach((tx: any) => {
+          totalAmount += tx.amount || 0;
+          totalConcession += tx.concessionAmount || 0;
+          reversalIds.push(tx._id);
+          
+          const ledger = mappedLedgersMap.get(tx.ledgerId);
+          if (!student && ledger) {
+            student = mappedStudentsMap.get(ledger.studentId);
+          }
+          const desc = getFeeTypeFormatted(ledger);
+          feeTypes.push(desc);
+          subItems.push({
+            description: desc,
+            amount: tx.amount || 0,
+            concessionAmount: tx.concessionAmount || 0
+          });
+        });
+
+        const isReversal = firstTx.isReversal;
+        const status = isReversal ? 'REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
+
+        mappedTransactions.push({
+          id: groupId,
           studentId: student ? student.id : '',
           studentName: student ? student.studentName : 'Unknown',
           studentCode: student ? student.studentCode : 'N/A',
           classInfo: student ? `${student.standard} - ${student.division} ${student.medium}` : 'N/A',
-          feeType: ledger
-            ? (() => {
-                const type = ledger.feeType;
-                let formatted = type;
-                if (type === 'EDUCATION') formatted = 'Education';
-                else if (type === 'TRANSPORT') formatted = 'Transport';
-                else if (type === 'TERM') formatted = 'Term';
-                else if (type === 'ADMISSION') formatted = 'Admission';
-                else if (type === 'BAG_KIT') formatted = 'Bag & Kit';
-                else formatted = type.charAt(0) + type.slice(1).toLowerCase();
-                return `${formatted} Fee - ${ledger.feePeriod}`;
-              })()
-            : 'General Fee',
-          amount: tx.amount,
-          concessionAmount: tx.concessionAmount || 0,
-          method: tx.method,
-          time: tx.createdAt ? new Date(tx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
-          status: tx.isReversal ? 'REVERSED' : (ledger?.status || 'PAID'),
-          date: tx.createdAt ? tx.createdAt.split('T')[0] : '',
-          remark: tx.details?.remark || tx.details?.reason || ''
-        };
+          feeType: feeTypes.join('\n'),
+          amount: totalAmount,
+          concessionAmount: totalConcession,
+          method: firstTx.method,
+          time: firstTx.createdAt ? new Date(firstTx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
+          status: status,
+          date: firstTx.createdAt ? firstTx.createdAt.split('T')[0] : '',
+          remark: firstTx.details?.remark || firstTx.details?.reason || '',
+          subItems: subItems.length > 1 ? subItems : undefined,
+          reversalIds: reversalIds.join(',')
+        });
       });
 
       setStudents(mappedStudents);
@@ -407,6 +450,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Filter out fees without a valid ledgerId
       const validFees = feesToPay.filter(f => f.ledgerId);
 
+      const batchTxnId = crypto.randomUUID ? crypto.randomUUID() : `TXN${Date.now()}${Math.random().toString(36).substring(2, 6)}`;
+
       for (const fee of validFees) {
         const ledgerId = fee.ledgerId!;
         const ledger = ledgerEntries.find(l => l.id === ledgerId || l._id === ledgerId);
@@ -443,7 +488,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               amount: paymentApplied,
               concessionAmount: concessionApplied,
               method: methodMapped,
-              details: { remark }
+              details: { remark, transactionId: batchTxnId }
             })
           });
           if (!payRes.ok) {
@@ -485,12 +530,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Reverse a payment by calling the backend API
   const reversePayment = async (transactionId: string) => {
     try {
-      const res = await authFetch(`/api/v1/payments/${transactionId}/reverse`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Manual reversal by admin' })
-      });
-      if (!res.ok) throw new Error('Failed to reverse payment');
+      const ids = transactionId.split(',');
+      for (const id of ids) {
+        if (!id.trim()) continue;
+        const res = await authFetch(`/api/v1/payments/${id.trim()}/reverse`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'Manual reversal by admin' })
+        });
+        if (!res.ok) console.error(`Failed to reverse payment ${id}`);
+      }
       // Refresh all data after reversal
       await fetchAll();
     } catch (err) {

@@ -48,15 +48,35 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
-          <tr>
-            <td className="py-4">
-              <span className="font-bold text-slate-800 text-base">{transaction.feeType || 'Fee Collection'}</span>
-            </td>
-            <td className="py-4 text-right font-bold text-slate-800 text-base">
-              ₹{Math.abs(transaction.amount).toLocaleString('en-IN')}
-            </td>
-          </tr>
-          {transaction.concessionAmount ? (
+          {transaction.subItems && transaction.subItems.length > 0 ? (
+            <>
+              {transaction.subItems.map((item, i) => (
+                <tr key={i}>
+                  <td className="py-3">
+                    <span className="font-semibold text-slate-800 text-sm">{item.description}</span>
+                  </td>
+                  <td className="py-3 text-right font-semibold text-slate-800 text-sm">
+                    <div>₹{Math.abs(item.amount).toLocaleString('en-IN')}</div>
+                    {item.concessionAmount > 0 && (
+                      <div className="text-xs text-slate-500 font-normal">
+                        - ₹{item.concessionAmount.toLocaleString('en-IN')} concession
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </>
+          ) : (
+            <tr>
+              <td className="py-4">
+                <span className="font-bold text-slate-800 text-base">{transaction.feeType || 'Fee Collection'}</span>
+              </td>
+              <td className="py-4 text-right font-bold text-slate-800 text-base">
+                ₹{Math.abs(transaction.amount).toLocaleString('en-IN')}
+              </td>
+            </tr>
+          )}
+          {!transaction.subItems && transaction.concessionAmount ? (
             <tr>
               <td className="py-4">
                 <span className="font-bold text-slate-600 text-sm">Concession Applied</span>

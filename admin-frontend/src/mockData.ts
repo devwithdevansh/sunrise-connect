@@ -46,6 +46,8 @@ export interface PaymentTransaction {
   status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED';
   date: string; // e.g. "2026-06-11"
   remark?: string;
+  subItems?: { description: string; amount: number; concessionAmount: number }[];
+  reversalIds?: string;
 }
 
 export const initialStudents: Student[] = [

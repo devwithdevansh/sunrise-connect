@@ -716,7 +716,7 @@ filteredStudents.map((s) => {
                                           <button
                                             onClick={() => {
                                               if (window.confirm(`Are you sure you want to reverse this payment of ₹${tx.amount.toLocaleString('en-IN')}? This will restore the balance back to the ledger.`)) {
-                                                reversePayment(tx.id);
+                                                reversePayment(tx.reversalIds || tx.id);
                                               }
                                             }}
                                             className="text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2.5 py-1 rounded-lg text-[10px] tracking-wide transition-all shadow-sm active:scale-[0.98]"

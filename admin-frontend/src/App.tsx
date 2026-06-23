@@ -208,7 +208,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
                             <button
                               onClick={() => {
                                 if (window.confirm(`Are you sure you want to reverse payment of ₹${t.amount} for ${t.studentName}?`)) {
-                                  reversePayment(t.id);
+                                  reversePayment(t.reversalIds || t.id);
                                 }
                               }}
                               className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg border border-red-100/50"
