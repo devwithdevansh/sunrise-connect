@@ -41,13 +41,14 @@ export interface PaymentTransaction {
   feeType: string; // e.g. "Education Fee - June"
   amount: number;
   concessionAmount?: number; // concession applied in this payment record
-  method: 'CASH' | 'CHEQUE' | 'ONLINE' | 'UPI' | 'CARD' | 'NET BANKING' | 'GOVT';
+  method: string;
   time: string; // e.g. "9:42 AM"
   status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED' | 'PARTIALLY_REVERSED' | 'PENDING';
   date: string; // e.g. "2026-06-11"
   remark?: string;
   subItems?: { id?: string; description: string; amount: number; concessionAmount: number; method?: string; status?: string }[];
   reversalIds?: string;
+  paymentBreakdown?: { method: string; amount: number }[];
 }
 
 export const initialStudents: Student[] = [

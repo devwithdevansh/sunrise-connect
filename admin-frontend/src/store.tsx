@@ -355,6 +355,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           });
         });
 
+        const uniqueMethods = Array.from(new Set(txGroup.map((tx: any) => tx.method).filter(Boolean)));
+        const joinedMethod = uniqueMethods.join(' + ');
+
+        const breakdownMap = new Map<string, number>();
+        txGroup.forEach((tx: any) => {
+          if (tx.method) {
+            breakdownMap.set(tx.method, (breakdownMap.get(tx.method) || 0) + (tx.amount || 0));
+          }
+        });
+        const paymentBreakdown = Array.from(breakdownMap.entries()).map(([method, amount]) => ({
+          method,
+          amount
+        }));
+
         const groupIsReversal = firstTx.isReversal || txGroup.every(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
         const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
         const status = groupIsReversal ? 'REVERSED' : groupIsPartiallyReversed ? 'PARTIALLY_REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
@@ -368,13 +382,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           feeType: feeTypes.join('\n'),
           amount: totalAmount,
           concessionAmount: totalConcession,
-          method: firstTx.method,
+          method: joinedMethod || firstTx.method || 'N/A',
           time: firstTx.createdAt ? new Date(firstTx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
           status: status,
           date: firstTx.createdAt ? firstTx.createdAt.split('T')[0] : '',
           remark: firstTx.details?.remark || firstTx.details?.reason || '',
           subItems: subItems,
-          reversalIds: reversalIds.join(',')
+          reversalIds: reversalIds.join(','),
+          paymentBreakdown: paymentBreakdown
         });
       });
 
