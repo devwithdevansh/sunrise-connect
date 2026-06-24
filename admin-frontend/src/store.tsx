@@ -239,7 +239,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ayRes.json(),
         fcRes.json()
       ]);
-      
+
       const rawStudents = studResp.data || [];
       const rawLedgers = ledResp.data || [];
       const rawTransactions = txResp.data || [];
@@ -326,25 +326,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const subItems: { id: string; description: string; amount: number; concessionAmount: number; method: string; status: string }[] = [];
         const feeTypes: string[] = [];
         const reversalIds: string[] = [];
-        
+
         let firstTx = txGroup[0];
         let student: any = null;
-        
+
         txGroup.forEach((tx: any) => {
           totalAmount += tx.amount || 0;
           totalConcession += tx.concessionAmount || 0;
           reversalIds.push(tx._id);
-          
+
           const ledger = mappedLedgersMap.get(tx.ledgerId);
           if (!student && ledger) {
             student = mappedStudentsMap.get(ledger.studentId);
           }
           const desc = getFeeTypeFormatted(ledger);
           feeTypes.push(desc);
-          
+
           const isReversed = tx.isReversal || reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString());
           const status = isReversed ? 'REVERSED' : (ledger?.status || 'PAID');
-          
+
           subItems.push({
             id: tx._id,
             description: desc,
@@ -355,19 +355,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           });
         });
 
-        const uniqueMethods = Array.from(new Set(txGroup.map((tx: any) => tx.method).filter(Boolean)));
-        const joinedMethod = uniqueMethods.join(' + ');
-
+        // Build payment breakdown: one entry per unique method with summed amounts
         const breakdownMap = new Map<string, number>();
         txGroup.forEach((tx: any) => {
           if (tx.method) {
             breakdownMap.set(tx.method, (breakdownMap.get(tx.method) || 0) + (tx.amount || 0));
           }
         });
-        const paymentBreakdown = Array.from(breakdownMap.entries()).map(([method, amount]) => ({
-          method,
-          amount
-        }));
+        const paymentBreakdown = Array.from(breakdownMap.entries()).map(([method, amount]) => ({ method, amount }));
+        const uniqueMethods = Array.from(breakdownMap.keys());
+        const joinedMethod = uniqueMethods.join(' + ');
 
         const groupIsReversal = firstTx.isReversal || txGroup.every(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
         const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
@@ -464,7 +461,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const logout = () => {
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
-    
+
     // Clear local state instantly for snappy UX
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -796,7 +793,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const params = new URLSearchParams();
       if (primary) params.append('primaryMobile', primary);
       if (secondary) params.append('secondaryMobile', secondary);
-      
+
       const res = await authFetch(`/api/v1/parents/check-mobile?${params.toString()}`);
       if (!res.ok) return null;
       const data = await res.json();
