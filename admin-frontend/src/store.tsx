@@ -111,7 +111,7 @@ interface AppContextType {
   createFeeCategory: (data: Partial<FeeCategoryData>) => Promise<boolean>;
   updateFeeCategory: (id: string, data: Partial<FeeCategoryData>) => Promise<boolean>;
   deleteFeeCategory: (id: string) => Promise<boolean>;
-  login: (email: string, pass: string) => Promise<boolean>;
+  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   checkMobile: (primary: string, secondary: string) => Promise<any>;
   deleteStudent: (id: string) => Promise<boolean>;
@@ -122,6 +122,7 @@ interface AppContextType {
   selectedStudentIdForFee: string | null;
   setSelectedStudentIdForFee: (id: string | null) => void;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
+  isLoadingDetails: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -144,6 +145,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(() => {
+    return localStorage.getItem('currentUser') !== null;
+  });
 
   // Authenticated fetch wrapper that appends Bearer token and handles auto-refresh on 401
   const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
@@ -190,6 +194,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Fetch data from backend on mount and after mutations
   const fetchAll = async () => {
+    setIsLoadingDetails(true);
     try {
       const [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes] = await Promise.all([
         authFetch('/api/v1/students?limit=1000'),
@@ -200,6 +205,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         authFetch('/api/v1/academic-years'),
         authFetch('/api/v1/fee-categories')
       ]);
+
+      const responses = [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes];
+      for (const response of responses) {
+        if (!response.ok) {
+          throw new Error(`Failed request: ${response.status} ${response.statusText}`);
+        }
+      }
+
       const [studResp, ledResp, txResp, feeResp, auditResp, ayResp, fcResp] = await Promise.all([
         studRes.json(),
         ledRes.json(),
@@ -353,6 +366,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setTransactions(mappedTransactions);
     } catch (err) {
       console.error('Failed to fetch data from backend', err);
+    } finally {
+      setIsLoadingDetails(false);
     }
   };
 
@@ -362,29 +377,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [currentUser]);
 
-  const login = async (email: string, pass: string): Promise<boolean> => {
+  const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await fetch('/api/v1/auth/portal/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        return false;
+        return { success: false, error: data?.message || 'Invalid email or password. Try admin@school.com / secret123' };
       }
-      const data = await res.json();
+      if (!data || !data.data || !data.data.accessToken) {
+        return { success: false, error: 'Invalid response from server' };
+      }
       const { accessToken, refreshToken, user: userInfo } = data.data;
 
       // Decode JWT to get user ID
-      const payloadBase64 = accessToken.split('.')[1];
-      const payload = JSON.parse(atob(payloadBase64));
-      const userId = payload.id;
+      let userId = '';
+      let role = '';
+      try {
+        const payloadBase64 = accessToken.split('.')[1];
+        let base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) {
+          base64 += '=';
+        }
+        const payload = JSON.parse(atob(base64));
+        userId = payload.id;
+        role = payload.role;
+      } catch (decodeErr) {
+        console.error('Failed to decode token:', decodeErr);
+        return { success: false, error: 'Invalid token format returned by server' };
+      }
 
       // Use the real name and role from the server response
       const name = userInfo?.name || email.split('@')[0];
-      const role = userInfo?.role || payload.role;
+      const actualRole = userInfo?.role || role;
 
-      const userObj = { name, role };
+      const userObj = { name, role: actualRole };
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userId', userId);
@@ -392,10 +422,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       setCurrentUser(userObj);
       setScreen('dashboard');
-      return true;
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       console.error('Login error:', err);
-      return false;
+      return { success: false, error: err.message || 'Failed to connect to server. Please check your network connection.' };
     }
   };
 
@@ -871,7 +901,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addCustomFee,
         importStudents,
         selectedStudentIdForFee,
-        setSelectedStudentIdForFee
+        setSelectedStudentIdForFee,
+        isLoadingDetails
       }}
     >
       {children}

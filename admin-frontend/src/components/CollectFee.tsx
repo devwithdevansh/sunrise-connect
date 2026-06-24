@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
-import type { Student } from '../mockData';
+import type { Student, PaymentTransaction } from '../mockData';
 import {
   Search,
   Plus,
-  Coins,
-  FileText,
-  CreditCard,
-  Smartphone,
-  Globe,
   Check,
   X,
   History,
@@ -563,7 +558,6 @@ export const CollectFee: React.FC = () => {
   }, [selectedFees, selectedStudent, ledgerEntries]);
 
   // Derived totals
-  const totalPayableFees = selectedFees.reduce((sum, f) => sum + getDueAmount(f.category, f.period), 0);
   const totalPayingNow = Object.values(lineItems).reduce((sum, item) => sum + item.paymentAmount, 0);
 
   // -------------------------------------------------------------------
@@ -1076,7 +1070,7 @@ export const CollectFee: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {selectedFees.map((f, i) => {
+                      {selectedFees.map((f) => {
                         const key = `${f.category}|${f.period}`;
                         const due = getDueAmount(f.category, f.period);
                         const config = lineItems[key];
@@ -1221,20 +1215,31 @@ export const CollectFee: React.FC = () => {
             const studentId = selectedStudent._id || selectedStudent.id;
             const studentTxs = transactions
               .filter(tx => tx.studentId === studentId)
-              .flatMap(tx => {
+              .flatMap((tx): TxItem[] => {
                 if (tx.subItems && tx.subItems.length > 0) {
                   return tx.subItems.map(sub => ({
-                    ...tx,
                     id: sub.id || tx.id,
                     feeType: sub.description,
                     amount: sub.amount,
                     concessionAmount: sub.concessionAmount,
-                    method: sub.method || tx.method,
+                    method: (sub.method as PaymentTransaction['method']) || tx.method,
                     status: sub.status || tx.status,
-                    subItems: undefined
+                    remark: tx.remark,
+                    date: tx.date,
+                    time: tx.time
                   }));
                 }
-                return [tx];
+                return [{
+                  id: tx.id,
+                  feeType: tx.feeType,
+                  amount: tx.amount,
+                  concessionAmount: tx.concessionAmount || 0,
+                  method: tx.method,
+                  status: tx.status,
+                  remark: tx.remark,
+                  date: tx.date,
+                  time: tx.time
+                }];
               })
               .sort((a, b) => {
                 const dateCompare = b.date.localeCompare(a.date);

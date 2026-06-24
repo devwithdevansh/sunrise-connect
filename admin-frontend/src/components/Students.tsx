@@ -739,7 +739,7 @@ filteredStudents.map((s) => {
                                               <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-sm">
                                                 <h6 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                                   <span>Payment Items</span>
-                                                  <span className="bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200">{tx.subItems.length} item{tx.subItems.length !== 1 ? 's' : ''}</span>
+                                                  <span className="bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200">{(tx.subItems || []).length} item{(tx.subItems || []).length !== 1 ? 's' : ''}</span>
                                                 </h6>
                                                 <table className="w-full text-left text-[11px] border-collapse">
                                                   <thead>
@@ -753,7 +753,7 @@ filteredStudents.map((s) => {
                                                     </tr>
                                                   </thead>
                                                   <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                                                    {tx.subItems.map((sub: any) => (
+                                                    {(tx.subItems || []).map((sub: any) => (
                                                       <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
                                                         <td className="py-2 px-2 font-bold text-slate-800">{sub.description}</td>
                                                         <td className="py-2 px-2 text-right font-extrabold text-slate-800">₹{sub.amount.toLocaleString('en-IN')}</td>

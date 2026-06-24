@@ -234,7 +234,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
                                 <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm">
                                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                                     <span>Receipt Line Items</span>
-                                    <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200">{t.subItems.length} fee item{t.subItems.length !== 1 ? 's' : ''}</span>
+                                    <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full border border-slate-200">{(t.subItems || []).length} fee item{(t.subItems || []).length !== 1 ? 's' : ''}</span>
                                   </h4>
                                   <table className="w-full text-left text-xs border-collapse">
                                     <thead>
@@ -248,7 +248,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                                      {t.subItems.map((sub: any) => (
+                                      {(t.subItems || []).map((sub: any) => (
                                         <tr key={sub.id} className="hover:bg-slate-50/30 transition-colors">
                                           <td className="py-3 px-3 font-bold text-slate-800">{sub.description}</td>
                                           <td className="py-3 px-3 text-right font-extrabold text-slate-800">₹{sub.amount.toLocaleString('en-IN')}</td>

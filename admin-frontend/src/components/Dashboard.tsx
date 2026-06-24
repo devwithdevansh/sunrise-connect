@@ -11,11 +11,94 @@ import {
   Users,
   AlertTriangle,
   Bus,
-  GraduationCap
+  GraduationCap,
+  Loader2
 } from 'lucide-react';
 
+const DashboardSkeleton: React.FC = () => {
+  return (
+    <div className="flex-1 p-6 space-y-6 animate-pulse">
+      {/* Top Header Bar Skeleton */}
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-2">
+          <div className="h-7 bg-slate-200 rounded-lg w-48"></div>
+          <div className="h-4 bg-slate-150 rounded-md w-36"></div>
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="h-10 bg-slate-200 rounded-xl w-full md:w-64"></div>
+          <div className="h-10 bg-slate-200 rounded-xl w-32 shrink-0"></div>
+        </div>
+      </header>
+
+      {/* Main Banner Card Skeleton */}
+      <div className="bg-gradient-to-r from-blue-900/10 to-blue-700/10 border border-slate-200/50 rounded-2xl p-6 min-h-[160px] flex flex-col justify-between">
+        <div className="space-y-2">
+          <div className="h-4 bg-slate-250 rounded-md w-32"></div>
+          <div className="h-10 bg-slate-200 rounded-lg w-60"></div>
+        </div>
+        <div className="flex gap-4 mt-4">
+          <div className="h-7 bg-slate-200 rounded-full w-36"></div>
+          <div className="h-7 bg-slate-200 rounded-full w-36"></div>
+          <div className="h-7 bg-slate-200 rounded-full w-36"></div>
+        </div>
+      </div>
+
+      {/* Payment Modes Grid Skeleton */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, idx) => (
+          <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm space-y-3">
+            <div className="w-10 h-10 bg-slate-150 rounded-xl"></div>
+            <div className="h-3 bg-slate-200 rounded w-16"></div>
+            <div className="h-5 bg-slate-200 rounded w-20"></div>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary Statistics Cards Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-start justify-between space-y-2">
+            <div className="space-y-2 w-3/4">
+              <div className="h-3 bg-slate-250 rounded w-20"></div>
+              <div className="h-7 bg-slate-200 rounded w-14"></div>
+              <div className="h-4 bg-slate-150 rounded w-full"></div>
+            </div>
+            <div className="w-10 h-10 bg-slate-100 rounded-xl border border-slate-100 shrink-0"></div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Payments Section Skeleton */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="h-5 bg-slate-200 rounded w-36"></div>
+          <div className="h-7 bg-slate-200 rounded-lg w-20"></div>
+        </div>
+        <div className="space-y-3 pt-2">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50">
+              <div className="space-y-2 w-1/4">
+                <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                <div className="h-3 bg-slate-150 rounded w-1/2"></div>
+              </div>
+              <div className="h-4 bg-slate-200 rounded w-16"></div>
+              <div className="h-4 bg-slate-200 rounded w-24"></div>
+              <div className="h-4 bg-slate-200 rounded w-16"></div>
+              <div className="h-6 bg-slate-150 rounded-lg w-20"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Dashboard: React.FC = () => {
-  const { students, ledgerEntries, transactions, setScreen } = useApp();
+  const { students, ledgerEntries, transactions, setScreen, isLoadingDetails } = useApp();
+
+  if (isLoadingDetails && students.length === 0) {
+    return <DashboardSkeleton />;
+  }
   const [searchQuery, setSearchQuery] = useState('');
 
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
@@ -130,7 +213,15 @@ export const Dashboard: React.FC = () => {
       {/* Top Header Bar */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Today's Dashboard</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Today's Dashboard</h2>
+            {isLoadingDetails && (
+              <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
+                <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
+                Syncing...
+              </span>
+            )}
+          </div>
           <p className="text-xs font-semibold text-slate-400">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>

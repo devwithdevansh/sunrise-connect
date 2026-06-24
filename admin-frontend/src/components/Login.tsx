@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
-import { Sun, Lock, Mail } from 'lucide-react';
+import { Sun, Lock, Mail, Loader2 } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useApp();
   const [email, setEmail] = useState('admin@school.com');
   const [password, setPassword] = useState('secret123');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = await login(email, password);
-    if (!success) {
-      setError('Invalid email or password. Try admin@school.com / secret123');
+    setLoading(true);
+    try {
+      const res = await login(email, password);
+      if (!res.success) {
+        setError(res.error || 'Invalid email or password. Try admin@school.com / secret123');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,9 +87,17 @@ export const Login: React.FC = () => {
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full bg-[#F59E0B] hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98]"
+              disabled={loading}
+              className="w-full bg-[#F59E0B] hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-amber-500/10 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              Sign In to Portal
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                <span>Sign In to Portal</span>
+              )}
             </button>
           </div>
         </form>

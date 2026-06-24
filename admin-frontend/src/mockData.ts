@@ -43,7 +43,7 @@ export interface PaymentTransaction {
   concessionAmount?: number; // concession applied in this payment record
   method: 'CASH' | 'CHEQUE' | 'ONLINE' | 'UPI' | 'CARD' | 'NET BANKING' | 'GOVT';
   time: string; // e.g. "9:42 AM"
-  status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED';
+  status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED' | 'PARTIALLY_REVERSED' | 'PENDING';
   date: string; // e.g. "2026-06-11"
   remark?: string;
   subItems?: { id?: string; description: string; amount: number; concessionAmount: number; method?: string; status?: string }[];
