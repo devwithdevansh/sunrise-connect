@@ -13,6 +13,8 @@ import { PromoteStudents } from './components/PromoteStudents';
 import { StaffManagement } from './components/StaffManagement';
 import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
+import { Reports } from './components/Reports';
+import { PrintReport } from './components/PrintReport';
 import {
   MessageSquare,
   Bell,
@@ -23,7 +25,10 @@ import {
 } from 'lucide-react';
 import { PrintReceipt } from './components/PrintReceipt';
 
-const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = ({ onPrint }) => {
+const ScreenContent: React.FC<{
+  onPrint: (tx: PaymentTransaction) => void;
+  onPrintReport: (report: { type: string; title: string; data: any }) => void;
+}> = ({ onPrint, onPrintReport }) => {
   const { currentScreen, transactions, reversePayment } = useApp();
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
 
@@ -305,54 +310,17 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
       return <AuditLogs />;
 
     case 'reports':
-      return (
-        <div className="flex-1 p-6 space-y-6">
-          <header>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Reports & Analytical Invoices</h2>
-            <p className="text-xs font-semibold text-slate-400">Generate pdf collection lists, standard revenue splits, and transport due lists</p>
-          </header>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-2">
-              <h4 className="font-bold text-slate-800 text-sm">Daily Collections Report</h4>
-              <p className="text-xs text-slate-500">Summary of today's collections categorized by cash, cheques, and online modes.</p>
-              <button
-                onClick={() => alert('Daily Collections Report downloaded successfully!')}
-                className="mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-xl text-xs"
-              >
-                Generate PDF
-              </button>
-            </div>
-            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-2">
-              <h4 className="font-bold text-slate-800 text-sm">Outstanding Due Balance</h4>
-              <p className="text-xs text-slate-500">List of all active students with remaining dues, divided into 1/2/3+ overdue months.</p>
-              <button
-                onClick={() => alert('Due Balance Report exported to Excel!')}
-                className="mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-xl text-xs"
-              >
-                Export Excel
-              </button>
-            </div>
-            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-2">
-              <h4 className="font-bold text-slate-800 text-sm">RTE Reconcile Sheet</h4>
-              <p className="text-xs text-slate-500">Track RTE quota exemptions to submit for state government reimbursement files.</p>
-              <button
-                onClick={() => alert('RTE Reimbursement log generated!')}
-                className="mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-xl text-xs"
-              >
-                Download PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      );
+      return <Reports onPrintReport={onPrintReport} />;
 
     default:
       return <Dashboard />;
   }
 };
 
-const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = ({ onPrint }) => {
+const MainAppLayout: React.FC<{
+  onPrint: (tx: PaymentTransaction) => void;
+  onPrintReport: (report: { type: string; title: string; data: any }) => void;
+}> = ({ onPrint, onPrintReport }) => {
   const { currentScreen } = useApp();
 
   if (currentScreen === 'login') {
@@ -363,7 +331,7 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
     <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans print:hidden">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
-        <ScreenContent onPrint={onPrint} />
+        <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
       </main>
     </div>
   );
@@ -371,18 +339,27 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void }> = (
 
 export const App: React.FC = () => {
   const [printingTx, setPrintingTx] = useState<PaymentTransaction | null>(null);
+  const [printingReport, setPrintingReport] = useState<{ type: string; title: string; data: any } | null>(null);
 
   const handlePrint = (tx: PaymentTransaction) => {
     setPrintingTx(tx);
-    // Give react time to render the print view before opening print dialog
     setTimeout(() => {
       window.print();
     }, 150);
   };
 
-  // Listen for afterprint to hide the receipt again (optional, it's hidden by CSS print:block anyway)
+  const handlePrintReport = (report: { type: string; title: string; data: any }) => {
+    setPrintingReport(report);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   useEffect(() => {
-    const afterPrint = () => setPrintingTx(null);
+    const afterPrint = () => {
+      setPrintingTx(null);
+      setPrintingReport(null);
+    };
     window.addEventListener('afterprint', afterPrint);
     return () => window.removeEventListener('afterprint', afterPrint);
   }, []);
@@ -390,10 +367,13 @@ export const App: React.FC = () => {
   return (
     <React.StrictMode>
       {/* The main app is hidden during print via print:hidden */}
-      <MainAppLayout onPrint={handlePrint} />
+      <MainAppLayout onPrint={handlePrint} onPrintReport={handlePrintReport} />
 
       {/* The receipt is only visible during print via print:block */}
       {printingTx && <PrintReceipt transaction={printingTx} />}
+
+      {/* The report printout is only visible during print via print:block */}
+      {printingReport && <PrintReport report={printingReport} />}
     </React.StrictMode>
   );
 };
