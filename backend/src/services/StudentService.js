@@ -8,6 +8,14 @@ import AuditService from './AuditService.js';
 import logger from '../config/logger.js';
 import AppError from '../utils/AppError.js';
 
+import '../models/Parent.js';
+import '../models/FeeCategory.js';
+import '../models/FeeStructure.js';
+import '../models/TransportFeeStructure.js';
+import '../models/StudentFeeLedger.js';
+import '../models/Payment.js';
+import '../models/AcademicYear.js';
+
 class StudentService {
   /** Create a new student */
   static async createStudent(data) {
