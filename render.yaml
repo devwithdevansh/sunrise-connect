@@ -25,3 +25,31 @@ services:
         value: "900000"
       - key: RATE_LIMIT_MAX
         value: "100"
+
+  - type: static
+    name: sunrise-connect-admin
+    plan: free
+    rootDir: admin-frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    routes:
+      # Rewrite frontend /api requests to the Render backend service
+      - type: rewrite
+        source: /api/*
+        destination: https://sunrise-connect-backend.onrender.com/api/*
+      # Support client-side routing fallback for React SPA
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: static
+    name: sunrise-connect-parent
+    plan: free
+    rootDir: FlutterProject
+    buildCommand: bash build_web.sh
+    publishDir: build/web
+    routes:
+      # Support client-side routing fallback for Flutter Web
+      - type: rewrite
+        source: /*
+        destination: /index.html

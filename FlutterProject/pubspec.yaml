@@ -43,6 +43,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     # staff_config.json is intentionally NOT committed to git (see .gitignore).
     # Run `cp assets/config/staff_config.example.json assets/config/staff_config.json`
     # and fill in real values before building, or StaffConfig will fail soft
