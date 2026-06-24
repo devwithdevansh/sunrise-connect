@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">23.8% </span>
+                <span class="strong">80.95% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/21</span>
+                <span class='fraction'>17/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>3/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">23.8% </span>
+                <span class="strong">80.95% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/21</span>
+                <span class='fraction'>17/21</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -145,21 +145,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,10 +169,6 @@
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -189,12 +176,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -212,13 +212,13 @@ class FeeStructureController {
    * Returns all active fee structures and transport fee structures
    * so the frontend can dynamically price every fee category.
    */
-  static list = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (_req, res) =&gt; {
-    const [feeStructures, transportStructures] = <span class="cstat-no" title="statement not covered" >await Promise.all([</span>
+  static list = catchAsync(async (_req, res) =&gt; {
+    const [feeStructures, transportStructures] = await Promise.all([
       FeeStructure.find({ isActive: true }).lean(),
       TransportFeeStructure.find({ isActive: true }).lean(),
     ]);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, { feeStructures, transportStructures });</span>
+    sendResponse(res, 200, { feeStructures, transportStructures });
   });
 &nbsp;
   /**
@@ -243,26 +243,26 @@ class FeeStructureController {
    * PUT /api/v1/fee-structures/:id
    * Updates standard fee structure (e.g. annualFee, parts counts)
    */
-  static updateFeeStructure = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-    const { id } = <span class="cstat-no" title="statement not covered" >req.params;</span>
-    const updated = <span class="cstat-no" title="statement not covered" >await FeeStructure.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });</span>
-<span class="cstat-no" title="statement not covered" >    if (!updated) {</span>
-<span class="cstat-no" title="statement not covered" >      throw new AppError('Fee structure not found', 404);</span>
+  static updateFeeStructure = catchAsync(async (req, res) =&gt; {
+    const { id } = req.params;
+    const updated = await FeeStructure.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!updated) {
+      throw new AppError('Fee structure not found', 404);
     }
-<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, updated);</span>
+    sendResponse(res, 200, updated);
   });
 &nbsp;
   /**
    * PUT /api/v1/fee-structures/transport/:id
    * Updates transport fee structure (e.g. amount)
    */
-  static updateTransportFeeStructure = catchAsync(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-    const { id } = <span class="cstat-no" title="statement not covered" >req.params;</span>
-    const updated = <span class="cstat-no" title="statement not covered" >await TransportFeeStructure.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });</span>
-<span class="cstat-no" title="statement not covered" >    if (!updated) {</span>
-<span class="cstat-no" title="statement not covered" >      throw new AppError('Transport fee structure not found', 404);</span>
+  static updateTransportFeeStructure = catchAsync(async (req, res) =&gt; {
+    const { id } = req.params;
+    const updated = await TransportFeeStructure.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!updated) {
+      throw new AppError('Transport fee structure not found', 404);
     }
-<span class="cstat-no" title="statement not covered" >    sendResponse(res, 200, updated);</span>
+    sendResponse(res, 200, updated);
   });
 }
 &nbsp;
@@ -274,7 +274,7 @@ export default FeeStructureController;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-23T20:44:08.578Z
+                at 2026-06-24T09:02:09.760Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

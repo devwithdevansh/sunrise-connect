@@ -18,10 +18,10 @@ class Env {
   /// and the app will use it automatically on Android/iOS physical devices.
   /// Leave empty to use the emulator/simulator defaults below.
   static const String _lanOverrideIp = '';
-
+//  final host = _resolveHost();
+//     return 'http://$host:$_port$_apiPath';
   static String get baseUrl {
-    final host = _resolveHost();
-    return 'http://$host:$_port$_apiPath';
+    return 'https://sunrise-connect-backend.onrender.com$_apiPath';
   }
 
   static String _resolveHost() {

@@ -127,6 +127,8 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+let activeRefreshPromise: Promise<{ accessToken: string; refreshToken: string } | null> | null = null;
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<{ name: string; role: 'ADMIN' | 'STAFF' } | null>(() => {
     const saved = localStorage.getItem('currentUser');
@@ -164,21 +166,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const userId = localStorage.getItem('userId');
       if (savedRefreshToken && userId) {
         try {
-          const refreshRes = await fetch('/api/v1/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              domain: 'user',
-              userId,
-              refreshToken: savedRefreshToken
-            })
-          });
-          if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
-            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
-            localStorage.setItem('accessToken', newAccessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-            headers['Authorization'] = `Bearer ${newAccessToken}`;
+          if (!activeRefreshPromise) {
+            activeRefreshPromise = (async () => {
+              try {
+                const refreshRes = await fetch('/api/v1/auth/refresh', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    domain: 'user',
+                    userId,
+                    refreshToken: savedRefreshToken
+                  })
+                });
+                if (refreshRes.ok) {
+                  const refreshData = await refreshRes.json();
+                  const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
+                  localStorage.setItem('accessToken', newAccessToken);
+                  localStorage.setItem('refreshToken', newRefreshToken);
+                  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+                }
+              } catch (refreshErr) {
+                console.error('Failed to auto-refresh token inside promise:', refreshErr);
+              } finally {
+                activeRefreshPromise = null;
+              }
+              return null;
+            })();
+          }
+          const tokens = await activeRefreshPromise;
+          if (tokens) {
+            headers['Authorization'] = `Bearer ${tokens.accessToken}`;
             res = await fetch(url, { ...options, headers });
             return res;
           }

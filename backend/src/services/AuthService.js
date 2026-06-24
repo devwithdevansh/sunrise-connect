@@ -151,9 +151,8 @@ class AuthService {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      // Mongoose 6+ throws if we $pull and $push on same array in one updateOne.
-      // Do it via document save.
-      const user = await Repo.findById(userId).session(session);
+      const modelName = domain === 'parent' ? 'Parent' : 'User';
+      const user = await mongoose.model(modelName).findById(userId).select('+refreshTokens').session(session);
       user.refreshTokens = user.refreshTokens.filter(t => t.tokenHash !== tokenEntry.tokenHash);
       user.refreshTokens.push({ tokenHash: newHash, expiresAt: newExpiresAt });
       await user.save({ session });
