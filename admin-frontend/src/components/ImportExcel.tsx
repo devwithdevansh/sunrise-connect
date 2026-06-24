@@ -25,6 +25,7 @@ interface ExcelRow {
   transportType: string;
   isRTE: boolean | string;
   isNewAdmission: boolean | string;
+  pendingFees?: Record<string, string>;
 }
 
 export const ImportExcel: React.FC = () => {
@@ -53,6 +54,7 @@ export const ImportExcel: React.FC = () => {
     { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: '"Railnagar", "Outside Railnagar", or "None"' },
     { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Right to Education quota ("Yes", "No", true, false)' },
     { name: 'Is New Admission', dbName: 'isNewAdmission', required: false, example: 'Yes', desc: 'Applies admission charges ("Yes", "No", true, false)' },
+    { name: 'Year YYYY-YY (e.g. Year 2025-26)', dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Set payment status: "paid", "gov paid", or a range like "oct to may", "term-2 to may"' },
   ];
 
   const downloadTemplate = () => {
@@ -67,7 +69,8 @@ export const ImportExcel: React.FC = () => {
         "Parent Secondary Mobile": "9876543211",
         "Transport Type": "Railnagar",
         "Is RTE": "No",
-        "Is New Admission": "Yes"
+        "Is New Admission": "Yes",
+        "Year 2025-26": "oct to may"
       },
       {
         "Student Name": "Ketan Patel",
@@ -79,7 +82,8 @@ export const ImportExcel: React.FC = () => {
         "Parent Secondary Mobile": "",
         "Transport Type": "None",
         "Is RTE": "Yes",
-        "Is New Admission": "No"
+        "Is New Admission": "No",
+        "Year 2025-26": "gov paid"
       }
     ];
 
@@ -126,6 +130,16 @@ export const ImportExcel: React.FC = () => {
           const parseRTE = row["Is RTE"] !== undefined ? row["Is RTE"] : row["isRTE"];
           const parseNew = row["Is New Admission"] !== undefined ? row["Is New Admission"] : row["isNewAdmission"];
 
+          // Parse any dynamic academic year columns (e.g. Year 2025-26)
+          const pendingFees: Record<string, string> = {};
+          Object.keys(row).forEach(key => {
+            const match = key.match(/^year\s+(\d{4}-\d{2})$/i);
+            if (match) {
+              const year = match[1];
+              pendingFees[year] = String(row[key] || '').trim();
+            }
+          });
+
           return {
             studentName: row["Student Name"] || row["studentName"] || "",
             medium: row["Medium"] || row["medium"] || "",
@@ -137,6 +151,7 @@ export const ImportExcel: React.FC = () => {
             transportType: row["Transport Type"] || row["transportType"] || "None",
             isRTE: parseRTE,
             isNewAdmission: parseNew,
+            pendingFees,
           };
         });
 
@@ -223,6 +238,17 @@ export const ImportExcel: React.FC = () => {
 
     if (row.transportType && !['Railnagar', 'Outside Railnagar', 'None'].includes(row.transportType)) {
       errors.push("Invalid transport type");
+    }
+
+    if (row.pendingFees) {
+      Object.keys(row.pendingFees).forEach(year => {
+        const val = row.pendingFees![year].toLowerCase();
+        if (val && val !== 'paid' && val !== 'gov paid') {
+          if (!/^[a-z0-9\- ]+ to may$/i.test(val)) {
+            errors.push(`Invalid ${year} status (e.g. "oct to may")`);
+          }
+        }
+      });
     }
 
     return errors;
@@ -408,6 +434,11 @@ export const ImportExcel: React.FC = () => {
                                 {(String(row.isNewAdmission).toLowerCase() === 'yes' || row.isNewAdmission === 'true' || row.isNewAdmission === true) && (
                                   <span className="bg-emerald-50 text-emerald-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">New</span>
                                 )}
+                                {row.pendingFees && Object.keys(row.pendingFees).map(yr => (
+                                  <span key={yr} className="bg-amber-50 text-amber-700 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
+                                    {yr}: {row.pendingFees?.[yr]}
+                                  </span>
+                                ))}
                               </div>
                             </td>
                             <td className="py-3 px-4 text-center">

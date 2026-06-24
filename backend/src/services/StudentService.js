@@ -68,13 +68,16 @@ class StudentService {
         parentId
       };
 
+      // Strip pendingFees from the student object itself
+      delete studentData.pendingFees;
+
       const student = await studentRepository.create(studentData, { session });
       await AuditService.log(
         { performedBy: null, targetStudentId: student._id, action: 'STUDENT_CREATED', details: {} },
         session
       );
 
-      // --- Generate all categories of fee ledgers for the entire academic year ---
+      // --- Generate all categories of fee ledgers for the academic years ---
       let educationCategory = await mongoose.model('FeeCategory').findOne({ type: 'EDUCATION' }, null, { session });
       if (!educationCategory) {
         educationCategory = await mongoose.model('FeeCategory').create([{
@@ -125,26 +128,24 @@ class StudentService {
         }], { session }).then(docs => docs[0]);
       }
 
-      const ledgersToCreate = [];
-      const allMonths = [
-        { name: 'June', dueDate: '2026-06-15' },
-        { name: 'July', dueDate: '2026-07-15' },
-        { name: 'August', dueDate: '2026-08-15' },
-        { name: 'September', dueDate: '2026-09-15' },
-        { name: 'October', dueDate: '2026-10-15' },
-        { name: 'November', dueDate: '2026-11-15' },
-        { name: 'December', dueDate: '2026-12-15' },
-        { name: 'January', dueDate: '2027-01-15' },
-        { name: 'February', dueDate: '2027-02-15' },
-        { name: 'March', dueDate: '2027-03-15' },
-        { name: 'April', dueDate: '2027-04-15' },
-        { name: 'May', dueDate: '2027-05-15' }
-      ];
+      // Fetch Active Academic Year
+      const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
+      const activeYear = activeYearDoc ? activeYearDoc.name : '2025-26';
 
-      const admissionMonth = student.admissionMonth || 'June';
-      const startMonthIndex = allMonths.findIndex(m => m.name === admissionMonth);
-      const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
-      const months = allMonths.slice(startIndex);
+      const yearsToGenerate = new Set();
+      if (data.pendingFees && typeof data.pendingFees === 'object') {
+        Object.keys(data.pendingFees).forEach(yr => {
+          yearsToGenerate.add(yr);
+        });
+      }
+      yearsToGenerate.add(activeYear);
+
+      const getStartYear = (yrStr) => {
+        const match = yrStr.match(/^(\d{4})/);
+        return match ? parseInt(match[1], 10) : 9999;
+      };
+      const sortedYears = Array.from(yearsToGenerate).sort((a, b) => getStartYear(a) - getStartYear(b));
+      const earliestYear = sortedYears[0];
 
       // --- Fetch dynamic fee amounts from FeeStructure collection ---
       const feeStruct = await mongoose.model('FeeStructure').findOne(
@@ -152,15 +153,13 @@ class StudentService {
         null,
         { session }
       );
-      // Derive per-part amounts from annualFee (fallback to previous hardcoded defaults)
+      // Derive per-part amounts from annualFee
       const eduPartCount = feeStruct?.educationPartCount || 12;
       const termPartCount = feeStruct?.termPartCount || 2;
       const annualFee = feeStruct?.annualFee || (student.medium === 'English' ? 36000 : 30000);
       const totalParts = eduPartCount + termPartCount; // 12 + 2 = 14 parts
       const eduAmount = Math.round(annualFee / totalParts);
 
-      // Term fee, Admission fee, Bag & Kit fee are now admin-editable fields stored in FeeStructure.
-      // We check if they are set (greater than 0), otherwise we fall back to proportional calculations for backward compatibility.
       const termAmount = (feeStruct?.termFee !== undefined && feeStruct?.termFee > 0)
         ? feeStruct.termFee
         : Math.round(annualFee / totalParts);
@@ -188,151 +187,268 @@ class StudentService {
       }
 
       const isRTE = student.isRTE || false;
+      const ledgersToCreate = [];
 
-      // 1. Education ledgers (12 months)
-      for (const m of months) {
-        ledgersToCreate.push({
-          studentId: student._id,
-          feePeriod: m.name,
-          feeType: 'EDUCATION',
-          totalAmount: eduAmount,
-          paidAmount: 0,
-          concessionAmount: isRTE ? eduAmount : 0,
-          remainingAmount: isRTE ? 0 : eduAmount,
-          dueDate: new Date(m.dueDate),
-          status: isRTE ? 'PAID' : 'PENDING',
-          feeCategoryId: educationCategory._id,
-          academicYear: '2025-26',
-          source: 'MANUAL',
-          generatedFrom: 'FEE_STRUCTURE',
-          ledgerNumber: `LEDGER_EDU_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
-          snapshot: {
-            studentName: student.studentName,
-            medium: student.medium,
-            standard: student.standard,
-            division: student.division,
-            transportType: student.transportType || 'None',
-            isRTE: isRTE
+      const getMonthsForAcademicYear = (academicYear) => {
+        const match = academicYear.match(/^(\d{4})/);
+        const startYear = match ? parseInt(match[1], 10) : 2025;
+        const baseYear = startYear + 1;
+        return [
+          { name: 'June', dueDate: `${baseYear}-06-15` },
+          { name: 'July', dueDate: `${baseYear}-07-15` },
+          { name: 'August', dueDate: `${baseYear}-08-15` },
+          { name: 'September', dueDate: `${baseYear}-09-15` },
+          { name: 'October', dueDate: `${baseYear}-10-15` },
+          { name: 'November', dueDate: `${baseYear}-11-15` },
+          { name: 'December', dueDate: `${baseYear}-12-15` },
+          { name: 'January', dueDate: `${baseYear + 1}-01-15` },
+          { name: 'February', dueDate: `${baseYear + 1}-02-15` },
+          { name: 'March', dueDate: `${baseYear + 1}-03-15` },
+          { name: 'April', dueDate: `${baseYear + 1}-04-15` },
+          { name: 'May', dueDate: `${baseYear + 1}-05-15` }
+        ];
+      };
+
+      const getTermsForAcademicYear = (academicYear) => {
+        const match = academicYear.match(/^(\d{4})/);
+        const startYear = match ? parseInt(match[1], 10) : 2025;
+        const baseYear = startYear + 1;
+        return [
+          { name: 'Term 1', dueDate: `${baseYear}-06-15` },
+          { name: 'Term 2', dueDate: `${baseYear}-10-15` }
+        ];
+      };
+
+      const getPendingStartIndex = (statusStr) => {
+        const clean = statusStr ? statusStr.toLowerCase().trim() : '';
+        if (!clean || clean === 'paid' || clean === 'gov paid') {
+          return null;
+        }
+        if (clean.includes('term-2') || clean.includes('term 2')) {
+          return 4; // October
+        }
+        if (clean.includes('term-1') || clean.includes('term 1')) {
+          return 0; // June
+        }
+        const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
+        for (let i = 0; i < monthPrefixes.length; i++) {
+          if (clean.includes(monthPrefixes[i])) {
+            return i;
           }
-        });
-      }
+        }
+        return 0;
+      };
 
-      // 2. Transport ledgers (12 months, if applicable)
-      if (student.transportType && student.transportType !== 'None') {
-        for (const m of months) {
+      for (const academicYear of sortedYears) {
+        const statusStr = data.pendingFees ? data.pendingFees[academicYear] : undefined;
+        const pendingStartIndex = getPendingStartIndex(statusStr);
+
+        const getLedgerStatusAndAmounts = (feeType, feePeriod, totalAmount, isRTE) => {
+          let concessionAmount = 0;
+          let paidAmount = 0;
+          let remainingAmount = totalAmount;
+          let status = 'PENDING';
+
+          if (isRTE && (feeType === 'EDUCATION' || feeType === 'TERM')) {
+            concessionAmount = totalAmount;
+            remainingAmount = 0;
+            status = 'PAID';
+          } else {
+            const clean = statusStr ? statusStr.toLowerCase().trim() : '';
+            if (clean === 'paid' || clean === 'gov paid') {
+              status = 'PAID';
+              paidAmount = totalAmount;
+              remainingAmount = 0;
+            } else if (!clean) {
+              status = 'PENDING';
+              paidAmount = 0;
+              remainingAmount = totalAmount;
+            } else {
+              // Range parsing
+              let itemIndex = 0;
+              if (feeType === 'EDUCATION' || feeType === 'TRANSPORT') {
+                const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
+                const currentPeriodLower = feePeriod.toLowerCase();
+                itemIndex = monthPrefixes.findIndex(p => currentPeriodLower.startsWith(p));
+                if (itemIndex === -1) itemIndex = 0;
+              } else if (feeType === 'TERM') {
+                itemIndex = feePeriod.includes('2') ? 4 : 0;
+              } else {
+                itemIndex = 0;
+              }
+
+              if (itemIndex < pendingStartIndex) {
+                status = 'PAID';
+                paidAmount = totalAmount;
+                remainingAmount = 0;
+              } else {
+                status = 'PENDING';
+                paidAmount = 0;
+                remainingAmount = totalAmount;
+              }
+            }
+          }
+          return { paidAmount, concessionAmount, remainingAmount, status };
+        };
+
+        const months = getMonthsForAcademicYear(academicYear);
+        const terms = getTermsForAcademicYear(academicYear);
+
+        const admissionMonth = student.admissionMonth || 'June';
+        const startMonthIndex = months.findIndex(m => m.name === admissionMonth);
+        const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
+        const monthsToCreate = months.slice(startIndex);
+
+        // 1. Education ledgers (12 months)
+        for (const m of monthsToCreate) {
+          const { paidAmount, concessionAmount, remainingAmount, status } = getLedgerStatusAndAmounts('EDUCATION', m.name, eduAmount, isRTE);
           ledgersToCreate.push({
             studentId: student._id,
             feePeriod: m.name,
-            feeType: 'TRANSPORT',
-            totalAmount: transportAmount,
-            paidAmount: 0,
-            concessionAmount: 0,
-            remainingAmount: transportAmount,
+            feeType: 'EDUCATION',
+            totalAmount: eduAmount,
+            paidAmount,
+            concessionAmount,
+            remainingAmount,
             dueDate: new Date(m.dueDate),
-            status: 'PENDING',
-            feeCategoryId: transportCategory._id,
-            academicYear: '2025-26',
+            status,
+            feeCategoryId: educationCategory._id,
+            academicYear,
             source: 'MANUAL',
-            generatedFrom: 'TRANSPORT_STRUCTURE',
-            ledgerNumber: `LEDGER_TRA_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
+            generatedFrom: 'FEE_STRUCTURE',
+            ledgerNumber: `LEDGER_EDU_${m.name.toUpperCase()}_${academicYear.replace('-', '_')}_${student.studentCode || student._id}`,
             snapshot: {
               studentName: student.studentName,
               medium: student.medium,
               standard: student.standard,
               division: student.division,
-              transportType: student.transportType,
+              transportType: student.transportType || 'None',
+              isRTE: isRTE
+            }
+          });
+        }
+
+        // 2. Transport ledgers (12 months, if applicable)
+        if (student.transportType && student.transportType !== 'None') {
+          for (const m of monthsToCreate) {
+            const { paidAmount, concessionAmount, remainingAmount, status } = getLedgerStatusAndAmounts('TRANSPORT', m.name, transportAmount, isRTE);
+            ledgersToCreate.push({
+              studentId: student._id,
+              feePeriod: m.name,
+              feeType: 'TRANSPORT',
+              totalAmount: transportAmount,
+              paidAmount,
+              concessionAmount,
+              remainingAmount,
+              dueDate: new Date(m.dueDate),
+              status,
+              feeCategoryId: transportCategory._id,
+              academicYear,
+              source: 'MANUAL',
+              generatedFrom: 'TRANSPORT_STRUCTURE',
+              ledgerNumber: `LEDGER_TRA_${m.name.toUpperCase()}_${academicYear.replace('-', '_')}_${student.studentCode || student._id}`,
+              snapshot: {
+                studentName: student.studentName,
+                medium: student.medium,
+                standard: student.standard,
+                division: student.division,
+                transportType: student.transportType,
+                isRTE: isRTE
+              }
+            });
+          }
+        }
+
+        // 3. Term ledgers (Term 1 & Term 2)
+        const termsToCreate = startIndex > 5 ? [terms[1]] : terms;
+        for (const t of termsToCreate) {
+          const { paidAmount, concessionAmount, remainingAmount, status } = getLedgerStatusAndAmounts('TERM', t.name, termAmount, isRTE);
+          ledgersToCreate.push({
+            studentId: student._id,
+            feePeriod: t.name,
+            feeType: 'TERM',
+            totalAmount: termAmount,
+            paidAmount,
+            concessionAmount,
+            remainingAmount,
+            dueDate: new Date(t.dueDate),
+            status,
+            feeCategoryId: termCategory._id,
+            academicYear,
+            source: 'MANUAL',
+            generatedFrom: 'FEE_STRUCTURE',
+            ledgerNumber: `LEDGER_TRM_${t.name.replace(' ', '').toUpperCase()}_${academicYear.replace('-', '_')}_${student.studentCode || student._id}`,
+            snapshot: {
+              studentName: student.studentName,
+              medium: student.medium,
+              standard: student.standard,
+              division: student.division,
+              transportType: student.transportType || 'None',
+              isRTE: isRTE
+            }
+          });
+        }
+
+        // 4. Admission ledger & 5. Bag & Kit ledger (only for new admissions, only in the earliest year)
+        if (student.isNewAdmission && academicYear === earliestYear) {
+          const match = academicYear.match(/^(\d{4})/);
+          const startYear = match ? parseInt(match[1], 10) : 2025;
+          const baseYear = startYear + 1;
+          const oneTimeDueDate = `${baseYear}-06-15`;
+
+          const { paidAmount: admPaid, concessionAmount: admConc, remainingAmount: admRem, status: admStatus } = getLedgerStatusAndAmounts('ADMISSION', 'One-time', admissionAmount, isRTE);
+          ledgersToCreate.push({
+            studentId: student._id,
+            feePeriod: 'One-time',
+            feeType: 'ADMISSION',
+            totalAmount: admissionAmount,
+            paidAmount: admPaid,
+            concessionAmount: admConc,
+            remainingAmount: admRem,
+            dueDate: new Date(oneTimeDueDate),
+            status: admStatus,
+            feeCategoryId: admissionCategory._id,
+            academicYear,
+            source: 'MANUAL',
+            generatedFrom: 'FEE_STRUCTURE',
+            ledgerNumber: `LEDGER_ADM_${academicYear.replace('-', '_')}_${student.studentCode || student._id}`,
+            snapshot: {
+              studentName: student.studentName,
+              medium: student.medium,
+              standard: student.standard,
+              division: student.division,
+              transportType: student.transportType || 'None',
+              isRTE: isRTE
+            }
+          });
+
+          const { paidAmount: bagPaid, concessionAmount: bagConc, remainingAmount: bagRem, status: bagStatus } = getLedgerStatusAndAmounts('BAG_KIT', 'One-time', bagKitAmount, isRTE);
+          ledgersToCreate.push({
+            studentId: student._id,
+            feePeriod: 'One-time',
+            feeType: 'BAG_KIT',
+            totalAmount: bagKitAmount,
+            paidAmount: bagPaid,
+            concessionAmount: bagConc,
+            remainingAmount: bagRem,
+            dueDate: new Date(oneTimeDueDate),
+            status: bagStatus,
+            feeCategoryId: bagKitCategory._id,
+            academicYear,
+            source: 'MANUAL',
+            generatedFrom: 'FEE_STRUCTURE',
+            ledgerNumber: `LEDGER_BAG_${academicYear.replace('-', '_')}_${student.studentCode || student._id}`,
+            snapshot: {
+              studentName: student.studentName,
+              medium: student.medium,
+              standard: student.standard,
+              division: student.division,
+              transportType: student.transportType || 'None',
               isRTE: isRTE
             }
           });
         }
       }
-
-      // 3. Term ledgers (Term 1 & Term 2)
-      const allTerms = [
-        { name: 'Term 1', dueDate: '2026-06-15' },
-        { name: 'Term 2', dueDate: '2026-10-15' }
-      ];
-      const terms = startIndex > 5 ? [allTerms[1]] : allTerms;
-      for (const t of terms) {
-        ledgersToCreate.push({
-          studentId: student._id,
-          feePeriod: t.name,
-          feeType: 'TERM',
-          totalAmount: termAmount,
-          paidAmount: 0,
-          concessionAmount: isRTE ? termAmount : 0,
-          remainingAmount: isRTE ? 0 : termAmount,
-          dueDate: new Date(t.dueDate),
-          status: isRTE ? 'PAID' : 'PENDING',
-          feeCategoryId: termCategory._id,
-          academicYear: '2025-26',
-          source: 'MANUAL',
-          generatedFrom: 'FEE_STRUCTURE',
-          ledgerNumber: `LEDGER_TRM_${t.name.replace(' ', '').toUpperCase()}_${student.studentCode || student._id}`,
-          snapshot: {
-            studentName: student.studentName,
-            medium: student.medium,
-            standard: student.standard,
-            division: student.division,
-            transportType: student.transportType || 'None',
-            isRTE: isRTE
-          }
-        });
-      }
-
-      // 4. Admission ledger & 5. Bag & Kit ledger (only for new admissions)
-      if (student.isNewAdmission) {
-        ledgersToCreate.push({
-          studentId: student._id,
-          feePeriod: 'One-time',
-          feeType: 'ADMISSION',
-          totalAmount: admissionAmount,
-          paidAmount: 0,
-          concessionAmount: 0,
-          remainingAmount: admissionAmount,
-          dueDate: new Date('2026-06-15'),
-          status: 'PENDING',
-          feeCategoryId: admissionCategory._id,
-          academicYear: '2025-26',
-          source: 'MANUAL',
-          generatedFrom: 'FEE_STRUCTURE',
-          ledgerNumber: `LEDGER_ADM_${student.studentCode || student._id}`,
-          snapshot: {
-            studentName: student.studentName,
-            medium: student.medium,
-            standard: student.standard,
-            division: student.division,
-            transportType: student.transportType || 'None',
-            isRTE: isRTE
-          }
-        });
-
-        ledgersToCreate.push({
-          studentId: student._id,
-          feePeriod: 'One-time',
-          feeType: 'BAG_KIT',
-          totalAmount: bagKitAmount,
-          paidAmount: 0,
-          concessionAmount: 0,
-          remainingAmount: bagKitAmount,
-          dueDate: new Date('2026-06-15'),
-          status: 'PENDING',
-          feeCategoryId: bagKitCategory._id,
-          academicYear: '2025-26',
-          source: 'MANUAL',
-          generatedFrom: 'FEE_STRUCTURE',
-          ledgerNumber: `LEDGER_BAG_${student.studentCode || student._id}`,
-          snapshot: {
-            studentName: student.studentName,
-            medium: student.medium,
-            standard: student.standard,
-            division: student.division,
-            transportType: student.transportType || 'None',
-            isRTE: isRTE
-          }
-        });
-      }
-
 
       await mongoose.model('StudentFeeLedger').insertMany(ledgersToCreate, { session });
 
