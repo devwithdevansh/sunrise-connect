@@ -771,6 +771,11 @@ export const CollectFee: React.FC = () => {
                 const cat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
                 return !getLedger(cat, item.value);
               });
+              const hasMismatch = configToCheck.some(item => {
+                const cat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
+                const l = getLedger(cat, item.value);
+                return l && l.status === 'PENDING' && !selectedStudent.isRTE && l.totalAmount !== getStandardAmount(cat, item.value);
+              });
               // For transport, skip showing the grid entirely if no transport AND no mid-year ledgers
               const skipTransportGrid = feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0;
 
@@ -807,11 +812,13 @@ export const CollectFee: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Missing ledgers warning + fix button */}
-                  {hasMissing && !skipTransportGrid && (
+                  {/* Missing ledgers or mismatch warning + fix button */}
+                  {(hasMissing || hasMismatch) && !skipTransportGrid && (
                     <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
                       <span className="text-xs font-semibold text-amber-700">
-                        ⚠ Some fee entries are missing for this student. Click "Generate" to create them.
+                        {hasMissing && hasMismatch ? '⚠ Missing fee entries and mismatched amounts detected. Click "Sync" to fix.' :
+                         hasMissing ? '⚠ Some fee entries are missing for this student. Click "Generate" to create them.' :
+                         '⚠ Fee amounts do not match the active fee structure. Click "Sync" to update pending fees.'}
                       </span>
                       <button
                         type="button"
@@ -821,16 +828,16 @@ export const CollectFee: React.FC = () => {
                           const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
                           setIsRegenerating(false);
                           if (ok) {
-                            setSuccessMsg('✓ Missing ledgers generated successfully. You can now collect fees.');
+                            setSuccessMsg('✓ Ledgers synced successfully. You can now collect fees.');
                             setTimeout(() => setSuccessMsg(''), 4000);
                           } else {
-                            setSuccessMsg('⚠ Failed to generate ledgers. Please try again.');
+                            setSuccessMsg('⚠ Failed to sync ledgers. Please try again.');
                             setTimeout(() => setSuccessMsg(''), 5000);
                           }
                         }}
                         className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
                       >
-                        {isRegenerating ? 'Generating...' : 'Generate Missing Ledgers'}
+                        {isRegenerating ? 'Syncing...' : (hasMissing && !hasMismatch ? 'Generate Missing Ledgers' : 'Sync Fee Amounts')}
                       </button>
                     </div>
                   )}
@@ -949,6 +956,39 @@ export const CollectFee: React.FC = () => {
                     {feeCategory === 'ADMISSION' ? 'Admission' : 'Bag & Kit'} fee has already been paid for this student.
                   </div>
                 )}
+                {/* Mismatch warning + sync for one-time fees */}
+                {(() => {
+                  const ledger = getLedger(feeCategory, 'One-time');
+                  const stdAmt = getStandardAmount(feeCategory, 'One-time');
+                  const hasAdmMismatch = ledger && ledger.status !== 'PAID' && stdAmt > 0 && ledger.totalAmount !== stdAmt;
+                  if (!hasAdmMismatch) return null;
+                  return (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-amber-700">
+                        ⚠ Fee amount in ledger (₹{ledger!.totalAmount.toLocaleString('en-IN')}) doesn't match fee structure (₹{stdAmt.toLocaleString('en-IN')}). Click "Sync" to update.
+                      </span>
+                      <button
+                        type="button"
+                        disabled={isRegenerating}
+                        onClick={async () => {
+                          setIsRegenerating(true);
+                          const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
+                          setIsRegenerating(false);
+                          if (ok) {
+                            setSuccessMsg('✓ Ledgers synced successfully.');
+                            setTimeout(() => setSuccessMsg(''), 4000);
+                          } else {
+                            setSuccessMsg('⚠ Failed to sync ledgers. Please try again.');
+                            setTimeout(() => setSuccessMsg(''), 5000);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
+                      >
+                        {isRegenerating ? 'Syncing...' : 'Sync Fee Amount'}
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 <div className={`border rounded-xl p-5 border-l-4 ${feeCategory === 'ADMISSION'
                     ? 'border-orange-100 bg-orange-50/50 border-l-orange-500'
@@ -1001,14 +1041,14 @@ export const CollectFee: React.FC = () => {
             {feeCategory === 'OTHER' && (
               <div className="space-y-4">
                 {ledgerEntries
-                  .filter(l => l.studentId === selectedStudent.id && l.feeType === 'OTHER')
+                  .filter(l => (l.studentId === selectedStudent._id || l.studentId === selectedStudent.id) && l.feeType === 'OTHER')
                   .length === 0 ? (
                   <div className="bg-slate-50 border border-slate-200 text-slate-500 p-6 rounded-xl text-center text-sm font-bold">
                     No custom fees found for this student. Click "+ Add Custom Fee" to create one.
                   </div>
                 ) : (
                   ledgerEntries
-                    .filter(l => l.studentId === selectedStudent.id && l.feeType === 'OTHER')
+                    .filter(l => (l.studentId === selectedStudent._id || l.studentId === selectedStudent.id) && l.feeType === 'OTHER')
                     .map(ledger => {
                       const isPaid = ledger.status === 'PAID';
                       const isSelected = selectedFees.some(f => f.category === 'OTHER' && f.period === ledger.feePeriod);

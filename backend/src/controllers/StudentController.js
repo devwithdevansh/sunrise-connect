@@ -46,7 +46,7 @@ class StudentController {
   /** POST /api/v1/students/:id/regenerate-ledgers */
   static regenerateLedgers = catchAsync(async (req, res) => {
     const result = await StudentService.regenerateMissingLedgers(req.params.id);
-    sendResponse(res, 200, result, `Regenerated ${result.created} missing ledgers`);
+    sendResponse(res, 200, result, `Synced ledgers: ${result.created} created, ${result.updated} updated`);
   });
 
   /** POST /api/v1/students/:id/custom-fee */

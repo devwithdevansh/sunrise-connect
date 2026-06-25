@@ -153,24 +153,19 @@ class StudentService {
         null,
         { session }
       );
-      // Derive per-part amounts from annualFee
-      const eduPartCount = feeStruct?.educationPartCount || 12;
-      const termPartCount = feeStruct?.termPartCount || 2;
-      const annualFee = feeStruct?.annualFee || (student.medium === 'English' ? 36000 : 30000);
-      const totalParts = eduPartCount + termPartCount; // 12 + 2 = 14 parts
-      const eduAmount = Math.round(annualFee / totalParts);
+      // Derive per-part amounts strictly from FeeStructure DB values.
+      // If no FeeStructure is found for this medium+standard, all amounts default to 0.
+      // The admin MUST configure a FeeStructure before adding students.
+      const eduPartCount = feeStruct?.educationPartCount ?? 12;
+      const termPartCount = feeStruct?.termPartCount ?? 2;
+      const annualFee = feeStruct?.annualFee ?? 0;
+      const totalParts = (eduPartCount + termPartCount) || 14; // guard against 0
+      const eduAmount = annualFee > 0 ? Math.round(annualFee / totalParts) : 0;
 
-      const termAmount = (feeStruct?.termFee !== undefined && feeStruct?.termFee > 0)
-        ? feeStruct.termFee
-        : Math.round(annualFee / totalParts);
-
-      const admissionAmount = (feeStruct?.admissionFee !== undefined && feeStruct?.admissionFee > 0)
-        ? feeStruct.admissionFee
-        : Math.round(annualFee * 0.07);
-
-      const bagKitAmount = (feeStruct?.bagKitFee !== undefined && feeStruct?.bagKitFee > 0)
-        ? feeStruct.bagKitFee
-        : Math.round(annualFee * 0.05);
+      // Use the exact DB value — 0 is a valid admin-set amount, never override with a percentage
+      const termAmount = feeStruct?.termFee ?? 0;
+      const admissionAmount = feeStruct?.admissionFee ?? 0;
+      const bagKitAmount = feeStruct?.bagKitFee ?? 0;
 
       // --- Fetch transport amount from TransportFeeStructure ---
       let transportAmount = 0;
@@ -798,6 +793,27 @@ class StudentService {
 
       const ledgersToCreate = [];
       let created = 0;
+      let updated = 0;
+
+      const updateLedgerIfNeeded = async (feeType, feePeriod, newAmount) => {
+        const ledger = existingLedgers.find(l => l.feeType === feeType && l.feePeriod === feePeriod);
+        if (ledger && ledger.status !== 'PAID' && !isRTE) {
+          if (ledger.totalAmount !== newAmount) {
+            const paidSoFar = ledger.paidAmount || 0;
+            ledger.totalAmount = newAmount;
+            ledger.remainingAmount = Math.max(0, newAmount - paidSoFar - (ledger.concessionAmount || 0));
+            if (ledger.remainingAmount === 0 && paidSoFar > 0) {
+              ledger.status = 'PAID';
+            } else if (paidSoFar > 0) {
+              ledger.status = 'PARTIAL';
+            } else {
+              ledger.status = 'PENDING';
+            }
+            await ledger.save({ session });
+            updated++;
+          }
+        }
+      };
 
       // 1. Education ledgers (12 months)
       if (educationCategory) {
@@ -820,6 +836,8 @@ class StudentService {
               ledgerNumber: `LEDGER_EDU_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
               snapshot
             });
+          } else {
+            await updateLedgerIfNeeded('EDUCATION', m.name, educationAmount);
           }
         }
       }
@@ -845,6 +863,8 @@ class StudentService {
               ledgerNumber: `LEDGER_TRA_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
               snapshot
             });
+          } else {
+            await updateLedgerIfNeeded('TRANSPORT', m.name, transportAmount);
           }
         }
       }
@@ -870,6 +890,8 @@ class StudentService {
               ledgerNumber: `LEDGER_TRM_${t.name.replace(' ', '').toUpperCase()}_${student.studentCode || student._id}`,
               snapshot
             });
+          } else {
+            await updateLedgerIfNeeded('TERM', t.name, termAmount);
           }
         }
       }
@@ -895,6 +917,9 @@ class StudentService {
             ledgerNumber: `LEDGER_ADM_${student.studentCode || student._id}`,
             snapshot
           });
+        } else if (admissionCategory) {
+          await updateLedgerIfNeeded('ADMISSION', 'One-time', admissionAmount);
+          await updateLedgerIfNeeded('ADMISSION', 'Admission', admissionAmount);
         }
 
         if (bagKitCategory && !existingKey('BAG_KIT', 'One-time') && !existingKey('BAG_KIT', 'Bag & Kit')) {
@@ -915,6 +940,9 @@ class StudentService {
             ledgerNumber: `LEDGER_BAG_${student.studentCode || student._id}`,
             snapshot
           });
+        } else if (bagKitCategory) {
+          await updateLedgerIfNeeded('BAG_KIT', 'One-time', bagKitAmount);
+          await updateLedgerIfNeeded('BAG_KIT', 'Bag & Kit', bagKitAmount);
         }
       }
 
@@ -924,12 +952,12 @@ class StudentService {
       }
 
       await AuditService.log(
-        { performedBy: null, targetStudentId: studentId, action: 'LEDGER_CREATED', details: { type: 'REGENERATE_MISSING', count: created } },
+        { performedBy: null, targetStudentId: studentId, action: 'LEDGER_CREATED', details: { type: 'REGENERATE_MISSING', count: created, updated } },
         session
       );
 
       await session.commitTransaction();
-      return { created, studentId };
+      return { created, updated, studentId };
     } catch (e) {
       await session.abortTransaction();
       logger.error('StudentService.regenerateMissingLedgers error', e);
