@@ -1,5 +1,7 @@
 import React from 'react';
 import type { PaymentTransaction } from '../mockData';
+import logoPath from '../assets/sunrise-logo.png';
+import watermarkLogoPath from '../assets/sunrise-round-logo.png';
 
 interface PrintReceiptProps {
   transaction: PaymentTransaction | null;
@@ -24,50 +26,30 @@ function toIndianWords(num: number): string {
       : ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + below100(n % 100) : '');
 
   let result = '';
-  const crore = Math.floor(num / 10_000_000); num %= 10_000_000;
-  const lakh = Math.floor(num / 100_000); num %= 100_000;
-  const thousand = Math.floor(num / 1_000); num %= 1_000;
+  let n = num;
+  const crore = Math.floor(n / 10_000_000); n %= 10_000_000;
+  const lakh = Math.floor(n / 100_000); n %= 100_000;
+  const thousand = Math.floor(n / 1_000); n %= 1_000;
 
   if (crore) result += below1000(crore) + ' Crore ';
   if (lakh) result += below1000(lakh) + ' Lakh ';
   if (thousand) result += below1000(thousand) + ' Thousand ';
-  if (num) result += below1000(num);
+  if (n) result += below1000(n);
 
   return result.trim();
 }
 
-/* ─── Payment-mode config (Cash vs Online + any future types) ───── */
+/* ─── Payment-mode label ─────────────────────────────────────────── */
 type PaymentMode = 'cash' | 'online' | 'cheque' | 'upi' | 'neft' | string;
 
-interface ModeStyle {
-  label: string;
-  color: string;
-  border: string;
-  badgeBg: string;
-}
-
-function getModeStyle(method: PaymentMode): ModeStyle {
+function getModeLabel(method: PaymentMode): string {
   const m = (method || '').toLowerCase();
-  if (m === 'cash') return {
-    label: 'Cash',
-    color: '#166534', border: '#bbf7d0', badgeBg: '#dcfce7',
-  };
-  if (m === 'online' || m === 'upi') return {
-    label: m === 'upi' ? 'UPI / Online' : 'Online',
-    color: '#1d4ed8', border: '#bfdbfe', badgeBg: '#dbeafe',
-  };
-  if (m === 'cheque') return {
-    label: 'Cheque',
-    color: '#854d0e', border: '#fde68a', badgeBg: '#fef9c3',
-  };
-  if (m === 'neft' || m === 'rtgs' || m === 'imps') return {
-    label: m.toUpperCase(),
-    color: '#5b21b6', border: '#ddd6fe', badgeBg: '#ede9fe',
-  };
-  return {
-    label: method ? method.charAt(0).toUpperCase() + method.slice(1) : 'N/A',
-    color: '#334155', border: '#cbd5e1', badgeBg: '#f1f5f9',
-  };
+  if (m === 'cash') return 'Cash';
+  if (m === 'upi') return 'UPI / Online';
+  if (m === 'online') return 'Online';
+  if (m === 'cheque') return 'Cheque';
+  if (m === 'neft' || m === 'rtgs' || m === 'imps') return m.toUpperCase();
+  return method ? method.charAt(0).toUpperCase() + method.slice(1) : 'N/A';
 }
 
 /* ─── Component ─────────────────────────────────────────────────── */
@@ -75,8 +57,8 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
   if (!transaction) return null;
 
   const totalAmount = Math.abs(transaction.amount);
-  const amountInWords = `Rupees ${toIndianWords(totalAmount)} Only`;
-  const mode = getModeStyle(transaction.method || '');
+  const amountInWords = `${toIndianWords(totalAmount)} Rupees Only`;
+  const modeLabel = getModeLabel(transaction.method || '');
 
   /* Build period string from subItems */
   const period = (() => {
@@ -89,243 +71,446 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
     return transaction.feeType || '—';
   })();
 
-  const metaRows = [
-    { label: 'Receipt No.', value: (transaction.id?.slice(-16).toUpperCase() || 'N/A'), mono: true },
+  const metaRows: { label: string; value: string }[] = [
+    { label: 'Receipt No.', value: (transaction.id?.slice(-16).toUpperCase() || 'N/A') },
     { label: 'Student Name', value: transaction.studentName },
-    ...(transaction.studentCode ? [{ label: 'Student Code', value: transaction.studentCode, mono: true }] : []),
+    ...(transaction.studentCode ? [{ label: 'Student Code', value: transaction.studentCode }] : []),
     ...(transaction.classInfo ? [{ label: 'Class', value: transaction.classInfo }] : []),
     { label: 'Period', value: period },
     {
       label: 'Payment Date',
       value: `${transaction.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })},  ${transaction.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`,
     },
-    { label: 'Payment Mode', value: '__MODE_BADGE__' },   // sentinel → replaced by badge
+    { label: 'Payment Mode', value: modeLabel },
   ];
 
-  /* ── Inline styles (no Tailwind needed in print) ── */
+  /* ── Print-only page style injected once ── */
+  const printPageStyle = `
+    @media print {
+      @page {
+        size: A4;
+        margin: 0;
+      }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  `;
+
+  /* ── Inline styles ── */
   const S = {
     page: {
-      width: '100%', maxWidth: '800px', margin: '0 auto',
-      padding: '36px 44px 28px',
-      backgroundColor: '#ffffff', color: '#1a1a2e',
+      width: '210mm',
+      minHeight: '297mm',
+      maxHeight: '297mm',
+      margin: '0 auto',
+      padding: '80px 36px 20px',
+      backgroundColor: '#ffffff',
+      color: '#1a1a2e',
       fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-      fontSize: '13px', lineHeight: 1.5,
+      fontSize: '12px',
+      lineHeight: 1.45,
+      boxSizing: 'border-box' as const,
+      overflow: 'hidden',
+      position: 'relative' as const,
     } as React.CSSProperties,
 
-    headerRow: { display: 'flex', alignItems: 'flex-start', gap: '18px', marginBottom: '14px' } as React.CSSProperties,
+    /* Header */
+    headerRow: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '18px',
+      marginBottom: '10px',
+    } as React.CSSProperties,
 
     logoCircle: {
-      width: '76px', height: '76px', borderRadius: '50%',
-      border: '3px solid #1b3a6b', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+      width: '210px',
+      // height: '210px',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     } as React.CSSProperties,
 
-    schoolName: { fontSize: '28px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '0.4px' } as React.CSSProperties,
-    schoolMedium: { fontSize: '13px', fontWeight: 700, color: '#e8a020', marginTop: '1px' } as React.CSSProperties,
-    schoolAddr: { fontSize: '12px', color: '#555', marginTop: '3px' } as React.CSSProperties,
-
-    ruleGold: { height: '4px', backgroundColor: '#e8a020', marginBottom: '3px' } as React.CSSProperties,
-    ruleNavy: { height: '2px', backgroundColor: '#1b3a6b', marginBottom: '22px' } as React.CSSProperties,
-
-    titleBar: {
-      backgroundColor: '#1b3a6b', color: '#fff',
-      textAlign: 'center' as const, padding: '11px 0',
-      fontSize: '16px', fontWeight: 700, letterSpacing: '2.5px',
-      marginBottom: '24px',
+    schoolName: {
+      fontSize: '26px',
+      fontWeight: 800,
+      color: '#1b3a6b',
+      letterSpacing: '0.5px',
+      lineHeight: 1.1,
     } as React.CSSProperties,
 
-    metaTable: { width: '100%', borderCollapse: 'collapse' as const, marginBottom: '24px' } as React.CSSProperties,
-
-    modeBadge: {
-      display: 'inline-block',
-      padding: '2px 10px', borderRadius: '20px',
-      backgroundColor: mode.badgeBg, color: mode.color,
-      border: `1.5px solid ${mode.border}`,
-      fontWeight: 700, fontSize: '12px',
+    schoolMedium: {
+      fontSize: '12.5px',
+      fontWeight: 700,
+      color: '#d08c16ff',
+      marginTop: '2px',
     } as React.CSSProperties,
 
-    feeTable: { width: '100%', borderCollapse: 'collapse' as const, marginBottom: '6px' } as React.CSSProperties,
+    schoolAddr: {
+      fontSize: '11.5px',
+      color: '#555',
+      marginTop: '2px',
+    } as React.CSSProperties,
 
-    thCell: (align: 'left' | 'right' = 'left'): React.CSSProperties => ({
-      padding: '10px 14px', textAlign: align,
-      fontSize: '13px', fontWeight: 700, color: '#fff',
+    /* Dividers */
+    ruleGold: {
+      height: '4px',
+      backgroundColor: '#e8a020',
+      marginBottom: '3px',
+    } as React.CSSProperties,
+
+    ruleNavy: {
+      height: '2px',
       backgroundColor: '#1b3a6b',
-    }),
+      marginBottom: '16px',
+    } as React.CSSProperties,
 
-    tdNum: { padding: '9px 14px', color: '#444', fontSize: '13px', width: '42px' } as React.CSSProperties,
-    tdDesc: { padding: '9px 14px', color: '#333', fontSize: '13px' } as React.CSSProperties,
-    tdAmt: { padding: '9px 14px', textAlign: 'right' as const, color: '#333', fontSize: '13px', fontWeight: 600 } as React.CSSProperties,
+    /* Title bar */
+    titleBar: {
+      backgroundColor: '#1b3a6b',
+      color: '#fff',
+      textAlign: 'center' as const,
+      padding: '10px 0',
+      fontSize: '16px',
+      fontWeight: 700,
+      letterSpacing: '3px',
+      marginBottom: '18px',
+    } as React.CSSProperties,
 
-    totalRow: { backgroundColor: '#1b3a6b', color: '#fff' } as React.CSSProperties,
-    totalLabel: { padding: '12px 14px', fontWeight: 800, fontSize: '14px', letterSpacing: '1px' } as React.CSSProperties,
-    totalAmt: { padding: '12px 14px', textAlign: 'right' as const, fontWeight: 800, fontSize: '17px' } as React.CSSProperties,
+    /* Meta table */
+    metaTable: {
+      width: '100%',
+      borderCollapse: 'collapse' as const,
+      marginBottom: '18px',
+    } as React.CSSProperties,
 
-    words: { marginBottom: '32px', fontSize: '12.5px', color: '#333', marginTop: '10px' } as React.CSSProperties,
+    metaTdLabel: {
+      padding: '7px 12px',
+      fontWeight: 700,
+      color: '#1b3a6b',
+      width: '160px',
+      fontSize: '12px',
+      whiteSpace: 'nowrap' as const,
+    } as React.CSSProperties,
 
-    sigRow: { display: 'flex', justifyContent: 'space-between', marginTop: '4px' } as React.CSSProperties,
-    sigBox: { textAlign: 'center' as const } as React.CSSProperties,
-    sigLine: { width: '160px', borderTop: '1px solid #aaa', paddingTop: '5px', margin: '0 auto' } as React.CSSProperties,
-    sigLabel: { fontSize: '11px', color: '#555', marginTop: '2px' } as React.CSSProperties,
+    metaTdColon: {
+      padding: '7px 4px',
+      fontWeight: 700,
+      color: '#555',
+      width: '12px',
+    } as React.CSSProperties,
 
+    metaTdValue: {
+      padding: '7px 12px',
+      color: '#333',
+      fontSize: '12px',
+      fontWeight: 600,
+    } as React.CSSProperties,
+
+    /* Payment details section header */
+    sectionHeader: {
+      color: '#1b3a6b',
+      fontWeight: 800,
+      fontSize: '12.5px',
+      letterSpacing: '0.5px',
+      marginBottom: '6px',
+      borderBottom: '2px solid #1b3a6b',
+      paddingBottom: '4px',
+    } as React.CSSProperties,
+
+    /* Fee table */
+    feeTable: {
+      width: '100%',
+      borderCollapse: 'collapse' as const,
+      marginBottom: '6px',
+    } as React.CSSProperties,
+
+    thLeft: {
+      padding: '9px 12px',
+      textAlign: 'left' as const,
+      fontSize: '12px',
+      fontWeight: 700,
+      color: '#fff',
+      backgroundColor: '#516f9eff',
+    } as React.CSSProperties,
+
+    thRight: {
+      padding: '9px 12px',
+      textAlign: 'right' as const,
+      fontSize: '12px',
+      fontWeight: 700,
+      color: '#fff',
+      backgroundColor: '#516f9eff',
+    } as React.CSSProperties,
+
+    tdNum: {
+      padding: '8px 12px',
+      color: '#444',
+      fontSize: '12px',
+      width: '36px',
+    } as React.CSSProperties,
+
+    tdDesc: {
+      padding: '8px 12px',
+      color: '#333',
+      fontSize: '12px',
+    } as React.CSSProperties,
+
+    tdAmt: {
+      padding: '8px 12px',
+      textAlign: 'right' as const,
+      color: '#333',
+      fontSize: '12px',
+      fontWeight: 600,
+    } as React.CSSProperties,
+
+    totalRow: {
+      backgroundColor: '#1b3a6b',
+      color: '#fff',
+    } as React.CSSProperties,
+
+    totalLabel: {
+      padding: '10px 12px',
+      fontWeight: 800,
+      fontSize: '13px',
+      letterSpacing: '1px',
+      color: '#fff',
+    } as React.CSSProperties,
+
+    totalAmt: {
+      padding: '10px 12px',
+      textAlign: 'right' as const,
+      fontWeight: 800,
+      fontSize: '15px',
+      color: '#fff',
+    } as React.CSSProperties,
+
+    /* Amount in words */
+    words: {
+      margin: '10px 0 20px',
+      fontSize: '12px',
+      color: '#333',
+    } as React.CSSProperties,
+
+    /* Signatures */
+    sigRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      marginTop: '6px',
+      marginBottom: '18px',
+    } as React.CSSProperties,
+
+    sigLeft: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '0',
+    } as React.CSSProperties,
+
+    sigReceivedBy: {
+      fontSize: '11px',
+      color: '#555',
+      marginBottom: '28px',
+    } as React.CSSProperties,
+
+    sigLine: {
+      width: '170px',
+      borderTop: '1.5px solid #888',
+      paddingTop: '4px',
+    } as React.CSSProperties,
+
+    sigLineLabel: {
+      fontSize: '11px',
+      color: '#444',
+      fontWeight: 600,
+      marginTop: '2px',
+    } as React.CSSProperties,
+
+    stampBox: {
+      width: '160px',
+      height: '70px',
+      border: '1.5px solid #bbb',
+      borderRadius: '4px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    } as React.CSSProperties,
+
+    stampLabel: {
+      fontSize: '11px',
+      color: '#aaa',
+      fontStyle: 'italic' as const,
+    } as React.CSSProperties,
+
+    stampTitle: {
+      fontSize: '11px',
+      color: '#555',
+      marginBottom: '6px',
+    } as React.CSSProperties,
+
+    /* Footer */
     footer: {
-      marginTop: '26px', borderLeft: '4px solid #e8a020',
-      padding: '9px 14px', backgroundColor: '#fffaf0',
-      fontSize: '11px', color: '#666', fontStyle: 'italic' as const,
+      borderLeft: '4px solid #e8a020',
+      padding: '8px 12px',
+      backgroundColor: '#fffaf0',
+      fontSize: '10.5px',
+      color: '#666',
+      fontStyle: 'italic' as const,
     } as React.CSSProperties,
   };
 
   return (
-    <div className="hidden print:block" style={S.page}>
+    <>
+      {/* Inject print page styles */}
+      <style dangerouslySetInnerHTML={{ __html: printPageStyle }} />
 
-      {/* ── HEADER ── */}
-      <div style={S.headerRow}>
-        <div style={S.logoCircle}>
-          <span style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', textAlign: 'center', lineHeight: 1.3 }}>
-            SUNRISE<br />SCHOOL
-          </span>
+      <div className="hidden print:block" style={S.page}>
+
+        {/* ── WATERMARK ── */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: 0.14,
+          pointerEvents: 'none',
+          zIndex: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <img src={watermarkLogoPath} alt="Watermark" style={{ width: '450px', height: 'auto', objectFit: 'contain' }} />
         </div>
-        <div>
-          <div style={S.schoolName}>SUNRISE SCHOOL</div>
-          <div style={S.schoolMedium}>English &amp; Gujarati Medium</div>
-          <div style={S.schoolAddr}>Railnagar, Rajkot, Gujarat</div>
-          <div style={S.schoolAddr}>Ph: +91 XXXXX XXXXX &nbsp;|&nbsp; Email: info@sunriseschool.in</div>
+
+        {/* ── HEADER ── */}
+        <div style={S.headerRow}>
+          {/* Logo */}
+          <div style={S.logoCircle}>
+            <img src={logoPath} alt="Sunrise School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+
+          <div>
+            {/* <div style={S.schoolName}>SUNRISE SCHOOL</div> */}
+            <div style={S.schoolMedium}>English &amp; Gujarati Medium</div>
+            <div style={S.schoolAddr}>Railnagar, Rajkot, Gujarat</div>
+            <div style={S.schoolAddr}>Ph: +91 XXXXX XXXXX &nbsp;|&nbsp; Email: info@sunriseschool.in</div>
+          </div>
         </div>
-      </div>
 
-      {/* ── DIVIDER ── */}
-      <div style={S.ruleGold} />
-      <div style={S.ruleNavy} />
+        {/* ── DIVIDERS ── */}
+        <div style={S.ruleGold} />
+        <div style={S.ruleNavy} />
 
-      {/* ── TITLE BAR ── */}
-      <div style={S.titleBar}>PAYMENT RECEIPT</div>
+        {/* ── TITLE BAR ── */}
+        <div style={S.titleBar}>PAYMENT RECEIPT</div>
 
-      {/* ── META INFO TABLE ── */}
-      <table style={S.metaTable}>
-        <tbody>
-          {metaRows.map((row, i) => (
-            <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#f0f4fb' : '#ffffff' }}>
-              <td style={{ padding: '8px 14px', fontWeight: 700, color: '#1b3a6b', width: '170px', fontSize: '13px', whiteSpace: 'nowrap' }}>
-                {row.label}
-              </td>
-              <td style={{ padding: '8px 4px', fontWeight: 700, color: '#555', width: '14px' }}>:</td>
-              <td style={{ padding: '8px 14px', color: '#333', fontSize: '13px', fontFamily: (row as any).mono ? 'monospace' : 'inherit' }}>
-                {row.value === '__MODE_BADGE__' ? (
-                  <span style={S.modeBadge}>{mode.label}</span>
-                ) : row.value}
-              </td>
+        {/* ── META INFO TABLE ── */}
+        <table style={S.metaTable}>
+          <tbody>
+            {metaRows.map((row, i) => (
+              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
+                <td style={S.metaTdLabel}>{row.label}</td>
+                <td style={S.metaTdColon}>:</td>
+                <td style={S.metaTdValue}>{row.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* ── PAYMENT DETAILS SECTION HEADER ── */}
+        <div style={S.sectionHeader}>PAYMENT DETAILS</div>
+
+        {/* ── FEE TABLE ── */}
+        <table style={S.feeTable}>
+          <thead>
+            <tr>
+              <th style={{ ...S.thLeft, width: '36px' }}>#</th>
+              <th style={S.thLeft}>Description</th>
+              <th style={S.thLeft}>Mode</th>
+              <th style={S.thRight}>Amount (₹)</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* ── FEE TABLE ── */}
-      <table style={S.feeTable}>
-        <thead>
-          <tr>
-            <th style={S.thCell('left')}>#</th>
-            <th style={S.thCell('left')}>Description</th>
-            <th style={S.thCell('left')}>Mode</th>
-            <th style={S.thCell('right')}>Amount (₹)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transaction.subItems && transaction.subItems.length > 0 ? (
-            transaction.subItems.map((item, i) => {
-              const itemMode = getModeStyle(item.method || transaction.method || '');
-              return (
-                <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#f7f9fd' : '#ffffff', borderBottom: '1px solid #e4eaf4' }}>
+          </thead>
+          <tbody>
+            {transaction.subItems && transaction.subItems.length > 0 ? (
+              transaction.subItems.map((item, i) => (
+                <tr
+                  key={i}
+                  style={{
+                    backgroundColor: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
+                    borderBottom: '1px solid #e4eaf4',
+                  }}
+                >
                   <td style={S.tdNum}>{i + 1}</td>
                   <td style={S.tdDesc}>
                     {item.description}
                     {item.concessionAmount > 0 && (
-                      <span style={{ color: '#e8a020', fontSize: '11px', marginLeft: '8px', fontWeight: 600 }}>
+                      <span style={{ color: '#e8a020', fontSize: '10.5px', marginLeft: '8px', fontWeight: 600 }}>
                         (−₹{item.concessionAmount.toLocaleString('en-IN')} concession)
                       </span>
                     )}
                   </td>
-                  <td style={S.tdDesc}>
-                    <span style={{
-                      display: 'inline-block', padding: '1px 9px', borderRadius: '20px',
-                      backgroundColor: itemMode.badgeBg, color: itemMode.color,
-                      border: `1px solid ${itemMode.border}`,
-                      fontWeight: 700, fontSize: '11px', whiteSpace: 'nowrap',
-                    }}>
-                      {itemMode.label}
-                    </span>
-                  </td>
+                  <td style={S.tdDesc}>{getModeLabel(item.method || transaction.method || '')}</td>
                   <td style={S.tdAmt}>{Math.abs(item.amount).toLocaleString('en-IN')}</td>
                 </tr>
-              );
-            })
-          ) : (
-            <tr style={{ backgroundColor: '#f7f9fd', borderBottom: '1px solid #e4eaf4' }}>
-              <td style={S.tdNum}>1</td>
-              <td style={S.tdDesc}>{transaction.feeType || 'Fee Collection'}</td>
-              <td style={S.tdDesc}>
-                <span style={{
-                  display: 'inline-block', padding: '1px 9px', borderRadius: '20px',
-                  backgroundColor: mode.badgeBg, color: mode.color,
-                  border: `1px solid ${mode.border}`,
-                  fontWeight: 700, fontSize: '11px',
-                }}>
-                  {mode.label}
-                </span>
-              </td>
-              <td style={S.tdAmt}>{totalAmount.toLocaleString('en-IN')}</td>
+              ))
+            ) : (
+              <tr style={{ backgroundColor: 'rgba(0,0,0,0.02)', borderBottom: '1px solid #e4eaf4' }}>
+                <td style={S.tdNum}>1</td>
+                <td style={S.tdDesc}>{transaction.feeType || 'Fee Collection'}</td>
+                <td style={S.tdDesc}>{getModeLabel(transaction.method || '')}</td>
+                <td style={S.tdAmt}>{totalAmount.toLocaleString('en-IN')}</td>
+              </tr>
+            )}
+
+            {/* Top-level concession row */}
+            {!transaction.subItems && transaction.concessionAmount ? (
+              <tr style={{ backgroundColor: 'rgba(232, 160, 32, 0.05)', borderBottom: '1px solid #e4eaf4' }}>
+                <td style={S.tdNum}></td>
+                <td style={{ ...S.tdDesc, color: '#e8a020', fontStyle: 'italic' }}>Concession Applied</td>
+                <td style={S.tdDesc}></td>
+                <td style={{ ...S.tdAmt, color: '#e8a020' }}>
+                  −{transaction.concessionAmount.toLocaleString('en-IN')}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+
+          <tfoot>
+            <tr style={S.totalRow}>
+              <td colSpan={3} style={S.totalLabel}>TOTAL PAID</td>
+              <td style={S.totalAmt}>₹ {totalAmount.toLocaleString('en-IN')}</td>
             </tr>
-          )}
+          </tfoot>
+        </table>
 
-          {/* Top-level concession row */}
-          {!transaction.subItems && transaction.concessionAmount ? (
-            <tr style={{ backgroundColor: '#fff8f0', borderBottom: '1px solid #e4eaf4' }}>
-              <td style={S.tdNum}></td>
-              <td style={{ ...S.tdDesc, color: '#e8a020', fontStyle: 'italic' }}>Concession Applied</td>
-              <td style={S.tdDesc}></td>
-              <td style={{ ...S.tdAmt, color: '#e8a020' }}>
-                −{transaction.concessionAmount.toLocaleString('en-IN')}
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
+        {/* ── AMOUNT IN WORDS ── */}
+        <div style={S.words}>
+          <strong>Amount in Words:</strong>&nbsp;
+          <em>{amountInWords}</em>
+        </div>
 
-        <tfoot>
-          <tr style={S.totalRow}>
-            <td colSpan={3} style={S.totalLabel}>TOTAL PAID</td>
-            <td style={S.totalAmt}>₹ {totalAmount.toLocaleString('en-IN')}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      {/* ── AMOUNT IN WORDS ── */}
-      <div style={S.words}>
-        <strong>Amount in Words:</strong>&nbsp;
-        <em>{amountInWords}</em>
-      </div>
-
-
-
-      {/* ── SIGNATURES ── */}
-      <div style={S.sigRow}>
-        <div style={S.sigBox}>
-          <p style={{ fontSize: '12px', color: '#555', marginBottom: '30px', margin: '0 0 30px 0' }}>Received by:</p>
-          <div style={S.sigLine}>
-            <p style={S.sigLabel}>Authorised Signatory</p>
+        {/* ── SIGNATURES ── */}
+        <div style={{ ...S.sigRow, justifyContent: 'flex-end' }}>
+          {/* Right: Received by + signature line */}
+          <div style={{ ...S.sigLeft, alignItems: 'center' }}>
+            <div style={{ ...S.sigReceivedBy, marginBottom: '40px' }}>Received by:</div>
+            <div style={S.sigLine}>
+              <div style={{ ...S.sigLineLabel, textAlign: 'center' as const }}>Authorised Signatory</div>
+            </div>
           </div>
         </div>
-        <div style={S.sigBox}>
-          <p style={{ fontSize: '12px', color: '#555', marginBottom: '30px', margin: '0 0 30px 0' }}>School Stamp:</p>
-          <div style={S.sigLine}>
-            <p style={S.sigLabel}>Principal / Administrator</p>
-          </div>
+
+        {/* ── FOOTER ── */}
+        <div style={S.footer}>
+          This is a computer-generated receipt and does not require a physical signature.<br />
+          For queries, contact: Sunrise Convent School, Railnagar, Rajkot, Gujarat.
         </div>
-      </div>
 
-      {/* ── FOOTER ── */}
-      <div style={S.footer}>
-        This is a computer-generated receipt and does not require a physical signature.<br />
-        For queries, contact: Sunrise School, Railnagar, Rajkot, Gujarat.
       </div>
-
-    </div>
+    </>
   );
 };
