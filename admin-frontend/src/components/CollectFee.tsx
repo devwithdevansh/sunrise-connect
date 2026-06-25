@@ -9,7 +9,8 @@ import {
   History,
   RotateCcw,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 
 const COMBINED_EDU_TERM_CONFIG = [
@@ -285,6 +286,7 @@ export const CollectFee: React.FC = () => {
   const [bankName, setBankName] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [autoSyncSignature, setAutoSyncSignature] = useState<string>('');
 
   // Custom Fee Modal
   const [isCustomFeeModalOpen, setIsCustomFeeModalOpen] = useState(false);
@@ -641,6 +643,62 @@ export const CollectFee: React.FC = () => {
   };
 
   // -------------------------------------------------------------------
+  // Auto-Sync Mismatched or Missing Ledgers
+  // -------------------------------------------------------------------
+  useEffect(() => {
+    if (!selectedStudent || isRegenerating) return;
+
+    const fs = feeStructures.find(f => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard);
+    const ts = transportFeeStructures.find(t => t.transportType === selectedStudent.transportType);
+    const currentSignature = `${selectedStudent._id || selectedStudent.id}-${JSON.stringify(fs || {})}-${JSON.stringify(ts || {})}`;
+
+    if (autoSyncSignature === currentSignature) return;
+
+    let needsSync = false;
+
+    // Check Education/Term
+    const eduConfig = getApplicablePeriods(COMBINED_EDU_TERM_CONFIG);
+    for (const item of eduConfig) {
+      const entry = getLedger(item.type, item.value);
+      if (!entry) { needsSync = true; break; }
+      if (entry.status === 'PENDING' && !selectedStudent.isRTE && entry.totalAmount !== getStandardAmount(item.type, item.value)) { needsSync = true; break; }
+    }
+
+    // Check Transport
+    if (!needsSync && selectedStudent.transportType !== 'None') {
+      const transConfig = getApplicablePeriods(MONTHS_CONFIG);
+      for (const item of transConfig) {
+        const entry = getLedger('TRANSPORT', item.value);
+        if (!entry) { needsSync = true; break; }
+        if (entry.status === 'PENDING' && !selectedStudent.isRTE && entry.totalAmount !== getStandardAmount('TRANSPORT', item.value)) { needsSync = true; break; }
+      }
+    }
+
+    // Check Admission/Bag Kit
+    if (!needsSync && selectedStudent.isNewAdmission) {
+      for (const cat of ['ADMISSION', 'BAG_KIT']) {
+        const entry = getLedger(cat, 'One-time');
+        const stdAmt = getStandardAmount(cat, 'One-time');
+        if (!entry && stdAmt > 0) { needsSync = true; break; }
+        if (entry && entry.status === 'PENDING' && stdAmt > 0 && entry.totalAmount !== stdAmt) { needsSync = true; break; }
+      }
+    }
+
+    if (needsSync) {
+      setAutoSyncSignature(currentSignature);
+      const doSync = async () => {
+        setIsRegenerating(true);
+        await regenerateLedgers(selectedStudent._id || selectedStudent.id);
+        setIsRegenerating(false);
+      };
+      doSync();
+    } else {
+      setAutoSyncSignature(currentSignature);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStudent, feeStructures, transportFeeStructures, ledgerEntries, isRegenerating, autoSyncSignature]);
+
+  // -------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------
   return (
@@ -776,16 +834,6 @@ export const CollectFee: React.FC = () => {
             {/* ── EDUCATION / TRANSPORT: Full 12-month grid ─────── */}
             {(feeCategory === 'EDUCATION' || feeCategory === 'TRANSPORT') && (() => {
               // Check if this student has missing ledgers for the current tab
-              const configToCheck = getApplicablePeriods(feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG);
-              const hasMissing = configToCheck.some(item => {
-                const cat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
-                return !getLedger(cat, item.value);
-              });
-              const hasMismatch = configToCheck.some(item => {
-                const cat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
-                const l = getLedger(cat, item.value);
-                return l && l.status === 'PENDING' && !selectedStudent.isRTE && l.totalAmount !== getStandardAmount(cat, item.value);
-              });
               // For transport, skip showing the grid entirely if no transport AND no mid-year ledgers
               const skipTransportGrid = feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None' && midYearTransportLedgers.length === 0;
 
@@ -822,33 +870,11 @@ export const CollectFee: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Missing ledgers or mismatch warning + fix button */}
-                  {(hasMissing || hasMismatch) && !skipTransportGrid && (
-                    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-amber-700">
-                        {hasMissing && hasMismatch ? '⚠ Missing fee entries and mismatched amounts detected. Click "Sync" to fix.' :
-                         hasMissing ? '⚠ Some fee entries are missing for this student. Click "Generate" to create them.' :
-                         '⚠ Fee amounts do not match the active fee structure. Click "Sync" to update pending fees.'}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={isRegenerating}
-                        onClick={async () => {
-                          setIsRegenerating(true);
-                          const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
-                          setIsRegenerating(false);
-                          if (ok) {
-                            setSuccessMsg('✓ Ledgers synced successfully. You can now collect fees.');
-                            setTimeout(() => setSuccessMsg(''), 4000);
-                          } else {
-                            setSuccessMsg('⚠ Failed to sync ledgers. Please try again.');
-                            setTimeout(() => setSuccessMsg(''), 5000);
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
-                      >
-                        {isRegenerating ? 'Syncing...' : (hasMissing && !hasMismatch ? 'Generate Missing Ledgers' : 'Sync Fee Amounts')}
-                      </button>
+                  {/* Auto-syncing banner */}
+                  {isRegenerating && !skipTransportGrid && (
+                    <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-blue-700">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-xs font-semibold">Automatically syncing fee amounts...</span>
                     </div>
                   )}
 
@@ -966,39 +992,13 @@ export const CollectFee: React.FC = () => {
                     {feeCategory === 'ADMISSION' ? 'Admission' : 'Bag & Kit'} fee has already been paid for this student.
                   </div>
                 )}
-                {/* Mismatch warning + sync for one-time fees */}
-                {(() => {
-                  const ledger = getLedger(feeCategory, 'One-time');
-                  const stdAmt = getStandardAmount(feeCategory, 'One-time');
-                  const hasAdmMismatch = ledger && ledger.status !== 'PAID' && stdAmt > 0 && ledger.totalAmount !== stdAmt;
-                  if (!hasAdmMismatch) return null;
-                  return (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-amber-700">
-                        ⚠ Fee amount in ledger (₹{ledger!.totalAmount.toLocaleString('en-IN')}) doesn't match fee structure (₹{stdAmt.toLocaleString('en-IN')}). Click "Sync" to update.
-                      </span>
-                      <button
-                        type="button"
-                        disabled={isRegenerating}
-                        onClick={async () => {
-                          setIsRegenerating(true);
-                          const ok = await regenerateLedgers(selectedStudent._id || selectedStudent.id);
-                          setIsRegenerating(false);
-                          if (ok) {
-                            setSuccessMsg('✓ Ledgers synced successfully.');
-                            setTimeout(() => setSuccessMsg(''), 4000);
-                          } else {
-                            setSuccessMsg('⚠ Failed to sync ledgers. Please try again.');
-                            setTimeout(() => setSuccessMsg(''), 5000);
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-50 shrink-0 ml-3"
-                      >
-                        {isRegenerating ? 'Syncing...' : 'Sync Fee Amount'}
-                      </button>
-                    </div>
-                  );
-                })()}
+                {/* Auto-syncing banner for one-time fees */}
+                {isRegenerating && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-blue-700 mb-6">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-xs font-semibold">Automatically syncing fee amounts...</span>
+                  </div>
+                )}
 
                 <div className={`border rounded-xl p-5 border-l-4 ${feeCategory === 'ADMISSION'
                     ? 'border-orange-100 bg-orange-50/50 border-l-orange-500'
