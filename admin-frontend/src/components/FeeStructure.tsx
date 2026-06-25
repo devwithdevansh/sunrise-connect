@@ -469,20 +469,10 @@ export const FeeStructure: React.FC = () => {
     // Calculate monthly education fee based on 14-part division
     const monthlyEdu = totalParts > 0 ? Math.round(annual / totalParts) : 0;
 
-    // Use stored value for term fee, fallback to 1-part amount if not configured/zero
-    const termFee = (structure.termFee !== undefined && structure.termFee > 0)
-      ? structure.termFee
-      : (totalParts > 0 ? Math.round(annual / totalParts) : 0);
-
-    // Use stored value for admission fee, fallback to 7% of annual if not configured/zero
-    const admission = (structure.admissionFee !== undefined && structure.admissionFee > 0)
-      ? structure.admissionFee
-      : Math.round(annual * 0.07);
-
-    // Use stored value for bag & kit fee, fallback to 5% of annual if not configured/zero
-    const bagKit = (structure.bagKitFee !== undefined && structure.bagKitFee > 0)
-      ? structure.bagKitFee
-      : Math.round(annual * 0.05);
+    // Use exact DB values — 0 is a valid admin-set amount
+    const termFee = structure.termFee ?? 0;
+    const admission = structure.admissionFee ?? 0;
+    const bagKit = structure.bagKitFee ?? 0;
 
     return {
       annual,

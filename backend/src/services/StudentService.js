@@ -162,8 +162,12 @@ class StudentService {
       const totalParts = (eduPartCount + termPartCount) || 14; // guard against 0
       const eduAmount = annualFee > 0 ? Math.round(annualFee / totalParts) : 0;
 
-      // Use the exact DB value — 0 is a valid admin-set amount, never override with a percentage
-      const termAmount = feeStruct?.termFee ?? 0;
+      // Term fee: use explicitly stored termFee from DB if > 0;
+      // otherwise fall back to same per-part amount (annualFee / totalParts).
+      // This enforces the 14-part model: 12 education months + 2 term fees = equal shares.
+      const termAmount = (feeStruct?.termFee !== undefined && feeStruct.termFee > 0)
+        ? feeStruct.termFee
+        : eduAmount;
       const admissionAmount = feeStruct?.admissionFee ?? 0;
       const bagKitAmount = feeStruct?.bagKitFee ?? 0;
 
@@ -738,7 +742,10 @@ class StudentService {
         { session }
       );
       const educationAmount = feeStruct ? Math.round(feeStruct.annualFee / ((feeStruct.educationPartCount || 12) + (feeStruct.termPartCount || 2))) : 0;
-      const termAmount = feeStruct?.termFee ?? 0;
+      // Term fee: fall back to same per-part amount if termFee not explicitly set in DB
+      const termAmount = (feeStruct?.termFee !== undefined && feeStruct.termFee > 0)
+        ? feeStruct.termFee
+        : educationAmount;
       const admissionAmount = feeStruct?.admissionFee ?? 0;
       const bagKitAmount = feeStruct?.bagKitFee ?? 0;
 

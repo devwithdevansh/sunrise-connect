@@ -332,10 +332,13 @@ export const CollectFee: React.FC = () => {
     const totalParts = eduParts + termParts; // 14 total parts
 
     // Annual fee divided into totalParts equal parts (e.g., 35000/14 = 2500 per part)
-    const education = totalParts > 0 ? Math.round(annualFee / totalParts) : 0;
+    // Both education months AND term fees are equal shares of the annual fee
+    const perPart = totalParts > 0 ? Math.round(annualFee / totalParts) : 0;
+    const education = perPart;
 
-    // Use stored termFee (set by admin), fallback 0
-    const term = fs?.termFee ?? 0;
+    // Term fee: use the explicitly stored termFee from DB if it's > 0;
+    // otherwise fall back to the same per-part amount (annualFee / totalParts)
+    const term = (fs?.termFee !== undefined && fs.termFee > 0) ? fs.termFee : perPart;
 
     // Use stored admissionFee and bagKitFee (set by admin), fallback 0
     const admission = fs?.admissionFee ?? 0;
@@ -397,13 +400,20 @@ export const CollectFee: React.FC = () => {
     );
   };
 
+  // Standard period values for which we can fall back to the fee structure amount
+  // when no ledger exists yet (months + term slots + one-time slots)
+  const STANDARD_TERM_PERIODS = new Set(['Term 1', 'Term 2']);
+
   /** Amount still due for a period (0 if fully paid or no ledger = fresh) */
   const getDueAmount = (category: string, period: string): number => {
     const entry = getLedger(category, period);
     // For mid-year / one-time entries the ledger IS the source of truth — never fall back to standard amount
     if (!entry) {
-      // Only fall back for standard month slots
-      if (STANDARD_MONTH_PERIODS.has(period) || period === 'One-time') {
+      // Fall back to fee structure amount for:
+      //   • standard monthly slots (June … May)
+      //   • term slots (Term 1, Term 2)
+      //   • one-time slots (Admission / Bag & Kit)
+      if (STANDARD_MONTH_PERIODS.has(period) || STANDARD_TERM_PERIODS.has(period) || period === 'One-time') {
         return getStandardAmount(category, period);
       }
       return 0;
