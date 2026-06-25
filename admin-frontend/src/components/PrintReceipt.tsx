@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PaymentTransaction } from '../mockData';
+import { useApp } from '../store';
 import logoPath from '../assets/sunrise-logo.png';
 import watermarkLogoPath from '../assets/sunrise-round-logo.png';
 
@@ -54,6 +55,8 @@ function getModeLabel(method: PaymentMode): string {
 
 /* ─── Component ─────────────────────────────────────────────────── */
 export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
+  const { currentUser } = useApp();
+
   if (!transaction) return null;
 
   const totalAmount = Math.abs(transaction.amount);
@@ -493,13 +496,28 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           <em>{amountInWords}</em>
         </div>
 
+        {transaction.remark && (
+          <div style={{ ...S.words, marginTop: '-10px' }}>
+            <strong>Remark:</strong>&nbsp;
+            <em>{transaction.remark}</em>
+          </div>
+        )}
+
         {/* ── SIGNATURES ── */}
         <div style={{ ...S.sigRow, justifyContent: 'flex-end' }}>
           {/* Right: Received by + signature line */}
           <div style={{ ...S.sigLeft, alignItems: 'center' }}>
-            <div style={{ ...S.sigReceivedBy, marginBottom: '40px' }}>Received by:</div>
+            {/* <div style={{ ...S.sigReceivedBy, marginBottom: '40px' }}>Received by:</div> */}
+
+            <div style={{ ...S.sigLineLabel, textAlign: 'center' as const }}>
+              {currentUser?.name ? currentUser.name.toUpperCase() : 'AUTHORISED SIGNATORY'}
+            </div>
             <div style={S.sigLine}>
-              <div style={{ ...S.sigLineLabel, textAlign: 'center' as const }}>Authorised Signatory</div>
+              {currentUser?.name && (
+                <div style={{ textAlign: 'center', fontSize: '9.5px', color: '#666', marginTop: '2px' }}>
+                  Authorised Signatory
+                </div>
+              )}
             </div>
           </div>
         </div>
