@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../store';
+import { isLedgerPending } from '../utils';
 import {
   Search,
   Plus,
@@ -165,7 +166,7 @@ export const Dashboard: React.FC = () => {
   const rteStudents = students.filter(s => s.isRTE).length;
 
   // Outstanding / Unpaid Calculation from ledger entries
-  const unpaidLedgers = ledgerEntries.filter(l => l.status !== 'PAID');
+  const unpaidLedgers = ledgerEntries.filter(l => isLedgerPending(l));
   const totalOutstanding = unpaidLedgers.reduce((sum, l) => sum + l.remainingAmount, 0);
 
   const stats = [

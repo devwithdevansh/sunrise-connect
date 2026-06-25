@@ -1,0 +1,1 @@
+﻿export const isLedgerPending = (entry: any): boolean => { if (entry.status === 'PAID') return false; const due = new Date(entry.dueDate); const now = new Date(); const dueMonthStart = new Date(due.getFullYear(), due.getMonth(), 1); const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1); return dueMonthStart.getTime() <= currentMonthStart.getTime(); };

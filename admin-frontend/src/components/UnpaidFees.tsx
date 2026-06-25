@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
+import { isLedgerPending } from '../utils';
 
 import {
   Search,
@@ -68,7 +69,7 @@ export const UnpaidFees: React.FC = () => {
 
   const getOutstandingAmount = (studentId: string) => {
     return ledgerEntries
-      .filter((l) => l.studentId === studentId && l.status !== 'PAID')
+      .filter((l) => l.studentId === studentId && isLedgerPending(l))
       .reduce((sum, l) => sum + l.remainingAmount, 0);
   };
 
