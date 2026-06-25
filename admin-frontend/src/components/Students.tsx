@@ -35,7 +35,7 @@ export const Students: React.FC = () => {
   const [newSParentSecondaryMobile, setNewSParentSecondaryMobile] = useState('');
   const [newSParentName, setNewSParentName] = useState('');
   const [newSMedium, setNewSMedium] = useState<'English' | 'Gujarati'>('English');
-  const [newSStandard, setNewSStandard] = useState('5');
+  const [newSStandard, setNewSStandard] = useState('1');
   const [newSDivision, setNewSDivision] = useState('A');
   const [newSTransport, setNewSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
@@ -116,7 +116,7 @@ export const Students: React.FC = () => {
     setNewSParentSecondaryMobile('');
     setNewSParentName('');
     setNewSMedium('English');
-    setNewSStandard('5');
+    setNewSStandard('1');
     setNewSDivision('A');
     setNewSTransport('None');
     setNewSIsRTE(false);
@@ -220,13 +220,9 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Classes">All Classes</option>
-              <option value="Class 3">Class 3</option>
-              <option value="Class 5">Class 5</option>
-              <option value="Class 6">Class 6</option>
-              <option value="Class 7">Class 7</option>
-              <option value="Class 8">Class 8</option>
-              <option value="Class 9">Class 9</option>
-              <option value="Class 10">Class 10</option>
+              {['1','2','3','4','5','6','7','8','9','10','11','12'].map((cls) => (
+                <option key={cls} value={`Class ${cls}`}>Std {cls}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
@@ -899,7 +895,7 @@ filteredStudents.map((s) => {
                     onChange={(e) => setNewSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['3', '5', '6', '7', '8', '9', '10'].map((std) => (
+                    {['1','2','3','4','5','6','7','8','9','10','11','12'].map((std) => (
                       <option key={std} value={std}>Std {std}</option>
                     ))}
                   </select>
@@ -1038,10 +1034,8 @@ filteredStudents.map((s) => {
                     onChange={(e) => setEditSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((cls) => (
-                      <option key={cls} value={cls}>
-                        Class {cls}
-                      </option>
+                    {['1','2','3','4','5','6','7','8','9','10','11','12'].map((cls) => (
+                      <option key={cls} value={cls}>Std {cls}</option>
                     ))}
                   </select>
                 </div>
