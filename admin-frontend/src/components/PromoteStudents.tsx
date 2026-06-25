@@ -4,6 +4,7 @@ import { Users, ArrowRight, CheckCircle } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
   const { students, setScreen } = useApp();
+  const [sourceMedium, setSourceMedium] = useState('English');
   const [sourceClass, setSourceClass] = useState('5');
   const [sourceDiv, setSourceDiv] = useState('A');
   const [targetClass, setTargetClass] = useState('6');
@@ -24,8 +25,10 @@ export const PromoteStudents: React.FC = () => {
   }, [sourceClass, sourceDiv]);
 
   const eligibleStudents = students.filter(s => 
-    s.standard === sourceClass && 
-    s.division === sourceDiv &&
+    s.isActive !== false &&
+    s.medium === sourceMedium &&
+    String(s.standard).trim() === String(sourceClass).trim() && 
+    String(s.division).trim() === String(sourceDiv).trim() &&
     (searchQuery === '' || s.studentName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -103,11 +106,15 @@ export const PromoteStudents: React.FC = () => {
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
             <Users className="h-4 w-4" /> Source Class
           </h3>
-          <div className="flex gap-4">
-            <select value={sourceClass} onChange={e => setSourceClass(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg">
+          <div className="flex gap-3">
+            <select value={sourceMedium} onChange={e => setSourceMedium(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg text-sm font-bold">
+              <option value="English">English</option>
+              <option value="Gujarati">Gujarati</option>
+            </select>
+            <select value={sourceClass} onChange={e => setSourceClass(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg text-sm font-bold">
               {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
             </select>
-            <select value={sourceDiv} onChange={e => setSourceDiv(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg">
+            <select value={sourceDiv} onChange={e => setSourceDiv(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg text-sm font-bold">
               {['A', 'B', 'C', 'D'].map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
