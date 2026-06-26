@@ -14,7 +14,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         // PRODUCTION: Live Render Backend
-        target: 'https://sunrise-connect-backend.onrender.com',
+        target: 'https://linen-weasel-242678.hostingersite.com',
         // LOCAL: Uncomment to use local backend server
         // target: 'http://127.0.0.1:3000',
         changeOrigin: true,
