@@ -442,9 +442,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
-      const data = await res.json().catch(() => ({}));
+
+      // Handle rate-limit (429) before trying to parse JSON
+      if (res.status === 429) {
+        return { success: false, error: 'Too many login attempts. Please wait a moment and try again.' };
+      }
+
+      // Safely parse JSON — Hostinger WAF may return HTML on errors
+      let data: any = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json().catch(() => ({}));
+      }
+
       if (!res.ok) {
-        return { success: false, error: data?.message || 'Invalid email or password. Try admin@school.com / secret123' };
+        return { success: false, error: data?.message || 'Invalid email or password.' };
       }
       if (!data || !data.data || !data.data.accessToken) {
         return { success: false, error: 'Invalid response from server' };
