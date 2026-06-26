@@ -743,7 +743,7 @@ export const CollectFee: React.FC = () => {
   // Render
   // -------------------------------------------------------------------
   return (
-    <div className="flex-grow flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-0">
+    <div className="flex-grow flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-0 h-screen overflow-hidden">
 
       {/* ── LEFT: Student Finder ─────────────────────────────── */}
       <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
