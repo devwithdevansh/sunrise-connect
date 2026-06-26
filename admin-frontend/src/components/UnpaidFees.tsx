@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import { isLedgerPending } from '../utils';
+import * as XLSX from 'xlsx';
 
 import {
   Search,
@@ -12,8 +13,13 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, ledgerEntries, transactions, setScreen } = useApp();
+  const { students, ledgerEntries, transactions, feeStructures, setScreen } = useApp();
+  
+  // Local input search state (instant typing response)
+  const [searchVal, setSearchVal] = useState('');
+  // Debounced search query state (throttles filter processing)
   const [searchQuery, setSearchQuery] = useState('');
+  
   const [dueFilter, setDueFilter] = useState<'ALL' | '1_DUE' | '2_DUE' | '3_DUE'>('ALL');
   
   // Selection states for WhatsApp bulk sending
@@ -24,8 +30,25 @@ export const UnpaidFees: React.FC = () => {
   const [mediumFilter, setMediumFilter] = useState('All Mediums');
   const [zoneFilter, setZoneFilter] = useState('All Zones');
 
+  // Pagination states (10 per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  // Debounce search query updates by 200ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchQuery(searchVal);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
+  // Reset pagination page on filter/search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dueFilter, classFilter, mediumFilter, zoneFilter, searchQuery]);
+
   // Dynamic counts based on actual students
-  const counts = React.useMemo(() => {
+  const counts = useMemo(() => {
     const unpaid = students.filter((s) => s.status !== 'PAID' && s.status !== 'RTE');
     return {
       all: unpaid.length,
@@ -35,69 +58,121 @@ export const UnpaidFees: React.FC = () => {
     };
   }, [students]);
 
+  // Pre-compute maps to optimize O(N * M) nested loops to O(N + M) complexity
+  const { studentDuesMap, studentLastPaidMap } = useMemo(() => {
+    const duesMap = new Map<string, number>();
+    const lastPaidMap = new Map<string, string>();
+    
+    // 1. Pre-calculate outstanding amounts
+    ledgerEntries.forEach((l) => {
+      if (isLedgerPending(l)) {
+        const remaining = l.remainingAmount || 0;
+        if (remaining > 0) {
+          duesMap.set(l.studentId, (duesMap.get(l.studentId) || 0) + remaining);
+        }
+      }
+    });
+
+    // 2. Pre-calculate last paid months (group by student, find latest)
+    const studentTxsGroup = new Map<string, typeof transactions>();
+    transactions.forEach((t) => {
+      if (t.status !== 'REVERSED' && t.studentId) {
+        if (!studentTxsGroup.has(t.studentId)) {
+          studentTxsGroup.set(t.studentId, []);
+        }
+        studentTxsGroup.get(t.studentId)!.push(t);
+      }
+    });
+
+    studentTxsGroup.forEach((txs, studentId) => {
+      if (txs.length === 0) {
+        lastPaidMap.set(studentId, 'Never');
+        return;
+      }
+      const latestTx = txs.reduce((latest, tx) => {
+        const txTime = new Date(tx.date || new Date().toISOString()).getTime();
+        const latestTime = new Date(latest.date || new Date().toISOString()).getTime();
+        return txTime > latestTime ? tx : latest;
+      }, txs[0]);
+
+      if (latestTx.date) {
+        const formatted = new Date(latestTx.date).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+        lastPaidMap.set(studentId, formatted);
+      } else {
+        lastPaidMap.set(studentId, 'Recent');
+      }
+    });
+
+    return { studentDuesMap: duesMap, studentLastPaidMap: lastPaidMap };
+  }, [ledgerEntries, transactions]);
+
   // Map students to overdue profiles matching the wireframe rows
-  const unpaidStudents = students.filter((s) => {
-    // Exclude paid and RTE students
-    if (s.status === 'PAID' || s.status === 'RTE') return false;
+  const unpaidStudents = useMemo(() => {
+    return students.filter((s) => {
+      // Exclude paid and RTE students
+      if (s.status === 'PAID' || s.status === 'RTE') return false;
 
-    // Filter by tab selection
-    if (dueFilter === '1_DUE' && s.status !== '1 DUE') return false;
-    if (dueFilter === '2_DUE' && s.status !== '2 DUE') return false;
-    if (dueFilter === '3_DUE' && s.status !== '3+ DUE') return false;
+      // Filter by tab selection
+      if (dueFilter === '1_DUE' && s.status !== '1 DUE') return false;
+      if (dueFilter === '2_DUE' && s.status !== '2 DUE') return false;
+      if (dueFilter === '3_DUE' && s.status !== '3+ DUE') return false;
 
-    // Filter by dropdown selectors
-    if (classFilter !== 'All Classes' && `${s.standard} - ${s.division}` !== classFilter) return false;
-    if (mediumFilter !== 'All Mediums' && s.medium !== mediumFilter.split(' ')[0]) return false;
-    if (zoneFilter !== 'All Zones') {
-      const zoneType = zoneFilter.split(' ')[0];
-      if (zoneType === 'Railnagar' && s.transportType !== 'Railnagar') return false;
-      if (zoneType === 'Outside' && s.transportType !== 'Outside Railnagar') return false;
-      if (zoneType === 'None' && s.transportType !== 'None') return false;
-    }
+      // Filter by dropdown selectors
+      if (classFilter !== 'All Classes' && `${s.standard} - ${s.division}` !== classFilter) return false;
+      if (mediumFilter !== 'All Mediums' && s.medium !== mediumFilter.split(' ')[0]) return false;
+      if (zoneFilter !== 'All Zones') {
+        const zoneType = zoneFilter.split(' ')[0];
+        if (zoneType === 'Railnagar' && s.transportType !== 'Railnagar') return false;
+        if (zoneType === 'Outside' && s.transportType !== 'Outside Railnagar') return false;
+        if (zoneType === 'None' && s.transportType !== 'None') return false;
+      }
 
-    // Filter by Search Query — search name, code, or parent mobile
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = (s.studentName ?? '').toLowerCase().includes(q);
-      const matchCode = (s.studentCode ?? '').toLowerCase().includes(q);
-      const matchMobile = (s.parentMobile ?? '').toLowerCase().includes(q);
-      return matchName || matchCode || matchMobile;
-    }
+      // Filter by Search Query — search name, code, or parent mobile
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = (s.studentName ?? '').toLowerCase().includes(q);
+        const matchCode = (s.studentCode ?? '').toLowerCase().includes(q);
+        const matchMobile = (s.parentMobile ?? '').toLowerCase().includes(q);
+        return matchName || matchCode || matchMobile;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [students, dueFilter, classFilter, mediumFilter, zoneFilter, searchQuery]);
 
   const getOutstandingAmount = (studentId: string) => {
-    return ledgerEntries
-      .filter((l) => l.studentId === studentId && isLedgerPending(l))
-      .reduce((sum, l) => sum + l.remainingAmount, 0);
+    return studentDuesMap.get(studentId) || 0;
   };
 
   // Helper: get a stable student ID (works for both DB-loaded and mock students)
   const getSid = (s: (typeof students)[0]) => s._id || s.id;
 
   const getLastPaidMonth = (studentId: string) => {
-    const studentTxs = transactions.filter(t => t.studentId === studentId && t.status !== 'REVERSED');
-    if (studentTxs.length === 0) return 'Never';
-    // Find the latest transaction date
-    const latestTx = studentTxs.reduce((latest, tx) => {
-      const txDate = new Date(tx.date || new Date().toISOString());
-      const latestDate = new Date(latest.date || new Date().toISOString());
-      return txDate > latestDate ? tx : latest;
-    }, studentTxs[0]);
-    
-    // Format to "Month Year" if possible
-    if (latestTx.date) {
-      return new Date(latestTx.date).toLocaleString('en-US', { month: 'long', year: 'numeric' });
-    }
-    return 'Recent';
+    return studentLastPaidMap.get(studentId) || 'Never';
   };
 
+  // Slice list for pagination
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return unpaidStudents.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [unpaidStudents, currentPage]);
+
+  const totalPages = Math.ceil(unpaidStudents.length / PAGE_SIZE);
+
   const handleSelectAll = () => {
-    if (selectedStudentIds.length === unpaidStudents.length) {
-      setSelectedStudentIds([]);
+    const pageStudentIds = paginatedStudents.map(s => getSid(s)!);
+    const allPageSelected = pageStudentIds.every(id => selectedStudentIds.includes(id));
+    
+    if (allPageSelected) {
+      setSelectedStudentIds(prev => prev.filter(id => !pageStudentIds.includes(id)));
     } else {
-      setSelectedStudentIds(unpaidStudents.map((s) => getSid(s)!));
+      setSelectedStudentIds(prev => {
+        const next = [...prev];
+        pageStudentIds.forEach(id => {
+          if (!next.includes(id)) next.push(id);
+        });
+        return next;
+      });
     }
   };
 
@@ -107,6 +182,184 @@ export const UnpaidFees: React.FC = () => {
     } else {
       setSelectedStudentIds((prev) => [...prev, studentId]);
     }
+  };
+
+  const handleExportExcel = () => {
+    if (unpaidStudents.length === 0) return;
+
+    // 1. Identify all academic years with unpaid fees for the filtered students
+    const sIds = new Set(unpaidStudents.map(s => getSid(s)));
+    const yearsSet = new Set<string>();
+    
+    ledgerEntries.forEach(l => {
+      if (sIds.has(l.studentId) && isLedgerPending(l)) {
+        const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
+        if (remaining > 0 && l.academicYear) {
+          yearsSet.add(l.academicYear);
+        }
+      }
+    });
+    
+    const academicYears = Array.from(yearsSet).sort();
+    if (academicYears.length === 0) {
+      academicYears.push('2025-26'); // safe fallback
+    }
+
+    // 2. Build the title row (matching standard/medium filter + current date + monthly rate)
+    let classPart = 'ALL CLASSES';
+    if (classFilter !== 'All Classes') {
+      const stdNum = classFilter.replace('Class ', '').replace('Class', '').trim();
+      classPart = `${stdNum}TH`.toUpperCase();
+      const numMatch = stdNum.match(/^\d+/);
+      if (numMatch) {
+        classPart = `${numMatch[0]}TH ${stdNum.replace(/^\d+\s*-\s*/, '')}`.toUpperCase();
+      }
+    }
+    
+    let mediumPart = '';
+    if (mediumFilter !== 'All Mediums') {
+      mediumPart = mediumFilter.toLowerCase().includes('english') ? 'EM' : 'GM';
+    }
+
+    const todayStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '.'); // DD.MM.YYYY
+
+    // Lookup monthly education fee if a single class and medium is filtered
+    let feePart = '';
+    if (classFilter !== 'All Classes' && mediumFilter !== 'All Mediums') {
+      const stdNum = classFilter.replace('Class ', '').split(' ')[0];
+      const medName = mediumFilter.replace(' Medium', '');
+      const fs = feeStructures.find(f => f.standard === stdNum && f.medium === medName);
+      if (fs) {
+        const annualFee = fs.annualFee || 0;
+        const totalParts = (fs.educationPartCount || 12) + (fs.termPartCount || 2);
+        const monthlyVal = totalParts > 0 ? Math.round(annualFee / totalParts) : 0;
+        if (monthlyVal > 0) {
+          feePart = ` (RS.${monthlyVal})`;
+        }
+      }
+    }
+
+    const titleText = `${classPart} ${mediumPart} ${todayStr}${feePart}`.replace(/\s+/g, ' ').trim();
+
+    // 3. Header Rows Setup
+    const headers = ['NAME', 'PARENTS NUMBER', 'MEDIUM'];
+    academicYears.forEach(year => {
+      headers.push(`YEAR ${year}`);
+      headers.push(year);
+    });
+    headers.push('TOTAL');
+
+    const rows: any[][] = [];
+    rows.push([titleText]);
+    rows.push([]); // blank spacing row
+    rows.push(headers);
+
+    // Standard sequence list for unpaid month sorting
+    const periodSeq = [
+      'Term 1', 'June', 'July', 'August', 'September', 'October', 'November', 
+      'Term 2', 'December', 'January', 'February', 'March', 'April', 'May'
+    ];
+    const getPeriodIdx = (p: string) => periodSeq.indexOf(p);
+    
+    const getPeriodLabel = (p: string) => {
+      if (p === 'Term 1') return 'TERM-1';
+      if (p === 'Term 2') return 'TERM-2';
+      return p.substring(0, 3).toUpperCase();
+    };
+
+    const getUnpaidPeriodString = (studentId: string, year: string) => {
+      const studentLedgers = ledgerEntries.filter(l => 
+        l.studentId === studentId && 
+        l.academicYear === year && 
+        isLedgerPending(l) &&
+        ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0) > 0)
+      );
+
+      if (studentLedgers.length === 0) return '';
+      
+      const standardLedgers = studentLedgers.filter(l => periodSeq.includes(l.feePeriod));
+      if (standardLedgers.length === 0) {
+        return studentLedgers[0].feePeriod;
+      }
+
+      const indices = standardLedgers.map(l => getPeriodIdx(l.feePeriod)).filter(idx => idx !== -1);
+      if (indices.length === 0) return '';
+
+      const minIdx = Math.min(...indices);
+      const maxIdx = Math.max(...indices);
+
+      if (minIdx === maxIdx) {
+        return getPeriodLabel(periodSeq[minIdx]);
+      }
+      return `${getPeriodLabel(periodSeq[minIdx])} TO ${getPeriodLabel(periodSeq[maxIdx])}`;
+    };
+
+    const getUnpaidAmountForYear = (studentId: string, year: string) => {
+      return ledgerEntries
+        .filter(l => l.studentId === studentId && l.academicYear === year && isLedgerPending(l))
+        .reduce((sum, l) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
+    };
+
+    // 4. Fill Student Row Data
+    let grandTotal = 0;
+    const yearTotals = new Map<string, number>();
+    academicYears.forEach(y => yearTotals.set(y, 0));
+
+    unpaidStudents.forEach(s => {
+      const sId = getSid(s);
+      const rowData: any[] = [s.studentName.toUpperCase(), s.parentMobile || '', s.medium.toUpperCase()];
+      
+      let studentTotal = 0;
+      academicYears.forEach(year => {
+        const periodStr = getUnpaidPeriodString(sId!, year);
+        const amount = getUnpaidAmountForYear(sId!, year);
+        
+        rowData.push(periodStr);
+        rowData.push(amount > 0 ? amount : '');
+        
+        studentTotal += amount;
+        yearTotals.set(year, (yearTotals.get(year) || 0) + amount);
+      });
+      
+      rowData.push(studentTotal);
+      grandTotal += studentTotal;
+      rows.push(rowData);
+    });
+
+    // 5. Fill Grand Total Sum Row
+    const totalRow: any[] = ['GRAND TOTAL', '', ''];
+    academicYears.forEach(year => {
+      totalRow.push('');
+      totalRow.push(yearTotals.get(year) || 0);
+    });
+    totalRow.push(grandTotal);
+    rows.push(totalRow);
+
+    // 6. Write sheet file
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Unpaid Fees');
+
+    // Merge title row
+    const totalCols = headers.length;
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } }
+    ];
+
+    // Format widths
+    ws['!cols'] = [
+      { wch: 25 }, // Name
+      { wch: 18 }, // Parents Number
+      { wch: 12 }, // Medium
+    ];
+    for (let i = 0; i < academicYears.length; i++) {
+      ws['!cols'].push({ wch: 15 }); // Year Period label
+      ws['!cols'].push({ wch: 12 }); // Year Amount value
+    }
+    ws['!cols'].push({ wch: 15 }); // Total
+
+    const fileName = `${titleText.replace(/[^a-zA-Z0-9.\-\(\)]/g, '_')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
   };
 
   const handleCollectClick = () => {
@@ -133,8 +386,8 @@ export const UnpaidFees: React.FC = () => {
             <input
               type="text"
               placeholder="Search student name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
               className="w-full md:w-64 bg-white border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
             />
           </div>
@@ -244,9 +497,13 @@ export const UnpaidFees: React.FC = () => {
             </div>
           </div>
 
-          <button disabled className="flex items-center gap-1.5 border border-slate-200 bg-slate-50 text-slate-400 font-bold px-3 py-2 rounded-xl text-xs shadow-sm transition-all cursor-not-allowed opacity-70">
-            <FileSpreadsheet className="h-3.5 w-3.5 text-slate-300" />
-            Export Excel (WIP)
+          <button
+            onClick={handleExportExcel}
+            disabled={unpaidStudents.length === 0}
+            className="flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+            Export Excel
           </button>
           <button
             disabled
@@ -266,7 +523,7 @@ export const UnpaidFees: React.FC = () => {
               <tr className="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase bg-slate-50/50">
                 <th className="py-3.5 px-4 w-12 text-center">
                   <button onClick={handleSelectAll} className="text-slate-400 hover:text-slate-600 transition-colors">
-                    {selectedStudentIds.length === unpaidStudents.length && unpaidStudents.length > 0 ? (
+                    {paginatedStudents.length > 0 && paginatedStudents.every(s => selectedStudentIds.includes(getSid(s)!)) ? (
                       <CheckSquare className="h-4 w-4 text-blue-600 fill-blue-50/20" />
                     ) : (
                       <Square className="h-4 w-4" />
@@ -283,14 +540,14 @@ export const UnpaidFees: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {unpaidStudents.length === 0 ? (
+              {paginatedStudents.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-xs text-slate-400">
                     No overdue students match the filter criteria.
                   </td>
                 </tr>
               ) : (
-                unpaidStudents.map((s) => {
+                paginatedStudents.map((s) => {
                   const sId = getSid(s);
                   const isChecked = selectedStudentIds.includes(sId!);
                   const isThreePlus = s.status === '3+ DUE';
@@ -358,6 +615,58 @@ export const UnpaidFees: React.FC = () => {
           </table>
         </div>
       </section>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <span className="text-xs font-semibold text-slate-500">
+            Showing <span className="font-extrabold text-slate-800">{Math.min(unpaidStudents.length, (currentPage - 1) * PAGE_SIZE + 1)}</span> to{' '}
+            <span className="font-extrabold text-slate-800">{Math.min(unpaidStudents.length, currentPage * PAGE_SIZE)}</span> of{' '}
+            <span className="font-extrabold text-slate-850">{unpaidStudents.length}</span> students
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(page => {
+                return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+              })
+              .map((page, index, arr) => {
+                const showEllipsis = index > 0 && page - arr[index - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsis && <span className="text-slate-400 px-1 text-xs">...</span>}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        currentPage === page
+                          ? 'bg-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/10'
+                          : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

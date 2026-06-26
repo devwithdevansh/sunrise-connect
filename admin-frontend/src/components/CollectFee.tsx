@@ -785,7 +785,14 @@ export const CollectFee: React.FC = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm">{student.studentName}</h4>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="font-bold text-slate-800 text-sm">{student.studentName}</h4>
+                        {student.isRTE && (
+                          <span className="bg-blue-50 text-blue-600 text-[8px] font-extrabold px-1.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider scale-95 origin-left shrink-0">
+                            RTE
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 mt-0.5">
                         Std {student.standard} · {student.division} · {student.medium}
                       </p>
@@ -836,8 +843,15 @@ export const CollectFee: React.FC = () => {
             <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-wrap gap-4 items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Paying For</span>
-                <h4 className="text-base font-extrabold text-slate-800 mt-0.5">{selectedStudent.studentName}</h4>
-                <p className="text-xs text-slate-500">
+                <div className="flex items-center gap-2 mt-0.5">
+                  <h4 className="text-base font-extrabold text-slate-800">{selectedStudent.studentName}</h4>
+                  {selectedStudent.isRTE && (
+                    <span className="bg-blue-50 text-blue-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-blue-200 uppercase tracking-wider">
+                      RTE Quota
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
                   Std {selectedStudent.standard}-{selectedStudent.division} · {selectedStudent.medium} Medium · {selectedStudent.parentName}
                 </p>
                 {selectedStudent.transportType !== 'None' && (
@@ -938,12 +952,35 @@ export const CollectFee: React.FC = () => {
                       </span>
                     </div>
                     <span className={`font-extrabold text-lg ${feeCategory === 'EDUCATION' ? 'text-blue-600' : 'text-emerald-600'}`}>
-                      ₹{(feeCategory === 'EDUCATION'
-                        ? studentFeeConfig.education
-                        : studentFeeConfig.transport
-                      ).toLocaleString('en-IN')}/month
+                      {feeCategory === 'EDUCATION' && selectedStudent.isRTE ? (
+                        <span className="flex items-center gap-2">
+                          <span className="line-through text-slate-400 font-semibold text-sm">
+                            ₹{studentFeeConfig.education.toLocaleString('en-IN')}/month
+                          </span>
+                          <span className="text-[10px] font-extrabold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg border border-blue-200 uppercase tracking-wider">
+                            RTE Waived
+                          </span>
+                        </span>
+                      ) : (
+                        `₹${(feeCategory === 'EDUCATION'
+                          ? studentFeeConfig.education
+                          : studentFeeConfig.transport
+                        ).toLocaleString('en-IN')}/month`
+                      )}
                     </span>
                   </div>
+
+                  {feeCategory === 'EDUCATION' && selectedStudent.isRTE && (
+                    <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                      <span className="text-lg leading-none mt-0.5">🎓</span>
+                      <div>
+                        <h5 className="font-extrabold text-blue-800 text-xs uppercase tracking-wide">RTE Quota Student</h5>
+                        <p className="text-xs text-blue-600/90 mt-1 leading-relaxed font-semibold">
+                          This student is enrolled under the Right to Education (RTE) quota. Annual tuition and term fees are fully waived/covered.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center mb-4">
                     <p className="text-xs text-slate-500">
@@ -1039,7 +1076,9 @@ export const CollectFee: React.FC = () => {
 
                         let btnStyle = 'border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/30';
                         if (isPaid) {
-                          btnStyle = 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed';
+                          btnStyle = selectedStudent.isRTE && (activeCat === 'EDUCATION' || activeCat === 'TERM')
+                            ? 'bg-blue-50 border-blue-200 text-blue-600 cursor-not-allowed'
+                            : 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed';
                         } else if (isSelected) {
                           btnStyle = activeCat === 'TERM'
                             ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-500/20'
@@ -1070,7 +1109,7 @@ export const CollectFee: React.FC = () => {
                             <span className={`text-[8px] font-extrabold uppercase mt-1 tracking-wide ${
                               overdue && !isSelected ? 'text-red-600' : upcoming && !isSelected ? 'text-amber-500' : ''
                             }`}>
-                              {isPaid ? 'PAID' : overdue ? `₹${dueAmt.toLocaleString('en-IN')}` : upcoming ? `₹${dueAmt.toLocaleString('en-IN')}` : isNew ? 'NEW' : ''}
+                              {isPaid ? (selectedStudent.isRTE && (activeCat === 'EDUCATION' || activeCat === 'TERM') ? 'RTE' : 'PAID') : overdue ? `₹${dueAmt.toLocaleString('en-IN')}` : upcoming ? `₹${dueAmt.toLocaleString('en-IN')}` : isNew ? 'NEW' : ''}
                             </span>
                           </button>
                         );
