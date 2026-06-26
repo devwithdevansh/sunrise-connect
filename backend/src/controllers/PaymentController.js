@@ -18,6 +18,30 @@ class PaymentController {
     sendResponse(res, 201, payment);
   });
 
+  /** POST /api/v1/payments/batch */
+  static createBatchPayments = catchAsync(async (req, res) => {
+    const { payments } = req.body;
+    if (req.user?.role === 'parent') {
+      const mongoose = await import('mongoose');
+      const ledgerIds = payments.map(p => p.ledgerId);
+      const ledgers = await mongoose.default.model('StudentFeeLedger').find({ _id: { $in: ledgerIds } });
+      const studentIds = ledgers.map(l => l.studentId);
+      const studentCount = await mongoose.default.model('Student').countDocuments({
+        _id: { $in: studentIds },
+        parentId: req.user.id
+      });
+      const uniqueStudentIds = [...new Set(studentIds.map(id => id.toString()))];
+      if (studentCount !== uniqueStudentIds.length) {
+        throw new AppError('You do not have permission to pay for one or more selected ledgers', 403);
+      }
+    }
+    const results = await PaymentService.createBatchPayments({
+      payments,
+      performedBy: req.user?.id ?? null
+    });
+    sendResponse(res, 201, results);
+  });
+
   /** GET /api/v1/payments */
   static listPayments = catchAsync(async (req, res) => {
     const { limit = 20, skip = 0, ...filter } = req.query;

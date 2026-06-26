@@ -27,3 +27,18 @@ export const listPaymentsSchema = {
     skip: z.coerce.number().int().min(0).optional(),
   }),
 };
+
+export const batchPaymentSchema = {
+  body: z.object({
+    payments: z.array(
+      z.object({
+        ledgerId: z.string().min(1),
+        amount: z.number().nonnegative(),
+        concessionAmount: z.number().nonnegative().optional().default(0),
+        method: z.enum(['CASH', 'CHEQUE', 'ONLINE', 'UPI', 'REVERSAL']),
+        remark: z.string().optional().nullable(),
+      })
+    ).min(1),
+  }),
+};
+

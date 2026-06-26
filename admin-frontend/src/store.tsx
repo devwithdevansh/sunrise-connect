@@ -536,13 +536,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Filter out fees without a valid ledgerId
       const validFees = lineItems.filter(f => f.ledgerId);
 
-      const batchTxnId = crypto.randomUUID ? crypto.randomUUID() : `TXN${Date.now()}${Math.random().toString(36).substring(2, 6)}`;
-
-      for (const fee of validFees) {
-        const ledgerId = fee.ledgerId!;
-        const ledger = ledgerEntries.find(l => l.id === ledgerId || l._id === ledgerId);
-        if (!ledger) continue;
-
+      const paymentsPayload = validFees.map(fee => {
         let methodMapped = fee.paymentMethod;
         if (methodMapped === 'CARD' || methodMapped === 'NET BANKING') {
           methodMapped = 'ONLINE';
@@ -550,44 +544,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           methodMapped = 'CASH';
         }
 
-        const paymentApplied = fee.paymentAmount;
-        const concessionApplied = fee.concessionAmount;
-        const remark = fee.remark;
+        return {
+          ledgerId: fee.ledgerId!,
+          amount: fee.paymentAmount,
+          concessionAmount: fee.concessionAmount,
+          method: methodMapped as 'CASH' | 'CHEQUE' | 'ONLINE' | 'UPI' | 'REVERSAL',
+          remark: fee.remark
+        };
+      }).filter(p => p.amount > 0 || p.concessionAmount > 0);
 
-        if (paymentApplied > 0) {
-          // Case A: Payment (with optional embedded concession)
-          const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-          const payRes = await authFetch('/api/v1/payments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Idempotency-Key': idempotencyKey
-            },
-            body: JSON.stringify({
-              ledgerId,
-              amount: paymentApplied,
-              concessionAmount: concessionApplied,
-              method: methodMapped,
-              details: { remark, transactionId: batchTxnId }
-            })
-          });
-          if (!payRes.ok) {
-            console.error(`Failed to record payment for ledger ${ledgerId}`);
-          }
-        } else if (concessionApplied > 0) {
-          // Case B: Concession only (no payment portion)
-          const concRes = await authFetch(`/api/v1/ledgers/${ledgerId}/concession`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: concessionApplied, reason: remark || 'Concession applied' })
-          });
-          if (!concRes.ok) {
-            console.error(`Failed to apply concession for ledger ${ledgerId}`);
-          }
-        }
+      if (paymentsPayload.length === 0) return;
+
+      const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `batch-pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const res = await authFetch('/api/v1/payments/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey
+        },
+        body: JSON.stringify({ payments: paymentsPayload })
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error('Failed to record batch payment:', errBody);
+        alert(errBody.message || 'Failed to record payments. Please try again.');
+      } else {
+        await fetchAll();
       }
-
-      await fetchAll();
     } catch (err) {
       console.error(err);
     }
