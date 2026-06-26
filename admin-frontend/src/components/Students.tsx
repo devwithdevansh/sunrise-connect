@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import { Search, ChevronDown, ChevronUp, Plus, X, Trash2, Pencil, Phone, Users, Landmark, History, RotateCcw } from 'lucide-react';
 
@@ -18,7 +18,12 @@ export const Students: React.FC = () => {
     academicYears,
     transportFeeStructures
   } = useApp();
+  
+  // Local input search state (instant typing response)
+  const [searchVal, setSearchVal] = useState('');
+  // Debounced search query state (throttles filter processing)
   const [searchQuery, setSearchQuery] = useState('');
+  
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'parent' | 'ledger' | 'history'>('parent');
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
@@ -28,6 +33,10 @@ export const Students: React.FC = () => {
 
   // Quick filter chips: 'ALL' | 'RTE' | 'TRANSPORT'
   const [chipFilter, setChipFilter] = useState<'ALL' | 'RTE' | 'TRANSPORT'>('ALL');
+
+  // Pagination states (10 per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // Add Student Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,27 +66,129 @@ export const Students: React.FC = () => {
   // Sibling Modal State
   const [siblingModalData, setSiblingModalData] = useState<{ parentName: string, parentId: string } | null>(null);
 
-  const filteredStudents = students.filter((s) => {
-    // Quick filter chips
-    if (chipFilter === 'RTE' && !s.isRTE) return false;
-    if (chipFilter === 'TRANSPORT' && s.transportType === 'None') return false;
+  // Debounce search query updates by 200ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchQuery(searchVal);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
 
-    // Dropdown filters
-    if (classFilter !== 'All Classes' && s.standard !== classFilter.replace('Class ', '')) return false;
-    if (divFilter !== 'All Divisions' && s.division !== divFilter.replace('Division ', '')) return false;
-    if (medFilter !== 'All Mediums' && s.medium !== medFilter.replace(' Medium', '')) return false;
+  // Reset pagination page on filter/search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [chipFilter, classFilter, divFilter, medFilter, searchQuery]);
 
-    // Search query filter
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        s.studentName.toLowerCase().includes(q) ||
-        s.studentCode.toLowerCase().includes(q) ||
-        s.parentMobile.includes(q)
-      );
-    }
-    return true;
-  });
+  // Helper to get parent ID string
+  const getParentIdStr = (student: any) => {
+    if (!student.parentId) return null;
+    if (typeof student.parentId === 'object') return student.parentId._id || student.parentId.id;
+    return student.parentId;
+  };
+
+  // Pre-calculate lookup maps for O(N + M) complexity
+  const { studentLedgersMap, studentTransactionsMap, siblingGroupMap, studentMap } = useMemo(() => {
+    const ledgersMap = new Map<string, typeof ledgerEntries>();
+    const txsMap = new Map<string, typeof transactions>();
+    const sMap = new Map<string, typeof students[0]>();
+    
+    // Group ledgers by student ID
+    ledgerEntries.forEach((l) => {
+      if (!ledgersMap.has(l.studentId)) {
+        ledgersMap.set(l.studentId, []);
+      }
+      ledgersMap.get(l.studentId)!.push(l);
+    });
+
+    // Group transactions by student ID
+    transactions.forEach((t) => {
+      if (t.studentId) {
+        if (!txsMap.has(t.studentId)) {
+          txsMap.set(t.studentId, []);
+        }
+        txsMap.get(t.studentId)!.push(t);
+      }
+    });
+
+    // Group student IDs by parentId and parentMobile
+    const pIdMap = new Map<string, string[]>();
+    const pMobileMap = new Map<string, string[]>();
+    
+    students.forEach((student) => {
+      const sId = student._id || student.id;
+      sMap.set(sId, student);
+      const pId = getParentIdStr(student);
+      if (pId) {
+        if (!pIdMap.has(pId)) pIdMap.set(pId, []);
+        pIdMap.get(pId)!.push(sId);
+      }
+      if (student.parentMobile) {
+        if (!pMobileMap.has(student.parentMobile)) pMobileMap.set(student.parentMobile, []);
+        pMobileMap.get(student.parentMobile)!.push(sId);
+      }
+    });
+
+    // Map from student ID to sibling student IDs
+    const siblingMap = new Map<string, string[]>();
+    students.forEach((student) => {
+      const sId = student._id || student.id;
+      const siblingIds = new Set<string>();
+      
+      const pId = getParentIdStr(student);
+      if (pId && pIdMap.has(pId)) {
+        pIdMap.get(pId)!.forEach(id => {
+          if (id !== sId) siblingIds.add(id);
+        });
+      }
+      
+      if (student.parentMobile && pMobileMap.has(student.parentMobile)) {
+        pMobileMap.get(student.parentMobile)!.forEach(id => {
+          if (id !== sId) siblingIds.add(id);
+        });
+      }
+      
+      siblingMap.set(sId, Array.from(siblingIds));
+    });
+
+    return {
+      studentLedgersMap: ledgersMap,
+      studentTransactionsMap: txsMap,
+      siblingGroupMap: siblingMap,
+      studentMap: sMap
+    };
+  }, [students, ledgerEntries, transactions]);
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      // Quick filter chips
+      if (chipFilter === 'RTE' && !s.isRTE) return false;
+      if (chipFilter === 'TRANSPORT' && s.transportType === 'None') return false;
+
+      // Dropdown filters
+      if (classFilter !== 'All Classes' && s.standard !== classFilter.replace('Class ', '')) return false;
+      if (divFilter !== 'All Divisions' && s.division !== divFilter.replace('Division ', '')) return false;
+      if (medFilter !== 'All Mediums' && s.medium !== medFilter.replace(' Medium', '')) return false;
+
+      // Search query filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          (s.studentName ?? '').toLowerCase().includes(q) ||
+          (s.studentCode ?? '').toLowerCase().includes(q) ||
+          (s.parentMobile ?? '').includes(q)
+        );
+      }
+      return true;
+    });
+  }, [students, chipFilter, classFilter, divFilter, medFilter, searchQuery]);
+
+  // Slice list for pagination
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredStudents.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredStudents, currentPage]);
+
+  const totalPages = Math.ceil(filteredStudents.length / PAGE_SIZE);
 
 
 
@@ -198,8 +309,8 @@ export const Students: React.FC = () => {
             <input
               type="text"
               placeholder="Search student name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
               className="w-full md:w-64 bg-white border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
             />
           </div>
@@ -307,43 +418,33 @@ export const Students: React.FC = () => {
 
       {/* Student Card Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredStudents.length === 0 ? (
+        {paginatedStudents.length === 0 ? (
           <div className="col-span-2 text-center text-xs text-slate-400 py-10">
             No students found matching your criteria.
           </div>
         ) : (
-          filteredStudents.map((s) => {
+          paginatedStudents.map((s) => {
             const initials = (s.studentName ?? '')
               .split(' ')
               .map((n) => n[0])
               .join('');
             const isExpanded = expandedStudentId === (s._id || s.id);
 
-            // Look up parent ID string for sibling calculation
-            const getParentIdStr = (student: any) => {
-              if (!student.parentId) return null;
-              if (typeof student.parentId === 'object') return student.parentId._id || student.parentId.id;
-              return student.parentId;
-            };
+            // Look up pre-calculated siblings
+            const siblingIds = siblingGroupMap.get(s._id || s.id) || [];
+            const siblings = siblingIds
+              .map(id => studentMap.get(id))
+              .filter((sib): sib is typeof students[0] => !!sib);
 
-            const sParentId = getParentIdStr(s);
-            const siblings = students.filter((other) => {
-              if (other._id === s._id || other.id === s.id) return false;
-              const oParentId = getParentIdStr(other);
-              if (sParentId && oParentId && sParentId === oParentId) return true;
-              if (s.parentMobile && other.parentMobile && s.parentMobile === other.parentMobile) return true;
-              return false;
-            });
-
-            // Ledger entries for this student
-            const studentLedgers = ledgerEntries.filter((l) => l.studentId === (s._id || s.id));
+            // Look up pre-calculated ledger entries for this student
+            const studentLedgers = studentLedgersMap.get(s._id || s.id) || [];
             const totalLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
             const totalPaidLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
             const totalConcessionLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.concessionAmount || 0), 0);
             const totalRemainingLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.remainingAmount || 0), 0);
 
-            // Transactions for this student
-            const studentTransactions = transactions.filter((t) => t.studentId === (s._id || s.id));
+            // Look up pre-calculated transactions for this student
+            const studentTransactions = studentTransactionsMap.get(s._id || s.id) || [];
 
             // Backend does not provide a `status` field; default to empty string.
             const status = s.status ?? '';
@@ -800,6 +901,59 @@ export const Students: React.FC = () => {
           })
         )}
       </section>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+          <span className="text-xs font-semibold text-slate-500">
+            Showing <span className="font-extrabold text-slate-800">{Math.min(filteredStudents.length, (currentPage - 1) * PAGE_SIZE + 1)}</span> to{' '}
+            <span className="font-extrabold text-slate-800">{Math.min(filteredStudents.length, currentPage * PAGE_SIZE)}</span> of{' '}
+            <span className="font-extrabold text-slate-850">{filteredStudents.length}</span> students
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(page => {
+                return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+              })
+              .map((page, index, arr) => {
+                const showEllipsis = index > 0 && page - arr[index - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsis && <span className="text-slate-400 px-1 text-xs">...</span>}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        currentPage === page
+                          ? 'bg-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/10'
+                          : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add Student Modal Panel */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
