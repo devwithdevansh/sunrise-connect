@@ -1,12 +1,26 @@
+// June to May (All 12 months unpaid): jun to may
+// July to May (June is paid; July onwards unpaid): jul to may
+// August to May (June and July paid; August onwards unpaid): aug to may
+// September to May (June to August paid; September onwards unpaid): sep to may
+// October to May (June to September paid; October onwards unpaid): oct to may
+// November to May (June to October paid; November onwards unpaid): nov to may
+// December to May (June to November paid; December onwards unpaid): dec to may
+// January to May (June to December paid; January onwards unpaid): jan to may
+// February to May (June to December + Jan paid; February onwards unpaid): feb to may
+// March to May (June to December + Jan and Feb paid; March onwards unpaid): mar to may
+// April to May (June to December + Jan to Mar paid; April and May unpaid): apr to may
+// May only unpaid (June to April paid; only May unpaid): may to may
+
+
 import React, { useState, useRef } from 'react';
 import { useApp } from '../store';
-import { 
-  FileSpreadsheet, 
-  Upload, 
-  Download, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
+import {
+  FileSpreadsheet,
+  Upload,
+  Download,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
   ArrowLeft,
   ChevronRight,
   Database,
@@ -30,7 +44,7 @@ interface ExcelRow {
 
 export const ImportExcel: React.FC = () => {
   const { importStudents, setScreen } = useApp();
-  
+
   const [previewData, setPreviewData] = useState<ExcelRow[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +104,7 @@ export const ImportExcel: React.FC = () => {
     const worksheet = XLSX.utils.json_to_sheet(sampleData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students Import Template");
-    
+
     // Auto fit column widths
     const maxLens = sampleData.reduce((acc, row) => {
       Object.keys(row).forEach((key) => {
@@ -221,14 +235,14 @@ export const ImportExcel: React.FC = () => {
     if (!row.standard.trim()) errors.push("Standard missing");
     if (!row.division.trim()) errors.push("Division missing");
     if (!row.parentName.trim()) errors.push("Parent name missing");
-    
+
     const mobileClean = row.parentMobile.replace(/\D/g, '');
     if (!mobileClean) {
       errors.push("Primary mobile missing");
     } else if (!/^[6-9]\d{9}$/.test(mobileClean)) {
       errors.push("Invalid Indian mobile (needs 10 digits)");
     }
-    
+
     if (row.parentSecondaryMobile) {
       const secMobile = row.parentSecondaryMobile.replace(/\D/g, '');
       if (secMobile && !/^[6-9]\d{9}$/.test(secMobile)) {
@@ -259,8 +273,8 @@ export const ImportExcel: React.FC = () => {
       {/* Page Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
         <div className="space-y-1">
-          <button 
-            onClick={() => setScreen('students')} 
+          <button
+            onClick={() => setScreen('students')}
             className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider mb-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -293,7 +307,7 @@ export const ImportExcel: React.FC = () => {
               <Database className="h-5 w-5 text-blue-600" />
               <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider">Fields Schema Mapping</h3>
             </div>
-            
+
             <div className="space-y-4">
               <p className="text-xs text-slate-500 leading-relaxed">
                 To guarantee clean data inserts, your Excel file columns must align exactly with the school database fields. Use the visual guide below:
@@ -343,11 +357,10 @@ export const ImportExcel: React.FC = () => {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`bg-white border-2 border-dashed rounded-3xl p-12 text-center transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer min-h-[360px] shadow-sm ${
-                  isDragging 
-                    ? 'border-blue-500 bg-blue-50/20' 
+                className={`bg-white border-2 border-dashed rounded-3xl p-12 text-center transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer min-h-[360px] shadow-sm ${isDragging
+                    ? 'border-blue-500 bg-blue-50/20'
                     : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50/30'
-                }`}
+                  }`}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <div className="bg-blue-50 text-blue-600 p-5 rounded-full border border-blue-100">

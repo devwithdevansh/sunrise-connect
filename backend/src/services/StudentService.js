@@ -128,9 +128,30 @@ class StudentService {
         }], { session }).then(docs => docs[0]);
       }
 
+      const getStartYear = (yrStr) => {
+        const match = yrStr.match(/^(\d{4})/);
+        return match ? parseInt(match[1], 10) : 9999;
+      };
+
       // Fetch Active Academic Year
       const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
       const activeYear = activeYearDoc ? activeYearDoc.name : '2025-26';
+
+      // Normalize keys in pendingFees to match database academic year names if start years match
+      if (data.pendingFees && typeof data.pendingFees === 'object') {
+        const dbYears = await mongoose.model('AcademicYear').find({}, null, { session });
+        const normalizedPending = {};
+        for (const yr of Object.keys(data.pendingFees)) {
+          const yrStart = getStartYear(yr);
+          const matchedDbYear = dbYears.find(dbYr => getStartYear(dbYr.name) === yrStart);
+          if (matchedDbYear) {
+            normalizedPending[matchedDbYear.name] = data.pendingFees[yr];
+          } else {
+            normalizedPending[yr] = data.pendingFees[yr];
+          }
+        }
+        data.pendingFees = normalizedPending;
+      }
 
       const yearsToGenerate = new Set();
       if (data.pendingFees && typeof data.pendingFees === 'object') {
@@ -140,10 +161,6 @@ class StudentService {
       }
       yearsToGenerate.add(activeYear);
 
-      const getStartYear = (yrStr) => {
-        const match = yrStr.match(/^(\d{4})/);
-        return match ? parseInt(match[1], 10) : 9999;
-      };
       const sortedYears = Array.from(yearsToGenerate).sort((a, b) => getStartYear(a) - getStartYear(b));
       const earliestYear = sortedYears[0];
 
@@ -728,6 +745,9 @@ class StudentService {
 
       const isRTE = student.isRTE || false;
 
+      const activeAcademicYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
+      const activeAcademicYearStr = activeAcademicYearDoc ? activeAcademicYearDoc.name : '2025-26';
+
       // Fetch categories
       const educationCategory = await mongoose.model('FeeCategory').findOne({ type: 'EDUCATION' }).session(session);
       const transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }).session(session);
@@ -837,7 +857,7 @@ class StudentService {
               dueDate: new Date(m.dueDate),
               status: isRTE ? 'PAID' : 'PENDING',
               feeCategoryId: educationCategory._id,
-              academicYear: '2025-26',
+              academicYear: activeAcademicYearStr,
               source: 'MANUAL',
               generatedFrom: 'FEE_STRUCTURE',
               ledgerNumber: `LEDGER_EDU_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
@@ -864,7 +884,7 @@ class StudentService {
               dueDate: new Date(m.dueDate),
               status: 'PENDING',
               feeCategoryId: transportCategory._id,
-              academicYear: '2025-26',
+              academicYear: activeAcademicYearStr,
               source: 'MANUAL',
               generatedFrom: 'TRANSPORT_STRUCTURE',
               ledgerNumber: `LEDGER_TRA_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
@@ -891,7 +911,7 @@ class StudentService {
               dueDate: new Date(t.dueDate),
               status: isRTE ? 'PAID' : 'PENDING',
               feeCategoryId: termCategory._id,
-              academicYear: '2025-26',
+              academicYear: activeAcademicYearStr,
               source: 'MANUAL',
               generatedFrom: 'FEE_STRUCTURE',
               ledgerNumber: `LEDGER_TRM_${t.name.replace(' ', '').toUpperCase()}_${student.studentCode || student._id}`,
@@ -918,7 +938,7 @@ class StudentService {
             dueDate: new Date('2026-06-15'),
             status: 'PENDING',
             feeCategoryId: admissionCategory._id,
-            academicYear: '2025-26',
+            academicYear: activeAcademicYearStr,
             source: 'MANUAL',
             generatedFrom: 'FEE_STRUCTURE',
             ledgerNumber: `LEDGER_ADM_${student.studentCode || student._id}`,
@@ -941,7 +961,7 @@ class StudentService {
             dueDate: new Date('2026-06-15'),
             status: 'PENDING',
             feeCategoryId: bagKitCategory._id,
-            academicYear: '2025-26',
+            academicYear: activeAcademicYearStr,
             source: 'MANUAL',
             generatedFrom: 'FEE_STRUCTURE',
             ledgerNumber: `LEDGER_BAG_${student.studentCode || student._id}`,

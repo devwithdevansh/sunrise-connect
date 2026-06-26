@@ -59,8 +59,20 @@ export function isPeriodOverdue(
   academicYear: string | undefined,
   activeAcademicYear: string
 ): boolean {
-  // Past academic year → always overdue
-  if (academicYear && academicYear !== activeAcademicYear) return true;
+  if (academicYear) {
+    const startYear = parseInt(academicYear.split('-')[0], 10);
+    const activeStartYear = parseInt(activeAcademicYear.split('-')[0], 10);
+    if (!isNaN(startYear) && !isNaN(activeStartYear)) {
+      if (startYear < activeStartYear) {
+        // Past academic year → always overdue
+        return true;
+      }
+      if (startYear > activeStartYear) {
+        // Future academic year → not overdue yet
+        return false;
+      }
+    }
+  }
 
   const yearToUse = academicYear || activeAcademicYear;
   const dueDate = getPeriodDueDate(feePeriod, yearToUse);
