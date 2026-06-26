@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import { isLedgerPending } from '../utils';
 import {
@@ -13,7 +13,10 @@ import {
   AlertTriangle,
   Bus,
   GraduationCap,
-  Loader2
+  Loader2,
+  Calendar,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const DashboardSkeleton: React.FC = () => {
@@ -100,48 +103,115 @@ export const Dashboard: React.FC = () => {
   if (isLoadingDetails && students.length === 0) {
     return <DashboardSkeleton />;
   }
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
   const todayString = useMemo(() => {
     return new Date().toISOString().split('T')[0];
   }, []);
 
-  // Filter transactions for today
-  const todayTransactions = useMemo(() => {
-    return transactions.filter(t => t.date === todayString && t.status !== 'REVERSED');
-  }, [transactions, todayString]);
+  const [selectedDate, setSelectedDate] = useState(todayString);
+  const [searchVal, setSearchVal] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  // Today's Collection totals
+  // Debounce search input by 200ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchQuery(searchVal);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
+  // Reset page when date or search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate, searchQuery]);
+
+  // Timezone-safe day navigation helpers
+  const handlePrevDay = () => {
+    const parts = selectedDate.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const dateObj = new Date(year, month, day);
+      dateObj.setDate(dateObj.getDate() - 1);
+      
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      setSelectedDate(`${yyyy}-${mm}-${dd}`);
+    }
+  };
+
+  const handleNextDay = () => {
+    const parts = selectedDate.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const dateObj = new Date(year, month, day);
+      dateObj.setDate(dateObj.getDate() + 1);
+      
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      setSelectedDate(`${yyyy}-${mm}-${dd}`);
+    }
+  };
+
+  const handleToday = () => {
+    setSelectedDate(todayString);
+  };
+
+  const formattedSelectedDate = useMemo(() => {
+    const parts = selectedDate.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const dateObj = new Date(year, month, day);
+      return dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    return selectedDate;
+  }, [selectedDate]);
+
+  // Filter transactions for selected date
+  const selectedDateTransactions = useMemo(() => {
+    return transactions.filter(t => t.date === selectedDate && t.status !== 'REVERSED');
+  }, [transactions, selectedDate]);
+
+  // Collection totals for selected date
   const totalCollection = useMemo(() => {
-    return todayTransactions.reduce((sum, t) => sum + t.amount, 0);
-  }, [todayTransactions]);
+    return selectedDateTransactions.reduce((sum, t) => sum + t.amount, 0);
+  }, [selectedDateTransactions]);
 
   const englishCol = useMemo(() => {
-    return todayTransactions
+    return selectedDateTransactions
       .filter((t) => t.classInfo.toLowerCase().includes('english'))
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [todayTransactions]);
+  }, [selectedDateTransactions]);
 
   const gujaratiCol = useMemo(() => {
-    return todayTransactions
+    return selectedDateTransactions
       .filter((t) => t.classInfo.toLowerCase().includes('gujarati'))
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [todayTransactions]);
+  }, [selectedDateTransactions]);
 
-  // Today's Concession – summed directly from payment records stored in DB
+  // Concession for selected date
   const todayConcession = useMemo(() => {
-    return todayTransactions.reduce((sum, t) => sum + (t.concessionAmount || 0), 0);
-  }, [todayTransactions]);
+    return selectedDateTransactions.reduce((sum, t) => sum + (t.concessionAmount || 0), 0);
+  }, [selectedDateTransactions]);
 
-  // Payment mode stats for today
+  // Payment mode stats for selected date
   const getModeSum = (method: string) => {
     if (method === 'ONLINE') {
-      return todayTransactions
+      return selectedDateTransactions
         .filter((t) => t.method === 'ONLINE' || t.method === 'UPI')
         .reduce((sum, t) => sum + t.amount, 0);
     }
-    return todayTransactions
+    return selectedDateTransactions
       .filter((t) => t.method === method)
       .reduce((sum, t) => sum + t.amount, 0);
   };
@@ -200,14 +270,25 @@ export const Dashboard: React.FC = () => {
     }
   ];
 
+  // Filter daily transactions by search query
   const filteredTransactions = useMemo(() => {
-    if (!searchQuery) return transactions;
-    return transactions.filter(
+    const daily = transactions.filter(t => t.date === selectedDate);
+    if (!searchQuery) return daily;
+    const q = searchQuery.toLowerCase();
+    return daily.filter(
       (tx) =>
-        tx.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.studentCode.toLowerCase().includes(searchQuery.toLowerCase())
+        tx.studentName.toLowerCase().includes(q) ||
+        tx.studentCode.toLowerCase().includes(q)
     );
-  }, [transactions, searchQuery]);
+  }, [transactions, selectedDate, searchQuery]);
+
+  // Paginate transactions
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredTransactions.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredTransactions, currentPage]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
 
   return (
     <div className="flex-1 p-6 space-y-6">
@@ -215,7 +296,9 @@ export const Dashboard: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Today's Dashboard</h2>
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+              {selectedDate === todayString ? "Today's Dashboard" : "Daily Collection Dashboard"}
+            </h2>
             {isLoadingDetails && (
               <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
                 <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
@@ -224,26 +307,26 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
           <p className="text-xs font-semibold text-slate-400">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {formattedSelectedDate}
           </p>
         </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="relative flex-grow md:flex-grow-0">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
               <Search className="h-4 w-4" />
             </span>
             <input
               type="text"
-              placeholder="Search student name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-64 bg-white border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+              placeholder="Search payments..."
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              className="w-full md:w-48 bg-white border border-slate-200 rounded-xl py-2 pl-9 pr-4 text-xs font-semibold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm placeholder:text-slate-400 placeholder:font-normal"
             />
           </div>
+
           <button
             onClick={() => setScreen('collect-fee')}
-            className="flex items-center gap-1.5 bg-[#F59E0B] hover:bg-amber-600 text-slate-900 font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-[0.98] text-sm shrink-0"
+            className="flex items-center gap-1.5 bg-[#F59E0B] hover:bg-amber-600 text-slate-900 font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-[0.98] text-xs shrink-0"
           >
             <Plus className="h-4 w-4 stroke-[3]" />
             Collect Fee
@@ -258,7 +341,9 @@ export const Dashboard: React.FC = () => {
         <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-blue-300/10 rounded-full translate-y-1/2 pointer-events-none"></div>
         
         <div>
-          <span className="text-[10px] font-bold tracking-widest text-blue-200 uppercase">Today's Total Collection</span>
+          <span className="text-[10px] font-bold tracking-widest text-blue-200 uppercase">
+            {selectedDate === todayString ? "Today's Total Collection" : `Total Collection on ${selectedDate}`}
+          </span>
           <h3 className="text-4xl md:text-5xl font-extrabold mt-1 flex items-baseline">
             ₹{totalCollection.toLocaleString('en-IN')}
           </h3>
@@ -322,85 +407,186 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* Recent Payments Section */}
-      <section className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-5">
-          <h4 className="text-base font-bold text-slate-800">Recent Payments</h4>
-          <button
-            onClick={() => setScreen('receipts')}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all"
-          >
-            View All
-          </button>
+      <section className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/10">
+          <div>
+            <h4 className="text-base font-bold text-slate-800">
+              Payments on {selectedDate === todayString ? "Today" : selectedDate}
+            </h4>
+            <p className="text-xs text-slate-400 mt-0.5 font-medium">
+              Showing payment history logs matching selection.
+            </p>
+          </div>
+          
+          {/* Dynamic Date Picker & Browsing Controls inside the payments card */}
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-sm shrink-0 self-end sm:self-center">
+            <button
+              type="button"
+              onClick={handlePrevDay}
+              className="p-1 hover:bg-slate-105 rounded-lg text-slate-500 transition-colors"
+              title="Previous Day"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            
+            <div className="relative flex items-center">
+              <Calendar className="h-3.5 w-3.5 text-slate-400 absolute left-2 pointer-events-none" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent pl-7 pr-2.5 py-0.5 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+              />
+            </div>
+
+            {selectedDate !== todayString && (
+              <button
+                type="button"
+                onClick={handleToday}
+                className="px-2 py-0.5 text-[10px] bg-indigo-50 hover:bg-indigo-100 text-indigo-650 font-extrabold rounded-lg transition-colors border border-indigo-100"
+                title="Go to Today"
+              >
+                Today
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleNextDay}
+              className="p-1 hover:bg-slate-105 rounded-lg text-slate-500 transition-colors"
+              title="Next Day"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase">
-                <th className="py-3 px-4">Student</th>
-                <th className="py-3 px-4">Class</th>
-                <th className="py-3 px-4">Fee Type</th>
-                <th className="py-3 px-4">Amount</th>
-                <th className="py-3 px-4">Method</th>
-                <th className="py-3 px-4">Time</th>
-                <th className="py-3 px-4">Status</th>
+              <tr className="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase bg-slate-50/50">
+                <th className="py-3 px-5">Student</th>
+                <th className="py-3 px-5">Class</th>
+                <th className="py-3 px-5">Fee Type</th>
+                <th className="py-3 px-5">Amount</th>
+                <th className="py-3 px-5">Method</th>
+                <th className="py-3 px-5">Time</th>
+                <th className="py-3 px-5">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
-              {filteredTransactions.slice(0, 5).map((tx) => (
-                <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-slate-800">{tx.studentName}</span>
-                      {tx.status === 'RTE' && (
-                        <span className="bg-purple-100 text-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">RTE</span>
-                      )}
-                    </div>
-                    <span className="text-slate-400 text-[10px] block font-mono">{tx.studentCode}</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-500 font-semibold">{tx.classInfo}</td>
-                  <td className="py-3.5 px-4 text-slate-600 font-semibold">{tx.feeType}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-800">
-                    {tx.amount === 0 ? (
-                      '₹0'
-                    ) : tx.amount === 1500 ? (
-                      <span>
-                        ₹1,500 <span className="text-[10px] text-slate-400 font-normal">of ₹3,500</span>
-                      </span>
-                    ) : (
-                      `₹${tx.amount.toLocaleString('en-IN')}`
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
-                      tx.method === 'ONLINE' || tx.method === 'UPI'
-                        ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                        : tx.method === 'CASH'
-                        ? 'bg-slate-100 text-slate-600'
-                        : tx.method === 'CARD'
-                        ? 'bg-indigo-50 text-indigo-600 border border-indigo-100'
-                        : 'bg-purple-50 text-purple-600 border border-purple-100'
-                    }`}>
-                      {tx.method}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-400 text-xs font-semibold">{tx.time}</td>
-                  <td className="py-3.5 px-4">
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                      tx.status === 'PAID'
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : tx.status === 'PARTIAL'
-                        ? 'bg-amber-100 text-amber-600'
-                        : 'bg-purple-100 text-purple-600'
-                    }`}>
-                      {tx.status}
-                    </span>
+            <tbody className="divide-y divide-slate-50 font-medium text-slate-750">
+              {paginatedTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-xs text-slate-400">
+                    No transactions recorded for this date.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedTransactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-slate-800">{tx.studentName}</span>
+                        {tx.status === 'RTE' && (
+                          <span className="bg-purple-100 text-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">RTE</span>
+                        )}
+                      </div>
+                      <span className="text-slate-400 text-[10px] block font-mono">{tx.studentCode}</span>
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-500 font-semibold">{tx.classInfo}</td>
+                    <td className="py-3.5 px-5 text-slate-600 font-semibold">{tx.feeType}</td>
+                    <td className="py-3.5 px-5 font-bold text-slate-800">
+                      {tx.amount === 0 ? (
+                        '₹0'
+                      ) : tx.amount === 1500 ? (
+                        <span>
+                          ₹1,500 <span className="text-[10px] text-slate-400 font-normal">of ₹3,500</span>
+                        </span>
+                      ) : (
+                        `₹${tx.amount.toLocaleString('en-IN')}`
+                      )}
+                    </td>
+                    <td className="py-3.5 px-5">
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
+                        tx.method === 'ONLINE' || tx.method === 'UPI'
+                          ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                          : tx.method === 'CASH'
+                          ? 'bg-slate-100 text-slate-600'
+                          : tx.method === 'CARD'
+                          ? 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                          : 'bg-purple-50 text-purple-600 border border-purple-100'
+                      }`}>
+                        {tx.method}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-400 text-xs font-semibold">{tx.time}</td>
+                    <td className="py-3.5 px-5">
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                        tx.status === 'PAID'
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                          : tx.status === 'PARTIAL'
+                          ? 'bg-amber-50 text-amber-600 border-amber-100'
+                          : 'bg-purple-50 text-purple-600 border-purple-100'
+                      }`}>
+                        {tx.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Panel */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border-t border-slate-100 p-4">
+            <span className="text-xs font-semibold text-slate-500">
+              Showing <span className="font-extrabold text-slate-800">{Math.min(filteredTransactions.length, (currentPage - 1) * PAGE_SIZE + 1)}</span> to{' '}
+              <span className="font-extrabold text-slate-800">{Math.min(filteredTransactions.length, currentPage * PAGE_SIZE)}</span> of{' '}
+              <span className="font-extrabold text-slate-850">{filteredTransactions.length}</span> payments
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-655 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                .map((page, index, arr) => {
+                  const showEllipsis = index > 0 && page - arr[index - 1] > 1;
+                  return (
+                    <React.Fragment key={page}>
+                      {showEllipsis && <span className="text-slate-400 px-1 text-xs">...</span>}
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          currentPage === page
+                            ? 'bg-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/10'
+                            : 'border border-slate-200 text-slate-655 hover:bg-slate-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </React.Fragment>
+                  );
+                })}
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-655 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
