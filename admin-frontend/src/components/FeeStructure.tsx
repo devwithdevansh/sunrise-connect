@@ -12,31 +12,31 @@ interface CreateFeeModalProps {
 const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
   const [standard, setStandard] = useState('1');
   const [medium, setMedium] = useState('English');
-  const [annualFee, setAnnualFee] = useState(10000);
-  const [admissionFee, setAdmissionFee] = useState(0);
-  const [bagKitFee, setBagKitFee] = useState(0);
+  const [annualFee, setAnnualFee] = useState<number | ''>('');
+  const [admissionFee, setAdmissionFee] = useState<number | ''>('');
+  const [bagKitFee, setBagKitFee] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   // Fixed 14-part system: 12 education months + 2 term fees
   const EDUCATION_PARTS = 12;
   const TERM_PARTS = 2;
-  const monthlyEdu = Math.round(annualFee / (EDUCATION_PARTS + TERM_PARTS));
+  const monthlyEdu = Math.round((Number(annualFee) || 0) / (EDUCATION_PARTS + TERM_PARTS));
 
   const handleSave = async () => {
     if (!standard.trim()) { setError('Standard is required'); return; }
-    if (annualFee < 0) { setError('Annual fee cannot be negative'); return; }
-    if (admissionFee < 0) { setError('Admission fee cannot be negative'); return; }
-    if (bagKitFee < 0) { setError('Bag & Kit fee cannot be negative'); return; }
+    if (annualFee === '' || Number(annualFee) < 0) { setError('Annual fee cannot be negative'); return; }
+    if (admissionFee !== '' && Number(admissionFee) < 0) { setError('Admission fee cannot be negative'); return; }
+    if (bagKitFee !== '' && Number(bagKitFee) < 0) { setError('Bag & Kit fee cannot be negative'); return; }
     setError('');
     setSaving(true);
     const ok = await onSave({
-      standard, medium, annualFee,
+      annualFee: Number(annualFee),
       educationPartCount: EDUCATION_PARTS,
       termPartCount: TERM_PARTS,
       termFee: monthlyEdu,
-      admissionFee,
-      bagKitFee,
+      admissionFee: Number(admissionFee),
+      bagKitFee: Number(bagKitFee),
     });
     setSaving(false);
     if (ok) onClose(); else setError('Failed to create. Standard may already exist for this medium.');
@@ -71,18 +71,18 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
           {/* Annual Fee */}
           <div>
             <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Annual Tuition Fee (₹)</label>
-            <input type="number" value={annualFee} onChange={e => setAnnualFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+            <input type="number" value={annualFee} onChange={e => setAnnualFee(e.target.value === '' ? '' : Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
           </div>
 
           {/* Admission + Bag & Kit */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Admission Fee (₹)</label>
-              <input type="number" value={admissionFee} onChange={e => setAdmissionFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+              <input type="number" value={admissionFee} onChange={e => setAdmissionFee(e.target.value === '' ? '' : Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
             </div>
             <div>
               <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Bag & Kit Fee (₹)</label>
-              <input type="number" value={bagKitFee} onChange={e => setBagKitFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+              <input type="number" value={bagKitFee} onChange={e => setBagKitFee(e.target.value === '' ? '' : Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
             </div>
           </div>
 
@@ -118,15 +118,15 @@ interface CreateTransportModalProps {
 
 const CreateTransportModal: React.FC<CreateTransportModalProps> = ({ onClose, onSave }) => {
   const [transportType, setTransportType] = useState('Railnagar');
-  const [amount, setAmount] = useState(1000);
+  const [amount, setAmount] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (amount < 0) { setError('Amount cannot be negative'); return; }
+    if (amount === '' || Number(amount) < 0) { setError('Amount cannot be negative'); return; }
     setError('');
     setSaving(true);
-    const ok = await onSave({ transportType, amount, frequency: 'MONTHLY' });
+    const ok = await onSave({ transportType, amount: Number(amount), frequency: 'MONTHLY' });
     setSaving(false);
     if (ok) onClose(); else setError('Failed to create. Zone may already exist.');
   };
@@ -148,7 +148,7 @@ const CreateTransportModal: React.FC<CreateTransportModalProps> = ({ onClose, on
           </div>
           <div>
             <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Monthly Fee (₹)</label>
-            <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800" />
+            <input type="number" value={amount} onChange={e => setAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800" />
           </div>
           {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
         </div>
@@ -169,13 +169,13 @@ interface EditFeeModalProps {
 }
 
 const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave }) => {
-  const [annualFee, setAnnualFee] = useState(structure.annualFee);
-  const [admissionFee, setAdmissionFee] = useState(
+  const [annualFee, setAnnualFee] = useState<number | ''>(structure.annualFee);
+  const [admissionFee, setAdmissionFee] = useState<number | ''>(
     (structure.admissionFee !== undefined && structure.admissionFee > 0)
       ? structure.admissionFee
       : Math.round(structure.annualFee * 0.07)
   );
-  const [bagKitFee, setBagKitFee] = useState(
+  const [bagKitFee, setBagKitFee] = useState<number | ''>(
     (structure.bagKitFee !== undefined && structure.bagKitFee > 0)
       ? structure.bagKitFee
       : Math.round(structure.annualFee * 0.05)
@@ -190,18 +190,18 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
   const monthlyEdu = Math.round(annualFee / (EDUCATION_PARTS + TERM_PARTS));
 
   const handleSave = async () => {
-    if (annualFee < 0) { setError('Annual fee cannot be negative'); return; }
-    if (admissionFee < 0) { setError('Admission fee cannot be negative'); return; }
-    if (bagKitFee < 0) { setError('Bag & Kit fee cannot be negative'); return; }
+    if (annualFee === '' || Number(annualFee) < 0) { setError('Annual fee cannot be negative'); return; }
+    if (admissionFee !== '' && Number(admissionFee) < 0) { setError('Admission fee cannot be negative'); return; }
+    if (bagKitFee !== '' && Number(bagKitFee) < 0) { setError('Bag & Kit fee cannot be negative'); return; }
     setError('');
     setSaving(true);
     const ok = await onSave(structure._id, {
-      annualFee,
+      annualFee: Number(annualFee),
       educationPartCount: EDUCATION_PARTS,
       termPartCount: TERM_PARTS,
       termFee: monthlyEdu,
-      admissionFee,
-      bagKitFee,
+      admissionFee: Number(admissionFee),
+      bagKitFee: Number(bagKitFee),
     });
     setSaving(false);
     if (ok) {
@@ -241,7 +241,7 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
             <input
               type="number"
               value={annualFee}
-              onChange={(e) => setAnnualFee(Number(e.target.value))}
+              onChange={(e) => setAnnualFee(e.target.value === '' ? '' : Number(e.target.value))}
               min={0}
               className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
@@ -251,11 +251,11 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Admission Fee (₹)</label>
-              <input type="number" value={admissionFee} onChange={(e) => setAdmissionFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+              <input type="number" value={admissionFee} onChange={(e) => setAdmissionFee(e.target.value === '' ? '' : Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
             </div>
             <div>
               <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Bag & Kit Fee (₹)</label>
-              <input type="number" value={bagKitFee} onChange={(e) => setBagKitFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+              <input type="number" value={bagKitFee} onChange={(e) => setBagKitFee(e.target.value === '' ? '' : Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
             </div>
           </div>
 
@@ -318,16 +318,16 @@ interface EditTransportModalProps {
 }
 
 const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onClose, onSave }) => {
-  const [amount, setAmount] = useState(structure.amount);
+  const [amount, setAmount] = useState<number | ''>(structure.amount);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const handleSave = async () => {
-    if (amount < 0) { setError('Amount cannot be negative'); return; }
+    if (amount === '' || Number(amount) < 0) { setError('Amount cannot be negative'); return; }
     setError('');
     setSaving(true);
-    const ok = await onSave(structure._id, { amount });
+    const ok = await onSave(structure._id, { amount: Number(amount) });
     setSaving(false);
     if (ok) {
       setSuccess(true);
@@ -363,7 +363,7 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
             <input
               type="number"
               value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
               min={0}
               className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
             />
@@ -410,7 +410,7 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
 
 /* ─── Main Component ──────────────────────────────────────────────── */
 export const FeeStructure: React.FC = () => {
-  const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, createFeeStructure, createTransportFeeStructure } = useApp();
+  const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure } = useApp();
   const [selectedStandard, setSelectedStandard] = useState<string>('1');
   const [editingFee, setEditingFee] = useState<FeeStructureData | null>(null);
   const [editingTransport, setEditingTransport] = useState<TransportFeeStructureData | null>(null);
@@ -418,16 +418,16 @@ export const FeeStructure: React.FC = () => {
   const [isCreatingTransport, setIsCreatingTransport] = useState(false);
 
   const handleDeleteFee = async (structure: FeeStructureData) => {
-    if (window.confirm(`Are you sure you want to deactivate the fee structure for Standard ${structure.standard} (${structure.medium} Medium)?\nNew students will not be able to assign this structure.`)) {
-      const ok = await updateFeeStructure(structure._id, { isActive: false });
-      if (!ok) alert("Failed to deactivate fee structure.");
+    if (window.confirm(`Are you sure you want to delete the fee structure for Standard ${structure.standard} (${structure.medium} Medium)?\nThis action cannot be undone.`)) {
+      const ok = await deleteFeeStructure(structure._id);
+      if (!ok) alert("Failed to delete fee structure.");
     }
   };
 
   const handleDeleteTransport = async (trans: TransportFeeStructureData) => {
-    if (window.confirm(`Are you sure you want to deactivate the transport rate for ${trans.transportType} zone?`)) {
-      const ok = await updateTransportFeeStructure(trans._id, { isActive: false });
-      if (!ok) alert("Failed to deactivate transport rate.");
+    if (window.confirm(`Are you sure you want to delete the transport rate for ${trans.transportType} zone?\nThis action cannot be undone.`)) {
+      const ok = await deleteTransportFeeStructure(trans._id);
+      if (!ok) alert("Failed to delete transport rate.");
     }
   };
 
@@ -568,7 +568,7 @@ export const FeeStructure: React.FC = () => {
                     <button
                       onClick={() => handleDeleteFee(englishStructure)}
                       className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 hover:text-red-200 border border-white/10 transition-all group"
-                      title="Deactivate Fee Structure"
+                      title="Delete Fee Structure"
                     >
                       <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                     </button>
@@ -650,7 +650,7 @@ export const FeeStructure: React.FC = () => {
                     <button
                       onClick={() => handleDeleteFee(gujaratiStructure)}
                       className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 hover:text-red-200 border border-white/10 transition-all group"
-                      title="Deactivate Fee Structure"
+                      title="Delete Fee Structure"
                     >
                       <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                     </button>
@@ -756,7 +756,7 @@ export const FeeStructure: React.FC = () => {
                   <button
                     onClick={() => handleDeleteTransport(trans)}
                     className="p-2 rounded-lg bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 transition-all group"
-                    title="Deactivate Transport Rate"
+                    title="Delete Transport Rate"
                   >
                     <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                   </button>

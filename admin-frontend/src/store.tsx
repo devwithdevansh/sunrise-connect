@@ -102,6 +102,8 @@ interface AppContextType {
   reversePayment: (paymentId: string) => Promise<boolean>;
   updateFeeStructure: (id: string, data: Partial<FeeStructureData>) => Promise<boolean>;
   updateTransportFeeStructure: (id: string, data: Partial<TransportFeeStructureData>) => Promise<boolean>;
+  deleteFeeStructure: (id: string) => Promise<boolean>;
+  deleteTransportFeeStructure: (id: string) => Promise<boolean>;
   createFeeStructure: (data: Partial<FeeStructureData>) => Promise<boolean>;
   createTransportFeeStructure: (data: Partial<TransportFeeStructureData>) => Promise<boolean>;
   createAcademicYear: (data: Partial<AcademicYearData>) => Promise<boolean>;
@@ -644,6 +646,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteFeeStructure = async (id: string): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/fee-structures/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete fee structure');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   // Update a transport fee structure
   const updateTransportFeeStructure = async (id: string, data: Partial<TransportFeeStructureData>): Promise<boolean> => {
     try {
@@ -653,6 +669,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update transport fee structure');
+      await fetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const deleteTransportFeeStructure = async (id: string): Promise<boolean> => {
+    try {
+      const res = await authFetch(`/api/v1/fee-structures/transport/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete transport fee structure');
       await fetchAll();
       return true;
     } catch (err) {
@@ -923,6 +953,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         reversePayment,
         updateFeeStructure,
         updateTransportFeeStructure,
+        deleteFeeStructure,
+        deleteTransportFeeStructure,
         createFeeStructure,
         createTransportFeeStructure,
         createAcademicYear,

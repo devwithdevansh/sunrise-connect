@@ -75,6 +75,32 @@ class FeeStructureController {
     }
     sendResponse(res, 200, updated);
   });
+
+  /**
+   * DELETE /api/v1/fee-structures/:id
+   * Hard deletes a standard fee structure
+   */
+  static deleteFeeStructure = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const deleted = await FeeStructure.findByIdAndDelete(id);
+    if (!deleted) {
+      throw new AppError('Fee structure not found', 404);
+    }
+    sendResponse(res, 200, null, 'Fee structure deleted successfully');
+  });
+
+  /**
+   * DELETE /api/v1/fee-structures/transport/:id
+   * Hard deletes a transport fee structure
+   */
+  static deleteTransportFeeStructure = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const deleted = await TransportFeeStructure.findByIdAndDelete(id);
+    if (!deleted) {
+      throw new AppError('Transport fee structure not found', 404);
+    }
+    sendResponse(res, 200, null, 'Transport fee structure deleted successfully');
+  });
 }
 
 export default FeeStructureController;

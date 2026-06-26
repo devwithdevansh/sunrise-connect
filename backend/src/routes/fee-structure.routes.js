@@ -23,5 +23,7 @@ router.post('/', authorize('ADMIN'), validate(createFeeStructureSchema), FeeStru
 router.post('/transport', authorize('ADMIN'), validate(createTransportFeeStructureSchema), FeeStructureController.createTransportFeeStructure);
 router.put('/:id', authorize('ADMIN'), validate(updateFeeStructureSchema), FeeStructureController.updateFeeStructure);
 router.put('/transport/:id', authorize('ADMIN'), validate(updateTransportFeeStructureSchema), FeeStructureController.updateTransportFeeStructure);
+router.delete('/:id', authorize('ADMIN'), FeeStructureController.deleteFeeStructure);
+router.delete('/transport/:id', authorize('ADMIN'), FeeStructureController.deleteTransportFeeStructure);
 
 export default router;
