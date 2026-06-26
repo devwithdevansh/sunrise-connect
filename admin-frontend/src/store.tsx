@@ -216,44 +216,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const fetchAll = async () => {
     setIsLoadingDetails(true);
     try {
-      const [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes] = await Promise.all([
-        authFetch('/api/v1/students?limit=1000'),
-        authFetch('/api/v1/ledgers?limit=1000'),
-        authFetch('/api/v1/payments?limit=1000'),
-        authFetch('/api/v1/fee-structures'),
-        authFetch('/api/v1/audit?limit=100'),
-        authFetch('/api/v1/academic-years'),
-        authFetch('/api/v1/fee-categories')
-      ]);
-
-      const responses = [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes];
-      for (const response of responses) {
-        if (!response.ok) {
-          throw new Error(`Failed request: ${response.status} ${response.statusText}`);
-        }
+      const initRes = await authFetch('/api/v1/dashboard/init');
+      if (!initRes.ok) {
+        throw new Error(`Failed request: ${initRes.status} ${initRes.statusText}`);
       }
 
-      const [studResp, ledResp, txResp, feeResp, auditResp, ayResp, fcResp] = await Promise.all([
-        studRes.json(),
-        ledRes.json(),
-        txRes.json(),
-        feeRes.json(),
-        auditRes.json(),
-        ayRes.json(),
-        fcRes.json()
-      ]);
+      const initData = await initRes.json();
+      const data = initData.data || {};
 
-      const rawStudents = studResp.data || [];
-      const rawLedgers = ledResp.data || [];
-      const rawTransactions = txResp.data || [];
+      const rawStudents = data.students || [];
+      const rawLedgers = data.ledgers || [];
+      const rawTransactions = data.transactions || [];
 
       // Fee structures
-      const feeData = feeResp.data || {};
-      setFeeStructures(feeData.feeStructures || []);
-      setTransportFeeStructures(feeData.transportStructures || []);
+      setFeeStructures(data.feeStructures || []);
+      setTransportFeeStructures(data.transportStructures || []);
 
       // Audit logs
-      const rawAuditLogs = auditResp.data?.logs || [];
+      const rawAuditLogs = data.auditLogs || [];
       setAuditLogs(rawAuditLogs);
       if (rawAuditLogs.length > 0) {
         const latestTime = new Date(rawAuditLogs[0].createdAt).getTime();
@@ -261,8 +241,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       // Academic Years and Fee Categories
-      setAcademicYears(ayResp.data || []);
-      setFeeCategories(fcResp.data || []);
+      setAcademicYears(data.academicYears || []);
+      setFeeCategories(data.feeCategories || []);
 
 
       // Map ledgers (inject id)
@@ -272,7 +252,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }));
 
       // Map students (calculate status and populate parent info from parentId object)
-      const activeAcademicYear = (ayResp.data || []).find((y: any) => y.isActive)?.name || '';
+      const activeAcademicYear = (data.academicYears || []).find((y: any) => y.isActive)?.name || '';
 
       const mappedStudents = rawStudents.map((s: any) => {
         const overdueLedgers = mappedLedgers.filter((l: any) => {

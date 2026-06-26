@@ -13,6 +13,7 @@ import '../models/TransportFeeStructure.js';
 import '../models/StudentFeeLedger.js';
 import '../models/Payment.js';
 import '../models/AuditLog.js';
+import '../models/AcademicYear.js';
 
 /**
  * Initialize MongoDB connection using Mongoose.
