@@ -3,7 +3,6 @@ import { Router } from 'express';
 import AuthController from '../controllers/AuthController.js';
 import authenticate from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
-import { authRateLimit } from '../middlewares/rateLimit.middleware.js';
 import {
   portalLoginSchema,
   verifyParentSchema,

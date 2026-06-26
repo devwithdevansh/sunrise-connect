@@ -3,9 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import env from './config/env.js';
 import logger from './config/logger.js';
-import { globalErrorHandler } from './middlewares/error.middleware.js';
 import AppError from './utils/AppError.js';
-import { apiRateLimit } from './middlewares/rateLimit.middleware.js';
+import { globalErrorHandler } from './middlewares/error.middleware.js';
 
 // Route imports
 import authRoutes      from './routes/auth.routes.js';
