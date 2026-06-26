@@ -31,6 +31,8 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
     setError('');
     setSaving(true);
     const ok = await onSave({
+      standard,
+      medium,
       annualFee: Number(annualFee),
       educationPartCount: EDUCATION_PARTS,
       termPartCount: TERM_PARTS,
