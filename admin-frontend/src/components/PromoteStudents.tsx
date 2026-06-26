@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store';
-import { Users, ArrowRight, CheckCircle } from 'lucide-react';
+import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
-  const { students, setScreen } = useApp();
+  const { students, setScreen, academicYears } = useApp();
   const [sourceMedium, setSourceMedium] = useState('English');
   const [sourceClass, setSourceClass] = useState('5');
   const [sourceDiv, setSourceDiv] = useState('A');
@@ -17,12 +17,28 @@ export const PromoteStudents: React.FC = () => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    if (academicYears && academicYears.length > 0) {
+      const active = academicYears.find(y => y.isActive);
+      if (active) {
+        setTargetYear(active.name);
+      } else {
+        setTargetYear(academicYears[0].name);
+      }
+    }
+  }, [academicYears]);
+
+  useEffect(() => {
     if (sourceClass) {
       const next = parseInt(sourceClass) + 1;
       setTargetClass(next <= 12 ? next.toString() : sourceClass);
       setTargetDiv(sourceDiv);
     }
   }, [sourceClass, sourceDiv]);
+
+  // Reset selected list when source configurations change
+  useEffect(() => {
+    setSelectedStudentIds([]);
+  }, [sourceMedium, sourceClass, sourceDiv]);
 
   const eligibleStudents = students.filter(s => 
     s.isActive !== false &&
@@ -86,98 +102,341 @@ export const PromoteStudents: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 p-6 space-y-6 max-w-7xl mx-auto">
-      <header>
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-          <ArrowRight className="h-6 w-6 text-indigo-500" /> Bulk Student Promotion
-        </h2>
-        <p className="text-slate-500 text-sm mt-1">Move students to their next academic year standard.</p>
-      </header>
+    <div className="flex-1 p-6 space-y-6 max-w-7xl mx-auto animate-fade-in">
+      {/* Premium Header Banner */}
+      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white rounded-3xl p-6 shadow-lg relative overflow-hidden mb-6">
+        {/* Background decorative elements */}
+        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-20 -mt-20 pointer-events-none"></div>
+        <div className="absolute left-1/3 bottom-0 w-32 h-32 bg-indigo-400/10 rounded-full -mb-10 pointer-events-none"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-500/30 px-3 py-1 rounded-full text-[10px] font-extrabold text-indigo-100 uppercase tracking-wider backdrop-blur-sm">
+              <GraduationCap className="h-3.5 w-3.5" /> Promotion Center
+            </div>
+            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">Bulk Student Promotion</h2>
+            <p className="text-indigo-100 text-xs md:text-sm max-w-2xl">
+              Advance groups of students to their next standard, customize destination divisions, and assign academic years efficiently.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {success && (
-        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-xl flex items-center gap-3 font-bold border border-emerald-200">
-          <CheckCircle className="h-5 w-5" /> Students successfully promoted! Redirecting...
+        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 font-bold border border-emerald-200 shadow-sm animate-fade-in">
+          <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
+          <span>Students successfully promoted! Redirecting to dashboard...</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Source Configuration */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <Users className="h-4 w-4" /> Source Class
-          </h3>
-          <div className="flex gap-3">
-            <select value={sourceMedium} onChange={e => setSourceMedium(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg text-sm font-bold">
-              <option value="English">English</option>
-              <option value="Gujarati">Gujarati</option>
-            </select>
-            <select value={sourceClass} onChange={e => setSourceClass(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg text-sm font-bold">
-              {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-            </select>
-            <select value={sourceDiv} onChange={e => setSourceDiv(e.target.value)} className="w-full bg-slate-50 border p-2 rounded-lg text-sm font-bold">
-              {['A', 'B', 'C', 'D'].map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
+      {/* Configuration Flow Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Source Configuration (Left) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-all duration-350 flex flex-col justify-between">
+          <div>
+            <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><Users className="h-4 w-4" /></span>
+              Source Cohort
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-1">Select the current cohort to promote</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            {/* Medium */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Medium</label>
+              <div className="relative">
+                <select
+                  value={sourceMedium}
+                  onChange={e => setSourceMedium(e.target.value)}
+                  className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-350 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
+                >
+                  <option value="English">English</option>
+                  <option value="Gujarati">Gujarati</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Standard */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Std (Class)</label>
+              <div className="relative">
+                <select
+                  value={sourceClass}
+                  onChange={e => setSourceClass(e.target.value)}
+                  className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-355 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
+                >
+                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Std {i+1}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Division */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Division</label>
+              <div className="relative">
+                <select
+                  value={sourceDiv}
+                  onChange={e => setSourceDiv(e.target.value)}
+                  className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-350 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
+                >
+                  {['A', 'B', 'C', 'D'].map(d => <option key={d} value={d}>Div {d}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Target Configuration */}
-        <div className="bg-indigo-50 p-5 rounded-2xl shadow-sm border border-indigo-100 space-y-4">
-          <h3 className="font-bold text-indigo-900 flex items-center gap-2">
-            <ArrowRight className="h-4 w-4" /> Target Class
-          </h3>
-          <div className="flex gap-3">
-            <select value={targetClass} onChange={e => setTargetClass(e.target.value)} className="w-full border p-2 rounded-lg font-bold">
-              {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-            </select>
-            <select value={targetDiv} onChange={e => setTargetDiv(e.target.value)} className="w-full border p-2 rounded-lg font-bold">
-              {['A', 'B', 'C', 'D'].map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-            <select value={targetYear} onChange={e => setTargetYear(e.target.value)} className="w-full border p-2 rounded-lg font-bold">
-              <option value="2025-26">2025-26</option>
-              <option value="2026-27">2026-27</option>
-            </select>
+        {/* Visual Connector (Middle) */}
+        <div className="lg:col-span-2 flex flex-row lg:flex-col items-center justify-center gap-2 p-2 rounded-2xl text-center">
+          <div className="hidden lg:flex flex-col items-center justify-center h-full">
+            <div className="h-10 w-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm animate-pulse">
+              <ArrowRight className="h-5 w-5" />
+            </div>
+            <span className="text-[9px] font-extrabold text-indigo-500 uppercase tracking-wider mt-2">Promote To</span>
+          </div>
+          <div className="flex lg:hidden items-center justify-center py-2 w-full gap-2">
+            <span className="h-px bg-slate-200 flex-1"></span>
+            <span className="text-[9px] font-extrabold text-indigo-500 uppercase tracking-wider bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">Promoting to</span>
+            <span className="h-px bg-slate-200 flex-1"></span>
+          </div>
+        </div>
+
+        {/* Target Cohort (Right) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-all duration-350 flex flex-col justify-between ring-1 ring-indigo-500/5">
+          <div>
+            <h3 className="font-extrabold text-indigo-950 text-sm flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><ArrowRight className="h-4 w-4" /></span>
+              Target Cohort
+            </h3>
+            <p className="text-[11px] text-indigo-400 mt-1">Specify destination class details & academic year</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            {/* Target Class */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-wider">Std (Class)</label>
+              <div className="relative">
+                <select
+                  value={targetClass}
+                  onChange={e => setTargetClass(e.target.value)}
+                  className="appearance-none w-full bg-indigo-50/40 border border-indigo-100 hover:border-indigo-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-indigo-900 focus:outline-none transition-all shadow-sm cursor-pointer"
+                >
+                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Std {i+1}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Target Division */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-wider">Division</label>
+              <div className="relative">
+                <select
+                  value={targetDiv}
+                  onChange={e => setTargetDiv(e.target.value)}
+                  className="appearance-none w-full bg-indigo-50/40 border border-indigo-100 hover:border-indigo-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-indigo-900 focus:outline-none transition-all shadow-sm cursor-pointer"
+                >
+                  {['A', 'B', 'C', 'D'].map(d => <option key={d} value={d}>Div {d}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Target Academic Year */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-wider">Academic Year</label>
+              <div className="relative">
+                <select
+                  value={targetYear}
+                  onChange={e => setTargetYear(e.target.value)}
+                  className="appearance-none w-full bg-indigo-50/40 border border-indigo-100 hover:border-indigo-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-indigo-900 focus:outline-none transition-all shadow-sm cursor-pointer"
+                >
+                  {academicYears && academicYears.length > 0 ? (
+                    academicYears.map(year => (
+                      <option key={year._id} value={year.name}>{year.name}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="2025-26">2025-26</option>
+                      <option value="2026-27">2026-27</option>
+                    </>
+                  )}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[400px]">
-        <div className="p-4 border-b flex items-center justify-between bg-slate-50">
-          <input type="text" placeholder="Search students..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="border p-2 rounded-lg w-64 text-sm" />
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">{selectedStudentIds.length} selected</span>
-            <button 
-              onClick={handlePromote} disabled={selectedStudentIds.length === 0 || loading}
-              className={`px-5 py-2 rounded-lg font-bold text-sm text-white ${selectedStudentIds.length > 0 && !loading ? 'bg-indigo-600' : 'bg-slate-300'}`}
+      {/* Eligible Students Selection Card */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all duration-300">
+        {/* Header Controller Bar */}
+        <div className="p-4 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="relative flex-grow sm:flex-grow-0">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search students by name..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full sm:w-64 bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-sm placeholder:text-slate-400 placeholder:font-normal"
+              />
+            </div>
+            <span className="text-[10px] font-extrabold text-slate-500 bg-slate-100 border border-slate-200/60 px-2.5 py-1 rounded-full shrink-0">
+              {eligibleStudents.length} Eligible
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500">
+              Selected: <strong className="text-indigo-600 font-extrabold">{selectedStudentIds.length}</strong> of {eligibleStudents.length}
+            </span>
+            {eligibleStudents.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="text-[10px] font-extrabold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow transition-all active:scale-[0.98]"
+              >
+                {selectedStudentIds.length === eligibleStudents.length ? 'Deselect All' : 'Select All'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable list */}
+        <div className="flex-1 overflow-y-auto max-h-[400px]">
+          {eligibleStudents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="h-12 w-12 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mb-3 border border-slate-100">
+                <Users className="h-5 w-5" />
+              </div>
+              <h4 className="font-extrabold text-slate-750 text-sm">No Eligible Students Found</h4>
+              <p className="text-xs text-slate-400 max-w-sm mt-1 font-medium">
+                No active students are currently enrolled in Std {sourceClass}-{sourceDiv} ({sourceMedium} Medium). Adjust filters to load cohorts.
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-50 sticky top-0 z-15 border-b border-slate-100">
+                <tr className="font-extrabold text-[9px] uppercase text-slate-400 tracking-wider">
+                  <th className="py-3 px-4 w-12 text-center">Select</th>
+                  <th className="py-3 px-4">Student Profile Details</th>
+                  <th className="py-3 px-4">Student ID / Code</th>
+                  <th className="py-3 px-4">Fee Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-755 font-semibold">
+                {eligibleStudents.map(student => {
+                  const sId = student._id || student.id;
+                  const isSelected = selectedStudentIds.includes(sId);
+                  const initials = (student.studentName ?? '')
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('');
+
+                  return (
+                    <tr
+                      key={sId}
+                      onClick={() => toggleStudent(sId)}
+                      className={`cursor-pointer hover:bg-slate-50/50 transition-colors ${isSelected ? 'bg-indigo-50/40 hover:bg-indigo-50/60' : ''}`}
+                    >
+                      <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleStudent(sId)}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-350 rounded cursor-pointer transition-all"
+                        />
+                      </td>
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-650 font-bold text-xs flex items-center justify-center uppercase border border-indigo-100">
+                          {initials}
+                        </div>
+                        <div>
+                          <span className="font-extrabold text-slate-800 text-sm block">{student.studentName}</span>
+                          <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">Parent Contact: {student.parentMobile ?? 'N/A'}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500">{student.studentCode}</td>
+                      <td className="py-3 px-4">
+                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase border ${
+                          student.status === 'PAID'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                            : student.status === 'RTE'
+                              ? 'bg-purple-50 text-purple-600 border-purple-100'
+                              : 'bg-amber-50 text-amber-550 border-amber-100'
+                        }`}>
+                          {student.status || 'ACTIVE'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Sticky Promotion Warning and Confirmation Bottom Panel */}
+      {selectedStudentIds.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-50 text-amber-600 shrink-0 mt-0.5 border border-amber-100">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-extrabold text-slate-800 text-sm">Verify Cohort Migration Details</h4>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                You are migrating <strong className="text-indigo-600 font-extrabold">{selectedStudentIds.length}</strong> student(s) from{' '}
+                <strong>Std {sourceClass} {sourceMedium} ({sourceDiv})</strong> to{' '}
+                <strong className="text-indigo-600 font-extrabold">Std {targetClass} ({targetDiv})</strong> under Academic Year{' '}
+                <strong className="text-indigo-600 font-extrabold">{targetYear}</strong>.
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium">
+                This transaction advances student profiles and builds new outstanding fee ledgers matching the target class fee structures.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+            <button
+              type="button"
+              onClick={() => setSelectedStudentIds([])}
+              className="bg-slate-50 hover:bg-slate-105 border border-slate-200 hover:border-slate-350 text-slate-655 font-bold px-4 py-2.5 rounded-xl text-xs transition-all active:scale-[0.98]"
             >
-              {loading ? 'Promoting...' : `Promote ${selectedStudentIds.length} Students`}
+              Cancel
+            </button>
+            
+            <button
+              type="button"
+              onClick={handlePromote}
+              disabled={loading}
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/25 transition-all active:scale-[0.98]"
+            >
+              {loading ? (
+                <>
+                  <span className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check className="h-3.5 w-3.5 stroke-[3]" />
+                  Execute Cohort Promotion
+                </>
+              )}
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-slate-50 sticky top-0">
-              <tr className="border-b font-bold text-xs uppercase text-slate-500">
-                <th className="p-4 w-12 text-center"><input type="checkbox" checked={eligibleStudents.length > 0 && selectedStudentIds.length === eligibleStudents.length} onChange={toggleAll} /></th>
-                <th className="p-4">Student Name</th>
-                <th className="p-4">Student ID</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {eligibleStudents.map(student => {
-                const sId = student._id || student.id;
-                const isSelected = selectedStudentIds.includes(sId);
-                return (
-                  <tr key={sId} onClick={() => toggleStudent(sId)} className={`cursor-pointer ${isSelected ? 'bg-indigo-50/50' : ''}`}>
-                    <td className="p-4 text-center"><input type="checkbox" checked={isSelected} readOnly /></td>
-                    <td className="p-4 font-bold">{student.studentName}</td>
-                    <td className="p-4 font-mono">{student.studentCode}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
