@@ -5,7 +5,7 @@ import type {
   LedgerEntry,
   PaymentTransaction
 } from './mockData';
-// Removed static mock data imports – data now loaded from backend
+import { isPeriodOverdue } from './utils';
 
 export type ScreenType =
   | 'dashboard'
@@ -264,9 +264,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }));
 
       // Map students (calculate status and populate parent info from parentId object)
+      const activeAcademicYear = (ayResp.data || []).find((y: any) => y.isActive)?.name || '';
+
       const mappedStudents = rawStudents.map((s: any) => {
-        const studentLedgers = mappedLedgers.filter((l: any) => l.studentId === s._id && l.status !== 'PAID');
-        const dueCount = studentLedgers.length;
+        const overdueLedgers = mappedLedgers.filter((l: any) => {
+          if (l.studentId !== s._id || l.status === 'PAID') return false;
+          if (l.remainingAmount <= 0) return false;
+          return isPeriodOverdue(l.feePeriod, l.academicYear, activeAcademicYear);
+        });
+
+        const uniquePeriods = new Set(
+          overdueLedgers.map((l: any) => `${l.academicYear || activeAcademicYear}_${l.feePeriod}`)
+        );
+        const dueCount = uniquePeriods.size;
+
         let status = 'PAID';
         if (s.isRTE) {
           status = 'RTE';
@@ -286,6 +297,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status
         };
       });
+
 
       // Map transactions to fit PaymentTransaction interface
       const mappedLedgersMap = new Map<string, any>(mappedLedgers.map((l: any) => [l._id || l.id, l]));

@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../store';
-import { isLedgerPending } from '../utils';
 import { FileSpreadsheet, Printer, Calendar, Filter, Users, DollarSign, Award, ArrowUpRight, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { isLedgerPending } from '../utils';
 
 interface ReportsProps {
   onPrintReport: (report: { type: string; title: string; data: any }) => void;
@@ -10,9 +10,9 @@ interface ReportsProps {
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   const { students, ledgerEntries, transactions } = useApp();
-  
+
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
-  
+
   // Daily Collections State
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
@@ -45,7 +45,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       if (!t.date || t.status === 'REVERSED') return false; // Ignore reversed txns
       const matchesDate = t.date === selectedDate;
       if (!matchesDate) return false;
-      
+
       if (dailySearchQuery) {
         const q = dailySearchQuery.toLowerCase();
         return (
@@ -85,19 +85,29 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   // ==========================================
   const outstandingReportData = useMemo(() => {
     // 1. Calculate dues per student from unpaid ledger entries
-    const studentDuesMap = new Map<string, { totalDue: number; educationDue: number; transportDue: number; count: number }>();
-    
+    const studentDuesMap = new Map<string, { totalDue: number; educationDue: number; transportDue: number; count: number; periods: Set<string> }>();
+
     ledgerEntries.forEach(l => {
       if (isLedgerPending(l)) {
         const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
         if (remaining > 0) {
-          const prev = studentDuesMap.get(l.studentId) || { totalDue: 0, educationDue: 0, transportDue: 0, count: 0 };
+          const prev = studentDuesMap.get(l.studentId) || { 
+            totalDue: 0, 
+            educationDue: 0, 
+            transportDue: 0, 
+            count: 0, 
+            periods: new Set<string>() 
+          };
           const isTransport = l.feeType === 'TRANSPORT';
+          const periodKey = `${l.academicYear || ''}_${l.feePeriod}`;
+          prev.periods.add(periodKey);
+
           studentDuesMap.set(l.studentId, {
             totalDue: prev.totalDue + remaining,
             educationDue: prev.educationDue + (isTransport ? 0 : remaining),
             transportDue: prev.transportDue + (isTransport ? remaining : 0),
-            count: prev.count + 1
+            count: prev.periods.size,
+            periods: prev.periods
           });
         }
       }
@@ -256,7 +266,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
-    
+
     // Fit column widths
     const maxLens = [{ wch: 6 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 25 }];
     worksheet['!cols'] = maxLens;
@@ -377,33 +387,30 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       <div className="flex border-b border-slate-100 gap-6">
         <button
           onClick={() => setActiveTab('daily')}
-          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${
-            activeTab === 'daily'
+          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${activeTab === 'daily'
               ? 'border-amber-500 text-slate-800'
               : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
+            }`}
         >
           <Calendar className="h-4 w-4" />
           <span>Daily Collections</span>
         </button>
         <button
           onClick={() => setActiveTab('outstanding')}
-          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${
-            activeTab === 'outstanding'
+          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${activeTab === 'outstanding'
               ? 'border-amber-500 text-slate-800'
               : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
+            }`}
         >
           <Users className="h-4 w-4" />
           <span>Outstanding Dues</span>
         </button>
         <button
           onClick={() => setActiveTab('rte')}
-          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${
-            activeTab === 'rte'
+          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${activeTab === 'rte'
               ? 'border-amber-500 text-slate-800'
               : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
+            }`}
         >
           <Award className="h-4 w-4" />
           <span>RTE Reconcile</span>
@@ -511,10 +518,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
                         </td>
                         <td className="py-4 px-6 whitespace-pre-line text-slate-500 font-medium">{t.feeType}</td>
                         <td className="py-4 px-6">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                            t.method?.toUpperCase() === 'CASH' ? 'bg-emerald-50 text-emerald-600' :
-                            t.method?.toUpperCase() === 'ONLINE' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.method?.toUpperCase() === 'CASH' ? 'bg-emerald-50 text-emerald-600' :
+                              t.method?.toUpperCase() === 'ONLINE' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
+                            }`}>
                             {t.method}
                           </span>
                         </td>
@@ -576,9 +582,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
               <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 mb-2">Dues Aging (Overdue Months)</span>
               <div className="flex items-end gap-3 h-10">
                 <div className="flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-amber-400 rounded-t-sm" 
-                    style={{ 
+                  <div
+                    className="w-full bg-amber-400 rounded-t-sm"
+                    style={{
                       height: `${outstandingReportData.studentCount > 0 ? (outstandingReportData.oneDueCount / outstandingReportData.studentCount) * 100 : 0}%`,
                       minHeight: outstandingReportData.oneDueCount > 0 ? '4px' : '0px'
                     }}
@@ -586,9 +592,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
                   <span className="text-[8px] text-slate-400 font-bold mt-1">1M ({outstandingReportData.oneDueCount})</span>
                 </div>
                 <div className="flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-orange-400 rounded-t-sm" 
-                    style={{ 
+                  <div
+                    className="w-full bg-orange-400 rounded-t-sm"
+                    style={{
                       height: `${outstandingReportData.studentCount > 0 ? (outstandingReportData.twoDueCount / outstandingReportData.studentCount) * 100 : 0}%`,
                       minHeight: outstandingReportData.twoDueCount > 0 ? '4px' : '0px'
                     }}
@@ -596,9 +602,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
                   <span className="text-[8px] text-slate-400 font-bold mt-1">2M ({outstandingReportData.twoDueCount})</span>
                 </div>
                 <div className="flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-red-400 rounded-t-sm" 
-                    style={{ 
+                  <div
+                    className="w-full bg-red-400 rounded-t-sm"
+                    style={{
                       height: `${outstandingReportData.studentCount > 0 ? (outstandingReportData.threePlusDueCount / outstandingReportData.studentCount) * 100 : 0}%`,
                       minHeight: outstandingReportData.threePlusDueCount > 0 ? '4px' : '0px'
                     }}
@@ -674,10 +680,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
                           <div className="text-[10px] text-slate-400 font-bold">{s.parentMobile}</div>
                         </td>
                         <td className="py-4 px-6">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold ${
-                            s.overdueCount >= 3 ? 'bg-red-50 text-red-650' :
-                            s.overdueCount === 2 ? 'bg-orange-50 text-orange-655' : 'bg-amber-50 text-amber-600'
-                          }`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold ${s.overdueCount >= 3 ? 'bg-red-50 text-red-650' :
+                              s.overdueCount === 2 ? 'bg-orange-50 text-orange-655' : 'bg-amber-50 text-amber-600'
+                            }`}>
                             {s.overdueCount} Months Overdue
                           </span>
                         </td>

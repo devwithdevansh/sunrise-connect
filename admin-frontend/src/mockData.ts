@@ -23,14 +23,16 @@ export interface LedgerEntry {
   id: string;
   studentId: string;
   feePeriod: string; // e.g. "June", "Term 1", "Term 2", "Transport - June"
-  feeType: 'EDUCATION' | 'TERM' | 'TRANSPORT' | 'ADMISSION' | 'OTHER';
+  feeType: 'EDUCATION' | 'TERM' | 'TRANSPORT' | 'ADMISSION' | 'BAG_KIT' | 'OTHER';
   totalAmount: number;
   paidAmount: number;
   concessionAmount: number;
   remainingAmount: number;
   dueDate: string;
   status: 'PENDING' | 'PARTIAL' | 'PAID';
+  academicYear?: string; // e.g. "2025-26" — used for year-scoped ledger lookup
 }
+
 
 export interface PaymentTransaction {
   id: string;

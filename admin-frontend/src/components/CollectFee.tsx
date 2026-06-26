@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import type { Student, PaymentTransaction } from '../mockData';
+import { isPeriodOverdue } from '../utils';
 import {
   Search,
   Plus,
@@ -13,25 +14,33 @@ import {
   Loader2
 } from 'lucide-react';
 
-const COMBINED_EDU_TERM_CONFIG = [
-  { type: 'TERM', label: 'Term 1', sublabel: 'Due before June', year: '', value: 'Term 1' },
-  { type: 'EDUCATION', label: 'Jun', year: '26', value: 'June' },
-  { type: 'EDUCATION', label: 'Jul', year: '26', value: 'July' },
-  { type: 'EDUCATION', label: 'Aug', year: '26', value: 'August' },
-  { type: 'EDUCATION', label: 'Sep', year: '26', value: 'September' },
-  { type: 'EDUCATION', label: 'Oct', year: '26', value: 'October' },
-  { type: 'EDUCATION', label: 'Nov', year: '26', value: 'November' },
-  { type: 'TERM', label: 'Term 2', sublabel: 'Due before December', year: '', value: 'Term 2' },
-  { type: 'EDUCATION', label: 'Dec', year: '26', value: 'December' },
-  { type: 'EDUCATION', label: 'Jan', year: '27', value: 'January' },
-  { type: 'EDUCATION', label: 'Feb', year: '27', value: 'February' },
-  { type: 'EDUCATION', label: 'Mar', year: '27', value: 'March' },
-  { type: 'EDUCATION', label: 'Apr', year: '27', value: 'April' },
-  { type: 'EDUCATION', label: 'May', year: '27', value: 'May' },
-];
+// Build EDU+TERM config dynamically based on academic year (e.g. "2025-26" → first half '25, second half '26)
+const buildEduTermConfig = (academicYearName: string) => {
+  // Parse year labels: "2025-26" → firstYr = '25', secondYr = '26'
+  const parts = academicYearName?.split('-') || [];
+  const firstYr = parts[0]?.slice(-2) || '25';
+  const secondYr = parts[1]?.slice(-2) || String(Number(firstYr) + 1).padStart(2, '0');
+  return [
+    { type: 'TERM',      label: 'Term 1', sublabel: 'Due before June',     year: '',        value: 'Term 1' },
+    { type: 'EDUCATION', label: 'Jun',    sublabel: '',                     year: firstYr,   value: 'June' },
+    { type: 'EDUCATION', label: 'Jul',    sublabel: '',                     year: firstYr,   value: 'July' },
+    { type: 'EDUCATION', label: 'Aug',    sublabel: '',                     year: firstYr,   value: 'August' },
+    { type: 'EDUCATION', label: 'Sep',    sublabel: '',                     year: firstYr,   value: 'September' },
+    { type: 'EDUCATION', label: 'Oct',    sublabel: '',                     year: firstYr,   value: 'October' },
+    { type: 'EDUCATION', label: 'Nov',    sublabel: '',                     year: firstYr,   value: 'November' },
+    { type: 'TERM',      label: 'Term 2', sublabel: 'Due before December',  year: '',        value: 'Term 2' },
+    { type: 'EDUCATION', label: 'Dec',    sublabel: '',                     year: firstYr,   value: 'December' },
+    { type: 'EDUCATION', label: 'Jan',    sublabel: '',                     year: secondYr,  value: 'January' },
+    { type: 'EDUCATION', label: 'Feb',    sublabel: '',                     year: secondYr,  value: 'February' },
+    { type: 'EDUCATION', label: 'Mar',    sublabel: '',                     year: secondYr,  value: 'March' },
+    { type: 'EDUCATION', label: 'Apr',    sublabel: '',                     year: secondYr,  value: 'April' },
+    { type: 'EDUCATION', label: 'May',    sublabel: '',                     year: secondYr,  value: 'May' },
+  ];
+};
 
-const MONTHS_CONFIG = COMBINED_EDU_TERM_CONFIG.filter(c => c.type === 'EDUCATION');
-const STANDARD_MONTH_PERIODS = new Set(MONTHS_CONFIG.map(m => m.value));
+// Static month config (period values only) — used for transport and general lookups
+const ALL_MONTH_VALUES = ['June','July','August','September','October','November','December','January','February','March','April','May'];
+const STANDARD_MONTH_PERIODS = new Set(ALL_MONTH_VALUES);
 
 // ── Payment History Sub-Component (Grouped by fee category) ─────
 interface TxItem {
@@ -261,14 +270,23 @@ export const CollectFee: React.FC = () => {
     recordPayment,
     feeStructures,
     transportFeeStructures,
+    academicYears,
     regenerateLedgers,
     addCustomFee,
     selectedStudentIdForFee,
     setSelectedStudentIdForFee,
     reversePayment
   } = useApp();
+
+  // Academic year helpers
+  const activeYear = academicYears.find(y => y.isActive);
+  const activeYearName = activeYear?.name || '';
+  const sortedYears = [...academicYears].sort((a, b) => b.name.localeCompare(a.name)); // newest first
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  // Which academic year is being viewed in the payment panel (defaults to active)
+  const [selectedYear, setSelectedYear] = useState<string>(activeYearName);
 
   // Fee collection form states
   const [feeCategory, setFeeCategory] = useState<'EDUCATION' | 'TRANSPORT' | 'ADMISSION' | 'BAG_KIT' | 'OTHER'>('EDUCATION');
@@ -294,13 +312,19 @@ export const CollectFee: React.FC = () => {
   const [customFeeAmount, setCustomFeeAmount] = useState('');
   const [isSubmittingCustomFee, setIsSubmittingCustomFee] = useState(false);
 
+  // Sync selectedYear when academicYears loads
+  useEffect(() => {
+    if (activeYearName && !selectedYear) setSelectedYear(activeYearName);
+  }, [activeYearName]);
+
   // Handle student pre-selection if redirected from Students page
   useEffect(() => {
     if (selectedStudentIdForFee && students.length > 0) {
       const found = students.find(s => s._id === selectedStudentIdForFee || s.id === selectedStudentIdForFee);
       if (found) {
         setSelectedStudent(found);
-        setSelectedStudentIdForFee(null); // Clear it so subsequent loads don't override manually selected students
+        setSelectedYear(activeYearName); // reset to active year
+        setSelectedStudentIdForFee(null);
       }
     } else if (students.length > 0 && !selectedStudent) {
       setSelectedStudent(students[0]);
@@ -355,7 +379,11 @@ export const CollectFee: React.FC = () => {
     return { education, term, transport, admission, bagKit };
   }, [selectedStudent, feeStructures, transportFeeStructures]);
 
-  // Mid-year transport ledgers: TRANSPORT entries that don't map to a standard month slot
+  // --- Dynamic config for selected year ---
+  const COMBINED_EDU_TERM_CONFIG = useMemo(() => buildEduTermConfig(selectedYear), [selectedYear]);
+  const MONTHS_CONFIG = useMemo(() => COMBINED_EDU_TERM_CONFIG.filter(c => c.type === 'EDUCATION'), [COMBINED_EDU_TERM_CONFIG]);
+
+  // Mid-year transport ledgers: TRANSPORT entries that don't map to a standard month slot, for selected year
   const midYearTransportLedgers = useMemo(() => {
     if (!selectedStudent) return [];
     const sId = selectedStudent._id || selectedStudent.id;
@@ -363,9 +391,10 @@ export const CollectFee: React.FC = () => {
       (l) =>
         l.studentId === sId &&
         l.feeType === 'TRANSPORT' &&
-        !STANDARD_MONTH_PERIODS.has(l.feePeriod)
+        !STANDARD_MONTH_PERIODS.has(l.feePeriod) &&
+        (l.academicYear === selectedYear || (!l.academicYear && selectedYear === activeYearName))
     );
-  }, [selectedStudent, ledgerEntries]);
+  }, [selectedStudent, ledgerEntries, selectedYear, activeYearName, COMBINED_EDU_TERM_CONFIG]);
 
   // -------------------------------------------------------------------
   // Helpers
@@ -382,7 +411,7 @@ export const CollectFee: React.FC = () => {
     return 0;
   };
 
-  /** What ledger entry exists for this student + category + period (any status) */
+  /** What ledger entry exists for this student + category + period — SCOPED to selectedYear */
   const getLedger = (category: string, period: string) => {
     const sId = selectedStudent?._id || selectedStudent?.id;
     // For one-time fees, also match legacy feePeriod names stored in DB
@@ -390,31 +419,36 @@ export const CollectFee: React.FC = () => {
       ADMISSION: ['One-time', 'Admission'],
       BAG_KIT: ['One-time', 'Bag & Kit'],
     };
-    const periodsToMatch = legacyPeriods[category]
-      ? legacyPeriods[category]
-      : [period];
+    const periodsToMatch = legacyPeriods[category] ?? [period];
 
     return ledgerEntries.find(
       (l) =>
         (l.studentId === sId) &&
         l.feeType === category &&
-        periodsToMatch.includes(l.feePeriod)
+        periodsToMatch.includes(l.feePeriod) &&
+        // Year scoping: match explicit academicYear OR fall back for legacy entries with no year
+        (l.academicYear === selectedYear || (!l.academicYear && selectedYear === activeYearName))
     );
   };
 
-  // Standard period values for which we can fall back to the fee structure amount
-  // when no ledger exists yet (months + term slots + one-time slots)
   const STANDARD_TERM_PERIODS = new Set(['Term 1', 'Term 2']);
 
-  /** Amount still due for a period (0 if fully paid or no ledger = fresh) */
+  // ── Date-gate helpers ────────────────────────────────────────────
+
+  /** Is this period genuinely overdue right now?
+   *  Uses period-name based mapping (Term 1 → June 1, Term 2 → Dec 1, etc.)
+   *  Past year → always. Current year → only if the period's 1st has arrived. */
+  const isOverdue = (_category: string, period: string): boolean => {
+    const entry = getLedger(_category, period);
+    if (entry?.status === 'PAID') return false;
+    return isPeriodOverdue(period, selectedYear, activeYearName);
+  };
+
+
+  /** Amount still due for a period (0 if fully paid) */
   const getDueAmount = (category: string, period: string): number => {
     const entry = getLedger(category, period);
-    // For mid-year / one-time entries the ledger IS the source of truth — never fall back to standard amount
     if (!entry) {
-      // Fall back to fee structure amount for:
-      //   • standard monthly slots (June … May)
-      //   • term slots (Term 1, Term 2)
-      //   • one-time slots (Admission / Bag & Kit)
       if (STANDARD_MONTH_PERIODS.has(period) || STANDARD_TERM_PERIODS.has(period) || period === 'One-time') {
         return getStandardAmount(category, period);
       }
@@ -427,16 +461,16 @@ export const CollectFee: React.FC = () => {
   // Period selection
   // -------------------------------------------------------------------
 
-  const getApplicablePeriods = (config: typeof COMBINED_EDU_TERM_CONFIG) => {
+  const getApplicablePeriods = (config: ReturnType<typeof buildEduTermConfig>) => {
+    // For past years, show ALL periods (the year is already over — no admission-month gating)
+    if (selectedYear !== activeYearName) return config;
     if (!selectedStudent || !selectedStudent.admissionMonth) return config;
-    const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const allMonths = ['June','July','August','September','October','November','December','January','February','March','April','May'];
     const startIdx = allMonths.indexOf(selectedStudent.admissionMonth);
     if (startIdx <= 0) return config;
-
     return config.filter(item => {
       if (item.type === 'EDUCATION' || item.type === 'TRANSPORT') {
-        const itemIdx = allMonths.indexOf(item.value);
-        return itemIdx >= startIdx;
+        return allMonths.indexOf(item.value) >= startIdx;
       }
       if (item.type === 'TERM') {
         if (item.value === 'Term 1') return startIdx <= 5;
@@ -581,17 +615,24 @@ export const CollectFee: React.FC = () => {
       (s.studentCode ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getStudentDueAmount = (studentId: string) =>
-    ledgerEntries
-      .filter((l) => l.studentId === studentId && l.status !== 'PAID')
+  // Student list: due amount = only genuinely overdue (period-based, consistent with store)
+  const getStudentDueAmount = (studentId: string) => {
+    return ledgerEntries
+      .filter((l) => {
+        if (l.studentId !== studentId || l.status === 'PAID' || l.remainingAmount <= 0) return false;
+        return isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName);
+      })
       .reduce((sum, l) => sum + l.remainingAmount, 0);
+  };
+
 
   const getStudentDueLabel = (student: Student) => {
     const amount = getStudentDueAmount(student._id || student.id);
     if (amount === 0) return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
     if (student.status === '2 DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (2 MONTHS)`, color: 'text-amber-600 bg-amber-50' };
     if (student.status === '3+ DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (3+ MONTHS)`, color: 'text-red-600 bg-red-50' };
-    return { text: `₹${amount.toLocaleString('en-IN')} DUE`, color: 'text-blue-600 bg-blue-50 font-bold' };
+    if (amount > 0) return { text: `₹${amount.toLocaleString('en-IN')} DUE`, color: 'text-blue-600 bg-blue-50 font-bold' };
+    return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
   };
 
   // -------------------------------------------------------------------
@@ -735,6 +776,7 @@ export const CollectFee: React.FC = () => {
                     setSelectedStudent(student);
                     setSelectedFees([]);
                     setFeeCategory('EDUCATION');
+                    setSelectedYear(activeYearName); // reset to current year on student change
                   }}
                   className={`p-4 border rounded-2xl cursor-pointer transition-all duration-200 ${isSelected
                       ? 'bg-blue-50/50 border-blue-500 shadow-sm ring-1 ring-blue-500/20'
@@ -790,7 +832,7 @@ export const CollectFee: React.FC = () => {
           <>
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Student banner + Category Tabs */}
+            {/* Student banner + Year Tabs + Category Tabs */}
             <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-wrap gap-4 items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Paying For</span>
@@ -808,28 +850,78 @@ export const CollectFee: React.FC = () => {
               <div className="flex bg-slate-200/50 p-0.5 rounded-lg border border-slate-200/20 flex-wrap">
                 {(['EDUCATION', 'TRANSPORT', 'ADMISSION', 'BAG_KIT', 'OTHER'] as const)
                   .filter((cat) => {
-                    if ((cat === 'ADMISSION' || cat === 'BAG_KIT') && !selectedStudent.isNewAdmission) {
-                      return false;
-                    }
+                    if ((cat === 'ADMISSION' || cat === 'BAG_KIT') && !selectedStudent.isNewAdmission) return false;
                     return true;
                   })
                   .map((cat) => (
                     <button
                       key={cat}
                       type="button"
-                      onClick={() => {
-                        setFeeCategory(cat);
-                      }}
-                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${feeCategory === cat
-                          ? 'bg-white text-slate-800 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700'
-                        }`}
+                      onClick={() => setFeeCategory(cat)}
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
+                        feeCategory === cat ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
                     >
                       {cat === 'EDUCATION' ? 'EDUCATION & TERM' : cat === 'BAG_KIT' ? 'BAG & KIT' : cat}
                     </button>
                   ))}
               </div>
             </div>
+
+            {/* ── Academic Year Tabs — shown only when student has past-year dues ── */}
+            {(() => {
+              const sId = selectedStudent._id || selectedStudent.id;
+              const studentYears = [...new Set(
+                ledgerEntries
+                  .filter(l => (l.studentId === sId) && l.status !== 'PAID' && l.remainingAmount > 0 && l.academicYear)
+                  .map(l => l.academicYear!)
+              )];
+              const hasPastYearDues = studentYears.some(y => y !== activeYearName);
+              if (!hasPastYearDues && sortedYears.length <= 1) return null;
+              // Show only years with pending ledgers OR the active year
+              const yearsToShow = sortedYears.filter(y =>
+                y.name === activeYearName || studentYears.includes(y.name)
+              );
+              if (yearsToShow.length <= 1) return null;
+              return (
+                <div className="flex gap-2 flex-wrap">
+                  {yearsToShow.map(y => {
+                    const yearPendingAmt = ledgerEntries
+                      .filter(l => l.studentId === sId && l.academicYear === y.name && l.status !== 'PAID' && l.remainingAmount > 0)
+                      .reduce((s, l) => s + l.remainingAmount, 0);
+                    const isPast = y.name !== activeYearName;
+                    const isSelected = selectedYear === y.name;
+                    return (
+                      <button
+                        key={y._id}
+                        type="button"
+                        onClick={() => { setSelectedYear(y.name); setSelectedFees([]); }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all ${
+                          isSelected
+                            ? isPast
+                              ? 'bg-red-600 border-red-600 text-white shadow-md'
+                              : 'bg-blue-600 border-blue-600 text-white shadow-md'
+                            : isPast
+                              ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100'
+                              : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300'
+                        }`}
+                      >
+                        {isPast && <span className="text-[10px]">⚠</span>}
+                        {y.name}
+                        {isPast && yearPendingAmt > 0 && (
+                          <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-red-100 text-red-700'
+                          }`}>
+                            ₹{yearPendingAmt.toLocaleString('en-IN')}
+                          </span>
+                        )}
+                        {!isPast && <span className={`ml-1 text-[9px] ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>Current</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* ── EDUCATION / TRANSPORT: Full 12-month grid ─────── */}
             {(feeCategory === 'EDUCATION' || feeCategory === 'TRANSPORT') && (() => {
@@ -939,6 +1031,12 @@ export const CollectFee: React.FC = () => {
                         const isSelected = selectedFees.some(f => f.category === activeCat && f.period === item.value);
                         const dueAmt = getDueAmount(activeCat, item.value);
 
+                        // Three states for unpaid periods:
+                        // 🔴 OVERDUE  = past year OR current year where dueDate ≤ today
+                        // 🟡 UPCOMING = current year where dueDate > today (payable in advance)
+                        const overdue = !isPaid && isPending && isOverdue(activeCat, item.value);
+                        const upcoming = !isPaid && isPending && !overdue;
+
                         let btnStyle = 'border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/30';
                         if (isPaid) {
                           btnStyle = 'bg-emerald-50 border-emerald-200 text-emerald-600 cursor-not-allowed';
@@ -946,8 +1044,10 @@ export const CollectFee: React.FC = () => {
                           btnStyle = activeCat === 'TERM'
                             ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-500/20'
                             : 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20';
-                        } else if (isPending) {
-                          btnStyle = 'border-amber-300 text-amber-700 bg-amber-50/40 hover:border-amber-400';
+                        } else if (overdue) {
+                          btnStyle = 'border-red-300 text-red-700 bg-red-50/60 hover:border-red-400 hover:bg-red-50';
+                        } else if (upcoming) {
+                          btnStyle = 'border-amber-200 text-amber-600 bg-amber-50/30 hover:border-amber-300';
                         } else if (isNew) {
                           btnStyle = 'border-slate-200 bg-white text-slate-400 hover:border-blue-300 hover:bg-blue-50/20';
                         }
@@ -960,17 +1060,17 @@ export const CollectFee: React.FC = () => {
                             onClick={() => handlePeriodToggle(activeCat, item.value)}
                             className={`border rounded-xl py-2.5 text-center flex flex-col items-center justify-center transition-all relative select-none ${btnStyle} ${activeCat === 'TERM' ? 'col-span-1 md:col-span-2' : ''}`}
                           >
-                            {isSelected && (
-                              <Check className="absolute top-1 right-1 h-2.5 w-2.5 stroke-[3]" />
-                            )}
+                            {isSelected && <Check className="absolute top-1 right-1 h-2.5 w-2.5 stroke-[3]" />}
                             <span className={`font-bold tracking-wide ${activeCat === 'TERM' ? 'text-sm' : 'text-xs'}`}>{item.label}</span>
                             {item.year ? (
                               <span className="text-[9px] mt-0.5 opacity-70">'{item.year}</span>
                             ) : (
                               <span className="text-[9px] mt-0.5 opacity-70 px-1">{item.sublabel}</span>
                             )}
-                            <span className="text-[8px] font-extrabold uppercase mt-1 tracking-wide">
-                              {isPaid ? 'PAID' : isPending ? `₹${dueAmt.toLocaleString('en-IN')}` : isNew ? 'NEW' : ''}
+                            <span className={`text-[8px] font-extrabold uppercase mt-1 tracking-wide ${
+                              overdue && !isSelected ? 'text-red-600' : upcoming && !isSelected ? 'text-amber-500' : ''
+                            }`}>
+                              {isPaid ? 'PAID' : overdue ? `₹${dueAmt.toLocaleString('en-IN')}` : upcoming ? `₹${dueAmt.toLocaleString('en-IN')}` : isNew ? 'NEW' : ''}
                             </span>
                           </button>
                         );
