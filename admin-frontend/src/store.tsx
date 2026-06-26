@@ -148,6 +148,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(() => {
     return localStorage.getItem('currentUser') !== null;
@@ -252,7 +253,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setTransportFeeStructures(feeData.transportStructures || []);
 
       // Audit logs
-      setAuditLogs(auditResp.data?.logs || []);
+      const rawAuditLogs = auditResp.data?.logs || [];
+      setAuditLogs(rawAuditLogs);
+      if (rawAuditLogs.length > 0) {
+        const latestTime = new Date(rawAuditLogs[0].createdAt).getTime();
+        setLastSyncTimestamp(latestTime);
+      }
 
       // Academic Years and Fee Categories
       setAcademicYears(ayResp.data || []);
@@ -419,6 +425,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       fetchAll();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let isSubscribed = true;
+
+    const checkSync = async () => {
+      try {
+        const res = await authFetch('/api/v1/dashboard/sync-state');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isSubscribed) return;
+
+        if (data.timestamp && data.timestamp > lastSyncTimestamp) {
+          console.log(`[Sync] Local state out of sync (local: ${lastSyncTimestamp}, server: ${data.timestamp}). Fetching latest data...`);
+          await fetchAll();
+        }
+      } catch (err) {
+        console.error('[Sync] Failed to verify sync state:', err);
+      }
+    };
+
+    const interval = setInterval(checkSync, 10000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
+  }, [currentUser, lastSyncTimestamp]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
