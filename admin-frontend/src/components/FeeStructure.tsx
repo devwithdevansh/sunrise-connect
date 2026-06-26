@@ -187,7 +187,7 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
   // Fixed 14-part system: 12 education months + 2 term fees
   const EDUCATION_PARTS = 12;
   const TERM_PARTS = 2;
-  const monthlyEdu = Math.round(annualFee / (EDUCATION_PARTS + TERM_PARTS));
+  const monthlyEdu = Math.round((Number(annualFee) || 0) / (EDUCATION_PARTS + TERM_PARTS));
 
   const handleSave = async () => {
     if (annualFee === '' || Number(annualFee) < 0) { setError('Annual fee cannot be negative'); return; }
