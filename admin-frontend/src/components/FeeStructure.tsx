@@ -34,7 +34,7 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
       standard, medium, annualFee,
       educationPartCount: EDUCATION_PARTS,
       termPartCount: TERM_PARTS,
-      termFee: 0,
+      termFee: monthlyEdu,
       admissionFee,
       bagKitFee,
     });
@@ -199,7 +199,7 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
       annualFee,
       educationPartCount: EDUCATION_PARTS,
       termPartCount: TERM_PARTS,
-      termFee: 0,
+      termFee: monthlyEdu,
       admissionFee,
       bagKitFee,
     });

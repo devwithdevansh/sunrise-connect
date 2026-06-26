@@ -997,11 +997,12 @@ export const Students: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Parent Mobile</label>
                   <input
-                    type="text"
+                    type="tel"
                     required
+                    maxLength={10}
                     value={newSParentMobile}
-                    onChange={(e) => setNewSParentMobile(e.target.value)}
-                    placeholder="+91 98765 43210"
+                    onChange={(e) => setNewSParentMobile(e.target.value.replace(/\D/g, ''))}
+                    placeholder="9876543210"
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1009,9 +1010,10 @@ export const Students: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Secondary Mobile</label>
                   <input
-                    type="text"
+                    type="tel"
+                    maxLength={10}
                     value={newSParentSecondaryMobile}
-                    onChange={(e) => setNewSParentSecondaryMobile(e.target.value)}
+                    onChange={(e) => setNewSParentSecondaryMobile(e.target.value.replace(/\D/g, ''))}
                     placeholder="Optional secondary number"
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   />
