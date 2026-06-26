@@ -544,14 +544,14 @@ export const Dashboard: React.FC = () => {
             <span className="text-xs font-semibold text-slate-500">
               Showing <span className="font-extrabold text-slate-800">{Math.min(filteredTransactions.length, (currentPage - 1) * PAGE_SIZE + 1)}</span> to{' '}
               <span className="font-extrabold text-slate-800">{Math.min(filteredTransactions.length, currentPage * PAGE_SIZE)}</span> of{' '}
-              <span className="font-extrabold text-slate-850">{filteredTransactions.length}</span> payments
+              <span className="font-extrabold text-slate-800">{filteredTransactions.length}</span> payments
             </span>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-655 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Previous
               </button>
@@ -568,7 +568,7 @@ export const Dashboard: React.FC = () => {
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                           currentPage === page
                             ? 'bg-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/10'
-                            : 'border border-slate-200 text-slate-655 hover:bg-slate-50'
+                            : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         {page}
@@ -580,7 +580,7 @@ export const Dashboard: React.FC = () => {
                 type="button"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-655 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Next
               </button>

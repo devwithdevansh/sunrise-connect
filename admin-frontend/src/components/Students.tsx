@@ -908,7 +908,7 @@ export const Students: React.FC = () => {
           <span className="text-xs font-semibold text-slate-500">
             Showing <span className="font-extrabold text-slate-800">{Math.min(filteredStudents.length, (currentPage - 1) * PAGE_SIZE + 1)}</span> to{' '}
             <span className="font-extrabold text-slate-800">{Math.min(filteredStudents.length, currentPage * PAGE_SIZE)}</span> of{' '}
-            <span className="font-extrabold text-slate-850">{filteredStudents.length}</span> students
+            <span className="font-extrabold text-slate-800">{filteredStudents.length}</span> students
           </span>
           <div className="flex items-center gap-1">
             <button
