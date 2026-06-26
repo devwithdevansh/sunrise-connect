@@ -7,7 +7,7 @@ import AppError from '../utils/AppError.js';
 class StudentController {
   /** POST /api/v1/students */
   static createStudent = catchAsync(async (req, res) => {
-    const student = await StudentService.createStudent(req.body);
+    const student = await StudentService.createStudent(req.body, req.user?._id || req.user?.id);
     sendResponse(res, 201, student);
   });
 
@@ -33,7 +33,7 @@ class StudentController {
 
   /** PATCH /api/v1/students/:id */
   static updateStudent = catchAsync(async (req, res) => {
-    const student = await StudentService.updateStudent(req.params.id, req.body);
+    const student = await StudentService.updateStudent(req.params.id, req.body, req.user?._id || req.user?.id);
     sendResponse(res, 200, student);
   });
 
@@ -63,7 +63,7 @@ class StudentController {
     if (!studentIds || !Array.isArray(studentIds) || !targetStandard || !targetDivision || !targetAcademicYear) {
       throw new AppError('Missing required fields for promotion', 400);
     }
-    const result = await StudentService.promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, req.user.userId);
+    const result = await StudentService.promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, req.user.id);
     sendResponse(res, 200, result);
   });
 

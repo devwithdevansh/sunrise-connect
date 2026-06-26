@@ -17,10 +17,28 @@ export const AuditLogs: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Filters
+  const [searchVal, setSearchVal] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAction, setSelectedAction] = useState('ALL');
   const [selectedStaff, setSelectedStaff] = useState('ALL');
   const [dateRange, setDateRange] = useState('ALL');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 15;
+
+  // Debounce search query updates by 200ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchQuery(searchVal);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
+  // Reset pagination on filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedAction, selectedStaff, dateRange]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +107,12 @@ export const AuditLogs: React.FC = () => {
     });
   }, [logs, selectedStaff, selectedAction, dateRange, searchQuery]);
 
+  const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE);
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredLogs.slice(start, start + PAGE_SIZE);
+  }, [filteredLogs, currentPage]);
+
   // Helper to format the action string (e.g. LEDGER_PAYMENT_ADDED -> Payment Added)
   const formatActionName = (action: string) => {
     return action.replace(/_/g, ' ').replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.substr(1).toLowerCase());
@@ -139,8 +163,8 @@ export const AuditLogs: React.FC = () => {
           <input
             type="text"
             placeholder="Search details or names..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchVal}
+            onChange={(e) => setSearchVal(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
           />
         </div>
@@ -210,7 +234,7 @@ export const AuditLogs: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredLogs.map(log => {
+                {paginatedLogs.map(log => {
                   const isFinancial = log.action.includes('PAYMENT') || log.action.includes('LEDGER');
                   const isDestructive = log.action.includes('REVERSED') || log.action.includes('DELETED');
                   
@@ -259,6 +283,58 @@ export const AuditLogs: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <span className="text-xs font-semibold text-slate-500">
+            Showing <span className="font-extrabold text-slate-800">{Math.min(filteredLogs.length, (currentPage - 1) * PAGE_SIZE + 1)}</span> to{' '}
+            <span className="font-extrabold text-slate-800">{Math.min(filteredLogs.length, currentPage * PAGE_SIZE)}</span> of{' '}
+            <span className="font-extrabold text-slate-850">{filteredLogs.length}</span> logs
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(page => {
+                return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+              })
+              .map((page, index, arr) => {
+                const showEllipsis = index > 0 && page - arr[index - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsis && <span className="text-slate-400 px-1 text-xs">...</span>}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        currentPage === page
+                          ? 'bg-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/10'
+                          : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-650 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

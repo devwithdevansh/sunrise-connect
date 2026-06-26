@@ -119,6 +119,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
         // Active status
         if (!s.isActive) return false;
 
+        // Exclude RTE students (since their tuition fees are government-exempted/covered)
+        if (s.isRTE || s.status === 'RTE') return false;
+
         // Class Filter
         if (outstandingClassFilter !== 'All Classes') {
           const std = outstandingClassFilter.replace('Class ', '');

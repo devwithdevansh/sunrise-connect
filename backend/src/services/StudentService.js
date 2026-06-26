@@ -18,7 +18,7 @@ import '../models/AcademicYear.js';
 
 class StudentService {
   /** Create a new student */
-  static async createStudent(data) {
+  static async createStudent(data, performedBy = null) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -73,7 +73,7 @@ class StudentService {
 
       const student = await studentRepository.create(studentData, { session });
       await AuditService.log(
-        { performedBy: null, targetStudentId: student._id, action: 'STUDENT_CREATED', details: {} },
+        { performedBy, targetStudentId: student._id, action: 'STUDENT_CREATED', details: { name: student.studentName } },
         session
       );
 
@@ -463,7 +463,7 @@ class StudentService {
   }
 
   /** Update mutable fields */
-  static async updateStudent(studentId, updates) {
+  static async updateStudent(studentId, updates, performedBy = null) {
     const newTransport = updates.transportType;
     if (newTransport && newTransport !== 'None') {
       const activeStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true });
@@ -617,7 +617,7 @@ class StudentService {
       }
 
       await AuditService.log(
-        { performedBy: null, targetStudentId: studentId, action: 'STUDENT_UPDATED', details: updates },
+        { performedBy, targetStudentId: studentId, action: 'STUDENT_UPDATED', details: updates },
         session
       );
       await session.commitTransaction();
