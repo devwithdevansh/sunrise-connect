@@ -12,6 +12,7 @@ backend/logs/
 backend/.cache/
 backend/dist/
 backend/build/
+backend/coverage/
 
 # Flutter
 FlutterProject/.dart_tool/
