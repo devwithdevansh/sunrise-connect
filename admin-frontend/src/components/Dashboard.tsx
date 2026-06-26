@@ -137,7 +137,7 @@ export const Dashboard: React.FC = () => {
       const day = parseInt(parts[2], 10);
       const dateObj = new Date(year, month, day);
       dateObj.setDate(dateObj.getDate() - 1);
-      
+
       const yyyy = dateObj.getFullYear();
       const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
       const dd = String(dateObj.getDate()).padStart(2, '0');
@@ -153,7 +153,7 @@ export const Dashboard: React.FC = () => {
       const day = parseInt(parts[2], 10);
       const dateObj = new Date(year, month, day);
       dateObj.setDate(dateObj.getDate() + 1);
-      
+
       const yyyy = dateObj.getFullYear();
       const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
       const dd = String(dateObj.getDate()).padStart(2, '0');
@@ -204,25 +204,74 @@ export const Dashboard: React.FC = () => {
     return selectedDateTransactions.reduce((sum, t) => sum + (t.concessionAmount || 0), 0);
   }, [selectedDateTransactions]);
 
-  // Payment mode stats for selected date
-  const getModeSum = (method: string) => {
-    if (method === 'ONLINE') {
-      return selectedDateTransactions
-        .filter((t) => t.method === 'ONLINE' || t.method === 'UPI')
-        .reduce((sum, t) => sum + t.amount, 0);
-    }
-    return selectedDateTransactions
-      .filter((t) => t.method === method)
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
+  // Payment mode stats for selected date (Dynamic)
+  const paymentModesData = useMemo(() => {
+    const totals = new Map<string, number>();
 
-  const paymentModes = [
-    { label: 'CASH', value: getModeSum('CASH').toLocaleString('en-IN'), icon: Coins, bg: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-    { label: 'ONLINE', value: getModeSum('ONLINE').toLocaleString('en-IN'), icon: Smartphone, bg: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-    { label: 'CHEQUE', value: getModeSum('CHEQUE').toLocaleString('en-IN'), icon: FileText, bg: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20' },
-    { label: 'CARD', value: getModeSum('CARD').toLocaleString('en-IN'), icon: CreditCard, bg: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-    { label: 'NET BANKING', value: getModeSum('NET BANKING').toLocaleString('en-IN'), icon: Globe, bg: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' },
-  ];
+    // Helper to normalize method names to group them correctly
+    const normalizeMethod = (m: string) => {
+      const upperM = (m || '').trim().toUpperCase();
+      if (upperM === 'UPI') return 'ONLINE';
+      if (['NEFT', 'RTGS', 'IMPS'].includes(upperM)) return 'NET BANKING';
+      return upperM;
+    };
+
+    selectedDateTransactions.forEach((t) => {
+      if (t.paymentBreakdown && t.paymentBreakdown.length > 0) {
+        t.paymentBreakdown.forEach((b) => {
+          const norm = normalizeMethod(b.method);
+          totals.set(norm, (totals.get(norm) || 0) + b.amount);
+        });
+      } else if (t.method) {
+        // Split by '+' in case it's a joined string but without breakdown
+        const methods = t.method.split('+').map(m => m.trim());
+        if (methods.length === 1) {
+          const norm = normalizeMethod(methods[0]);
+          totals.set(norm, (totals.get(norm) || 0) + t.amount);
+        } else {
+          // If multiple methods but no breakdown, we can't accurately split amount,
+          // but we shouldn't create a card named "ONLINE + CASH".
+          // In the absence of breakdown, just attribute it entirely to the first method as a fallback.
+          const norm = normalizeMethod(methods[0]);
+          totals.set(norm, (totals.get(norm) || 0) + t.amount);
+        }
+      }
+    });
+
+    // Ensure we always show the base 5 methods even if 0, matching the photo
+    const baseMethods = ['CASH', 'ONLINE', 'CHEQUE', 'CARD', 'NET BANKING'];
+    baseMethods.forEach(m => {
+      if (!totals.has(m)) totals.set(m, 0);
+    });
+
+    const config: Record<string, { icon: React.ElementType, bg: string }> = {
+      'CASH': { icon: Coins, bg: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+      'ONLINE': { icon: Smartphone, bg: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
+      'CHEQUE': { icon: FileText, bg: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20' },
+      'CARD': { icon: CreditCard, bg: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+      'NET BANKING': { icon: Globe, bg: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' },
+      'GOVT': { icon: GraduationCap, bg: 'bg-purple-500/10 text-purple-600 border-purple-500/20' }
+    };
+
+    const fallbackConfig = { icon: Coins, bg: 'bg-slate-500/10 text-slate-600 border-slate-500/20' };
+
+    return Array.from(totals.entries()).map(([label, value]) => {
+      const conf = config[label] || fallbackConfig;
+      return {
+        label,
+        value: value.toLocaleString('en-IN'),
+        ...conf
+      };
+    }).sort((a, b) => {
+      // Keep base methods first
+      const aIdx = baseMethods.indexOf(a.label);
+      const bIdx = baseMethods.indexOf(b.label);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.label.localeCompare(b.label);
+    });
+  }, [selectedDateTransactions]);
 
   // Overall student & ledger statistics
   const totalStudents = students.length;
@@ -339,7 +388,7 @@ export const Dashboard: React.FC = () => {
         {/* Abstract shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
         <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-blue-300/10 rounded-full translate-y-1/2 pointer-events-none"></div>
-        
+
         <div>
           <span className="text-[10px] font-bold tracking-widest text-blue-200 uppercase">
             {selectedDate === todayString ? "Today's Total Collection" : `Total Collection on ${selectedDate}`}
@@ -367,7 +416,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Payment Modes Grid */}
       <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-        {paymentModes.map((mode) => {
+        {paymentModesData.map((mode) => {
           const Icon = mode.icon;
           return (
             <div
@@ -417,7 +466,7 @@ export const Dashboard: React.FC = () => {
               Showing payment history logs matching selection.
             </p>
           </div>
-          
+
           {/* Dynamic Date Picker & Browsing Controls inside the payments card */}
           <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-sm shrink-0 self-end sm:self-center">
             <button
@@ -428,7 +477,7 @@ export const Dashboard: React.FC = () => {
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
-            
+
             <div className="relative flex items-center">
               <Calendar className="h-3.5 w-3.5 text-slate-400 absolute left-2 pointer-events-none" />
               <input
@@ -507,27 +556,25 @@ export const Dashboard: React.FC = () => {
                       )}
                     </td>
                     <td className="py-3.5 px-5">
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
-                        tx.method === 'ONLINE' || tx.method === 'UPI'
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${tx.method === 'ONLINE' || tx.method === 'UPI'
                           ? 'bg-blue-50 text-blue-600 border border-blue-100'
                           : tx.method === 'CASH'
-                          ? 'bg-slate-100 text-slate-600'
-                          : tx.method === 'CARD'
-                          ? 'bg-indigo-50 text-indigo-600 border border-indigo-100'
-                          : 'bg-purple-50 text-purple-600 border border-purple-100'
-                      }`}>
+                            ? 'bg-slate-100 text-slate-600'
+                            : tx.method === 'CARD'
+                              ? 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                              : 'bg-purple-50 text-purple-600 border border-purple-100'
+                        }`}>
                         {tx.method}
                       </span>
                     </td>
                     <td className="py-3.5 px-5 text-slate-400 text-xs font-semibold">{tx.time}</td>
                     <td className="py-3.5 px-5">
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
-                        tx.status === 'PAID'
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${tx.status === 'PAID'
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                           : tx.status === 'PARTIAL'
-                          ? 'bg-amber-50 text-amber-600 border-amber-100'
-                          : 'bg-purple-50 text-purple-600 border-purple-100'
-                      }`}>
+                            ? 'bg-amber-50 text-amber-600 border-amber-100'
+                            : 'bg-purple-50 text-purple-600 border-purple-100'
+                        }`}>
                         {tx.status}
                       </span>
                     </td>
@@ -565,11 +612,10 @@ export const Dashboard: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          currentPage === page
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${currentPage === page
                             ? 'bg-blue-600 border border-blue-600 text-white shadow-md shadow-blue-500/10'
                             : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
