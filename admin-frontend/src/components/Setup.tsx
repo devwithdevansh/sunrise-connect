@@ -154,7 +154,6 @@ const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
               <option value="TERM">TERM</option>
               <option value="TRANSPORT">TRANSPORT</option>
               <option value="ADMISSION">ADMISSION</option>
-              <option value="BAG_KIT">BAG_KIT</option>
               <option value="OTHER">OTHER</option>
             </select>
           </div>
@@ -424,7 +423,6 @@ export const Setup: React.FC = () => {
                       <option value="TERM">TERM</option>
                       <option value="TRANSPORT">TRANSPORT</option>
                       <option value="ADMISSION">ADMISSION</option>
-                      <option value="BAG_KIT">BAG_KIT</option>
                       <option value="OTHER">OTHER</option>
                     </select>
                   </div>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1782448004972" clover="3.2.0">
-  <project timestamp="1782448004972" name="All files">
-    <metrics statements="1399" coveredstatements="815" conditionals="845" coveredconditionals="332" methods="219" coveredmethods="112" elements="2463" coveredelements="1259" complexity="0" loc="1399" ncloc="1399" packages="11" files="69" classes="69"/>
+<coverage generated="1782469108156" clover="3.2.0">
+  <project timestamp="1782469108156" name="All files">
+    <metrics statements="1419" coveredstatements="819" conditionals="853" coveredconditionals="332" methods="221" coveredmethods="112" elements="2493" coveredelements="1263" complexity="0" loc="1419" ncloc="1419" packages="11" files="69" classes="69"/>
     <package name="src">
       <metrics statements="26" coveredstatements="24" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="1"/>
       <file name="app.js" path="E:\Sunrise Connect\backend\src\app.js">
@@ -52,7 +52,7 @@
       </file>
     </package>
     <package name="src.controllers">
-      <metrics statements="245" coveredstatements="126" conditionals="102" coveredconditionals="32" methods="61" coveredmethods="21"/>
+      <metrics statements="263" coveredstatements="128" conditionals="110" coveredconditionals="32" methods="63" coveredmethods="21"/>
       <file name="AcademicYearController.js" path="E:\Sunrise Connect\backend\src\controllers\AcademicYearController.js">
         <metrics statements="18" coveredstatements="4" conditionals="6" coveredconditionals="0" methods="4" coveredmethods="0"/>
         <line num="5" count="9" type="stmt"/>
@@ -140,28 +140,46 @@
         <line num="47" count="0" type="stmt"/>
       </file>
       <file name="FeeStructureController.js" path="E:\Sunrise Connect\backend\src\controllers\FeeStructureController.js">
-        <metrics statements="21" coveredstatements="17" conditionals="4" coveredconditionals="4" methods="5" coveredmethods="3"/>
+        <metrics statements="39" coveredstatements="19" conditionals="12" coveredconditionals="4" methods="7" coveredmethods="3"/>
         <line num="14" count="9" type="stmt"/>
         <line num="15" count="1" type="stmt"/>
         <line num="20" count="1" type="stmt"/>
         <line num="27" count="9" type="stmt"/>
         <line num="28" count="0" type="stmt"/>
-        <line num="29" count="0" type="stmt"/>
-        <line num="36" count="9" type="stmt"/>
-        <line num="37" count="0" type="stmt"/>
+        <line num="29" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="30" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="31" count="0" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
         <line num="38" count="0" type="stmt"/>
-        <line num="45" count="9" type="stmt"/>
-        <line num="46" count="2" type="stmt"/>
-        <line num="47" count="2" type="stmt"/>
-        <line num="48" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="49" count="1" type="stmt"/>
-        <line num="51" count="1" type="stmt"/>
-        <line num="58" count="9" type="stmt"/>
+        <line num="40" count="0" type="stmt"/>
+        <line num="41" count="0" type="stmt"/>
+        <line num="48" count="9" type="stmt"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="50" count="0" type="stmt"/>
+        <line num="57" count="9" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
         <line num="59" count="2" type="stmt"/>
-        <line num="60" count="2" type="stmt"/>
-        <line num="61" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="62" count="1" type="stmt"/>
-        <line num="64" count="1" type="stmt"/>
+        <line num="60" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="61" count="1" type="stmt"/>
+        <line num="63" count="1" type="stmt"/>
+        <line num="70" count="9" type="stmt"/>
+        <line num="71" count="2" type="stmt"/>
+        <line num="72" count="2" type="stmt"/>
+        <line num="73" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="74" count="1" type="stmt"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="83" count="9" type="stmt"/>
+        <line num="84" count="0" type="stmt"/>
+        <line num="85" count="0" type="stmt"/>
+        <line num="86" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="87" count="0" type="stmt"/>
+        <line num="89" count="0" type="stmt"/>
+        <line num="96" count="9" type="stmt"/>
+        <line num="97" count="0" type="stmt"/>
+        <line num="98" count="0" type="stmt"/>
+        <line num="99" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="100" count="0" type="stmt"/>
+        <line num="102" count="0" type="stmt"/>
       </file>
       <file name="LedgerController.js" path="E:\Sunrise Connect\backend\src\controllers\LedgerController.js">
         <metrics statements="31" coveredstatements="16" conditionals="14" coveredconditionals="5" methods="7" coveredmethods="2"/>
@@ -352,7 +370,7 @@
       </file>
       <file name="authorize.middleware.js" path="E:\Sunrise Connect\backend\src\middlewares\authorize.middleware.js">
         <metrics statements="5" coveredstatements="5" conditionals="4" coveredconditionals="3" methods="2" coveredmethods="2"/>
-        <line num="6" count="324" type="stmt"/>
+        <line num="6" count="342" type="stmt"/>
         <line num="7" count="37" type="cond" truecount="1" falsecount="1"/>
         <line num="8" count="37" type="cond" truecount="2" falsecount="0"/>
         <line num="9" count="6" type="stmt"/>
@@ -601,7 +619,7 @@
       </file>
     </package>
     <package name="src.routes">
-      <metrics statements="76" coveredstatements="76" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <metrics statements="78" coveredstatements="78" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <file name="academic-year.routes.js" path="E:\Sunrise Connect\backend\src\routes\academic-year.routes.js">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="7" count="9" type="stmt"/>
@@ -644,7 +662,7 @@
         <line num="11" count="9" type="stmt"/>
       </file>
       <file name="fee-structure.routes.js" path="E:\Sunrise Connect\backend\src\routes\fee-structure.routes.js">
-        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <metrics statements="9" coveredstatements="9" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="14" count="9" type="stmt"/>
         <line num="16" count="9" type="stmt"/>
         <line num="19" count="9" type="stmt"/>
@@ -652,6 +670,8 @@
         <line num="23" count="9" type="stmt"/>
         <line num="24" count="9" type="stmt"/>
         <line num="25" count="9" type="stmt"/>
+        <line num="26" count="9" type="stmt"/>
+        <line num="27" count="9" type="stmt"/>
       </file>
       <file name="ledger.routes.js" path="E:\Sunrise Connect\backend\src\routes\ledger.routes.js">
         <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
@@ -1581,7 +1601,7 @@
       </file>
       <file name="catchAsync.js" path="E:\Sunrise Connect\backend\src\utils\catchAsync.js">
         <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
-        <line num="3" count="532" type="stmt"/>
+        <line num="3" count="550" type="stmt"/>
         <line num="4" count="31" type="stmt"/>
       </file>
       <file name="response.js" path="E:\Sunrise Connect\backend\src\utils\response.js">
