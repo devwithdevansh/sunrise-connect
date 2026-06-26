@@ -32,16 +32,16 @@ const rateLimit = ({ windowMs = env.RATE_LIMIT_WINDOW_MS, max = env.RATE_LIMIT_M
   };
 };
 
-/** Stricter limiter for auth endpoints */
+/** Auth limiter for login/logout endpoints – generous enough for school admin use behind proxies */
 export const authRateLimit = rateLimit({ 
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 
+  max: parseInt(env.AUTH_RATE_LIMIT_MAX, 10) || 500  // configurable via AUTH_RATE_LIMIT_MAX env var
 });
 
-/** Default API limiter */
+/** Default API limiter (not used globally – only per-route if needed) */
 export const apiRateLimit = rateLimit({ 
   windowMs: env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
-  max: (env.RATE_LIMIT_MAX * 10) || 1000 // Scale up max limit for standard API calls
+  max: (parseInt(env.RATE_LIMIT_MAX, 10) * 10) || 1000
 });
 
 export default rateLimit;

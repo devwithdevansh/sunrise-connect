@@ -427,7 +427,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     };
 
-    const interval = setInterval(checkSync, 10000);
+    const interval = setInterval(checkSync, 30000); // poll every 30s
 
     return () => {
       isSubscribed = false;
