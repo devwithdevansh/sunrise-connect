@@ -13,52 +13,102 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
   const [standard, setStandard] = useState('1');
   const [medium, setMedium] = useState('English');
   const [annualFee, setAnnualFee] = useState(10000);
+  const [admissionFee, setAdmissionFee] = useState(0);
+  const [bagKitFee, setBagKitFee] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Fixed 14-part system: 12 education months + 2 term fees
+  const EDUCATION_PARTS = 12;
+  const TERM_PARTS = 2;
+  const monthlyEdu = Math.round(annualFee / (EDUCATION_PARTS + TERM_PARTS));
 
   const handleSave = async () => {
     if (!standard.trim()) { setError('Standard is required'); return; }
     if (annualFee < 0) { setError('Annual fee cannot be negative'); return; }
+    if (admissionFee < 0) { setError('Admission fee cannot be negative'); return; }
+    if (bagKitFee < 0) { setError('Bag & Kit fee cannot be negative'); return; }
     setError('');
     setSaving(true);
-    const ok = await onSave({ standard, medium, annualFee });
+    const ok = await onSave({
+      standard, medium, annualFee,
+      educationPartCount: EDUCATION_PARTS,
+      termPartCount: TERM_PARTS,
+      termFee: 0,
+      admissionFee,
+      bagKitFee,
+    });
     setSaving(false);
     if (ok) onClose(); else setError('Failed to create. Standard may already exist for this medium.');
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="bg-gradient-to-r from-blue-900 to-indigo-800 text-white px-6 py-4 flex items-center justify-between">
-          <h3 className="font-black text-lg tracking-tight">Add New Standard</h3>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">New Fee Structure</span>
+            <h3 className="font-black text-lg tracking-tight mt-0.5">Add New Standard</h3>
+          </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><X className="h-5 w-5" /></button>
         </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Standard</label>
-            <input type="text" value={standard} onChange={e => setStandard(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800" placeholder="e.g. Nursery, LKG, 1" />
+        <div className="p-6 space-y-5">
+          {/* Standard + Medium */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Standard</label>
+              <input type="text" value={standard} onChange={e => setStandard(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="e.g. Nursery, LKG, 1" />
+            </div>
+            <div>
+              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Medium</label>
+              <select value={medium} onChange={e => setMedium(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <option value="English">English</option>
+                <option value="Gujarati">Gujarati</option>
+              </select>
+            </div>
           </div>
+
+          {/* Annual Fee */}
           <div>
-            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Medium</label>
-            <select value={medium} onChange={e => setMedium(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800">
-              <option value="English">English</option>
-              <option value="Gujarati">Gujarati</option>
-            </select>
+            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Annual Tuition Fee (₹)</label>
+            <input type="number" value={annualFee} onChange={e => setAnnualFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
           </div>
-          <div>
-            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Annual Fee (₹)</label>
-            <input type="number" value={annualFee} onChange={e => setAnnualFee(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800" />
+
+          {/* Admission + Bag & Kit */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Admission Fee (₹)</label>
+              <input type="number" value={admissionFee} onChange={e => setAdmissionFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+            </div>
+            <div>
+              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Bag & Kit Fee (₹)</label>
+              <input type="number" value={bagKitFee} onChange={e => setBagKitFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+            </div>
           </div>
+
+          {/* Live Preview */}
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
+            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Live Preview</p>
+            <div className="flex justify-between text-xs text-slate-600"><span>Monthly Education:</span><span className="font-bold text-slate-800">₹{monthlyEdu.toLocaleString('en-IN')} /mo</span></div>
+            <div className="flex justify-between text-xs text-slate-600"><span>Term Fee:</span><span className="font-bold text-slate-800">₹{monthlyEdu.toLocaleString('en-IN')} /term</span></div>
+            <div className="flex justify-between text-xs text-slate-600"><span>Admission Fee:</span><span className="font-bold text-slate-800">₹{admissionFee.toLocaleString('en-IN')}</span></div>
+            <div className="flex justify-between text-xs text-slate-600"><span>Bag & Kit Fee:</span><span className="font-bold text-slate-800">₹{bagKitFee.toLocaleString('en-IN')}</span></div>
+          </div>
+
           {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
         </div>
         <div className="px-6 py-4 border-t flex justify-end gap-3 bg-slate-50">
           <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600">{saving ? 'Saving...' : 'Create'}</button>
+          <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 flex items-center gap-2">
+            {saving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving...</> : <><Check className="h-3.5 w-3.5" />Create</>}
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
+
 
 /* ─── Create Modal for Transport Fee ──────────────────────────────── */
 interface CreateTransportModalProps {
@@ -120,15 +170,6 @@ interface EditFeeModalProps {
 
 const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave }) => {
   const [annualFee, setAnnualFee] = useState(structure.annualFee);
-  const [educationPartCount, setEducationPartCount] = useState(structure.educationPartCount);
-  const [termPartCount, setTermPartCount] = useState(structure.termPartCount);
-  const [termFee, setTermFee] = useState(
-    (structure.termFee !== undefined && structure.termFee > 0)
-      ? structure.termFee
-      : (structure.educationPartCount + structure.termPartCount > 0
-          ? Math.round(structure.annualFee / (structure.educationPartCount + structure.termPartCount))
-          : 0)
-  );
   const [admissionFee, setAdmissionFee] = useState(
     (structure.admissionFee !== undefined && structure.admissionFee > 0)
       ? structure.admissionFee
@@ -143,20 +184,22 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Fixed 14-part system: 12 education months + 2 term fees
+  const EDUCATION_PARTS = 12;
+  const TERM_PARTS = 2;
+  const monthlyEdu = Math.round(annualFee / (EDUCATION_PARTS + TERM_PARTS));
+
   const handleSave = async () => {
     if (annualFee < 0) { setError('Annual fee cannot be negative'); return; }
-    if (educationPartCount < 1) { setError('Education parts must be at least 1'); return; }
-    if (termPartCount < 0) { setError('Term parts cannot be negative'); return; }
-    if (termFee < 0) { setError('Term fee cannot be negative'); return; }
     if (admissionFee < 0) { setError('Admission fee cannot be negative'); return; }
     if (bagKitFee < 0) { setError('Bag & Kit fee cannot be negative'); return; }
     setError('');
     setSaving(true);
     const ok = await onSave(structure._id, {
       annualFee,
-      educationPartCount,
-      termPartCount,
-      termFee,
+      educationPartCount: EDUCATION_PARTS,
+      termPartCount: TERM_PARTS,
+      termFee: 0,
       admissionFee,
       bagKitFee,
     });
@@ -169,17 +212,10 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
     }
   };
 
-  // Derived preview values
-  const totalParts = educationPartCount + termPartCount;
-  const monthlyEdu = totalParts > 0 ? Math.round(annualFee / totalParts) : 0;
-  const termFeeDisplay = termFee > 0 ? termFee : (totalParts > 0 ? Math.round(annualFee / totalParts) : 0);
-  const admissionDisplay = admissionFee;
-  const bagKitDisplay = bagKitFee;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg mx-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -211,63 +247,30 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
             />
           </div>
 
+          {/* Admission + Bag & Kit */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Education Part Count */}
             <div>
-              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
-                Education Parts
-              </label>
-              <input
-                type="number"
-                value={educationPartCount}
-                onChange={(e) => setEducationPartCount(Number(e.target.value))}
-                min={1}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-            </div>
-            {/* Term Part Count */}
-            <div>
-              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
-                Term Parts
-              </label>
-              <input
-                type="number"
-                value={termPartCount}
-                onChange={(e) => setTermPartCount(Number(e.target.value))}
-                min={0}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-            </div>
-          </div>
-
-          {/* New Fields */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Term Fee</label>
-              <input type="number" value={termFee} onChange={(e) => setTermFee(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Admission Fee (₹)</label>
+              <input type="number" value={admissionFee} onChange={(e) => setAdmissionFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
             </div>
             <div>
-              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Admission</label>
-              <input type="number" value={admissionFee} onChange={(e) => setAdmissionFee(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
-            </div>
-            <div>
-              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Bag & Kit</label>
-              <input type="number" value={bagKitFee} onChange={(e) => setBagKitFee(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
+              <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Bag & Kit Fee (₹)</label>
+              <input type="number" value={bagKitFee} onChange={(e) => setBagKitFee(Number(e.target.value))} min={0} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
             </div>
           </div>
 
           {/* Live Preview */}
           <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Live Preview</span>
-            <div className="grid grid-cols-2 gap-y-2 text-xs font-semibold">
+            <div className="grid grid-cols-2 gap-y-2 text-xs font-semibold mt-2">
               <span className="text-slate-500">Monthly Education:</span>
               <span className="text-right text-slate-800 font-bold">₹{monthlyEdu.toLocaleString('en-IN')} /mo</span>
               <span className="text-slate-500">Term Fee:</span>
-              <span className="text-right text-slate-800 font-bold">₹{termFeeDisplay.toLocaleString('en-IN')} /term</span>
+              <span className="text-right text-slate-800 font-bold">₹{monthlyEdu.toLocaleString('en-IN')} /term</span>
               <span className="text-slate-500">Admission Fee:</span>
-              <span className="text-right text-slate-800 font-bold">₹{admissionDisplay.toLocaleString('en-IN')}</span>
+              <span className="text-right text-slate-800 font-bold">₹{admissionFee.toLocaleString('en-IN')}</span>
               <span className="text-slate-500">Bag & Kit Fee:</span>
-              <span className="text-right text-slate-800 font-bold">₹{bagKitDisplay.toLocaleString('en-IN')}</span>
+              <span className="text-right text-slate-800 font-bold">₹{bagKitFee.toLocaleString('en-IN')}</span>
             </div>
           </div>
 
@@ -305,6 +308,7 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
     </div>
   );
 };
+
 
 /* ─── Edit Modal for Transport Fee ────────────────────────────────── */
 interface EditTransportModalProps {

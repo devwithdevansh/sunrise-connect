@@ -15,7 +15,8 @@ export const Students: React.FC = () => {
     transactions,
     reversePayment,
     currentUser,
-    academicYears
+    academicYears,
+    transportFeeStructures
   } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
@@ -24,10 +25,10 @@ export const Students: React.FC = () => {
   const [classFilter, setClassFilter] = useState('All Classes');
   const [divFilter, setDivFilter] = useState('All Divisions');
   const [medFilter, setMedFilter] = useState('All Mediums');
-  
+
   // Quick filter chips: 'ALL' | 'RTE' | 'TRANSPORT'
   const [chipFilter, setChipFilter] = useState<'ALL' | 'RTE' | 'TRANSPORT'>('ALL');
-  
+
   // Add Student Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newSName, setNewSName] = useState('');
@@ -37,7 +38,7 @@ export const Students: React.FC = () => {
   const [newSMedium, setNewSMedium] = useState<'English' | 'Gujarati'>('English');
   const [newSStandard, setNewSStandard] = useState('1');
   const [newSDivision, setNewSDivision] = useState('A');
-  const [newSTransport, setNewSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
+  const [newSTransport, setNewSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
   const [newSAdmissionMonth, setNewSAdmissionMonth] = useState('June');
@@ -49,11 +50,12 @@ export const Students: React.FC = () => {
   const [editSMedium, setEditSMedium] = useState<'English' | 'Gujarati'>('English');
   const [editSStandard, setEditSStandard] = useState('5');
   const [editSDivision, setEditSDivision] = useState('A');
-  const [editSTransport, setEditSTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
-  const [originalTransport, setOriginalTransport] = useState<'Railnagar' | 'Outside Railnagar' | 'None'>('None');
+  const [editSTransport, setEditSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
+  const [originalTransport, setOriginalTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
+  const [editSIsRTE, setEditSIsRTE] = useState(false);
 
   // Sibling Modal State
-  const [siblingModalData, setSiblingModalData] = useState<{parentName: string, parentId: string} | null>(null);
+  const [siblingModalData, setSiblingModalData] = useState<{ parentName: string, parentId: string } | null>(null);
 
   const filteredStudents = students.filter((s) => {
     // Quick filter chips
@@ -133,6 +135,7 @@ export const Students: React.FC = () => {
     setEditSDivision(s.division);
     setEditSTransport(s.transportType || 'None');
     setOriginalTransport(s.transportType || 'None');
+    setEditSIsRTE(s.isRTE || false);
     setIsEditModalOpen(true);
   };
 
@@ -146,6 +149,7 @@ export const Students: React.FC = () => {
       standard: editSStandard,
       division: editSDivision,
       transportType: editSTransport,
+      isRTE: editSIsRTE,
     };
 
     // Calculate remaining months for transport adjustment (mirroring backend logic)
@@ -185,7 +189,7 @@ export const Students: React.FC = () => {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-grow md:flex-grow-0">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -220,7 +224,7 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Classes">All Classes</option>
-              {['1','2','3','4','5','6','7','8','9','10','11','12'].map((cls) => (
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
                 <option key={cls} value={`Class ${cls}`}>Std {cls}</option>
               ))}
             </select>
@@ -262,31 +266,28 @@ export const Students: React.FC = () => {
           <div className="bg-slate-100 p-0.5 rounded-lg border border-slate-200/50 flex">
             <button
               onClick={() => setChipFilter('ALL')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${
-                chipFilter === 'ALL'
+              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${chipFilter === 'ALL'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
-              }`}
+                }`}
             >
               All
             </button>
             <button
               onClick={() => setChipFilter('RTE')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${
-                chipFilter === 'RTE'
+              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${chipFilter === 'RTE'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
-              }`}
+                }`}
             >
               RTE Only
             </button>
             <button
               onClick={() => setChipFilter('TRANSPORT')}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${
-                chipFilter === 'TRANSPORT'
+              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${chipFilter === 'TRANSPORT'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
-              }`}
+                }`}
             >
               With Transport
             </button>
@@ -311,13 +312,13 @@ export const Students: React.FC = () => {
             No students found matching your criteria.
           </div>
         ) : (
-filteredStudents.map((s) => {
+          filteredStudents.map((s) => {
             const initials = (s.studentName ?? '')
               .split(' ')
               .map((n) => n[0])
               .join('');
             const isExpanded = expandedStudentId === (s._id || s.id);
-            
+
             // Look up parent ID string for sibling calculation
             const getParentIdStr = (student: any) => {
               if (!student.parentId) return null;
@@ -356,9 +357,8 @@ filteredStudents.map((s) => {
             return (
               <div
                 key={s._id}
-                className={`bg-white border border-slate-100 rounded-2xl p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 relative ${
-                  isExpanded ? 'md:col-span-2 border-blue-200 shadow-md ring-1 ring-blue-500/10' : ''
-                }`}
+                className={`bg-white border border-slate-100 rounded-2xl p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 relative ${isExpanded ? 'md:col-span-2 border-blue-200 shadow-md ring-1 ring-blue-500/10' : ''
+                  }`}
               >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 w-full">
                   <div className="flex items-start gap-4">
@@ -381,16 +381,16 @@ filteredStudents.map((s) => {
                           </span>
                         )}
                       </div>
-                      
+
                       <p className="text-xs text-slate-500">
                         Std {s.standard} · Division {s.division} ·{' '}
                         <span className="font-medium">{s.medium} Medium</span>
                       </p>
-                      
+
                       <span className="text-slate-400 text-[10px] block font-mono">
                         {s.studentCode}
                       </span>
-                      
+
                       <div className="pt-1.5 flex flex-wrap gap-2 items-center">
                         <span className="text-[10px] text-slate-400 font-semibold">
                           Parent: {s.parentMobile ?? 'N/A'}
@@ -427,11 +427,10 @@ filteredStudents.map((s) => {
                           }
                           setExpandedStudentId(isExpanded ? null : (s._id || s.id));
                         }}
-                        className={`border font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1 ${
-                          isExpanded
+                        className={`border font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1 ${isExpanded
                             ? 'bg-slate-800 border-slate-800 text-white hover:bg-slate-700'
                             : 'bg-white border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700'
-                        }`}
+                          }`}
                       >
                         {isExpanded ? (
                           <>
@@ -485,38 +484,35 @@ filteredStudents.map((s) => {
                 {/* Expanded Details Section */}
                 {isExpanded && (
                   <div className="w-full mt-4 border-t border-slate-100 pt-5 space-y-4">
-                    
+
                     {/* Premium tab bar */}
                     <div className="flex border-b border-slate-100/80 -mx-5 px-5 overflow-x-auto scrollbar-none">
                       <button
                         onClick={() => setActiveTab('parent')}
-                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${
-                          activeTab === 'parent'
+                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${activeTab === 'parent'
                             ? 'border-blue-600 text-blue-600'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                          }`}
                       >
                         <Users className="h-4 w-4" />
                         Parent & Siblings
                       </button>
                       <button
                         onClick={() => setActiveTab('ledger')}
-                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${
-                          activeTab === 'ledger'
+                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${activeTab === 'ledger'
                             ? 'border-blue-600 text-blue-600'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                          }`}
                       >
                         <Landmark className="h-4 w-4" />
                         Fee Balance Ledgers ({studentLedgers.length})
                       </button>
                       <button
                         onClick={() => setActiveTab('history')}
-                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${
-                          activeTab === 'history'
+                        className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 -mb-px shrink-0 outline-none ${activeTab === 'history'
                             ? 'border-blue-600 text-blue-600'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                          }`}
                       >
                         <History className="h-4 w-4" />
                         Payment History ({studentTransactions.length})
@@ -573,12 +569,11 @@ filteredStudents.map((s) => {
                                       <span className="font-bold text-slate-700 text-xs block">{sib.studentName}</span>
                                       <span className="text-[10px] text-slate-400 block mt-0.5">Std {sib.standard} · Division {sib.division}</span>
                                     </div>
-                                    <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                      sib.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                                      sib.status === 'RTE' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
-                                      sib.status === '2 DUE' ? 'bg-red-50 text-red-500 border border-red-100' :
-                                      'bg-amber-50 text-amber-500 border border-amber-100'
-                                    }`}>
+                                    <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${sib.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                        sib.status === 'RTE' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                                          sib.status === '2 DUE' ? 'bg-red-50 text-red-500 border border-red-100' :
+                                            'bg-amber-50 text-amber-500 border border-amber-100'
+                                      }`}>
                                       {sib.status}
                                     </span>
                                   </div>
@@ -617,10 +612,10 @@ filteredStudents.map((s) => {
                                     <tr key={l._id || l.id} className="hover:bg-slate-100/50 transition-colors">
                                       <td className="py-3 pr-3 font-extrabold text-slate-800">
                                         {(l.feeType as string) === 'EDUCATION' ? 'Education' :
-                                         (l.feeType as string) === 'TRANSPORT' ? 'Transport' :
-                                         (l.feeType as string) === 'TERM' ? 'Term' :
-                                         (l.feeType as string) === 'ADMISSION' ? 'Admission' :
-                                         (l.feeType as string) === 'BAG_KIT' ? 'Bag & Kit' : l.feeType}
+                                          (l.feeType as string) === 'TRANSPORT' ? 'Transport' :
+                                            (l.feeType as string) === 'TERM' ? 'Term' :
+                                              (l.feeType as string) === 'ADMISSION' ? 'Admission' :
+                                                (l.feeType as string) === 'BAG_KIT' ? 'Bag & Kit' : l.feeType}
                                       </td>
                                       <td className="py-3 px-3 text-slate-500 font-medium">{l.feePeriod}</td>
                                       <td className="py-3 px-3 text-right font-semibold">₹{l.totalAmount.toLocaleString('en-IN')}</td>
@@ -630,11 +625,10 @@ filteredStudents.map((s) => {
                                         ₹{l.remainingAmount.toLocaleString('en-IN')}
                                       </td>
                                       <td className="py-3 pl-3 text-center">
-                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                                          l.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                                          l.status === 'PARTIAL' ? 'bg-amber-50 text-amber-500 border border-amber-100' :
-                                          'bg-red-50 text-red-500 border border-red-100'
-                                        }`}>
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${l.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                            l.status === 'PARTIAL' ? 'bg-amber-50 text-amber-500 border border-amber-100' :
+                                              'bg-red-50 text-red-500 border border-red-100'
+                                          }`}>
                                           {l.status}
                                         </span>
                                       </td>
@@ -647,11 +641,10 @@ filteredStudents.map((s) => {
                                     <td className="py-3.5 px-3 text-right text-purple-700">₹{totalConcessionLedgerAmount.toLocaleString('en-IN')}</td>
                                     <td className="py-3.5 px-3 text-right text-red-600">₹{totalRemainingLedgerAmount.toLocaleString('en-IN')}</td>
                                     <td className="py-3.5 pl-3 text-center">
-                                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${
-                                        totalRemainingLedgerAmount === 0
+                                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${totalRemainingLedgerAmount === 0
                                           ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                                           : 'bg-red-100 text-red-800 border-red-200'
-                                      }`}>
+                                        }`}>
                                         {totalRemainingLedgerAmount === 0 ? 'NO BALANCE' : 'DUE FEES'}
                                       </span>
                                     </td>
@@ -720,11 +713,10 @@ filteredStudents.map((s) => {
                                             </span>
                                           </td>
                                           <td className="py-3 px-3 text-center">
-                                            <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
-                                              tx.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' :
-                                              tx.status === 'PARTIALLY_REVERSED' ? 'bg-amber-50 text-amber-500 border-amber-100' :
-                                              tx.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'
-                                            }`}>
+                                            <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${tx.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' :
+                                                tx.status === 'PARTIALLY_REVERSED' ? 'bg-amber-50 text-amber-500 border-amber-100' :
+                                                  tx.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'
+                                              }`}>
                                               {tx.status}
                                             </span>
                                           </td>
@@ -760,9 +752,8 @@ filteredStudents.map((s) => {
                                                           </span>
                                                         </td>
                                                         <td className="py-2 px-2 text-center">
-                                                          <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                                                            sub.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                          }`}>
+                                                          <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${sub.status === 'REVERSED' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                            }`}>
                                                             {sub.status}
                                                           </span>
                                                         </td>
@@ -895,7 +886,7 @@ filteredStudents.map((s) => {
                     onChange={(e) => setNewSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1','2','3','4','5','6','7','8','9','10','11','12'].map((std) => (
+                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
                       <option key={std} value={std}>Std {std}</option>
                     ))}
                   </select>
@@ -918,12 +909,13 @@ filteredStudents.map((s) => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
                   <select
                     value={newSTransport}
-                    onChange={(e) => setNewSTransport(e.target.value as any)}
+                    onChange={(e) => setNewSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="None">None</option>
-                    <option value="Railnagar">Railnagar (+₹600)</option>
-                    <option value="Outside Railnagar">Outside Railnagar (+₹900)</option>
+                    {transportFeeStructures.map((t) => (
+                      <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
+                    ))}
                   </select>
                 </div>
 
@@ -1034,7 +1026,7 @@ filteredStudents.map((s) => {
                     onChange={(e) => setEditSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1','2','3','4','5','6','7','8','9','10','11','12'].map((cls) => (
+                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
                       <option key={cls} value={cls}>Std {cls}</option>
                     ))}
                   </select>
@@ -1058,13 +1050,27 @@ filteredStudents.map((s) => {
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
                 <select
                   value={editSTransport}
-                  onChange={(e) => setEditSTransport(e.target.value as any)}
+                  onChange={(e) => setEditSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
                   className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                 >
                   <option value="None">None</option>
-                  <option value="Railnagar">Railnagar (+₹600)</option>
-                  <option value="Outside Railnagar">Outside Railnagar (+₹900)</option>
+                  {transportFeeStructures.map((t) => (
+                    <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
+                  ))}
                 </select>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <input
+                  type="checkbox"
+                  id="editRteCheckbox"
+                  checked={editSIsRTE}
+                  onChange={(e) => setEditSIsRTE(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="editRteCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                  Student admitted under RTE (Right to Education) quota
+                </label>
               </div>
 
               {editSTransport !== originalTransport && (
@@ -1103,7 +1109,7 @@ filteredStudents.map((s) => {
             <p className="text-sm text-slate-600 mb-6">
               The mobile number provided already belongs to parent <strong>{siblingModalData.parentName}</strong>. Is this new student a sibling?
             </p>
-            
+
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => {

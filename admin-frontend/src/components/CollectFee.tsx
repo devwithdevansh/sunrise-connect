@@ -987,7 +987,7 @@ export const CollectFee: React.FC = () => {
             {/* ── ADMISSION / BAG_KIT ─────────────────────── */}
             {(feeCategory === 'ADMISSION' || feeCategory === 'BAG_KIT') && (
               <div className="space-y-6">
-                {getDueAmount(feeCategory, 'One-time') === 0 && (
+                {(() => { const l = getLedger(feeCategory, 'One-time'); return l && l.status === 'PAID'; })() && (
                   <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm font-bold text-center">
                     {feeCategory === 'ADMISSION' ? 'Admission' : 'Bag & Kit'} fee has already been paid for this student.
                   </div>
