@@ -99,7 +99,6 @@ interface EditFCModalProps {
 }
 
 const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
-  const { academicYears } = useApp();
   const [name, setName] = useState(cat.name);
   const [type, setType] = useState(cat.type);
   const [description, setDescription] = useState(cat.description || '');
@@ -204,8 +203,6 @@ export const Setup: React.FC = () => {
   } = useApp();
   
   const [activeTab, setActiveTab] = useState<'academic-year' | 'fee-categories' | 'fee-structure'>('academic-year');
-
-  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
 
   const filteredCategories = React.useMemo(() => {
     return feeCategories;
