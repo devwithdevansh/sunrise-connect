@@ -25,10 +25,14 @@ class FeeStructureController {
    * Create a new standard fee structure
    */
   static createFeeStructure = catchAsync(async (req, res) => {
-    const existing = await FeeStructure.findOne({ medium: req.body.medium, standard: req.body.standard });
+    const existing = await FeeStructure.findOne({ 
+      medium: req.body.medium, 
+      standard: req.body.standard, 
+      academicYear: req.body.academicYear 
+    });
     if (existing) {
       if (existing.isActive) {
-        throw new AppError('Fee structure already exists for this medium and standard', 400);
+        throw new AppError('Fee structure already exists for this academic year, medium and standard', 400);
       }
       const updated = await FeeStructure.findByIdAndUpdate(
         existing._id,

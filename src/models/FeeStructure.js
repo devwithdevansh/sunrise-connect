@@ -55,6 +55,11 @@ const feeStructureSchema = new mongoose.Schema(
         required: true,
       },
     ],
+    academicYear: {
+      type: String,
+      required: [true, 'Academic year mapping is required'],
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -67,9 +72,9 @@ const feeStructureSchema = new mongoose.Schema(
 
 // Indexes
 
-// 1. Unique Compound Index (Medium + Standard)
-// Ensures we never accidentally create two different master fee structures for the exact same medium and standard.
-feeStructureSchema.index({ medium: 1, standard: 1 }, { unique: true });
+// 1. Unique Compound Index (AcademicYear + Medium + Standard)
+// Ensures we never accidentally create two different master fee structures for the exact same medium, standard, and academic year.
+feeStructureSchema.index({ academicYear: 1, medium: 1, standard: 1 }, { unique: true });
 
 // 2. Active Status Filtering Index
 // Useful when fetching all active structures to populate dropdowns on the admin dashboard.

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const createFeeStructureSchema = {
   body: z.object({
+    academicYear: z.string().min(1),
     medium: z.enum(['English', 'Gujarati']),
     standard: z.string().min(1),
     annualFee: z.number().nonnegative(),

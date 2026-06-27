@@ -60,7 +60,7 @@ async function main() {
       { medium: 'Gujarati', standard: '11', annualFee: 30000, educationPartCount: 12, termPartCount: 2, isActive: true },
       { medium: 'Gujarati', standard: '12', annualFee: 30000, educationPartCount: 12, termPartCount: 2, isActive: true },
     ];
-    await FeeStructure.insertMany(feeStructures);
+    await FeeStructure.insertMany(feeStructures.map(f => ({ ...f, academicYear: '2025-26' })));
     console.log(`📋 Seeded ${feeStructures.length} FeeStructure records`);
 
     // ---- Seed Transport Fee Structures ----
