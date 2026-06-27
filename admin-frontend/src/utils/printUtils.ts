@@ -303,17 +303,18 @@ export function generateReceiptHTML(
   </div>
   ` : ''}
 
-  <!-- ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ -->
+  <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
   <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid; z-index: 3;">
-    <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" viewBox="0 0 718 130" preserveAspectRatio="none">
-      <!-- Gold curved banner on the right -->
-      <path d="M 370 0 L 718 0 L 718 95 C 670 130, 520 130, 420 130 C 460 95, 450 45, 370 0 Z" fill="#e8a020" />
-      <!-- Navy curved banner on the left (overlapping) -->
-      <path d="M 0 0 L 440 0 C 420 85, 380 130, 300 130 L 0 130 Z" fill="#1b3a6b" />
-    </svg>
-    
-    <!-- Left side content: Logo and School details inside the Navy area -->
-    <div style="position: absolute; top: 0; left: 0; width: 58%; height: 130px; z-index: 2; display: flex; align-items: center; padding-left: 20px; color: #fff;">
+    <!-- Right Gold Block (Shorter, tucked behind) -->
+    <div style="position: absolute; top: 0; right: 0; width: 48%; height: 95px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
+      <div style="font-size: 10px; color: #1b3a6b; font-weight: 700; marginTop: 6px; text-align: right; background: rgba(255,255,255,0.9); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        NO: <span style="font-family: monospace; font-size: 11px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
+      </div>
+    </div>
+
+    <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
+    <div style="position: absolute; top: 0; left: 0; width: 60%; height: 130px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 20px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <div style="width: 70px; height: 70px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 15px; flex-shrink: 0;">
         ${logoImg}
       </div>
@@ -324,14 +325,6 @@ export function generateReceiptHTML(
           ${SCH.address}<br/>
           Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
         </div>
-      </div>
-    </div>
-
-    <!-- Right side content: RECEIPT title and Receipt No inside the Gold area -->
-    <div style="position: absolute; top: 0; right: 0; width: 42%; height: 115px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff;">
-      <div style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
-      <div style="font-size: 10px; color: #1b3a6b; font-weight: 700; margin-top: 6px; text-align: right; background: rgba(255,255,255,0.9); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        NO: <span style="font-family: monospace; font-size: 11px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
   </div>
@@ -408,22 +401,15 @@ export function generateReceiptHTML(
     </div>
   </div>
 
-  <!-- ════ FOOTER WITH CURVED SVG SHAPES ════ -->
-  <div class="footer-container" style="position: relative; height: 75px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
-    <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1;" viewBox="0 0 718 75" preserveAspectRatio="none">
-      <!-- Gold curved block on the bottom left (underneath) -->
-      <path d="M 0 30 L 220 30 C 180 65, 140 75, 100 75 L 0 75 Z" fill="#e8a020" />
-      <!-- Navy curved block on the bottom right (overlapping) -->
-      <path d="M 180 30 L 718 30 L 718 75 L 130 75 C 160 75, 160 45, 180 30 Z" fill="#1b3a6b" />
-    </svg>
-    
-    <!-- Left side text (Gold block) -->
-    <div style="position: absolute; bottom: 0; left: 0; width: 22%; height: 45px; z-index: 2; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b;">
+  <!-- ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
+  <div class="footer-container" style="position: relative; height: 60px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
+    <!-- Left Gold Block (Shorter, tucked behind) -->
+    <div style="position: absolute; bottom: 0; left: 0; width: 45%; height: 45px; background: #e8a020; z-index: 1; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <span style="font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">THANK YOU</span>
     </div>
 
-    <!-- Right side text (Navy block) -->
-    <div style="position: absolute; bottom: 0; right: 0; width: 78%; height: 45px; z-index: 2; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 9.5px;">
+    <!-- Right Navy Block (Full height, overlapping, with top-left curve) -->
+    <div style="position: absolute; bottom: 0; right: 0; width: 70%; height: 60px; background: #1b3a6b; z-index: 2; border-top-left-radius: 35px; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 9.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <div style="display: flex; gap: 18px; font-weight: 600; align-items: center; letter-spacing: 0.5px;">
         <span>📞 ${SCH.phone}</span>
         <span style="opacity: 0.4;">|</span>

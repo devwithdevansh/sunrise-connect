@@ -318,17 +318,18 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           <img src={watermarkLogoPath} alt="Watermark" style={{ width: '440px', height: '440px', opacity: 0.08, transform: 'rotate(-12deg)', objectFit: 'contain' }} />
         </div>
 
-        {/* ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ */}
+        {/* ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
         <div className="header-container" style={{ position: 'relative', height: '130px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
-          <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }} viewBox="0 0 718 130" preserveAspectRatio="none">
-            {/* Gold curved banner on the right */}
-            <path d="M 370 0 L 718 0 L 718 95 C 670 130, 520 130, 420 130 C 460 95, 450 45, 370 0 Z" fill="#e8a020" />
-            {/* Navy curved banner on the left (overlapping) */}
-            <path d="M 0 0 L 440 0 C 420 85, 380 130, 300 130 L 0 130 Z" fill="#1b3a6b" />
-          </svg>
-          
-          {/* Left side content: Logo and School details inside the Navy area */}
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '58%', height: '130px', zIndex: 2, display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#fff' }}>
+          {/* Right Gold Block (Shorter, tucked behind) */}
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '95px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
+            <div style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)' }}>RECEIPT</div>
+            <div style={{ fontSize: '10px', color: '#1b3a6b', fontWeight: 700, marginTop: '6px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '3px 8px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+              NO: <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
+            </div>
+          </div>
+
+          {/* Left Navy Block (Full height, overlapping, with bottom-right curve) */}
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '60%', height: '130px', background: '#1b3a6b', zIndex: 2, borderBottomRightRadius: '35px', display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#fff' }}>
             <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: '#fff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.15)', marginRight: '15px', flexShrink: 0 }}>
               <img src={logoPath} alt="Sunrise School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
@@ -339,14 +340,6 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                 Railnagar, Rajkot, Gujarat — 360 001<br/>
                 Ph: +91 XXXXX XXXXX &nbsp;·&nbsp; info@sunriseschool.in
               </div>
-            </div>
-          </div>
-
-          {/* Right side content: RECEIPT title and Receipt No inside the Gold area */}
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '42%', height: '115px', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
-            <div style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)' }}>RECEIPT</div>
-            <div style={{ fontSize: '10px', color: '#1b3a6b', fontWeight: 700, marginTop: '6px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '3px 8px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-              NO: <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
             </div>
           </div>
         </div>
@@ -476,22 +469,15 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           </div>
         </div>
 
-        {/* ════ FOOTER WITH CURVED SVG SHAPES ════ */}
-        <div className="footer-container" style={{ position: 'relative', height: '75px', width: '100%', overflow: 'hidden', background: '#fff', zIndex: 10 }}>
-          <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }} viewBox="0 0 718 75" preserveAspectRatio="none">
-            {/* Gold curved block on the bottom left (underneath) */}
-            <path d="M 0 30 L 220 30 C 180 65, 140 75, 100 75 L 0 75 Z" fill="#e8a020" />
-            {/* Navy curved block on the bottom right (overlapping) */}
-            <path d="M 180 30 L 718 30 L 718 75 L 130 75 C 160 75, 160 45, 180 30 Z" fill="#1b3a6b" />
-          </svg>
-          
-          {/* Left side text (Gold block) */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '22%', height: '45px', zIndex: 2, display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#1b3a6b' }}>
+        {/* ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
+        <div className="footer-container" style={{ position: 'relative', height: '60px', width: '100%', overflow: 'hidden', background: '#fff', zIndex: 10 }}>
+          {/* Left Gold Block (Shorter, tucked behind) */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '45%', height: '45px', background: '#e8a020', zIndex: 1, display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#1b3a6b' }}>
             <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>THANK YOU</span>
           </div>
 
-          {/* Right side text (Navy block) */}
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '78%', height: '45px', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '25px', color: '#fff', fontSize: '9.5px' }}>
+          {/* Right Navy Block (Full height, overlapping, with top-left curve) */}
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '70%', height: '60px', background: '#1b3a6b', zIndex: 2, borderTopLeftRadius: '35px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '25px', color: '#fff', fontSize: '9.5px' }}>
             <div style={{ display: 'flex', gap: '18px', fontWeight: 600, alignItems: 'center', letterSpacing: '0.5px' }}>
               <span>📞 +91 XXXXX XXXXX</span>
               <span style={{ opacity: 0.4 }}>|</span>
