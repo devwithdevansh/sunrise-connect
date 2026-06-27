@@ -277,37 +277,17 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
       background: '#fffbf0',
       margin: '12px 0 16px',
       fontSize: '11px',
-      color: '#333',
-    } as React.CSSProperties,
-
-    sigRow: {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      alignItems: 'flex-end',
-      margin: '10px 0 18px',
-    } as React.CSSProperties,
-
-    sigLine: {
-      width: '170px',
-      borderTop: '1.5px solid #888',
-      paddingTop: '4px',
-      textAlign: 'center' as const,
-    } as React.CSSProperties,
-
-    footer: {
-      borderLeft: '4px solid #e8a020',
-      padding: '7px 12px',
-      backgroundColor: '#fffaf0',
-      fontSize: '10px',
-      color: '#666',
-      fontStyle: 'italic' as const,
     } as React.CSSProperties,
   };
 
   return (
     <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+      `}</style>
+
       {/* Screen-preview — visible on screen, hidden when printing (print handled by iframe) */}
-      <div style={{ ...S.page, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '297mm' }}>
+      <div style={{ ...S.page, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '297mm', fontFamily: "'Inter', sans-serif", color: '#1e293b' }}>
 
         {/* ── WATERMARK ── */}
         <div style={{
@@ -322,9 +302,9 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
         <div className="header-container" style={{ position: 'relative', height: '130px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
           {/* Right Gold Block (Shorter, tucked behind) */}
           <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '95px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
-            <div style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)' }}>RECEIPT</div>
+            <div style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)', fontFamily: "'Outfit', sans-serif" }}>RECEIPT</div>
             <div style={{ fontSize: '10px', color: '#1b3a6b', fontWeight: 700, marginTop: '6px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '3px 8px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-              NO: <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
+              NO: <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
             </div>
           </div>
 
@@ -334,8 +314,8 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               <img src={logoPath} alt="Sunrise School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div>
-              <div style={{ fontSize: '19px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff' }}>SUNRISE CONVENT SCHOOL</div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: '#fcd34d', marginTop: '3px', letterSpacing: '0.3px' }}>English &amp; Gujarati Medium</div>
+              <div style={{ fontSize: '19px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>SUNRISE CONVENT SCHOOL</div>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: '#fcd34d', marginTop: '3px', letterSpacing: '0.3px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
               <div style={{ fontSize: '8.5px', color: '#e2e8f0', marginTop: '3px', lineHeight: 1.3 }}>
                 Railnagar, Rajkot, Gujarat — 360 001<br/>
                 Ph: +91 XXXXX XXXXX &nbsp;·&nbsp; info@sunriseschool.in
@@ -348,37 +328,37 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           <div style={{ flex: 1, paddingTop: '10px' }}>
             
             {/* ════ INFO GRID ════ */}
-            <div style={{ ...S.metaTable, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid #dde4f0', borderRadius: '6px', overflow: 'hidden', marginBottom: '14px' }}>
-              <div style={{ padding: '12px 14px', borderRight: '1px solid #dde4f0', background: 'rgba(248, 250, 253, 0.85)' }}>
-                <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.5px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '8px' }}>Student Information</div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Name</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.studentName}</span></div>
-                {transaction.studentCode && <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Student Code</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: 'monospace' }}>{transaction.studentCode}</span></div>}
-                {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
+            <div style={{ ...S.metaTable, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', border: 'none', overflow: 'visible', marginBottom: '14px' }}>
+              <div style={{ padding: '14px 16px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', background: 'rgba(248, 250, 253, 0.65)' }}>
+                <div style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '10px', fontFamily: "'Outfit', sans-serif" }}>Student Information</div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Name</span><span style={{ fontSize: '12px', fontWeight: 700, color: '#1b3a6b', flex: 1 }}>{transaction.studentName}</span></div>
+                {transaction.studentCode && <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Student Code</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{transaction.studentCode}</span></div>}
+                {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
               </div>
-              <div style={{ padding: '12px 14px', background: 'rgba(255, 255, 255, 0.85)' }}>
-                <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.5px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '8px' }}>Payment Information</div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Date</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{dateStr}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Time</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{timeStr}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Mode</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{modeLabel}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>✓ Payment Received</span></div>
+              <div style={{ padding: '14px 16px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.65)' }}>
+                <div style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '10px', fontFamily: "'Outfit', sans-serif" }}>Payment Information</div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Date</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{dateStr}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Time</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{timeStr}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Mode</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{modeLabel}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>✓ Payment Received</span></div>
               </div>
             </div>
 
             {/* ════ PAYMENT DETAILS SECTION HEADER ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <div style={{ width: '4px', height: '16px', background: '#e8a020', borderRadius: '2px' }}></div>
-              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Payment Details</div>
+              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Payment Details</div>
             </div>
 
             {/* ── FEE TABLE ── */}
-            <table style={{ ...S.feeTable, border: '1px solid #dde4f0', borderRadius: '6px', overflow: 'hidden' }}>
+            <table style={{ ...S.feeTable, border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', overflow: 'hidden' }}>
               <thead>
                 <tr style={{ background: 'linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%)' }}>
-                  <th style={{ padding: '9px 10px', color: '#fff', fontSize: '10px', fontWeight: 700, textAlign: 'center', width: '36px' }}>#</th>
-                  <th style={{ padding: '9px 10px', color: '#fff', fontSize: '10px', fontWeight: 700, textAlign: 'left' }}>Description</th>
-                  <th style={{ padding: '9px 10px', color: '#fff', fontSize: '10px', fontWeight: 700, textAlign: 'center', width: '110px' }}>Mode</th>
-                  <th style={{ padding: '9px 10px', color: '#fff', fontSize: '10px', fontWeight: 700, textAlign: 'right', width: '110px' }}>Amount (₹)</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'center', width: '36px', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>#</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'left', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Description</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'center', width: '110px', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Mode</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'right', width: '110px', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Amount (₹)</th>
                 </tr>
               </thead>
               <tbody>
@@ -387,41 +367,41 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                     <tr
                       key={i}
                       style={{
-                        backgroundColor: i % 2 === 0 ? 'rgba(248, 250, 253, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                        backgroundColor: i % 2 === 0 ? 'rgba(248, 250, 253, 0.7)' : 'rgba(255, 255, 255, 0.75)',
                         borderBottom: '1px solid #e8edf8',
                       }}
                     >
-                      <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{i + 1}</td>
-                      <td style={{ ...S.tdDesc, fontWeight: 500, borderRight: '1px solid #e2e8f4' }}>
+                      <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</td>
+                      <td style={{ ...S.tdDesc, fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>
                         {item.description}
                         {item.concessionAmount > 0 && (
-                          <span style={{ display: 'inline-block', marginLeft: '8px', fontSize: '9.5px', color: '#b45309', background: '#fef3c7', padding: '1px 6px', borderRadius: '3px', fontWeight: 600 }}>
+                          <span style={{ display: 'inline-block', marginLeft: '8px', fontSize: '9px', color: '#b45309', background: 'rgba(254, 243, 199, 0.85)', border: '1px solid rgba(252, 211, 77, 0.5)', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
                             -₹{item.concessionAmount.toLocaleString('en-IN')} off
                           </span>
                         )}
                       </td>
                       <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{getModeLabel(item.method || transaction.method || '')}</td>
-                      <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700 }}>₹{Math.abs(item.amount).toLocaleString('en-IN')}</td>
+                      <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>₹{Math.abs(item.amount).toLocaleString('en-IN')}</td>
                     </tr>
                   ))
                 ) : (
-                  <tr style={{ backgroundColor: 'rgba(248, 250, 253, 0.8)' }}>
-                    <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>1</td>
-                    <td style={{ ...S.tdDesc, fontWeight: 500, borderRight: '1px solid #e2e8f4' }}>{transaction.feeType || 'Fee Collection'}</td>
+                  <tr style={{ backgroundColor: 'rgba(248, 250, 253, 0.7)' }}>
+                    <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}>1</td>
+                    <td style={{ ...S.tdDesc, fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>{transaction.feeType || 'Fee Collection'}</td>
                     <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{modeLabel}</td>
-                    <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700 }}>₹{totalAmount.toLocaleString('en-IN')}</td>
+                    <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>₹{totalAmount.toLocaleString('en-IN')}</td>
                   </tr>
                 )}
 
                 {/* Top-level concession row */}
                 {!transaction.subItems && transaction.concessionAmount ? (
-                  <tr style={{ backgroundColor: 'rgba(255, 251, 235, 0.8)' }}>
-                    <td style={{ borderRight: '1px solid #e2e8f4' }}></td>
-                    <td style={{ ...S.tdDesc, color: '#b45309', fontStyle: 'italic', fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>
+                  <tr style={{ backgroundColor: 'rgba(255, 251, 235, 0.7)' }}>
+                    <td style={{ borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}></td>
+                    <td style={{ ...S.tdDesc, color: '#b45309', fontStyle: 'italic', fontWeight: 700, borderRight: '1px solid #e2e8f4' }}>
                       ✦ Concession Applied
                     </td>
                     <td style={{ borderRight: '1px solid #e2e8f4' }}></td>
-                    <td style={{ ...S.tdAmt, color: '#b45309', fontWeight: 700 }}>
+                    <td style={{ ...S.tdAmt, color: '#b45309', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
                       −₹{(transaction.concessionAmount || 0).toLocaleString('en-IN')}
                     </td>
                   </tr>
@@ -429,37 +409,37 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               </tbody>
 
               <tfoot>
-                <tr style={{ background: 'linear-gradient(135deg, #e8a020 0%, #d08c16 100%)' }}>
-                  <td colSpan={3} style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>TOTAL PAID</td>
-                  <td style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '16px', textAlign: 'right' }}>₹ {totalAmount.toLocaleString('en-IN')}</td>
+                <tr style={{ background: 'linear-gradient(to bottom, #e8a020, #d97706)' }}>
+                  <td colSpan={3} style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", borderBottom: '3px double #1b3a6b' }}>TOTAL PAID</td>
+                  <td style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '16px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", borderBottom: '3px double #1b3a6b' }}>₹ {totalAmount.toLocaleString('en-IN')}</td>
                 </tr>
               </tfoot>
             </table>
 
             {/* ── AMOUNT IN WORDS ── */}
-            <div style={{ ...S.wordsBox, borderLeft: '4px solid #e8a020', background: 'linear-gradient(to right, #fffbf0, #fff)', padding: '9px 14px', borderRadius: '0 4px 4px 0', fontSize: '10.5px', color: '#334155', marginTop: '12px' }}>
+            <div style={{ borderLeft: '4px solid #e8a020', background: 'linear-gradient(to right, rgba(255, 251, 240, 0.85), rgba(255, 255, 255, 0.85))', padding: '10px 14px', borderRadius: '0 6px 6px 0', fontSize: '10px', color: '#334155', marginTop: '12px', borderTop: '1px solid rgba(226, 232, 240, 0.3)', borderBottom: '1px solid rgba(226, 232, 240, 0.3)', borderRight: '1px solid rgba(226, 232, 240, 0.3)' }}>
               <strong>Amount in Words:</strong>&nbsp;
               <em>{amountInWords}</em>
             </div>
 
             {transaction.remark && (
-              <div style={{ borderLeft: '4px solid #94a3b8', background: '#f8fafd', padding: '7px 14px', borderRadius: '0 4px 4px 0', fontSize: '10px', color: '#475569', fontStyle: 'italic', marginTop: '8px' }}>
+              <div style={{ borderLeft: '4px solid #94a3b8', background: 'rgba(248, 250, 253, 0.85)', padding: '8px 14px', borderRadius: '0 6px 6px 0', fontSize: '9.5px', color: '#475569', fontStyle: 'italic', marginTop: '8px', borderTop: '1px solid rgba(226, 232, 240, 0.3)', borderBottom: '1px solid rgba(226, 232, 240, 0.3)', borderRight: '1px solid rgba(226, 232, 240, 0.3)' }}>
                 <strong>Remark:</strong>&nbsp;
                 <em>{transaction.remark}</em>
               </div>
             )}
 
             {/* ── SIGNATURES ── */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', marginBottom: '16px' }}>
-              <div style={{ width: '100px', height: '70px', border: '1.5px dashed #cbd5e1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '8px', fontWeight: 600, textAlign: 'center', lineHeight: '1.4' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '25px', marginBottom: '16px' }}>
+              <div style={{ width: '76px', height: '76px', border: '2px double #cbd5e1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '8px', fontWeight: 800, textAlign: 'center', lineHeight: '1.3', fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 SCHOOL<br/>SEAL
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: '#1b3a6b', marginBottom: '28px' }}>
+                <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#1b3a6b', marginBottom: '28px', fontFamily: "'Outfit', sans-serif", letterSpacing: '0.5px' }}>
                   {currentUser?.name ? currentUser.name.toUpperCase() : 'AUTHORISED SIGNATORY'}
                 </div>
-                <div style={{ ...S.sigLine, borderTop: '1.5px solid #94a3b8', paddingTop: '5px' }}>
-                  <div style={{ fontSize: '8.5px', color: '#94a3b8', fontWeight: 600 }}>
+                <div style={{ width: '170px', borderTop: '1.5px solid #94a3b8', paddingTop: '5px' }}>
+                  <div style={{ fontSize: '8.5px', color: '#94a3b8', fontWeight: 600, fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Authorised Signatory
                   </div>
                 </div>
@@ -487,7 +467,6 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
             </div>
           </div>
         </div>
-
       </div>
     </>
   );

@@ -86,11 +86,13 @@ const SCH = {
 // ─── Shared base CSS ──────────────────────────────────────────────────────────
 
 const BASE_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 11px;
-  color: #1a1a2e;
+  color: #1e293b;
   background: #fff;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
@@ -131,35 +133,35 @@ export function generateReceiptHTML(
   const feeRows = (() => {
     if (transaction.subItems?.length) {
       return transaction.subItems.map((item, i) => `
-        <tr style="background:${i % 2 === 0 ? 'rgba(248,250,253,0.8)' : 'rgba(255,255,255,0.8)'};page-break-inside:avoid;">
-          <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;">${i + 1}</td>
-          <td style="padding:8px 12px;color:#1e293b;font-weight:500;border-right:1px solid #e2e8f4;">
+        <tr style="background:${i % 2 === 0 ? 'rgba(248,250,253,0.7)' : 'rgba(255,255,255,0.75)'};page-break-inside:avoid;">
+          <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">${i + 1}</td>
+          <td style="padding:8px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">
             ${item.description}
-            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9.5px;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:3px;font-weight:600;">-₹${item.concessionAmount.toLocaleString('en-IN')} off</span>` : ''}
+            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9px;color:#b45309;background:rgba(254,243,199,0.85);border:1px solid rgba(252,211,77,0.5);padding:2px 8px;border-radius:9999px;font-weight:700;font-family:'Inter',sans-serif;">-₹${item.concessionAmount.toLocaleString('en-IN')} off</span>` : ''}
           </td>
           <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || '')}</td>
-          <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;">₹${inr(item.amount)}</td>
+          <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;font-family:'JetBrains Mono',monospace;">₹${inr(item.amount)}</td>
         </tr>
       `).join('');
     }
     return `
-      <tr style="background:rgba(248,250,253,0.8);page-break-inside:avoid;">
-        <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;">1</td>
-        <td style="padding:8px 12px;color:#1e293b;font-weight:500;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
+      <tr style="background:rgba(248,250,253,0.7);page-break-inside:avoid;">
+        <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">1</td>
+        <td style="padding:8px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
         <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
-        <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;">₹${inr(totalAmount)}</td>
+        <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;font-family:'JetBrains Mono',monospace;">₹${inr(totalAmount)}</td>
       </tr>
     `;
   })();
 
   const concessionRow = (!transaction.subItems && transaction.concessionAmount) ? `
-    <tr style="background:rgba(255,251,235,0.8);page-break-inside:avoid;">
-      <td style="padding:7px 10px;border-right:1px solid #e2e8f4;"></td>
-      <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:600;border-right:1px solid #e2e8f4;">
+    <tr style="background:rgba(255,251,235,0.7);page-break-inside:avoid;">
+      <td style="padding:7px 10px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;"></td>
+      <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:700;border-right:1px solid #e2e8f4;">
         ✦ Concession Applied
       </td>
       <td style="border-right:1px solid #e2e8f4;"></td>
-      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;">−₹${(transaction.concessionAmount||0).toLocaleString('en-IN')}</td>
+      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono',monospace;">−₹${(transaction.concessionAmount||0).toLocaleString('en-IN')}</td>
     </tr>
   ` : '';
 
@@ -205,31 +207,30 @@ export function generateReceiptHTML(
     /* ── Two-column info grid ── */
     .info-grid {
       display: grid; grid-template-columns: 1fr 1fr;
-      gap: 0;
-      border: 1px solid #dde4f0;
-      border-radius: 6px;
-      overflow: hidden;
+      gap: 15px;
       margin-bottom: 14px;
       page-break-inside: avoid;
     }
     .info-col {
-      padding: 12px 14px;
+      padding: 14px 16px;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 8px;
     }
     .info-col:first-child {
-      border-right: 1px solid #dde4f0;
-      background: rgba(248, 250, 253, 0.85); /* Semi-transparent */
+      background: rgba(248, 250, 253, 0.65); /* Semi-transparent */
     }
     .info-col:last-child {
-      background: rgba(255, 255, 255, 0.85); /* Semi-transparent */
+      background: rgba(255, 255, 255, 0.65); /* Semi-transparent */
     }
     .info-col-header {
-      font-size: 8.5px; font-weight: 800; color: #1b3a6b;
-      letter-spacing: 1.5px; text-transform: uppercase;
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px; font-weight: 800; color: #1b3a6b;
+      letter-spacing: 1.2px; text-transform: uppercase;
       border-bottom: 2px solid #e8a020;
-      padding-bottom: 5px; margin-bottom: 8px;
+      padding-bottom: 5px; margin-bottom: 10px;
     }
-    .info-row { display: flex; gap: 6px; margin-bottom: 5px; }
-    .info-label { font-size: 9.5px; font-weight: 700; color: #94a3b8; width: 90px; flex-shrink: 0; }
+    .info-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: baseline; }
+    .info-label { font-family: 'Outfit', sans-serif; font-size: 8px; font-weight: 700; color: #64748b; width: 90px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.8px; }
     .info-value { font-size: 10px; font-weight: 600; color: #1e293b; flex: 1; }
 
     /* ── Section header ── */
@@ -239,28 +240,31 @@ export function generateReceiptHTML(
       page-break-after: avoid;
     }
     .section-hd-bar { width: 4px; height: 16px; background: #e8a020; border-radius: 2px; flex-shrink: 0; }
-    .section-hd-text { font-size: 10.5px; font-weight: 800; color: #1b3a6b; letter-spacing: 0.8px; text-transform: uppercase; }
+    .section-hd-text { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 800; color: #1b3a6b; letter-spacing: 0.8px; text-transform: uppercase; }
 
     /* ── Fee table ── */
-    .fee-table { width: 100%; margin-bottom: 0; border: 1px solid #dde4f0; border-radius: 6px; overflow: hidden; }
+    .fee-table { width: 100%; margin-bottom: 0; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 8px; overflow: hidden; }
     .fee-table thead tr { background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%); }
-    .fee-table thead th { padding: 9px 10px; color: #fff; font-size: 10px; font-weight: 700; text-align: left; }
+    .fee-table thead th { font-family: 'Outfit', sans-serif; padding: 10px 12px; color: #fff; font-size: 9.5px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; }
     .fee-table thead th:last-child { text-align: right; }
     .fee-table tbody tr { border-bottom: 1px solid #e8edf8; }
     .fee-table tbody tr:last-child { border-bottom: none; }
-    .fee-table tfoot tr { background: linear-gradient(135deg, #e8a020 0%, #d08c16 100%); }
-    .fee-table tfoot td { padding: 11px 12px; color: #1b3a6b; font-weight: 800; }
+    .fee-table tfoot tr { background: linear-gradient(to bottom, #e8a020, #d97706); }
+    .fee-table tfoot td { padding: 11px 12px; color: #1b3a6b; font-weight: 800; font-family: 'Outfit', sans-serif; border-bottom: 3px double #1b3a6b; }
     .fee-table tfoot td.total-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
-    .fee-table tfoot td.total-amt { text-align: right; font-size: 16px; color: #1b3a6b; }
+    .fee-table tfoot td.total-amt { text-align: right; font-size: 16px; color: #1b3a6b; font-family: 'JetBrains Mono', monospace; }
 
     /* ── Words box ── */
     .words-box {
       margin-top: 12px;
       border-left: 4px solid #e8a020;
       background: linear-gradient(to right, rgba(255, 251, 240, 0.85), rgba(255, 255, 255, 0.85)); /* Semi-transparent */
-      padding: 9px 14px;
-      border-radius: 0 4px 4px 0;
-      font-size: 10.5px; color: #334155;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 10px; color: #334155;
+      border-top: 1px solid rgba(226, 232, 240, 0.3);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+      border-right: 1px solid rgba(226, 232, 240, 0.3);
       page-break-inside: avoid;
     }
 
@@ -269,29 +273,35 @@ export function generateReceiptHTML(
       margin-top: 8px;
       border-left: 4px solid #94a3b8;
       background: rgba(248, 250, 253, 0.85); /* Semi-transparent */
-      padding: 7px 14px;
-      border-radius: 0 4px 4px 0;
-      font-size: 10px; color: #475569; font-style: italic;
+      padding: 8px 14px;
+      border-radius: 0 6px 6px 0;
+      font-size: 9.5px; color: #475569; font-style: italic;
+      border-top: 1px solid rgba(226, 232, 240, 0.3);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+      border-right: 1px solid rgba(226, 232, 240, 0.3);
       page-break-inside: avoid;
     }
 
     /* ── Signature section ── */
     .sig-section {
       display: flex; justify-content: space-between; align-items: flex-end;
-      margin-top: 20px; margin-bottom: 16px;
+      margin-top: 25px; margin-bottom: 16px;
       page-break-inside: avoid;
     }
     .sig-block { text-align: center; }
-    .sig-name { font-size: 10px; font-weight: 700; color: #1b3a6b; margin-bottom: 28px; }
-    .sig-line { width: 160px; border-top: 1.5px solid #94a3b8; padding-top: 5px; }
-    .sig-sub { font-size: 8.5px; color: #94a3b8; font-weight: 600; }
+    .sig-name { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 700; color: #1b3a6b; margin-bottom: 28px; letter-spacing: 0.5px; }
+    .sig-line { width: 170px; border-top: 1.5px solid #94a3b8; padding-top: 5px; }
+    .sig-sub { font-family: 'Outfit', sans-serif; font-size: 8.5px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .stamp-box {
-      width: 100px; height: 70px;
-      border: 1.5px dashed #cbd5e1;
+      width: 76px; height: 76px;
+      border: 2px double #cbd5e1;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1; font-size: 8px; font-weight: 600;
-      text-align: center; line-height: 1.4;
+      color: #cbd5e1; font-size: 8px; font-weight: 800;
+      text-align: center; line-height: 1.3;
+      font-family: 'Outfit', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
@@ -309,7 +319,7 @@ export function generateReceiptHTML(
     <div style="position: absolute; top: 0; right: 0; width: 48%; height: 95px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <div style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
       <div style="font-size: 10px; color: #1b3a6b; font-weight: 700; marginTop: 6px; text-align: right; background: rgba(255,255,255,0.9); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        NO: <span style="font-family: monospace; font-size: 11px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
+        NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
 
@@ -336,8 +346,8 @@ export function generateReceiptHTML(
       <div class="info-grid" style="margin-top: 15px;">
         <div class="info-col">
           <div class="info-col-header">Student Information</div>
-          <div class="info-row"><span class="info-label">Name</span><span class="info-value">${transaction.studentName}</span></div>
-          ${transaction.studentCode ? `<div class="info-row"><span class="info-label">Student Code</span><span class="info-value" style="font-family:monospace;">${transaction.studentCode}</span></div>` : ''}
+          <div class="info-row"><span class="info-label">Name</span><span class="info-value" style="font-size: 12px; color: #1b3a6b; font-weight: 700;">${transaction.studentName}</span></div>
+          ${transaction.studentCode ? `<div class="info-row"><span class="info-label">Student Code</span><span class="info-value" style="font-family:'JetBrains Mono', monospace; font-size: 9.5px;">${transaction.studentCode}</span></div>` : ''}
           ${transaction.classInfo   ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ''}
           <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
         </div>
