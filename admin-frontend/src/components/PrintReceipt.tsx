@@ -311,14 +311,11 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
 
         {/* ── WATERMARK ── */}
         <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%) rotate(-12deg)',
-          opacity: 0.055,
-          pointerEvents: 'none',
-          zIndex: 0,
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          position: 'absolute', top: 0, left: 0, width: '210mm', height: '297mm',
+          zIndex: 0, pointerEvents: 'none',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
         }}>
-          <img src={watermarkLogoPath} alt="Watermark" style={{ width: '440px', height: '440px', objectFit: 'contain' }} />
+          <img src={watermarkLogoPath} alt="Watermark" style={{ width: '440px', height: '440px', opacity: 0.055, transform: 'rotate(-12deg)', objectFit: 'contain' }} />
         </div>
 
         {/* ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ */}

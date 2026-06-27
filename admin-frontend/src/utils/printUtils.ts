@@ -166,7 +166,6 @@ export function generateReceiptHTML(
   const signerName = currentUserName ? currentUserName.toUpperCase() : 'AUTHORISED SIGNATORY';
 
   const logoImg   = logoBase64      ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />` : '';
-  const watermark = watermarkBase64 ? `<img src="${watermarkBase64}" alt="" style="width:380px;height:auto;" />` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -186,19 +185,6 @@ export function generateReceiptHTML(
       background: #fff;
     }
 
-    /* ── Watermark ── */
-    .watermark {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-12deg);
-      opacity: 0.055;
-      pointer-events: none;
-      z-index: 0;
-      width: 440px;
-      height: 440px;
-      object-fit: contain;
-    }
     .content-wrapper {
       position: relative;
       z-index: 1;
@@ -307,7 +293,12 @@ export function generateReceiptHTML(
   </style>
 </head>
 <body>
-  ${watermark}
+  <!-- WATERMARK CONTAINER (Strictly isolated from flow) -->
+  ${watermarkBase64 ? `
+  <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: -10; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+    <img src="${watermarkBase64}" style="width: 440px; height: 440px; opacity: 0.055; transform: rotate(-12deg); object-fit: contain;" />
+  </div>
+  ` : ''}
 
   <!-- ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ -->
   <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid;">
@@ -320,7 +311,7 @@ export function generateReceiptHTML(
     
     <!-- Left side content: Logo and School details inside the Navy area -->
     <div style="position: absolute; top: 0; left: 0; width: 58%; height: 130px; z-index: 2; display: flex; align-items: center; padding-left: 20px; color: #fff;">
-      <div style="width: 70px; height: 70px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-right: 15px; flex-shrink: 0;">
+      <div style="width: 70px; height: 70px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 15px; flex-shrink: 0;">
         ${logoImg}
       </div>
       <div>
