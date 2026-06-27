@@ -190,7 +190,7 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
 // ─── School constants ─────────────────────────────────────────────────────────
 
 const SCH = {
-  name: 'SUNRISE CONVENT SCHOOL',
+  name: 'SUNRISE SCHOOL RAJKOT',
   medium: 'English &amp; Gujarati Medium',
   address: 'Railnagar, Rajkot, Gujarat — 360 001',
   phone: '+91 XXXXX XXXXX',
@@ -432,7 +432,7 @@ export function generateReceiptHTML(
   ` : ''}
 
   <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="header-container" style="position: relative; height: 110px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid; z-index: 3;">
+  <div class="header-container" style="position: relative; height: 110px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 3;">
     <!-- Right Gold Block (Shorter, tucked behind) -->
     <div style="position: absolute; top: 0; right: 0; width: 48%; height: 80px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <div style="font-size: 24px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
