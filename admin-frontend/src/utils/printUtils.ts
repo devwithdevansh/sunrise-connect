@@ -145,13 +145,16 @@ export function generateReceiptHTML(
   const receiptNo     = (transaction.id?.slice(-12).toUpperCase() || 'N/A');
 
   const period = (() => {
-    if (transaction.subItems?.length) {
-      const months = transaction.subItems.map(i => i.description.split(' ')[0]);
-      return months.length > 1
-        ? `${months[0]} – ${months[months.length - 1]} (${months.length} Months)`
-        : months[0];
+    if (transaction.studentCode) {
+      const match = transaction.studentCode.match(/\/(\d{4})-(\d{2})\//);
+      if (match) {
+        const startYear = match[1];
+        const endYear = startYear.slice(0, 2) + match[2];
+        return `${startYear} – ${endYear}`;
+      }
     }
-    return transaction.feeType || '—';
+    const yearPart = transaction.date ? new Date(transaction.date).getFullYear() : new Date().getFullYear();
+    return `${yearPart} – ${yearPart + 1}`;
   })();
 
   const dateStr = transaction.date
@@ -378,7 +381,6 @@ export function generateReceiptHTML(
         <div class="info-col">
           <div class="info-col-header">Student Information</div>
           <div class="info-row"><span class="info-label">Name</span><span class="info-value" style="font-size: 12px; color: #1b3a6b; font-weight: 700;">${transaction.studentName}</span></div>
-          ${transaction.studentCode ? `<div class="info-row"><span class="info-label">Student Code</span><span class="info-value" style="font-family:'JetBrains Mono', monospace; font-size: 9.5px;">${transaction.studentCode}</span></div>` : ''}
           ${transaction.classInfo   ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ''}
           <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
         </div>
@@ -386,8 +388,7 @@ export function generateReceiptHTML(
           <div class="info-col-header">Payment Information</div>
           <div class="info-row"><span class="info-label">Date</span><span class="info-value">${dateStr}</span></div>
           <div class="info-row"><span class="info-label">Time</span><span class="info-value">${timeStr}</span></div>
-          <div class="info-row"><span class="info-label">Mode</span><span class="info-value">${mode}</span></div>
-          <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#16a34a;font-weight:700;">✓ Payment Received</span></div>
+          <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#16a34a;font-weight:700;">Payment Received</span></div>
         </div>
       </div>
 
@@ -413,7 +414,7 @@ export function generateReceiptHTML(
         <tfoot>
           <tr>
             <td colspan="3" class="total-label">Total Paid</td>
-            <td class="total-amt">₹ ${inr(totalAmount)}</td>
+            <td class="total-amt">${inr(totalAmount)} ₹</td>
           </tr>
         </tfoot>
       </table>
@@ -428,10 +429,7 @@ export function generateReceiptHTML(
       ` : ''}
 
       <!-- ════ SIGNATURE ════ -->
-      <div class="sig-section">
-        <div class="sig-block">
-          <div class="stamp-box">SCHOOL<br/>SEAL</div>
-        </div>
+      <div class="sig-section" style="justify-content: flex-end;">
         <div class="sig-block">
           <div class="sig-name">${signerName}</div>
           <div class="sig-line">

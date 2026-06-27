@@ -92,15 +92,18 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
   const amountInWords  = toIndianWords(totalAmount);
   const modeLabel      = getModeLabel(transaction.method || '');
 
-  /* Build period string from subItems */
+  /* Build period string as fees year */
   const period = (() => {
-    if (transaction.subItems && transaction.subItems.length > 0) {
-      const months = transaction.subItems.map(i => i.description.split(' ')[0]);
-      return months.length > 1
-        ? `${months[0]} – ${months[months.length - 1]} (${months.length} Months)`
-        : months[0];
+    if (transaction.studentCode) {
+      const match = transaction.studentCode.match(/\/(\d{4})-(\d{2})\//);
+      if (match) {
+        const startYear = match[1];
+        const endYear = startYear.slice(0, 2) + match[2];
+        return `${startYear} – ${endYear}`;
+      }
     }
-    return transaction.feeType || '—';
+    const yearPart = transaction.date ? new Date(transaction.date).getFullYear() : new Date().getFullYear();
+    return `${yearPart} – ${yearPart + 1}`;
   })();
 
   const dateStr = transaction.date
@@ -350,7 +353,6 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               <div style={{ padding: '14px 16px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', background: 'rgba(248, 250, 253, 0.65)' }}>
                 <div style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '10px', fontFamily: "'Outfit', sans-serif" }}>Student Information</div>
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Name</span><span style={{ fontSize: '12px', fontWeight: 700, color: '#1b3a6b', flex: 1 }}>{transaction.studentName}</span></div>
-                {transaction.studentCode && <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Student Code</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{transaction.studentCode}</span></div>}
                 {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
               </div>
@@ -358,8 +360,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                 <div style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '10px', fontFamily: "'Outfit', sans-serif" }}>Payment Information</div>
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Date</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{dateStr}</span></div>
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Time</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{timeStr}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Mode</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{modeLabel}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>✓ Payment Received</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>Payment Received</span></div>
               </div>
             </div>
 
@@ -399,7 +400,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                         )}
                       </td>
                       <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{getModeLabel(item.method || transaction.method || '')}</td>
-                      <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>₹{Math.abs(item.amount).toLocaleString('en-IN')}</td>
+                      <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{Math.abs(item.amount).toLocaleString('en-IN')} ₹</td>
                     </tr>
                   ))
                 ) : (
@@ -407,7 +408,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                     <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}>1</td>
                     <td style={{ ...S.tdDesc, fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>{transaction.feeType || 'Fee Collection'}</td>
                     <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{modeLabel}</td>
-                    <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>₹{totalAmount.toLocaleString('en-IN')}</td>
+                    <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{totalAmount.toLocaleString('en-IN')} ₹</td>
                   </tr>
                 )}
 
@@ -420,7 +421,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                     </td>
                     <td style={{ borderRight: '1px solid #e2e8f4' }}></td>
                     <td style={{ ...S.tdAmt, color: '#b45309', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
-                      −₹{(transaction.concessionAmount || 0).toLocaleString('en-IN')}
+                      −{(transaction.concessionAmount || 0).toLocaleString('en-IN')} ₹
                     </td>
                   </tr>
                 ) : null}
@@ -429,7 +430,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               <tfoot>
                 <tr style={{ background: 'linear-gradient(to bottom, #e8a020, #d97706)' }}>
                   <td colSpan={3} style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", borderBottom: '3px double #1b3a6b' }}>TOTAL PAID</td>
-                  <td style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '16px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", borderBottom: '3px double #1b3a6b' }}>₹ {totalAmount.toLocaleString('en-IN')}</td>
+                  <td style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '16px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", borderBottom: '3px double #1b3a6b' }}>{totalAmount.toLocaleString('en-IN')} ₹</td>
                 </tr>
               </tfoot>
             </table>
@@ -448,10 +449,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
             )}
 
             {/* ── SIGNATURES ── */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '25px', marginBottom: '16px' }}>
-              <div style={{ width: '76px', height: '76px', border: '2px double #cbd5e1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '8px', fontWeight: 800, textAlign: 'center', lineHeight: '1.3', fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                SCHOOL<br/>SEAL
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', marginTop: '25px', marginBottom: '16px' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#1b3a6b', marginBottom: '28px', fontFamily: "'Outfit', sans-serif", letterSpacing: '0.5px' }}>
                   {currentUser?.name ? currentUser.name.toUpperCase() : 'AUTHORISED SIGNATORY'}
