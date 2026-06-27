@@ -313,13 +313,13 @@ export function generateReceiptHTML(
       flex-direction: column;
       justify-content: space-between;
       box-sizing: border-box;
-      padding: 0 14mm 0;
+      padding: 0;
       background: transparent; /* Allows watermark to show through */
     }
 
     .main-body {
       flex: 1;
-      padding-top: 10px;
+      padding: 12px 8mm 0;
     }
 
     /* ── Two-column info grid ── */
