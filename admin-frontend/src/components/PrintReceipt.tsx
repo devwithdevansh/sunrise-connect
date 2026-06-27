@@ -20,35 +20,53 @@ interface PrintReceiptProps {
 }
 
 /* ─── Indian number-to-words ─────────────────────────────────────── */
-function toIndianWords(num: number): string {
-  if (num === 0) return 'Zero';
-  const ones = [
-    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
-    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
-    'Seventeen', 'Eighteen', 'Nineteen',
-  ];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+function toIndianWords(amount: number): string {
+  const parts = amount.toFixed(2).split('.');
+  const rupees = parseInt(parts[0], 10);
+  const paise = parseInt(parts[1], 10);
 
-  const below100 = (n: number): string =>
-    n < 20 ? ones[n] : tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+  const convertPart = (num: number): string => {
+    if (num === 0) return '';
+    const ones = [
+      '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+      'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+      'Seventeen', 'Eighteen', 'Nineteen',
+    ];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
-  const below1000 = (n: number): string =>
-    n < 100
-      ? below100(n)
-      : ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + below100(n % 100) : '');
+    const below100 = (n: number): string =>
+      n < 20 ? ones[n] : tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
 
-  let result = '';
-  let n = num;
-  const crore = Math.floor(n / 10_000_000); n %= 10_000_000;
-  const lakh = Math.floor(n / 100_000); n %= 100_000;
-  const thousand = Math.floor(n / 1_000); n %= 1_000;
+    const below1000 = (n: number): string =>
+      n < 100
+        ? below100(n)
+        : ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + below100(n % 100) : '');
 
-  if (crore)    result += below1000(crore)    + ' Crore ';
-  if (lakh)     result += below1000(lakh)     + ' Lakh ';
-  if (thousand) result += below1000(thousand) + ' Thousand ';
-  if (n)        result += below1000(n);
+    let result = '';
+    let n = num;
+    const crore = Math.floor(n / 10_000_000); n %= 10_000_000;
+    const lakh = Math.floor(n / 100_000); n %= 100_000;
+    const thousand = Math.floor(n / 1_000); n %= 1_000;
 
-  return result.trim();
+    if (crore)    result += below1000(crore)    + ' Crore ';
+    if (lakh)     result += below1000(lakh)     + ' Lakh ';
+    if (thousand) result += below1000(thousand) + ' Thousand ';
+    if (n)        result += below1000(n);
+
+    return result.trim();
+  };
+
+  if (rupees === 0 && paise === 0) return 'Zero Rupees Only';
+
+  let words = '';
+  if (rupees > 0) {
+    words += convertPart(rupees) + ' Rupees';
+  }
+  if (paise > 0) {
+    if (rupees > 0) words += ' and ';
+    words += convertPart(paise) + ' Paise';
+  }
+  return words + ' Only';
 }
 
 /* ─── Payment-mode label ─────────────────────────────────────────── */
@@ -71,7 +89,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
   if (!transaction) return null;
 
   const totalAmount    = Math.abs(transaction.amount);
-  const amountInWords  = `${toIndianWords(totalAmount)} Rupees Only`;
+  const amountInWords  = toIndianWords(totalAmount);
   const modeLabel      = getModeLabel(transaction.method || '');
 
   /* Build period string from subItems */
