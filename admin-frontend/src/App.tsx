@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
@@ -19,10 +19,9 @@ import {
   Bell,
   Sun
 } from 'lucide-react';
-import { PrintReceipt } from './components/PrintReceipt';
 import { Reports } from './components/Reports';
-import { PrintReport } from './components/PrintReport';
 import { Receipts } from './components/Receipts';
+import { generateReceiptHTML, generateReportHTML, printHTML } from './utils/printUtils';
 
 const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
   const { currentScreen } = useApp();
@@ -162,7 +161,7 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
   }
 
   return (
-    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans print:hidden">
+    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
         {isScreenLoading ? (
@@ -176,43 +175,30 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 };
 
 export const App: React.FC = () => {
-  const [printingTx, setPrintingTx] = useState<PaymentTransaction | null>(null);
-  const [printingReport, setPrintingReport] = useState<any | null>(null);
-
+  /**
+   * Receipt printing — generates self-contained HTML and injects it into a
+   * hidden <iframe>, then calls iframe.contentWindow.print().
+   * No DOM state or window.print() hack needed.
+   */
   const handlePrint = (tx: PaymentTransaction) => {
-    setPrintingTx(tx);
-    // Give react time to render the print view before opening print dialog
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    // Read currentUser name from localStorage (same key the store uses)
+    let currentUserName: string | undefined;
+    try {
+      const saved = localStorage.getItem('currentUser');
+      if (saved) currentUserName = JSON.parse(saved)?.name;
+    } catch { /* ignore */ }
+    const html = generateReceiptHTML(tx, currentUserName);
+    printHTML(html);
   };
 
   const handlePrintReport = (report: any) => {
-    setPrintingReport(report);
-    // Give react time to render the print view before opening print dialog
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    const html = generateReportHTML(report);
+    printHTML(html);
   };
-
-  // Listen for afterprint to hide the receipt again (optional, it's hidden by CSS print:block anyway)
-  useEffect(() => {
-    const afterPrint = () => {
-      setPrintingTx(null);
-      setPrintingReport(null);
-    };
-    window.addEventListener('afterprint', afterPrint);
-    return () => window.removeEventListener('afterprint', afterPrint);
-  }, []);
 
   return (
     <React.StrictMode>
-      {/* The main app is hidden during print via print:hidden */}
       <MainAppLayout onPrint={handlePrint} onPrintReport={handlePrintReport} />
-
-      {/* The receipt is only visible during print via print:block */}
-      {printingTx && <PrintReceipt transaction={printingTx} />}
-      {printingReport && <PrintReport report={printingReport} />}
     </React.StrictMode>
   );
 };
