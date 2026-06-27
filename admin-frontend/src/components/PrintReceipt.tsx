@@ -251,24 +251,25 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
     } as React.CSSProperties,
 
     tdNum: {
-      padding: '7px 10px',
+      padding: '5px 8px',
       color: '#444',
       fontSize: '11px',
       width: '34px',
     } as React.CSSProperties,
 
     tdDesc: {
-      padding: '7px 10px',
+      padding: '5px 8px',
       color: '#333',
       fontSize: '11px',
     } as React.CSSProperties,
 
     tdAmt: {
-      padding: '7px 10px',
+      padding: '5px 8px',
       textAlign: 'right' as const,
       color: '#333',
       fontSize: '11px',
       fontWeight: 600,
+      whiteSpace: 'nowrap' as const,
     } as React.CSSProperties,
 
     totalRow: {
@@ -277,7 +278,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
     } as React.CSSProperties,
 
     totalLabel: {
-      padding: '9px 10px',
+      padding: '7px 8px',
       fontWeight: 800,
       fontSize: '12px',
       letterSpacing: '1px',
@@ -285,11 +286,12 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
     } as React.CSSProperties,
 
     totalAmt: {
-      padding: '9px 10px',
+      padding: '7px 8px',
       textAlign: 'right' as const,
       fontWeight: 800,
       fontSize: '13px',
       color: '#fff',
+      whiteSpace: 'nowrap' as const,
     } as React.CSSProperties,
 
     wordsBox: {
@@ -320,24 +322,24 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
         </div>
 
         {/* ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
-        <div className="header-container" style={{ position: 'relative', height: '130px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
+        <div className="header-container" style={{ position: 'relative', height: '110px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
           {/* Right Gold Block (Shorter, tucked behind) */}
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '95px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
-            <div style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)', fontFamily: "'Outfit', sans-serif" }}>RECEIPT</div>
-            <div style={{ fontSize: '10px', color: '#1b3a6b', fontWeight: 700, marginTop: '6px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '3px 8px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-              NO: <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '80px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
+            <div style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)', fontFamily: "'Outfit', sans-serif" }}>RECEIPT</div>
+            <div style={{ fontSize: '9px', color: '#1b3a6b', fontWeight: 700, marginTop: '4px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+              NO: <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
             </div>
           </div>
 
           {/* Left Navy Block (Full height, overlapping, with bottom-right curve) */}
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '60%', height: '130px', background: '#1b3a6b', zIndex: 2, borderBottomRightRadius: '35px', display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#fff' }}>
-            <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: '#fff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.15)', marginRight: '15px', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '60%', height: '110px', background: '#1b3a6b', zIndex: 2, borderBottomRightRadius: '35px', display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#fff' }}>
+            <div style={{ width: '58px', height: '58px', borderRadius: '50%', background: '#fff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.15)', marginRight: '12px', flexShrink: 0 }}>
               <img src={logoPath} alt="Sunrise School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div>
-              <div style={{ fontSize: '19px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>SUNRISE CONVENT SCHOOL</div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: '#fcd34d', marginTop: '3px', letterSpacing: '0.3px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
-              <div style={{ fontSize: '8.5px', color: '#e2e8f0', marginTop: '3px', lineHeight: 1.3 }}>
+              <div style={{ fontSize: '17px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>SUNRISE CONVENT SCHOOL</div>
+              <div style={{ fontSize: '8.5px', fontWeight: 700, color: '#fcd34d', marginTop: '2px', letterSpacing: '0.3px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
+              <div style={{ fontSize: '8px', color: '#e2e8f0', marginTop: '2px', lineHeight: 1.25 }}>
                 Railnagar, Rajkot, Gujarat — 360 001<br/>
                 Ph: +91 XXXXX XXXXX &nbsp;·&nbsp; info@sunriseschool.in
               </div>
@@ -349,18 +351,18 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           <div style={{ flex: 1, paddingTop: '10px' }}>
             
             {/* ════ INFO GRID ════ */}
-            <div style={{ ...S.metaTable, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', border: 'none', overflow: 'visible', marginBottom: '14px' }}>
-              <div style={{ padding: '14px 16px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', background: 'rgba(248, 250, 253, 0.65)' }}>
-                <div style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '10px', fontFamily: "'Outfit', sans-serif" }}>Student Information</div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Name</span><span style={{ fontSize: '12px', fontWeight: 700, color: '#1b3a6b', flex: 1 }}>{transaction.studentName}</span></div>
-                {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
+            <div style={{ ...S.metaTable, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', border: 'none', overflow: 'visible', marginBottom: '10px' }}>
+              <div style={{ padding: '8px 12px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '6px', background: 'rgba(248, 250, 253, 0.65)' }}>
+                <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '4px', marginBottom: '6px', fontFamily: "'Outfit', sans-serif" }}>Student Information</div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Name</span><span style={{ fontSize: '12px', fontWeight: 700, color: '#1b3a6b', flex: 1 }}>{transaction.studentName}</span></div>
+                {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
               </div>
-              <div style={{ padding: '14px 16px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.65)' }}>
-                <div style={{ fontSize: '9px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '10px', fontFamily: "'Outfit', sans-serif" }}>Payment Information</div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Date</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{dateStr}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Time</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{timeStr}</span></div>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>Payment Received</span></div>
+              <div style={{ padding: '8px 12px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.65)' }}>
+                <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '4px', marginBottom: '6px', fontFamily: "'Outfit', sans-serif" }}>Payment Information</div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Date</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{dateStr}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Time</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{timeStr}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>Payment Received</span></div>
               </div>
             </div>
 
@@ -429,8 +431,8 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
 
               <tfoot>
                 <tr style={{ background: 'linear-gradient(to bottom, #e8a020, #d97706)' }}>
-                  <td colSpan={3} style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif", borderBottom: '3px double #1b3a6b' }}>TOTAL PAID</td>
-                  <td style={{ padding: '11px 12px', color: '#1b3a6b', fontWeight: 800, fontSize: '16px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", borderBottom: '3px double #1b3a6b' }}>{totalAmount.toLocaleString('en-IN')} ₹</td>
+                  <td colSpan={3} style={{ ...S.totalLabel, borderBottom: '3px double #1b3a6b' }}>TOTAL PAID</td>
+                  <td style={{ ...S.totalAmt, borderBottom: '3px double #1b3a6b', fontSize: '14px' }}>{totalAmount.toLocaleString('en-IN')} ₹</td>
                 </tr>
               </tfoot>
             </table>

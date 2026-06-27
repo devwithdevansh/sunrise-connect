@@ -168,34 +168,34 @@ export function generateReceiptHTML(
     if (transaction.subItems?.length) {
       return transaction.subItems.map((item, i) => `
         <tr style="background:${i % 2 === 0 ? 'rgba(248,250,253,0.7)' : 'rgba(255,255,255,0.75)'};page-break-inside:avoid;">
-          <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">${i + 1}</td>
-          <td style="padding:8px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">
+          <td style="padding:5px 8px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">${i + 1}</td>
+          <td style="padding:5px 8px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">
             ${item.description}
-            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9px;color:#b45309;background:rgba(254,243,199,0.85);border:1px solid rgba(252,211,77,0.5);padding:2px 8px;border-radius:9999px;font-weight:700;font-family:'Inter',sans-serif;">-₹${item.concessionAmount.toLocaleString('en-IN')} off</span>` : ''}
+            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9px;color:#b45309;background:rgba(254,243,199,0.85);border:1px solid rgba(252,211,77,0.5);padding:2px 8px;border-radius:9999px;font-weight:700;font-family:'Inter',sans-serif;">-${item.concessionAmount.toLocaleString('en-IN')} &nbsp;₹ off</span>` : ''}
           </td>
-          <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || '')}</td>
-          <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;font-family:'JetBrains Mono',monospace;">₹${inr(item.amount)}</td>
+          <td style="padding:5px 8px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || '')}</td>
+          <td style="padding:5px 8px;text-align:right;color:#1b3a6b;font-weight:700;width:120px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${inr(item.amount)} &nbsp;₹</td>
         </tr>
       `).join('');
     }
     return `
       <tr style="background:rgba(248,250,253,0.7);page-break-inside:avoid;">
-        <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">1</td>
-        <td style="padding:8px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
-        <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
-        <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;font-family:'JetBrains Mono',monospace;">₹${inr(totalAmount)}</td>
+        <td style="padding:5px 8px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">1</td>
+        <td style="padding:5px 8px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
+        <td style="padding:5px 8px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
+        <td style="padding:5px 8px;text-align:right;color:#1b3a6b;font-weight:700;width:120px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${inr(totalAmount)} &nbsp;₹</td>
       </tr>
     `;
   })();
 
   const concessionRow = (!transaction.subItems && transaction.concessionAmount) ? `
     <tr style="background:rgba(255,251,235,0.7);page-break-inside:avoid;">
-      <td style="padding:7px 10px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;"></td>
-      <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:700;border-right:1px solid #e2e8f4;">
+      <td style="padding:5px 8px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;"></td>
+      <td style="padding:5px 8px;color:#b45309;font-style:italic;font-weight:700;border-right:1px solid #e2e8f4;">
         ✦ Concession Applied
       </td>
       <td style="border-right:1px solid #e2e8f4;"></td>
-      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono',monospace;">−₹${(transaction.concessionAmount||0).toLocaleString('en-IN')}</td>
+      <td style="padding:5px 8px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">−${(transaction.concessionAmount||0).toLocaleString('en-IN')} &nbsp;₹</td>
     </tr>
   ` : '';
 
@@ -241,14 +241,14 @@ export function generateReceiptHTML(
     /* ── Two-column info grid ── */
     .info-grid {
       display: grid; grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 10px;
       page-break-inside: avoid;
     }
     .info-col {
-      padding: 14px 16px;
+      padding: 8px 12px;
       border: 1px solid rgba(226, 232, 240, 0.8);
-      border-radius: 8px;
+      border-radius: 6px;
     }
     .info-col:first-child {
       background: rgba(248, 250, 253, 0.65); /* Semi-transparent */
@@ -258,35 +258,35 @@ export function generateReceiptHTML(
     }
     .info-col-header {
       font-family: 'Outfit', sans-serif;
-      font-size: 9px; font-weight: 800; color: #1b3a6b;
+      font-size: 8.5px; font-weight: 800; color: #1b3a6b;
       letter-spacing: 1.2px; text-transform: uppercase;
       border-bottom: 2px solid #e8a020;
-      padding-bottom: 5px; margin-bottom: 10px;
+      padding-bottom: 4px; margin-bottom: 6px;
     }
-    .info-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: baseline; }
+    .info-row { display: flex; gap: 6px; margin-bottom: 4px; align-items: baseline; }
     .info-label { font-family: 'Outfit', sans-serif; font-size: 8px; font-weight: 700; color: #64748b; width: 90px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.8px; }
-    .info-value { font-size: 10px; font-weight: 600; color: #1e293b; flex: 1; }
+    .info-value { font-size: 9.5px; font-weight: 600; color: #1e293b; flex: 1; }
 
     /* ── Section header ── */
     .section-hd {
       display: flex; align-items: center; gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       page-break-after: avoid;
     }
-    .section-hd-bar { width: 4px; height: 16px; background: #e8a020; border-radius: 2px; flex-shrink: 0; }
-    .section-hd-text { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 800; color: #1b3a6b; letter-spacing: 0.8px; text-transform: uppercase; }
+    .section-hd-bar { width: 4px; height: 14px; background: #e8a020; border-radius: 2px; flex-shrink: 0; }
+    .section-hd-text { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 800; color: #1b3a6b; letter-spacing: 0.8px; text-transform: uppercase; }
 
     /* ── Fee table ── */
-    .fee-table { width: 100%; margin-bottom: 0; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 8px; overflow: hidden; }
+    .fee-table { width: 100%; margin-bottom: 0; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 6px; overflow: hidden; }
     .fee-table thead tr { background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%); }
-    .fee-table thead th { font-family: 'Outfit', sans-serif; padding: 10px 12px; color: #fff; font-size: 9.5px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; }
+    .fee-table thead th { font-family: 'Outfit', sans-serif; padding: 8px 10px; color: #fff; font-size: 9px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; }
     .fee-table thead th:last-child { text-align: right; }
     .fee-table tbody tr { border-bottom: 1px solid #e8edf8; }
     .fee-table tbody tr:last-child { border-bottom: none; }
     .fee-table tfoot tr { background: linear-gradient(to bottom, #e8a020, #d97706); }
-    .fee-table tfoot td { padding: 11px 12px; color: #1b3a6b; font-weight: 800; font-family: 'Outfit', sans-serif; border-bottom: 3px double #1b3a6b; }
-    .fee-table tfoot td.total-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
-    .fee-table tfoot td.total-amt { text-align: right; font-size: 16px; color: #1b3a6b; font-family: 'JetBrains Mono', monospace; }
+    .fee-table tfoot td { padding: 9px 10px; color: #1b3a6b; font-weight: 800; font-family: 'Outfit', sans-serif; border-bottom: 3px double #1b3a6b; }
+    .fee-table tfoot td.total-label { font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; }
+    .fee-table tfoot td.total-amt { text-align: right; font-size: 14px; color: #1b3a6b; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
 
     /* ── Words box ── */
     .words-box {
@@ -348,24 +348,24 @@ export function generateReceiptHTML(
   ` : ''}
 
   <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid; z-index: 3;">
+  <div class="header-container" style="position: relative; height: 110px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid; z-index: 3;">
     <!-- Right Gold Block (Shorter, tucked behind) -->
-    <div style="position: absolute; top: 0; right: 0; width: 48%; height: 95px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
-      <div style="font-size: 10px; color: #1b3a6b; font-weight: 700; marginTop: 6px; text-align: right; background: rgba(255,255,255,0.9); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
+    <div style="position: absolute; top: 0; right: 0; width: 48%; height: 80px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="font-size: 24px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
+      <div style="font-size: 9px; color: #1b3a6b; font-weight: 700; marginTop: 4px; text-align: right; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
 
     <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
-    <div style="position: absolute; top: 0; left: 0; width: 60%; height: 130px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 20px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="width: 70px; height: 70px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 15px; flex-shrink: 0;">
+    <div style="position: absolute; top: 0; left: 0; width: 60%; height: 110px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 20px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 12px; flex-shrink: 0;">
         ${logoImg}
       </div>
       <div>
-        <div style="font-size: 19px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE CONVENT SCHOOL</div>
-        <div style="font-size: 9px; font-weight: 700; color: #fcd34d; margin-top: 3px; letter-spacing: 0.3px;">${SCH.medium}</div>
-        <div style="font-size: 8.5px; color: #e2e8f0; margin-top: 3px; line-height: 1.3;">
+        <div style="font-size: 17px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE CONVENT SCHOOL</div>
+        <div style="font-size: 8.5px; font-weight: 700; color: #fcd34d; margin-top: 2px; letter-spacing: 0.3px;">${SCH.medium}</div>
+        <div style="font-size: 8px; color: #e2e8f0; margin-top: 2px; line-height: 1.25;">
           ${SCH.address}<br/>
           Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
         </div>
