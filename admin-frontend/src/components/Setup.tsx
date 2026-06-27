@@ -103,19 +103,18 @@ const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
   const [name, setName] = useState(cat.name);
   const [type, setType] = useState(cat.type);
   const [description, setDescription] = useState(cat.description || '');
-  const academicYear = cat.academicYear || academicYears.find(y => y.isActive)?.name || '2025-26';
   const [isActive, setIsActive] = useState(cat.isActive !== false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (!name || !type || !academicYear) {
-      setError('Name, Type, and Academic Year are required');
+    if (!name || !type) {
+      setError('Name and Type are required');
       return;
     }
     setError('');
     setSaving(true);
-    const ok = await onSave(cat._id, { name, type, description, academicYear, isActive });
+    const ok = await onSave(cat._id, { name, type, description, isActive });
     setSaving(false);
     if (ok) {
       onClose();
@@ -209,21 +208,15 @@ export const Setup: React.FC = () => {
   const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
 
   const filteredCategories = React.useMemo(() => {
-    return feeCategories.filter(cat => cat.academicYear === activeYearName || (!cat.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
-  }, [feeCategories, activeYearName, academicYears]);
+    return feeCategories;
+  }, [feeCategories]);
 
   // Form states
   const [showAYForm, setShowAYForm] = useState(false);
   const [newAY, setNewAY] = useState({ name: '', startDate: '', endDate: '' });
 
   const [showFCForm, setShowFCForm] = useState(false);
-  const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '', academicYear: activeYearName });
-
-  React.useEffect(() => {
-    if (activeYearName) {
-      setNewFC(prev => ({ ...prev, academicYear: activeYearName }));
-    }
-  }, [activeYearName]);
+  const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '' });
 
   // Modal editing states
   const [editingAY, setEditingAY] = useState<any | null>(null);
@@ -262,15 +255,14 @@ export const Setup: React.FC = () => {
 
   const handleCreateFC = async () => {
     if (!newFC.name || !newFC.type) return;
-    if (!activeYearName) { setFCError('No active academic year set. Please activate a year first.'); return; }
     setFCError('');
-    const payload = { ...newFC, academicYear: activeYearName };
+    const payload = { ...newFC };
     const ok = await createFeeCategory(payload);
     if (ok) {
       setShowFCForm(false);
-      setNewFC({ name: '', type: 'EDUCATION', description: '', academicYear: activeYearName });
+      setNewFC({ name: '', type: 'EDUCATION', description: '' });
     } else {
-      setFCError('Failed to save. A category with this name may already exist for this academic year.');
+      setFCError('Failed to save. A category with this name may already exist.');
     }
   };
 
@@ -484,7 +476,7 @@ export const Setup: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-bold text-slate-700 text-sm">Create New Fee Category</h4>
                   <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black px-2.5 py-1 rounded-lg border border-indigo-100">
-                    Year: {activeYearName}
+                    Global Category
                   </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -5,15 +5,16 @@ import { AlertCircle, Bus, ChevronDown, Award, Pencil, X, Check, Loader2, Plus, 
 
 /* ─── Create Modal for Standard Fee ───────────────────────────────── */
 interface CreateFeeModalProps {
+  initialAcademicYear: string;
   onClose: () => void;
   onSave: (data: Partial<FeeStructureData>) => Promise<boolean>;
 }
 
 const STANDARD_OPTIONS = ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
-const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
+const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ initialAcademicYear, onClose, onSave }) => {
   const { academicYears, feeStructures } = useApp();
-  const activeYear = academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26';
+  const [academicYear, setAcademicYear] = useState(initialAcademicYear);
   const [standard, setStandard] = useState('Nursery');
   const [medium, setMedium] = useState('English');
   const [annualFee, setAnnualFee] = useState<number | ''>('');
@@ -31,10 +32,10 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
   const alreadyUsed = useMemo(() => {
     return new Set(
       feeStructures
-        .filter(f => f.academicYear === activeYear && f.medium === medium)
+        .filter(f => f.academicYear === academicYear && f.medium === medium)
         .map(f => f.standard)
     );
-  }, [feeStructures, activeYear, medium]);
+  }, [feeStructures, academicYear, medium]);
 
   const availableStandards = useMemo(
     () => STANDARD_OPTIONS.filter(s => !alreadyUsed.has(s)),
@@ -45,6 +46,8 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
   useEffect(() => {
     if (availableStandards.length > 0 && !availableStandards.includes(standard)) {
       setStandard(availableStandards[0]);
+    } else if (availableStandards.length === 0) {
+      setStandard('');
     }
   }, [availableStandards]);
 
@@ -56,7 +59,7 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
     setError('');
     setSaving(true);
     const ok = await onSave({
-      academicYear: activeYear,
+      academicYear,
       standard,
       medium,
       annualFee: Number(annualFee),
@@ -70,30 +73,9 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
     if (ok) onClose(); else setError('Failed to create. Standard may already exist for this academic year and medium.');
   };
 
-  if (availableStandards.length === 0) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
-          <div className="bg-gradient-to-r from-blue-900 to-indigo-800 text-white px-6 py-4 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">New Fee Structure</span>
-              <h3 className="font-black text-lg tracking-tight mt-0.5">Add New Standard</h3>
-            </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><X className="h-5 w-5" /></button>
-          </div>
-          <div className="p-8 text-center space-y-3">
-            <p className="text-slate-500 text-sm font-semibold">All standards (Nursery – 12) have already been configured for <span className="text-slate-800">{medium} Medium</span> in <span className="text-slate-800">{activeYear}</span>.</p>
-            <p className="text-slate-400 text-xs">Switch the medium above or edit an existing standard's fees.</p>
-            <button onClick={onClose} className="mt-4 px-5 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200">Close</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]" onClick={e => e.stopPropagation()}>
         <div className="bg-gradient-to-r from-blue-900 to-indigo-800 text-white px-6 py-4 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">New Fee Structure</span>
@@ -102,20 +84,39 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-6 space-y-5">
-          {/* Academic Year badge */}
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2 flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-wider">Academic Year</span>
-            <span className="ml-auto text-xs font-black text-indigo-700">{activeYear}</span>
+          {/* Academic Year Selector */}
+          <div>
+            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Academic Year</label>
+            <select
+              value={academicYear}
+              onChange={(e) => setAcademicYear(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            >
+              {academicYears.map((y) => (
+                <option key={y._id} value={y.name}>
+                  {y.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Standard + Medium */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Standard</label>
-              <select value={standard} onChange={e => setStandard(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                {availableStandards.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+              <select
+                value={standard}
+                onChange={e => setStandard(e.target.value)}
+                disabled={availableStandards.length === 0}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+              >
+                {availableStandards.length === 0 ? (
+                  <option value="">No standards left</option>
+                ) : (
+                  availableStandards.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))
+                )}
               </select>
             </div>
             <div>
@@ -154,12 +155,19 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
             <div className="flex justify-between text-xs text-slate-600"><span>Bag & Kit Fee:</span><span className="font-bold text-slate-800">₹{(Number(bagKitFee) || 0).toLocaleString('en-IN')}</span></div>
           </div>
 
+          {availableStandards.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-amber-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              All standards have already been configured for {medium} Medium in {academicYear}.
+            </div>
+          )}
+
           {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
         </div>
         <div className="px-6 py-4 border-t flex justify-end gap-3 bg-slate-50">
 
           <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 flex items-center gap-2">
+          <button onClick={handleSave} disabled={saving || availableStandards.length === 0} className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             {saving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving...</> : <><Check className="h-3.5 w-3.5" />Create</>}
           </button>
         </div>
@@ -281,7 +289,7 @@ const EditFeeModal: React.FC<EditFeeModalProps> = ({ structure, onClose, onSave 
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-900 to-indigo-800 text-white px-6 py-4 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Edit Fee Structure</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Edit Fee Structure ({structure.academicYear})</span>
             <h3 className="font-black text-lg tracking-tight mt-0.5">
               {structure.medium} Medium — Std {structure.standard}
             </h3>
@@ -471,7 +479,16 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
 /* ─── Main Component ──────────────────────────────────────────────── */
 export const FeeStructure: React.FC = () => {
   const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure, academicYears } = useApp();
-  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const defaultYear = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const [selectedYear, setSelectedYear] = useState<string>('');
+  const activeYearName = selectedYear || defaultYear;
+
+  useEffect(() => {
+    if (defaultYear && !selectedYear) {
+      setSelectedYear(defaultYear);
+    }
+  }, [defaultYear]);
+
   const [selectedStandard, setSelectedStandard] = useState<string>('1');
   const [editingFee, setEditingFee] = useState<FeeStructureData | null>(null);
   const [editingTransport, setEditingTransport] = useState<TransportFeeStructureData | null>(null);
@@ -575,6 +592,27 @@ export const FeeStructure: React.FC = () => {
           >
             <Plus className="h-4 w-4" /> Add Standard
           </button>
+          {/* Academic Year Selector */}
+          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1">
+            <label htmlFor="year-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+              Year:
+            </label>
+            <div className="relative">
+              <select
+                id="year-select"
+                value={activeYearName}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="appearance-none bg-transparent text-slate-700 font-extrabold text-sm py-1.5 pl-2 pr-8 focus:outline-none cursor-pointer min-w-[100px] transition-all"
+              >
+                {academicYears.map((y) => (
+                  <option key={y._id} value={y.name}>
+                    {y.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none stroke-[2.5]" />
+            </div>
+          </div>
           {/* Standard Selector */}
           <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1">
             <label htmlFor="standard-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
@@ -856,6 +894,7 @@ export const FeeStructure: React.FC = () => {
       {/* Create Modals */}
       {isCreatingFee && (
         <CreateFeeModal
+          initialAcademicYear={activeYearName}
           onClose={() => setIsCreatingFee(false)}
           onSave={createFeeStructure}
         />

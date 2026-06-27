@@ -197,18 +197,18 @@ class StudentService {
           admissionCategory,
           bagKitCategory,
         ] = await Promise.all([
-          mongoose.model('FeeCategory').findOne({ type: 'EDUCATION', academicYear, isActive: true }, null, { session }),
-          mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT', academicYear, isActive: true }, null, { session }),
-          mongoose.model('FeeCategory').findOne({ type: 'TERM', academicYear, isActive: true }, null, { session }),
-          mongoose.model('FeeCategory').findOne({ type: 'ADMISSION', academicYear, isActive: true }, null, { session }),
-          mongoose.model('FeeCategory').findOne({ type: 'OTHER', academicYear, isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'EDUCATION', isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT', isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'TERM', isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'ADMISSION', isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'OTHER', isActive: true }, null, { session }),
         ]);
 
         const ensureCategory = async (cat, name, type, description) => {
           if (cat) return cat;
           const fallback = await mongoose.model('FeeCategory').findOne({ type, isActive: true }, null, { session });
           if (fallback) return fallback;
-          return mongoose.model('FeeCategory').create([{ name, type, description, academicYear, isActive: true }], { session }).then(d => d[0]);
+          return mongoose.model('FeeCategory').create([{ name, type, description, isActive: true }], { session }).then(d => d[0]);
         };
         const [edCat, trCat, tmCat, adCat, bkCat] = await Promise.all([
           ensureCategory(educationCategory, 'Education', 'EDUCATION', 'Education fee category'),
@@ -787,16 +787,15 @@ class StudentService {
       const academicYearStr = targetAcademicYearStr;
 
       const ensureCategory = async (type, name, description) => {
-        let cat = await mongoose.model('FeeCategory').findOne({ type, academicYear: academicYearStr }).session(session);
+        let cat = await mongoose.model('FeeCategory').findOne({ type }).session(session);
         if (!cat) {
-          cat = await mongoose.model('FeeCategory').findOne({ type, name, academicYear: academicYearStr }).session(session);
+          cat = await mongoose.model('FeeCategory').findOne({ type, name }).session(session);
         }
         if (!cat) {
           cat = await mongoose.model('FeeCategory').create([{
             name,
             type,
             description,
-            academicYear: academicYearStr,
             isActive: true
           }], { session }).then(docs => docs[0]);
         }
