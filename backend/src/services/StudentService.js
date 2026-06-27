@@ -756,7 +756,7 @@ class StudentService {
         updatedStudentIds.push(student._id);
         
         // Wait for the ledger generation to complete for the target academic year
-        await this._generateLedgersForAcademicYear(student._id, targetAcademicYear, session);
+        await this._generateLedgersForAcademicYear(student._id, targetAcademicYear, session, { forceCreate: true });
 
         await AuditService.log(
           { performedBy, targetStudentId: student._id, action: 'STUDENT_UPDATED', details: { reason: 'Promotion', targetStandard, targetDivision, targetAcademicYear } },
@@ -775,7 +775,8 @@ class StudentService {
     }
   }
 
-  static async _generateLedgersForAcademicYear(studentId, targetAcademicYearStr, parentSession = null) {
+  static async _generateLedgersForAcademicYear(studentId, targetAcademicYearStr, parentSession = null, options = {}) {
+    const { forceCreate = false } = options;
     const session = parentSession || await mongoose.startSession();
     if (!parentSession) session.startTransaction();
     try {
@@ -843,6 +844,12 @@ class StudentService {
       }
 
       const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id, academicYear: academicYearStr }).session(session);
+      
+      if (existingLedgers.length === 0 && !forceCreate) {
+        if (!parentSession) await session.commitTransaction();
+        return { created: 0, updated: 0 };
+      }
+
       const existingKey = (feeType, feePeriod) => existingLedgers.some(l => l.feeType === feeType && l.feePeriod === feePeriod);
 
       const match = academicYearStr.match(/^(\d{4})/);
