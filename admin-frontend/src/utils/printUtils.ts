@@ -436,19 +436,19 @@ export function generateReceiptHTML(
     <!-- Right Gold Block (Shorter, tucked behind) -->
     <div style="position: absolute; top: 0; right: 0; width: 48%; height: 80px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <div style="font-size: 24px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
-      <div style="font-size: 9px; color: #1b3a6b; font-weight: 700; marginTop: 4px; text-align: right; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <div style="font-size: 9px; color: #1b3a6b; font-weight: 700; marginTop: 10px; text-align: right; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
         NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
 
     <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
     <div style="position: absolute; top: 0; left: 0; width: 60%; height: 110px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 20px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 12px; flex-shrink: 0;">
+      <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 20px; flex-shrink: 0;">
         ${logoImg}
       </div>
       <div>
-        <div style="font-size: 17px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE CONVENT SCHOOL</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #fcd34d; margin-top: 2px; letter-spacing: 0.3px;">${SCH.medium}</div>
+        <div style="font-size: 17px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff; margin-bottom:8px;">SUNRISE SCHOOL RAJKOT</div>
+        <div style="font-size: 8.5px; font-weight: 700; color: #fcd34d; margin-top: 2px; letter-spacing: 0.3px;margin-bottom:2px;">${SCH.medium}</div>
         <div style="font-size: 8px; color: #e2e8f0; margin-top: 2px; line-height: 1.25;">
           ${SCH.address}<br/>
           Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
