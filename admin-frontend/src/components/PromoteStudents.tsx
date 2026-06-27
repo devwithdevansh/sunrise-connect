@@ -10,13 +10,25 @@ export const PromoteStudents: React.FC = () => {
   const [targetClass, setTargetClass] = useState('6');
   const [targetDiv, setTargetDiv] = useState('A');
   const [targetYear, setTargetYear] = useState('2026-27');
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+
+  // Derive source medium options dynamically from active year fee structures
+  const sourceMediumOptions = React.useMemo(() => {
+    const configuredMeds = feeStructures
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'))
+      .map(f => f.medium);
+    const medSet = new Set(configuredMeds);
+    if (medSet.size === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return Array.from(medSet);
+  }, [feeStructures, activeYearName]);
 
   // Derive source class options dynamically from active year fee structures
   const sourceClassOptions = React.useMemo(() => {
@@ -25,7 +37,7 @@ export const PromoteStudents: React.FC = () => {
       .map(f => f.standard);
     const stdSet = new Set(configuredStds);
     if (stdSet.size === 0) {
-      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      return ['Nursery', 'LKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
     }
     const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
     return Array.from(stdSet).sort((a, b) => {
@@ -42,9 +54,9 @@ export const PromoteStudents: React.FC = () => {
       .map(f => f.standard);
     const stdSet = new Set(configuredStds);
     if (stdSet.size === 0) {
-      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      return ['Nursery', 'LKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
     }
-    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    const preSchoolMap: Record<string, number> = { 'nursery': -2, 'lkg': -1, };
     return Array.from(stdSet).sort((a, b) => {
       const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
       const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
@@ -62,6 +74,12 @@ export const PromoteStudents: React.FC = () => {
       }
     }
   }, [academicYears]);
+
+  useEffect(() => {
+    if (sourceMediumOptions.length > 0 && !sourceMediumOptions.includes(sourceMedium)) {
+      setSourceMedium(sourceMediumOptions[0]);
+    }
+  }, [sourceMediumOptions, sourceMedium]);
 
   useEffect(() => {
     if (sourceClassOptions.length > 0 && !sourceClassOptions.includes(sourceClass)) {
@@ -88,7 +106,7 @@ export const PromoteStudents: React.FC = () => {
       } else if (sourceClass.toLowerCase() === 'ukg') {
         nextClass = '1';
       }
-      
+
       if (targetClassOptions.includes(nextClass)) {
         setTargetClass(nextClass);
       } else if (targetClassOptions.length > 0) {
@@ -103,10 +121,10 @@ export const PromoteStudents: React.FC = () => {
     setSelectedStudentIds([]);
   }, [sourceMedium, sourceClass, sourceDiv]);
 
-  const eligibleStudents = students.filter(s => 
+  const eligibleStudents = students.filter(s =>
     s.isActive !== false &&
     s.medium === sourceMedium &&
-    String(s.standard).trim() === String(sourceClass).trim() && 
+    String(s.standard).trim() === String(sourceClass).trim() &&
     String(s.division).trim() === String(sourceDiv).trim() &&
     (searchQuery === '' || s.studentName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -169,7 +187,7 @@ export const PromoteStudents: React.FC = () => {
         {/* Background decorative elements */}
         <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-20 -mt-20 pointer-events-none"></div>
         <div className="absolute left-1/3 bottom-0 w-32 h-32 bg-indigo-400/10 rounded-full -mb-10 pointer-events-none"></div>
-        
+
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 bg-indigo-500/30 px-3 py-1 rounded-full text-[10px] font-extrabold text-indigo-100 uppercase tracking-wider backdrop-blur-sm">
@@ -212,8 +230,9 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setSourceMedium(e.target.value)}
                   className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-350 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  <option value="English">English</option>
-                  <option value="Gujarati">Gujarati</option>
+                  {sourceMediumOptions.map((med) => (
+                    <option key={med} value={med}>{med}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               </div>
@@ -432,13 +451,12 @@ export const PromoteStudents: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-mono text-[11px] text-slate-500">{student.studentCode}</td>
                       <td className="py-3 px-4">
-                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase border ${
-                          student.status === 'PAID'
+                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase border ${student.status === 'PAID'
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : student.status === 'RTE'
                               ? 'bg-purple-50 text-purple-600 border-purple-100'
                               : 'bg-amber-50 text-amber-550 border-amber-100'
-                        }`}>
+                          }`}>
                           {student.status || 'ACTIVE'}
                         </span>
                       </td>
@@ -480,7 +498,7 @@ export const PromoteStudents: React.FC = () => {
             >
               Cancel
             </button>
-            
+
             <button
               type="button"
               onClick={handlePromote}

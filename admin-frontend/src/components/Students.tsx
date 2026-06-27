@@ -16,9 +16,38 @@ export const Students: React.FC = () => {
     reversePayment,
     currentUser,
     academicYears,
-    transportFeeStructures
+    transportFeeStructures,
+    feeStructures
   } = useApp();
-  
+
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const activeYearFeeStructures = useMemo(() => {
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'));
+  }, [feeStructures, activeYearName]);
+
+  const dynamicStandards = useMemo(() => {
+    const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
+    const list = Array.from(stdSet);
+    if (list.length === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    return list.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [activeYearFeeStructures]);
+
+  const dynamicMediums = useMemo(() => {
+    const medSet = new Set(activeYearFeeStructures.map(f => f.medium));
+    const list = Array.from(medSet);
+    if (list.length === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return list;
+  }, [activeYearFeeStructures]);
+
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
   // Debounced search query state (throttles filter processing)
@@ -78,6 +107,31 @@ export const Students: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [chipFilter, classFilter, divFilter, medFilter, searchQuery]);
+
+  // Sync modal standard & medium defaults with dynamic options
+  useEffect(() => {
+    if (dynamicStandards.length > 0 && !dynamicStandards.includes(newSStandard)) {
+      setNewSStandard(dynamicStandards[0]);
+    }
+  }, [dynamicStandards, newSStandard]);
+
+  useEffect(() => {
+    if (dynamicMediums.length > 0 && !dynamicMediums.includes(newSMedium)) {
+      setNewSMedium(dynamicMediums[0] as any);
+    }
+  }, [dynamicMediums, newSMedium]);
+
+  useEffect(() => {
+    if (dynamicStandards.length > 0 && !dynamicStandards.includes(editSStandard)) {
+      setEditSStandard(dynamicStandards[0]);
+    }
+  }, [dynamicStandards, editSStandard]);
+
+  useEffect(() => {
+    if (dynamicMediums.length > 0 && !dynamicMediums.includes(editSMedium)) {
+      setEditSMedium(dynamicMediums[0] as any);
+    }
+  }, [dynamicMediums, editSMedium]);
 
   // Helper to get parent ID string
   const getParentIdStr = (student: any) => {
@@ -335,7 +389,7 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Classes">All Classes</option>
-              {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+              {dynamicStandards.map((cls) => (
                 <option key={cls} value={`Class ${cls}`}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
               ))}
             </select>
@@ -365,8 +419,9 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Mediums">All Mediums</option>
-              <option value="English Medium">English</option>
-              <option value="Gujarati Medium">Gujarati</option>
+              {dynamicMediums.map((med) => (
+                <option key={med} value={`${med} Medium`}>{med}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
@@ -1028,8 +1083,9 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSMedium(e.target.value as any)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    <option value="English">English Medium</option>
-                    <option value="Gujarati">Gujarati Medium</option>
+                    {dynamicMediums.map((med) => (
+                      <option key={med} value={med}>{med} Medium</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -1042,7 +1098,7 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
+                    {dynamicStandards.map((std) => (
                       <option key={std} value={std}>{isNaN(Number(std)) ? std : `Std ${std}`}</option>
                     ))}
                   </select>
@@ -1165,11 +1221,12 @@ export const Students: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Medium</label>
                   <select
                     value={editSMedium}
-                    onChange={(e) => setEditSMedium(e.target.value as 'English' | 'Gujarati')}
+                    onChange={(e) => setEditSMedium(e.target.value as any)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    <option value="English">English</option>
-                    <option value="Gujarati">Gujarati</option>
+                    {dynamicMediums.map((med) => (
+                      <option key={med} value={med}>{med} Medium</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -1182,7 +1239,7 @@ export const Students: React.FC = () => {
                     onChange={(e) => setEditSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                    {dynamicStandards.map((cls) => (
                       <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
                     ))}
                   </select>

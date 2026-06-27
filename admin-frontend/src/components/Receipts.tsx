@@ -15,7 +15,35 @@ interface ReceiptsProps {
 }
 
 export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
-  const { transactions, reversePayment } = useApp();
+  const { transactions, reversePayment, feeStructures, academicYears } = useApp();
+
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const activeYearFeeStructures = useMemo(() => {
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'));
+  }, [feeStructures, activeYearName]);
+
+  const dynamicStandards = useMemo(() => {
+    const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
+    const list = Array.from(stdSet);
+    if (list.length === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    return list.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [activeYearFeeStructures]);
+
+  const dynamicMediums = useMemo(() => {
+    const medSet = new Set(activeYearFeeStructures.map(f => f.medium));
+    const list = Array.from(medSet);
+    if (list.length === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return list;
+  }, [activeYearFeeStructures]);
   
   // Search state
   const [searchVal, setSearchVal] = useState('');
@@ -187,7 +215,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
               className="appearance-none w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-655 focus:outline-none transition-all shadow-sm cursor-pointer"
             >
               <option value="All Classes">All Classes</option>
-              {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
+              {dynamicStandards.map((std) => (
                 <option key={std} value={`Class ${std}`}>{isNaN(Number(std)) ? std : `Std ${std}`}</option>
               ))}
             </select>
@@ -202,8 +230,9 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
               className="appearance-none w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-655 focus:outline-none transition-all shadow-sm cursor-pointer"
             >
               <option value="All Mediums">All Mediums</option>
-              <option value="English Medium">English</option>
-              <option value="Gujarati Medium">Gujarati</option>
+              {dynamicMediums.map((med) => (
+                <option key={med} value={`${med} Medium`}>{med}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>

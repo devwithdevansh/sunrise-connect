@@ -81,36 +81,7 @@ class StudentService {
         session
       );
 
-      // Fetch all fee categories in parallel (saves ~300ms vs sequential awaits)
-      const [
-        educationCategory,
-        transportCategory,
-        termCategory,
-        admissionCategory,
-        bagKitCategory,
-      ] = await Promise.all([
-        mongoose.model('FeeCategory').findOne({ type: 'EDUCATION' }, null, { session }),
-        mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }, null, { session }),
-        mongoose.model('FeeCategory').findOne({ type: 'TERM' }, null, { session }),
-        mongoose.model('FeeCategory').findOne({ type: 'ADMISSION' }, null, { session }),
-        mongoose.model('FeeCategory').findOne({ type: 'OTHER' }, null, { session }),
-      ]);
-
-      // Create any missing categories (rare — only on first ever student)
-      const ensureCategory = async (cat, name, type, description) => {
-        if (cat) return cat;
-        return mongoose.model('FeeCategory').create([{ name, type, description, isActive: true }], { session }).then(d => d[0]);
-      };
-      const [edCat, trCat, tmCat, adCat, bkCat] = await Promise.all([
-        ensureCategory(educationCategory, 'Education', 'EDUCATION', 'Education fee category'),
-        ensureCategory(transportCategory, 'Transport', 'TRANSPORT', 'Transport fee category'),
-        ensureCategory(termCategory, 'Term', 'TERM', 'Term fee category'),
-        ensureCategory(admissionCategory, 'Admission', 'ADMISSION', 'Admission fee category'),
-        ensureCategory(bagKitCategory, 'Bag & Kit', 'OTHER', 'Bag & Kit fee category'),
-      ]);
-      // Reassign for the rest of the function
-      Object.assign(educationCategory ?? {}, edCat);
-      const resolvedCategories = { educationCategory: edCat, transportCategory: trCat, termCategory: tmCat, admissionCategory: adCat, bagKitCategory: bkCat };
+      // FeeCategory resolution moved inside the academicYear loop to support year-specific categories.
 
       const getStartYear = (yrStr) => {
         const match = yrStr.match(/^(\d{4})/);
@@ -218,6 +189,35 @@ class StudentService {
       };
 
       for (const academicYear of sortedYears) {
+        // Fetch categories for this specific academic year
+        const [
+          educationCategory,
+          transportCategory,
+          termCategory,
+          admissionCategory,
+          bagKitCategory,
+        ] = await Promise.all([
+          mongoose.model('FeeCategory').findOne({ type: 'EDUCATION', academicYear, isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT', academicYear, isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'TERM', academicYear, isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'ADMISSION', academicYear, isActive: true }, null, { session }),
+          mongoose.model('FeeCategory').findOne({ type: 'OTHER', academicYear, isActive: true }, null, { session }),
+        ]);
+
+        const ensureCategory = async (cat, name, type, description) => {
+          if (cat) return cat;
+          const fallback = await mongoose.model('FeeCategory').findOne({ type, isActive: true }, null, { session });
+          if (fallback) return fallback;
+          return mongoose.model('FeeCategory').create([{ name, type, description, academicYear, isActive: true }], { session }).then(d => d[0]);
+        };
+        const [edCat, trCat, tmCat, adCat, bkCat] = await Promise.all([
+          ensureCategory(educationCategory, 'Education', 'EDUCATION', 'Education fee category'),
+          ensureCategory(transportCategory, 'Transport', 'TRANSPORT', 'Transport fee category'),
+          ensureCategory(termCategory, 'Term', 'TERM', 'Term fee category'),
+          ensureCategory(admissionCategory, 'Admission', 'ADMISSION', 'Admission fee category'),
+          ensureCategory(bagKitCategory, 'Bag & Kit', 'OTHER', 'Bag & Kit fee category'),
+        ]);
+
         // --- Fetch dynamic fee amounts from FeeStructure collection for this specific academic year ---
         let feeStruct = await mongoose.model('FeeStructure').findOne(
           { medium: student.medium, standard: student.standard, academicYear, isActive: true },
@@ -736,12 +736,17 @@ class StudentService {
       const activeAcademicYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
       const activeAcademicYearStr = activeAcademicYearDoc ? activeAcademicYearDoc.name : '2025-26';
 
-      // Fetch categories
-      const educationCategory = await mongoose.model('FeeCategory').findOne({ type: 'EDUCATION' }).session(session);
-      const transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }).session(session);
-      const termCategory = await mongoose.model('FeeCategory').findOne({ type: 'TERM' }).session(session);
-      const admissionCategory = await mongoose.model('FeeCategory').findOne({ type: 'ADMISSION' }).session(session);
-      const bagKitCategory = await mongoose.model('FeeCategory').findOne({ type: 'OTHER' }).session(session);
+      // Fetch categories (matching activeAcademicYearStr first)
+      const fetchCat = async (type) => {
+        let cat = await mongoose.model('FeeCategory').findOne({ type, academicYear: activeAcademicYearStr }).session(session);
+        if (!cat) cat = await mongoose.model('FeeCategory').findOne({ type }).session(session);
+        return cat;
+      };
+      const educationCategory = await fetchCat('EDUCATION');
+      const transportCategory = await fetchCat('TRANSPORT');
+      const termCategory = await fetchCat('TERM');
+      const admissionCategory = await fetchCat('ADMISSION');
+      const bagKitCategory = await fetchCat('OTHER');
 
       // Fetch fee structures (matching the active academic year first)
       let feeStruct = await mongoose.model('FeeStructure').findOne(

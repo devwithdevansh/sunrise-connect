@@ -37,6 +37,7 @@ export interface AcademicYearData {
 
 export interface FeeCategoryData {
   _id: string;
+  academicYear?: string;
   name: string;
   type: string;
   description: string;

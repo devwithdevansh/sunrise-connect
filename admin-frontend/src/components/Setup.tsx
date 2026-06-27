@@ -99,21 +99,23 @@ interface EditFCModalProps {
 }
 
 const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
+  const { academicYears } = useApp();
   const [name, setName] = useState(cat.name);
   const [type, setType] = useState(cat.type);
   const [description, setDescription] = useState(cat.description || '');
+  const [academicYear, setAcademicYear] = useState(cat.academicYear || academicYears.find(y => y.isActive)?.name || '2025-26');
   const [isActive, setIsActive] = useState(cat.isActive !== false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (!name || !type) {
-      setError('Name and Type are required');
+    if (!name || !type || !academicYear) {
+      setError('Name, Type, and Academic Year are required');
       return;
     }
     setError('');
     setSaving(true);
-    const ok = await onSave(cat._id, { name, type, description, isActive });
+    const ok = await onSave(cat._id, { name, type, description, academicYear, isActive });
     setSaving(false);
     if (ok) {
       onClose();
@@ -142,6 +144,18 @@ const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Monthly Education Fee"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Academic Year</label>
+            <select
+              className="w-full border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 transition-all outline-none"
+              value={academicYear}
+              onChange={e => setAcademicYear(e.target.value)}
+            >
+              {academicYears.map(yr => (
+                <option key={yr._id} value={yr.name}>{yr.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">System Type</label>
@@ -204,12 +218,26 @@ export const Setup: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<'academic-year' | 'fee-categories' | 'fee-structure'>('academic-year');
 
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const [selectedYear, setSelectedYear] = useState<string>('');
+
+  const filteredCategories = React.useMemo(() => {
+    return feeCategories.filter(cat => cat.academicYear === selectedYear || (!cat.academicYear && selectedYear === activeYearName));
+  }, [feeCategories, selectedYear, activeYearName]);
+
   // Form states
   const [showAYForm, setShowAYForm] = useState(false);
   const [newAY, setNewAY] = useState({ name: '', startDate: '', endDate: '' });
 
   const [showFCForm, setShowFCForm] = useState(false);
-  const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '' });
+  const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '', academicYear: '' });
+
+  React.useEffect(() => {
+    if (activeYearName) {
+      if (!selectedYear) setSelectedYear(activeYearName);
+      setNewFC(prev => ({ ...prev, academicYear: prev.academicYear || activeYearName }));
+    }
+  }, [activeYearName, selectedYear]);
 
   // Modal editing states
   const [editingAY, setEditingAY] = useState<any | null>(null);
@@ -240,11 +268,11 @@ export const Setup: React.FC = () => {
   };
 
   const handleCreateFC = async () => {
-    if (!newFC.name || !newFC.type) return;
+    if (!newFC.name || !newFC.type || !newFC.academicYear) return;
     const ok = await createFeeCategory(newFC);
     if (ok) {
       setShowFCForm(false);
-      setNewFC({ name: '', type: 'EDUCATION', description: '' });
+      setNewFC({ name: '', type: 'EDUCATION', description: '', academicYear: activeYearName });
     }
   };
 
@@ -393,15 +421,34 @@ export const Setup: React.FC = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-bold text-slate-800">Fee Categories</h3>
-              <button onClick={() => setShowFCForm(true)} className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm">
-                <Plus className="w-4 h-4" /> Add Category
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-xl px-3 py-1">
+                  <label htmlFor="year-fc-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                    Year:
+                  </label>
+                  <select
+                    id="year-fc-select"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="bg-transparent text-slate-700 font-extrabold text-sm py-1.5 focus:outline-none cursor-pointer min-w-[100px]"
+                  >
+                    {academicYears.map((yr) => (
+                      <option key={yr._id} value={yr.name}>
+                        {yr.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button onClick={() => setShowFCForm(true)} className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm">
+                  <Plus className="w-4 h-4" /> Add Category
+                </button>
+              </div>
             </div>
 
             {showFCForm && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
                 <h4 className="font-bold text-slate-700 mb-4 text-sm">Create New Fee Category</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">Name</label>
                     <input
@@ -411,6 +458,18 @@ export const Setup: React.FC = () => {
                       onChange={e => setNewFC({ ...newFC, name: e.target.value })}
                       placeholder="e.g. Monthly Education Fee"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Academic Year</label>
+                    <select
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      value={newFC.academicYear}
+                      onChange={e => setNewFC({ ...newFC, academicYear: e.target.value })}
+                    >
+                      {academicYears.map(yr => (
+                        <option key={yr._id} value={yr.name}>{yr.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">System Type</label>
@@ -455,7 +514,7 @@ export const Setup: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {feeCategories.map(cat => (
+                  {filteredCategories.map(cat => (
                     <tr key={cat._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3.5 px-5 font-bold text-slate-800">{cat.name}</td>
                       <td className="py-3.5 px-5">
