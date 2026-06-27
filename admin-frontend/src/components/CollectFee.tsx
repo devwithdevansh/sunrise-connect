@@ -1273,13 +1273,17 @@ export const CollectFee: React.FC = () => {
                                 <span className="text-xs text-amber-600">Due: ₹{due.toLocaleString('en-IN')}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3">
+                             <td className="px-4 py-3">
                               <input
                                 type="number"
                                 min="0"
                                 value={config.paymentAmount === 0 ? '' : config.paymentAmount}
                                 onChange={(e) => {
-                                  const val = parseFloat(e.target.value) || 0;
+                                  let val = parseFloat(e.target.value) || 0;
+                                  const maxPayment = Math.max(0, due - config.concessionAmount);
+                                  if (val > maxPayment) {
+                                    val = maxPayment;
+                                  }
                                   setLineItems(prev => ({
                                     ...prev,
                                     [key]: { ...prev[key], paymentAmount: val }
@@ -1295,7 +1299,11 @@ export const CollectFee: React.FC = () => {
                                 min="0"
                                 value={config.concessionAmount === 0 ? '' : config.concessionAmount}
                                 onChange={(e) => {
-                                  const val = parseFloat(e.target.value) || 0;
+                                  let val = parseFloat(e.target.value) || 0;
+                                  const maxConcession = Math.max(0, due - config.paymentAmount);
+                                  if (val > maxConcession) {
+                                    val = maxConcession;
+                                  }
                                   setLineItems(prev => ({
                                     ...prev,
                                     [key]: { ...prev[key], concessionAmount: val }

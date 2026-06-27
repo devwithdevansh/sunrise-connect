@@ -239,7 +239,11 @@ export const Setup: React.FC = () => {
   };
 
   const handleActivateAY = async (id: string) => {
-    await activateAcademicYear(id);
+    const target = academicYears.find(y => y._id === id);
+    const targetName = target ? target.name : 'this academic year';
+    if (window.confirm(`⚠️ WARNING: You are about to switch the active academic year to "${targetName}".\n\nAll future fee generation, ledger calculations, and student management features will target this year.\n\nAre you sure you want to proceed?`)) {
+      await activateAcademicYear(id);
+    }
   };
 
   const handleDeleteAY = async (ay: any) => {
