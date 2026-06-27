@@ -430,7 +430,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           </div>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', padding: '0 14mm 0', background: 'transparent' }}>
+        <div style={{ position: 'relative', zIndex: 2, height: 'calc(100% - 110px - 60px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', padding: '0 14mm 0', background: 'transparent' }}>
           <div style={{ flex: 1, paddingTop: '10px' }}>
             
             {/* ════ INFO GRID ════ */}
@@ -551,7 +551,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
         </div>
 
         {/* ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
-        <div className="footer-container" style={{ position: 'relative', height: '60px', width: '100%', overflow: 'hidden', background: '#fff', zIndex: 10 }}>
+        <div className="footer-container" style={{ position: 'absolute', bottom: 0, left: 0, height: '60px', width: '100%', overflow: 'hidden', background: '#fff', zIndex: 10 }}>
           {/* Left Gold Block (Shorter, tucked behind) */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '45%', height: '45px', background: '#e8a020', zIndex: 1, display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#1b3a6b' }}>
             <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>THANK YOU</span>

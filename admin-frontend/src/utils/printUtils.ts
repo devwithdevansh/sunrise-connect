@@ -308,7 +308,7 @@ export function generateReceiptHTML(
     .content-wrapper {
       position: relative;
       z-index: 2; /* Sits above the watermark */
-      height: 100%;
+      height: calc(100% - 110px - 60px);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -525,7 +525,7 @@ export function generateReceiptHTML(
   </div>
 
   <!-- ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="footer-container" style="position: relative; height: 60px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
+  <div class="footer-container" style="position: absolute; bottom: 0; left: 0; height: 60px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
     <!-- Left Gold Block (Shorter, tucked behind) -->
     <div style="position: absolute; bottom: 0; left: 0; width: 45%; height: 45px; background: #e8a020; z-index: 1; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <span style="font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">THANK YOU</span>
