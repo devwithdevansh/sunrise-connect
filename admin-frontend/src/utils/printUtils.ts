@@ -131,7 +131,7 @@ export function generateReceiptHTML(
   const feeRows = (() => {
     if (transaction.subItems?.length) {
       return transaction.subItems.map((item, i) => `
-        <tr style="background:${i % 2 === 0 ? '#f8fafd' : '#ffffff'};page-break-inside:avoid;">
+        <tr style="background:${i % 2 === 0 ? 'rgba(248,250,253,0.8)' : 'rgba(255,255,255,0.8)'};page-break-inside:avoid;">
           <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;">${i + 1}</td>
           <td style="padding:8px 12px;color:#1e293b;font-weight:500;border-right:1px solid #e2e8f4;">
             ${item.description}
@@ -143,7 +143,7 @@ export function generateReceiptHTML(
       `).join('');
     }
     return `
-      <tr style="background:#f8fafd;page-break-inside:avoid;">
+      <tr style="background:rgba(248,250,253,0.8);page-break-inside:avoid;">
         <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;">1</td>
         <td style="padding:8px 12px;color:#1e293b;font-weight:500;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
         <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
@@ -153,7 +153,7 @@ export function generateReceiptHTML(
   })();
 
   const concessionRow = (!transaction.subItems && transaction.concessionAmount) ? `
-    <tr style="background:#fffbeb;page-break-inside:avoid;">
+    <tr style="background:rgba(255,251,235,0.8);page-break-inside:avoid;">
       <td style="padding:7px 10px;border-right:1px solid #e2e8f4;"></td>
       <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:600;border-right:1px solid #e2e8f4;">
         ✦ Concession Applied
@@ -187,13 +187,14 @@ export function generateReceiptHTML(
 
     .content-wrapper {
       position: relative;
-      z-index: 1;
+      z-index: 2; /* Sits above the watermark */
       height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       box-sizing: border-box;
       padding: 0 14mm 0;
+      background: transparent; /* Allows watermark to show through */
     }
 
     .main-body {
@@ -216,9 +217,11 @@ export function generateReceiptHTML(
     }
     .info-col:first-child {
       border-right: 1px solid #dde4f0;
-      background: #f8fafd;
+      background: rgba(248, 250, 253, 0.85); /* Semi-transparent */
     }
-    .info-col:last-child { background: #fff; }
+    .info-col:last-child {
+      background: rgba(255, 255, 255, 0.85); /* Semi-transparent */
+    }
     .info-col-header {
       font-size: 8.5px; font-weight: 800; color: #1b3a6b;
       letter-spacing: 1.5px; text-transform: uppercase;
@@ -254,7 +257,7 @@ export function generateReceiptHTML(
     .words-box {
       margin-top: 12px;
       border-left: 4px solid #e8a020;
-      background: linear-gradient(to right, #fffbf0, #fff);
+      background: linear-gradient(to right, rgba(255, 251, 240, 0.85), rgba(255, 255, 255, 0.85)); /* Semi-transparent */
       padding: 9px 14px;
       border-radius: 0 4px 4px 0;
       font-size: 10.5px; color: #334155;
@@ -265,7 +268,7 @@ export function generateReceiptHTML(
     .remark-box {
       margin-top: 8px;
       border-left: 4px solid #94a3b8;
-      background: #f8fafd;
+      background: rgba(248, 250, 253, 0.85); /* Semi-transparent */
       padding: 7px 14px;
       border-radius: 0 4px 4px 0;
       font-size: 10px; color: #475569; font-style: italic;
@@ -293,15 +296,15 @@ export function generateReceiptHTML(
   </style>
 </head>
 <body>
-  <!-- WATERMARK CONTAINER (Strictly isolated from flow) -->
+  <!-- WATERMARK CONTAINER (Rendered at z-index: 1, under content at z-index: 2) -->
   ${watermarkBase64 ? `
-  <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: -10; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-    <img src="${watermarkBase64}" style="width: 440px; height: 440px; opacity: 0.055; transform: rotate(-12deg); object-fit: contain;" />
+  <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+    <img src="${watermarkBase64}" style="width: 460px; height: 460px; opacity: 0.08; transform: rotate(-12deg); object-fit: contain;" />
   </div>
   ` : ''}
 
   <!-- ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ -->
-  <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid;">
+  <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid; z-index: 3;">
     <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" viewBox="0 0 718 130" preserveAspectRatio="none">
       <!-- Gold curved banner on the right -->
       <path d="M 370 0 L 718 0 L 718 95 C 670 130, 520 130, 420 130 C 460 95, 450 45, 370 0 Z" fill="#e8a020" />

@@ -312,10 +312,10 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
         {/* ── WATERMARK ── */}
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '210mm', height: '297mm',
-          zIndex: 0, pointerEvents: 'none',
+          zIndex: 1, pointerEvents: 'none',
           display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
         }}>
-          <img src={watermarkLogoPath} alt="Watermark" style={{ width: '440px', height: '440px', opacity: 0.055, transform: 'rotate(-12deg)', objectFit: 'contain' }} />
+          <img src={watermarkLogoPath} alt="Watermark" style={{ width: '440px', height: '440px', opacity: 0.08, transform: 'rotate(-12deg)', objectFit: 'contain' }} />
         </div>
 
         {/* ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ */}
@@ -351,19 +351,19 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
           </div>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', padding: '0 14mm 0' }}>
+        <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', padding: '0 14mm 0', background: 'transparent' }}>
           <div style={{ flex: 1, paddingTop: '10px' }}>
             
             {/* ════ INFO GRID ════ */}
             <div style={{ ...S.metaTable, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid #dde4f0', borderRadius: '6px', overflow: 'hidden', marginBottom: '14px' }}>
-              <div style={{ padding: '12px 14px', borderRight: '1px solid #dde4f0', background: '#f8fafd' }}>
+              <div style={{ padding: '12px 14px', borderRight: '1px solid #dde4f0', background: 'rgba(248, 250, 253, 0.85)' }}>
                 <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.5px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '8px' }}>Student Information</div>
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Name</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.studentName}</span></div>
                 {transaction.studentCode && <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Student Code</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: 'monospace' }}>{transaction.studentCode}</span></div>}
                 {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
               </div>
-              <div style={{ padding: '12px 14px', background: '#fff' }}>
+              <div style={{ padding: '12px 14px', background: 'rgba(255, 255, 255, 0.85)' }}>
                 <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.5px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '5px', marginBottom: '8px' }}>Payment Information</div>
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Date</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{dateStr}</span></div>
                 <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}><span style={{ fontSize: '9.5px', fontWeight: 700, color: '#94a3b8', width: '90px', flexShrink: 0 }}>Time</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{timeStr}</span></div>
@@ -394,7 +394,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                     <tr
                       key={i}
                       style={{
-                        backgroundColor: i % 2 === 0 ? '#f8fafd' : '#ffffff',
+                        backgroundColor: i % 2 === 0 ? 'rgba(248, 250, 253, 0.8)' : 'rgba(255, 255, 255, 0.8)',
                         borderBottom: '1px solid #e8edf8',
                       }}
                     >
@@ -412,7 +412,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                     </tr>
                   ))
                 ) : (
-                  <tr style={{ backgroundColor: '#f8fafd' }}>
+                  <tr style={{ backgroundColor: 'rgba(248, 250, 253, 0.8)' }}>
                     <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>1</td>
                     <td style={{ ...S.tdDesc, fontWeight: 500, borderRight: '1px solid #e2e8f4' }}>{transaction.feeType || 'Fee Collection'}</td>
                     <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{modeLabel}</td>
@@ -422,7 +422,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
 
                 {/* Top-level concession row */}
                 {!transaction.subItems && transaction.concessionAmount ? (
-                  <tr style={{ backgroundColor: '#fffbeb' }}>
+                  <tr style={{ backgroundColor: 'rgba(255, 251, 235, 0.8)' }}>
                     <td style={{ borderRight: '1px solid #e2e8f4' }}></td>
                     <td style={{ ...S.tdDesc, color: '#b45309', fontStyle: 'italic', fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>
                       ✦ Concession Applied
