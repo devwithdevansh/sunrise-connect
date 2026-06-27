@@ -247,6 +247,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const fetchTimeoutRef = useRef<number | null>(null);
   const activeFetchRef = useRef<Promise<void> | null>(null);
+  const lastSyncCheckTimeRef = useRef<number>(0);
 
   // Fetch data from backend on mount and after mutations
   const fetchAll = useCallback(async () => {
@@ -457,6 +458,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setScreenState(screen);
     if (!currentUser || screen === 'login') return;
 
+    const now = Date.now();
+    if (now - lastSyncCheckTimeRef.current < 15000) {
+      // Throttle sync state checks to at most once per 15 seconds
+      return;
+    }
+    lastSyncCheckTimeRef.current = now;
+
     try {
       const res = await authFetch('/api/v1/dashboard/sync-state');
       if (!res.ok) return;
@@ -484,6 +492,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let isSubscribed = true;
 
     const checkSync = async () => {
+      const now = Date.now();
+      if (now - lastSyncCheckTimeRef.current < 15000) {
+        return;
+      }
+      lastSyncCheckTimeRef.current = now;
+
       try {
         const res = await authFetch('/api/v1/dashboard/sync-state');
         if (!res.ok) return;
@@ -499,9 +513,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     };
 
-    // Stagger background polling with jitter (25s to 35s) so multi-tabs don't poll at once
-    const jitter = Math.random() * 10000 - 5000;
-    const interval = setInterval(checkSync, 30000 + jitter);
+    // Stagger background polling with jitter (80s to 100s) so multi-tabs don't poll at once
+    const jitter = Math.random() * 20000 - 10000;
+    const interval = setInterval(checkSync, 90000 + jitter);
 
     return () => {
       isSubscribed = false;
