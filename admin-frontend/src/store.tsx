@@ -878,10 +878,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) return false;
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error('[createFeeCategory] error:', errBody?.message || res.status);
+        return false;
+      }
       debouncedFetchAll();
       return true;
     } catch (err) {
+      console.error('[createFeeCategory] network error:', err);
       return false;
     }
   };

@@ -253,12 +253,19 @@ export const Setup: React.FC = () => {
     }
   };
 
+  const [fcError, setFCError] = useState('');
+
   const handleCreateFC = async () => {
-    if (!newFC.name || !newFC.type || !newFC.academicYear) return;
-    const ok = await createFeeCategory(newFC);
+    if (!newFC.name || !newFC.type) return;
+    if (!activeYearName) { setFCError('No active academic year set. Please activate a year first.'); return; }
+    setFCError('');
+    const payload = { ...newFC, academicYear: activeYearName };
+    const ok = await createFeeCategory(payload);
     if (ok) {
       setShowFCForm(false);
       setNewFC({ name: '', type: 'EDUCATION', description: '', academicYear: activeYearName });
+    } else {
+      setFCError('Failed to save. A category with this name may already exist for this academic year.');
     }
   };
 
@@ -416,7 +423,12 @@ export const Setup: React.FC = () => {
 
             {showFCForm && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
-                <h4 className="font-bold text-slate-700 mb-4 text-sm">Create New Fee Category</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-slate-700 text-sm">Create New Fee Category</h4>
+                  <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black px-2.5 py-1 rounded-lg border border-indigo-100">
+                    Year: {activeYearName}
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">Name</label>
@@ -452,8 +464,9 @@ export const Setup: React.FC = () => {
                     />
                   </div>
                 </div>
+                {fcError && <p className="mt-3 text-xs font-bold text-red-500">{fcError}</p>}
                 <div className="mt-4 flex justify-end gap-2">
-                  <button onClick={() => setShowFCForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
+                  <button onClick={() => { setShowFCForm(false); setFCError(''); }} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
                   <button onClick={handleCreateFC} className="px-4 py-2 bg-[#F59E0B] text-slate-900 font-bold rounded-lg text-sm shadow-sm hover:bg-amber-500">Save</button>
                 </div>
               </div>
