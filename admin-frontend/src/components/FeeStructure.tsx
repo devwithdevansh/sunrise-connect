@@ -10,6 +10,9 @@ interface CreateFeeModalProps {
 }
 
 const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
+  const { academicYears } = useApp();
+  const activeYear = academicYears.find(y => y.isActive)?.name || '2025-26';
+  const [academicYear, setAcademicYear] = useState(activeYear);
   const [standard, setStandard] = useState('1');
   const [medium, setMedium] = useState('English');
   const [annualFee, setAnnualFee] = useState<number | ''>('');
@@ -31,6 +34,7 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
     setError('');
     setSaving(true);
     const ok = await onSave({
+      academicYear,
       standard,
       medium,
       annualFee: Number(annualFee),
@@ -41,7 +45,7 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
       bagKitFee: Number(bagKitFee),
     });
     setSaving(false);
-    if (ok) onClose(); else setError('Failed to create. Standard may already exist for this medium.');
+    if (ok) onClose(); else setError('Failed to create. Standard may already exist for this academic year and medium.');
   };
 
   return (
@@ -55,6 +59,16 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-6 space-y-5">
+          {/* Academic Year Selection */}
+          <div>
+            <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Academic Year</label>
+            <select value={academicYear} onChange={e => setAcademicYear(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+              {academicYears.map(year => (
+                <option key={year._id} value={year.name}>{year.name}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Standard + Medium */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -412,12 +426,20 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
 
 /* ─── Main Component ──────────────────────────────────────────────── */
 export const FeeStructure: React.FC = () => {
-  const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure } = useApp();
+  const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure, academicYears } = useApp();
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedStandard, setSelectedStandard] = useState<string>('1');
   const [editingFee, setEditingFee] = useState<FeeStructureData | null>(null);
   const [editingTransport, setEditingTransport] = useState<TransportFeeStructureData | null>(null);
   const [isCreatingFee, setIsCreatingFee] = useState(false);
   const [isCreatingTransport, setIsCreatingTransport] = useState(false);
+
+  useEffect(() => {
+    if (activeYearName && !selectedYear) {
+      setSelectedYear(activeYearName);
+    }
+  }, [activeYearName, selectedYear]);
 
   const handleDeleteFee = async (structure: FeeStructureData) => {
     if (window.confirm(`Are you sure you want to delete the fee structure for Standard ${structure.standard} (${structure.medium} Medium)?\nThis action cannot be undone.`)) {
@@ -433,16 +455,21 @@ export const FeeStructure: React.FC = () => {
     }
   };
 
+  // Filter standard fee structures by academic year
+  const filteredFeeStructures = useMemo(() => {
+    return feeStructures.filter(f => f.academicYear === selectedYear || (!f.academicYear && selectedYear === activeYearName));
+  }, [feeStructures, selectedYear, activeYearName]);
+
   // Get unique sorted standards
   const standards = useMemo(() => {
-    const stdSet = new Set(feeStructures.map((f) => f.standard));
+    const stdSet = new Set(filteredFeeStructures.map((f) => f.standard));
     return Array.from(stdSet).sort((a, b) => {
       const numA = parseInt(a, 10);
       const numB = parseInt(b, 10);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return a.localeCompare(b);
     });
-  }, [feeStructures]);
+  }, [filteredFeeStructures]);
 
   // Sync selected standard when standards list is fetched
   useEffect(() => {
@@ -453,16 +480,16 @@ export const FeeStructure: React.FC = () => {
 
   // Find structures for selected standard
   const englishStructure = useMemo(() => {
-    return feeStructures.find(
+    return filteredFeeStructures.find(
       (f) => f.standard === selectedStandard && f.medium.toLowerCase() === 'english' && f.isActive
     );
-  }, [feeStructures, selectedStandard]);
+  }, [filteredFeeStructures, selectedStandard]);
 
   const gujaratiStructure = useMemo(() => {
-    return feeStructures.find(
+    return filteredFeeStructures.find(
       (f) => f.standard === selectedStandard && f.medium.toLowerCase() === 'gujarati' && f.isActive
     );
-  }, [feeStructures, selectedStandard]);
+  }, [filteredFeeStructures, selectedStandard]);
 
   // Helper to construct fee parts
   const getFeeDetails = (structure: any) => {
@@ -511,6 +538,29 @@ export const FeeStructure: React.FC = () => {
           >
             <Plus className="h-4 w-4" /> Add Standard
           </button>
+          {/* Academic Year Selector */}
+          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1">
+            <label htmlFor="year-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+              Year:
+            </label>
+            <div className="relative">
+              <select
+                id="year-select"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="appearance-none bg-transparent text-slate-700 font-extrabold text-sm py-1.5 pl-2 pr-8 focus:outline-none cursor-pointer min-w-[100px] transition-all"
+              >
+                {academicYears.map((yr) => (
+                  <option key={yr._id} value={yr.name}>
+                    {yr.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none stroke-[2.5]" />
+            </div>
+          </div>
+
+          {/* Standard Selector */}
           <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1">
             <label htmlFor="standard-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
               Select:

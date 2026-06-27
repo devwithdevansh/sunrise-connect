@@ -45,6 +45,7 @@ export interface FeeCategoryData {
 
 export interface FeeStructureData {
   _id: string;
+  academicYear?: string;
   medium: string;
   standard: string;
   annualFee: number;

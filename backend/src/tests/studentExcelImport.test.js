@@ -36,6 +36,7 @@ beforeEach(async () => {
 
   // Create Fee Structure
   await mongoose.model('FeeStructure').create({
+    academicYear: '2025-26',
     medium: 'English',
     standard: '5',
     annualFee: 14000,

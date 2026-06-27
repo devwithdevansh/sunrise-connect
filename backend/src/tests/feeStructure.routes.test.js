@@ -28,6 +28,7 @@ describe('GET /api/v1/fee-structures', () => {
   it('returns 200 with fee structures and transport structures', async () => {
     // Seed data
     await FeeStructure.create({
+      academicYear: '2025-26',
       medium: 'English',
       standard: '5',
       annualFee: 36000,
@@ -55,6 +56,7 @@ describe('GET /api/v1/fee-structures', () => {
 describe('PUT /api/v1/fee-structures/:id – update standard fee', () => {
   it('returns 200 and updates the annualFee in the database', async () => {
     const created = await FeeStructure.create({
+      academicYear: '2025-26',
       medium: 'Gujarati',
       standard: '3',
       annualFee: 30000,
@@ -79,6 +81,7 @@ describe('PUT /api/v1/fee-structures/:id – update standard fee', () => {
 
   it('returns 400 when annualFee is negative', async () => {
     const created = await FeeStructure.create({
+      academicYear: '2025-26',
       medium: 'English',
       standard: '1',
       annualFee: 36000,

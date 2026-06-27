@@ -148,29 +148,7 @@ class StudentService {
       const sortedYears = Array.from(yearsToGenerate).sort((a, b) => getStartYear(a) - getStartYear(b));
       const earliestYear = sortedYears[0];
 
-      // --- Fetch dynamic fee amounts from FeeStructure collection ---
-      const feeStruct = await mongoose.model('FeeStructure').findOne(
-        { medium: student.medium, standard: student.standard, isActive: true },
-        null,
-        { session }
-      );
-      // Derive per-part amounts strictly from FeeStructure DB values.
-      // If no FeeStructure is found for this medium+standard, all amounts default to 0.
-      // The admin MUST configure a FeeStructure before adding students.
-      const eduPartCount = feeStruct?.educationPartCount ?? 12;
-      const termPartCount = feeStruct?.termPartCount ?? 2;
-      const annualFee = feeStruct?.annualFee ?? 0;
-      const totalParts = (eduPartCount + termPartCount) || 14; // guard against 0
-      const eduAmount = annualFee > 0 ? Math.round(annualFee / totalParts) : 0;
-
-      // Term fee: use explicitly stored termFee from DB if > 0;
-      // otherwise fall back to same per-part amount (annualFee / totalParts).
-      // This enforces the 14-part model: 12 education months + 2 term fees = equal shares.
-      const termAmount = (feeStruct?.termFee !== undefined && feeStruct.termFee > 0)
-        ? feeStruct.termFee
-        : eduAmount;
-      const admissionAmount = feeStruct?.admissionFee ?? 0;
-      const bagKitAmount = feeStruct?.bagKitFee ?? 0;
+      // Fee structure calculation is performed inside the sortedYears loop to support year-specific rates.
 
       // --- Fetch transport amount from TransportFeeStructure ---
       let transportAmount = 0;
@@ -240,6 +218,32 @@ class StudentService {
       };
 
       for (const academicYear of sortedYears) {
+        // --- Fetch dynamic fee amounts from FeeStructure collection for this specific academic year ---
+        let feeStruct = await mongoose.model('FeeStructure').findOne(
+          { medium: student.medium, standard: student.standard, academicYear, isActive: true },
+          null,
+          { session }
+        );
+        // Fallback to active/generic fee structure if year-specific one is not found
+        if (!feeStruct) {
+          feeStruct = await mongoose.model('FeeStructure').findOne(
+            { medium: student.medium, standard: student.standard, isActive: true },
+            null,
+            { session }
+          );
+        }
+
+        const eduPartCount = feeStruct?.educationPartCount ?? 12;
+        const termPartCount = feeStruct?.termPartCount ?? 2;
+        const annualFee = feeStruct?.annualFee ?? 0;
+        const totalParts = (eduPartCount + termPartCount) || 14;
+        const eduAmount = annualFee > 0 ? Math.round(annualFee / totalParts) : 0;
+        const termAmount = (feeStruct?.termFee !== undefined && feeStruct.termFee > 0)
+          ? feeStruct.termFee
+          : eduAmount;
+        const admissionAmount = feeStruct?.admissionFee ?? 0;
+        const bagKitAmount = feeStruct?.bagKitFee ?? 0;
+
         const statusStr = data.pendingFees ? data.pendingFees[academicYear] : undefined;
         const pendingStartIndex = getPendingStartIndex(statusStr);
 
@@ -739,12 +743,19 @@ class StudentService {
       const admissionCategory = await mongoose.model('FeeCategory').findOne({ type: 'ADMISSION' }).session(session);
       const bagKitCategory = await mongoose.model('FeeCategory').findOne({ type: 'OTHER' }).session(session);
 
-      // Fetch fee structures
-      const feeStruct = await mongoose.model('FeeStructure').findOne(
-        { medium: student.medium, standard: student.standard, isActive: true },
+      // Fetch fee structures (matching the active academic year first)
+      let feeStruct = await mongoose.model('FeeStructure').findOne(
+        { medium: student.medium, standard: student.standard, academicYear: activeAcademicYearStr, isActive: true },
         null,
         { session }
       );
+      if (!feeStruct) {
+        feeStruct = await mongoose.model('FeeStructure').findOne(
+          { medium: student.medium, standard: student.standard, isActive: true },
+          null,
+          { session }
+        );
+      }
       const educationAmount = feeStruct ? Math.round(feeStruct.annualFee / ((feeStruct.educationPartCount || 12) + (feeStruct.termPartCount || 2))) : 0;
       // Term fee: fall back to same per-part amount if termFee not explicitly set in DB
       const termAmount = (feeStruct?.termFee !== undefined && feeStruct.termFee > 0)

@@ -3,7 +3,7 @@ import { useApp } from '../store';
 import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
-  const { students, setScreen, academicYears, authFetch } = useApp();
+  const { students, setScreen, academicYears, authFetch, feeStructures } = useApp();
   const [sourceMedium, setSourceMedium] = useState('English');
   const [sourceClass, setSourceClass] = useState('5');
   const [sourceDiv, setSourceDiv] = useState('A');
@@ -15,6 +15,42 @@ export const PromoteStudents: React.FC = () => {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+
+  // Derive source class options dynamically from active year fee structures
+  const sourceClassOptions = React.useMemo(() => {
+    const configuredStds = feeStructures
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'))
+      .map(f => f.standard);
+    const stdSet = new Set(configuredStds);
+    if (stdSet.size === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    return Array.from(stdSet).sort((a, b) => {
+      const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
+      const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
+      return orderA - orderB;
+    });
+  }, [feeStructures, activeYearName]);
+
+  // Derive target class options dynamically from target year fee structures
+  const targetClassOptions = React.useMemo(() => {
+    const configuredStds = feeStructures
+      .filter(f => f.academicYear === targetYear)
+      .map(f => f.standard);
+    const stdSet = new Set(configuredStds);
+    if (stdSet.size === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    return Array.from(stdSet).sort((a, b) => {
+      const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
+      const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
+      return orderA - orderB;
+    });
+  }, [feeStructures, targetYear]);
 
   useEffect(() => {
     if (academicYears && academicYears.length > 0) {
@@ -28,12 +64,39 @@ export const PromoteStudents: React.FC = () => {
   }, [academicYears]);
 
   useEffect(() => {
+    if (sourceClassOptions.length > 0 && !sourceClassOptions.includes(sourceClass)) {
+      setSourceClass(sourceClassOptions[0]);
+    }
+  }, [sourceClassOptions, sourceClass]);
+
+  useEffect(() => {
+    if (targetClassOptions.length > 0 && !targetClassOptions.includes(targetClass)) {
+      setTargetClass(targetClassOptions[0]);
+    }
+  }, [targetClassOptions, targetClass]);
+
+  useEffect(() => {
     if (sourceClass) {
-      const next = parseInt(sourceClass) + 1;
-      setTargetClass(next <= 12 ? next.toString() : sourceClass);
+      const nextNum = parseInt(sourceClass, 10);
+      let nextClass = sourceClass;
+      if (!isNaN(nextNum)) {
+        nextClass = (nextNum + 1).toString();
+      } else if (sourceClass.toLowerCase() === 'nursery') {
+        nextClass = 'LKG';
+      } else if (sourceClass.toLowerCase() === 'lkg') {
+        nextClass = 'UKG';
+      } else if (sourceClass.toLowerCase() === 'ukg') {
+        nextClass = '1';
+      }
+      
+      if (targetClassOptions.includes(nextClass)) {
+        setTargetClass(nextClass);
+      } else if (targetClassOptions.length > 0) {
+        setTargetClass(targetClassOptions.includes(nextClass) ? nextClass : targetClassOptions[0]);
+      }
       setTargetDiv(sourceDiv);
     }
-  }, [sourceClass, sourceDiv]);
+  }, [sourceClass, sourceDiv, targetClassOptions]);
 
   // Reset selected list when source configurations change
   useEffect(() => {
@@ -165,7 +228,7 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setSourceClass(e.target.value)}
                   className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-355 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                  {sourceClassOptions.map((cls) => (
                     <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
                   ))}
                 </select>
@@ -225,7 +288,7 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setTargetClass(e.target.value)}
                   className="appearance-none w-full bg-indigo-50/40 border border-indigo-100 hover:border-indigo-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-indigo-900 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                  {targetClassOptions.map((cls) => (
                     <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
                   ))}
                 </select>
