@@ -31,7 +31,15 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   // Available filters from data
   const classes = useMemo(() => {
     const stds = new Set(students.map(s => s.standard));
-    return ['All Classes', ...Array.from(stds).sort((a, b) => parseInt(a) - parseInt(b)).map(std => `Class ${std}`)];
+    const getStdOrder = (std: string) => {
+      const normalized = (std || '').toString().trim();
+      const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+      const lower = normalized.toLowerCase();
+      if (preSchoolMap[lower] !== undefined) return preSchoolMap[lower];
+      const num = parseInt(normalized, 10);
+      return isNaN(num) ? 999 : num;
+    };
+    return ['All Classes', ...Array.from(stds).sort((a, b) => getStdOrder(a) - getStdOrder(b)).map(std => `Class ${std}`)];
   }, [students]);
 
   const mediums = ['All Mediums', 'English Medium', 'Gujarati Medium'];

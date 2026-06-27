@@ -187,8 +187,8 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
               className="appearance-none w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-655 focus:outline-none transition-all shadow-sm cursor-pointer"
             >
               <option value="All Classes">All Classes</option>
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
-                <option key={std} value={`Class ${std}`}>Std {std}</option>
+              {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
+                <option key={std} value={`Class ${std}`}>{isNaN(Number(std)) ? std : `Std ${std}`}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />

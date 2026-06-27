@@ -165,7 +165,9 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setSourceClass(e.target.value)}
                   className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-355 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Std {i+1}</option>)}
+                  {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                    <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               </div>
@@ -223,7 +225,9 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setTargetClass(e.target.value)}
                   className="appearance-none w-full bg-indigo-50/40 border border-indigo-100 hover:border-indigo-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-indigo-900 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Std {i+1}</option>)}
+                  {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                    <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
               </div>

@@ -335,8 +335,8 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Classes">All Classes</option>
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
-                <option key={cls} value={`Class ${cls}`}>Std {cls}</option>
+              {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                <option key={cls} value={`Class ${cls}`}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
@@ -1042,8 +1042,8 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
-                      <option key={std} value={std}>Std {std}</option>
+                    {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
+                      <option key={std} value={std}>{isNaN(Number(std)) ? std : `Std ${std}`}</option>
                     ))}
                   </select>
                 </div>
@@ -1182,8 +1182,8 @@ export const Students: React.FC = () => {
                     onChange={(e) => setEditSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
-                      <option key={cls} value={cls}>Std {cls}</option>
+                    {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                      <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
                     ))}
                   </select>
                 </div>
