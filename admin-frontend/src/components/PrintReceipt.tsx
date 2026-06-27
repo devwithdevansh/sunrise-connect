@@ -82,6 +82,89 @@ function getModeLabel(method: PaymentMode): string {
   return method ? method.charAt(0).toUpperCase() + method.slice(1) : 'N/A';
 }
 
+interface SubItem {
+  id?: string;
+  description: string;
+  amount: number;
+  concessionAmount: number;
+  method?: string;
+  status?: string;
+}
+
+function groupSubItems(items: SubItem[]): SubItem[] {
+  if (!items || items.length === 0) return [];
+
+  const MONTH_ORDER = [
+    'April', 'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December', 'January', 'February', 'March'
+  ];
+
+  const groups: { [key: string]: { items: SubItem[]; months: string[] } } = {};
+
+  for (const item of items) {
+    const match = item.description.match(/^(.+?)\s*-\s*(January|February|March|April|May|June|July|August|September|October|November|December)$/i);
+    if (match) {
+      const rawPrefix = match[1].trim();
+      const rawMonth = match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase();
+      if (!groups[rawPrefix]) {
+        groups[rawPrefix] = { items: [], months: [] };
+      }
+      groups[rawPrefix].items.push(item);
+      groups[rawPrefix].months.push(rawMonth);
+    } else {
+      const desc = item.description.trim();
+      if (!groups[desc]) {
+        groups[desc] = { items: [], months: [] };
+      }
+      groups[desc].items.push(item);
+    }
+  }
+
+  const result: SubItem[] = [];
+
+  for (const key of Object.keys(groups)) {
+    const g = groups[key];
+    if (g.months.length > 0) {
+      g.months.sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
+      const startMonth = g.months[0];
+      const endMonth = g.months[g.months.length - 1];
+
+      const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
+      const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+      const first = g.items[0];
+
+      const description = startMonth === endMonth
+        ? `${key} - ${startMonth}`
+        : `${key} - ${startMonth} to ${endMonth}`;
+
+      result.push({
+        description,
+        amount: totalAmt,
+        concessionAmount: totalConcession,
+        method: first.method,
+        status: first.status,
+      });
+    } else {
+      if (g.items.length === 1) {
+        result.push(g.items[0]);
+      } else {
+        const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
+        const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+        const first = g.items[0];
+        result.push({
+          description: key,
+          amount: totalAmt,
+          concessionAmount: totalConcession,
+          method: first.method,
+          status: first.status,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
 /* ─── Component ─────────────────────────────────────────────────── */
 export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
   const { currentUser } = useApp();
@@ -384,7 +467,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               </thead>
               <tbody>
                 {transaction.subItems && transaction.subItems.length > 0 ? (
-                  transaction.subItems.map((item, i) => (
+                  groupSubItems(transaction.subItems).map((item, i) => (
                     <tr
                       key={i}
                       style={{
@@ -397,7 +480,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
                         {item.description}
                         {item.concessionAmount > 0 && (
                           <span style={{ display: 'inline-block', marginLeft: '8px', fontSize: '9px', color: '#b45309', background: 'rgba(254, 243, 199, 0.85)', border: '1px solid rgba(252, 211, 77, 0.5)', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
-                            -₹{item.concessionAmount.toLocaleString('en-IN')} off
+                            -{item.concessionAmount.toLocaleString('en-IN')} ₹ off
                           </span>
                         )}
                       </td>

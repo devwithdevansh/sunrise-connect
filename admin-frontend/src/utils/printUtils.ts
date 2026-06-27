@@ -104,6 +104,89 @@ function inr(n: number): string {
   return Math.abs(n).toLocaleString('en-IN');
 }
 
+export interface SubItem {
+  id?: string;
+  description: string;
+  amount: number;
+  concessionAmount: number;
+  method?: string;
+  status?: string;
+}
+
+export function groupSubItems(items: SubItem[]): SubItem[] {
+  if (!items || items.length === 0) return [];
+
+  const MONTH_ORDER = [
+    'April', 'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December', 'January', 'February', 'March'
+  ];
+
+  const groups: { [key: string]: { items: SubItem[]; months: string[] } } = {};
+
+  for (const item of items) {
+    const match = item.description.match(/^(.+?)\s*-\s*(January|February|March|April|May|June|July|August|September|October|November|December)$/i);
+    if (match) {
+      const rawPrefix = match[1].trim();
+      const rawMonth = match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase();
+      if (!groups[rawPrefix]) {
+        groups[rawPrefix] = { items: [], months: [] };
+      }
+      groups[rawPrefix].items.push(item);
+      groups[rawPrefix].months.push(rawMonth);
+    } else {
+      const desc = item.description.trim();
+      if (!groups[desc]) {
+        groups[desc] = { items: [], months: [] };
+      }
+      groups[desc].items.push(item);
+    }
+  }
+
+  const result: SubItem[] = [];
+
+  for (const key of Object.keys(groups)) {
+    const g = groups[key];
+    if (g.months.length > 0) {
+      g.months.sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
+      const startMonth = g.months[0];
+      const endMonth = g.months[g.months.length - 1];
+
+      const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
+      const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+      const first = g.items[0];
+
+      const description = startMonth === endMonth
+        ? `${key} - ${startMonth}`
+        : `${key} - ${startMonth} to ${endMonth}`;
+
+      result.push({
+        description,
+        amount: totalAmt,
+        concessionAmount: totalConcession,
+        method: first.method,
+        status: first.status,
+      });
+    } else {
+      if (g.items.length === 1) {
+        result.push(g.items[0]);
+      } else {
+        const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
+        const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+        const first = g.items[0];
+        result.push({
+          description: key,
+          amount: totalAmt,
+          concessionAmount: totalConcession,
+          method: first.method,
+          status: first.status,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
 // ─── School constants ─────────────────────────────────────────────────────────
 
 const SCH = {
@@ -166,7 +249,8 @@ export function generateReceiptHTML(
   // Fee rows
   const feeRows = (() => {
     if (transaction.subItems?.length) {
-      return transaction.subItems.map((item, i) => `
+      const grouped = groupSubItems(transaction.subItems);
+      return grouped.map((item, i) => `
         <tr style="background:${i % 2 === 0 ? 'rgba(248,250,253,0.7)' : 'rgba(255,255,255,0.75)'};page-break-inside:avoid;">
           <td style="padding:5px 8px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">${i + 1}</td>
           <td style="padding:5px 8px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">
