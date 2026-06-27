@@ -66,6 +66,7 @@ describe('Student excel import multi-year fee generation tests', () => {
       standard: '5',
       division: 'A',
       isNewAdmission: true,
+      buyBagKit: true,
       pendingFees: {
         '2024-25': 'oct to may',
         '2025-26': 'paid'

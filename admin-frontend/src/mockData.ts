@@ -9,6 +9,7 @@ export interface Student {
   transportType: 'Railnagar' | 'Outside Railnagar' | 'None';
   isRTE: boolean;
   isNewAdmission?: boolean;
+  buyBagKit?: boolean;
   admissionMonth?: string;
   isActive: boolean;
   parentId?: string;

@@ -79,6 +79,7 @@ export const Students: React.FC = () => {
   const [newSTransport, setNewSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
+  const [newSBuyBagKit, setNewSBuyBagKit] = useState(false);
   const [newSAdmissionMonth, setNewSAdmissionMonth] = useState('June');
 
   // Edit Student Modal state
@@ -91,6 +92,7 @@ export const Students: React.FC = () => {
   const [editSTransport, setEditSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [originalTransport, setOriginalTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [editSIsRTE, setEditSIsRTE] = useState(false);
+  const [editSBuyBagKit, setEditSBuyBagKit] = useState(false);
 
   // Sibling Modal State
   const [siblingModalData, setSiblingModalData] = useState<{ parentName: string, parentId: string } | null>(null);
@@ -273,6 +275,7 @@ export const Students: React.FC = () => {
       transportType: newSTransport,
       isRTE: newSIsRTE,
       isNewAdmission: newSIsNewAdmission,
+      buyBagKit: newSBuyBagKit,
       admissionMonth: newSAdmissionMonth,
       isActive: true
     });
@@ -288,6 +291,7 @@ export const Students: React.FC = () => {
     setNewSTransport('None');
     setNewSIsRTE(false);
     setNewSIsNewAdmission(true);
+    setNewSBuyBagKit(false);
     setNewSAdmissionMonth('June');
     setIsModalOpen(false);
   };
@@ -301,6 +305,7 @@ export const Students: React.FC = () => {
     setEditSTransport(s.transportType || 'None');
     setOriginalTransport(s.transportType || 'None');
     setEditSIsRTE(s.isRTE || false);
+    setEditSBuyBagKit(s.buyBagKit || false);
     setIsEditModalOpen(true);
   };
 
@@ -315,6 +320,7 @@ export const Students: React.FC = () => {
       division: editSDivision,
       transportType: editSTransport,
       isRTE: editSIsRTE,
+      buyBagKit: editSBuyBagKit,
     };
 
     // Calculate remaining months for transport adjustment (mirroring backend logic)
@@ -1167,7 +1173,20 @@ export const Students: React.FC = () => {
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
                 />
                 <label htmlFor="newAdmissionCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                  New Admission (charges Admission & Bag/Kit fees)
+                  New Admission (charges Admission fees)
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <input
+                  type="checkbox"
+                  id="newBuyBagKitCheckbox"
+                  checked={newSBuyBagKit}
+                  onChange={(e) => setNewSBuyBagKit(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="newBuyBagKitCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                  Include Bag & Kit Fee (Optional)
                 </label>
               </div>
 
@@ -1283,6 +1302,19 @@ export const Students: React.FC = () => {
                 />
                 <label htmlFor="editRteCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
                   Student admitted under RTE (Right to Education) quota
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <input
+                  type="checkbox"
+                  id="editBuyBagKitCheckbox"
+                  checked={editSBuyBagKit}
+                  onChange={(e) => setEditSBuyBagKit(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="editBuyBagKitCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                  Include Bag & Kit Fee (Optional)
                 </label>
               </div>
 
