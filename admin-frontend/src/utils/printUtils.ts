@@ -718,7 +718,7 @@ export function generateReportHTML(
   <title>${title}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: 8mm 10mm; }
+    @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     tr { page-break-inside: avoid; }
