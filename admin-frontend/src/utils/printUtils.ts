@@ -1,127 +1,118 @@
 /**
  * printUtils.ts
  * ─────────────────────────────────────────────────────────────────────────────
- * Central print engine.
- * • Injects HTML into a hidden <iframe> and triggers iframe.contentWindow.print()
- * • Fully self-contained HTML strings: no React DOM pollution during print
- * • Supports @page A4 portrait/landscape with proper page-break rules
+ * Premium print engine for Sunrise Convent School.
+ *
+ * KEY FIX: Images are fetched and converted to base64 data URIs so they are
+ * embedded directly in the HTML string — no network requests from the iframe,
+ * which means logos always load correctly in both dev and production.
+ *
+ * Architecture:
+ *  - fetchAsBase64(url)     → converts any asset URL to a data URI
+ *  - generateReceiptHTML()  → premium A4 receipt HTML with embedded images
+ *  - generateReportHTML()   → branded A4/landscape report HTML
+ *  - printHTML(html)        → injects into hidden iframe → iframe.print()
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 import type { PaymentTransaction } from '../mockData';
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── Image → Base64 ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch any URL (Vite-resolved asset path) and return a base64 data URI.
+ * Returns empty string on failure so print still works without the logo.
+ */
+export async function fetchAsBase64(url: string): Promise<string> {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return '';
+    const blob = await resp.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return '';
+  }
+}
+
+// ─── Text helpers ─────────────────────────────────────────────────────────────
 
 function toIndianWords(num: number): string {
   if (num === 0) return 'Zero';
-  const ones = [
-    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
-    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
-    'Seventeen', 'Eighteen', 'Nineteen',
-  ];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-  const below100 = (n: number): string =>
-    n < 20 ? ones[n] : tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
-  const below1000 = (n: number): string =>
-    n < 100
-      ? below100(n)
-      : ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + below100(n % 100) : '');
-
-  let result = '';
-  let n = num;
-  const crore = Math.floor(n / 10_000_000); n %= 10_000_000;
-  const lakh = Math.floor(n / 100_000); n %= 100_000;
-  const thousand = Math.floor(n / 1_000); n %= 1_000;
-  if (crore)   result += below1000(crore)   + ' Crore ';
-  if (lakh)    result += below1000(lakh)    + ' Lakh ';
-  if (thousand) result += below1000(thousand) + ' Thousand ';
-  if (n)       result += below1000(n);
-  return result.trim();
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
+    'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const b100  = (n: number): string => n < 20 ? ones[n] : tens[Math.floor(n/10)] + (n%10 ? ' '+ones[n%10] : '');
+  const b1000 = (n: number): string => n < 100 ? b100(n) : ones[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' '+b100(n%100) : '');
+  let r = '', n = num;
+  const cr = Math.floor(n/10_000_000); n %= 10_000_000;
+  const lk = Math.floor(n/100_000);   n %= 100_000;
+  const th = Math.floor(n/1_000);     n %= 1_000;
+  if (cr) r += b1000(cr) + ' Crore ';
+  if (lk) r += b1000(lk) + ' Lakh ';
+  if (th) r += b1000(th) + ' Thousand ';
+  if (n)  r += b1000(n);
+  return r.trim();
 }
 
-function getModeLabel(method: string): string {
+function modeLabel(method: string): string {
   const m = (method || '').toLowerCase();
   if (m === 'cash')   return 'Cash';
   if (m === 'upi')    return 'UPI / Online';
-  if (m === 'online') return 'Online';
+  if (m === 'online') return 'Online Transfer';
   if (m === 'cheque') return 'Cheque';
-  if (m === 'neft' || m === 'rtgs' || m === 'imps') return m.toUpperCase();
+  if (['neft','rtgs','imps'].includes(m)) return m.toUpperCase();
   return method ? method.charAt(0).toUpperCase() + method.slice(1) : 'N/A';
 }
 
-function fmt(n: number): string {
+function inr(n: number): string {
   return Math.abs(n).toLocaleString('en-IN');
 }
 
-// ─── shared branded header HTML ──────────────────────────────────────────────
-// We embed the logo as a URL so the iframe can load it.
-// We resolve it from the same origin at runtime.
+// ─── School constants ─────────────────────────────────────────────────────────
 
-function logoUrl(): string {
-  // Vite builds assets to /assets/... — we resolve from current origin
-  // Use a CSS background-color sun icon as fallback if logo path differs
-  return `${window.location.origin}/src/assets/sunrise-logo.png`;
-}
+const SCH = {
+  name:    'SUNRISE CONVENT SCHOOL',
+  medium:  'English &amp; Gujarati Medium',
+  address: 'Railnagar, Rajkot, Gujarat — 360 001',
+  phone:   '+91 XXXXX XXXXX',
+  email:   'info@sunriseschool.in',
+};
 
-function watermarkUrl(): string {
-  return `${window.location.origin}/src/assets/sunrise-round-logo.png`;
-}
+// ─── Shared base CSS ──────────────────────────────────────────────────────────
 
-const SCHOOL_NAME = 'SUNRISE CONVENT SCHOOL';
-const SCHOOL_ADDRESS = 'Railnagar, Rajkot, Gujarat';
-const SCHOOL_PHONE = '+91 XXXXX XXXXX';
-const SCHOOL_EMAIL = 'info@sunriseschool.in';
-const SCHOOL_MEDIUM = 'English &amp; Gujarati Medium';
-
-// ─── Shared CSS base ─────────────────────────────────────────────────────────
 const BASE_CSS = `
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-    font-size: 11px;
-    color: #1a1a2e;
-    background: #fff;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  table { border-collapse: collapse; width: 100%; }
-  .gold { color: #d08c16; }
-  .navy { color: #1b3a6b; }
-  .stripe-even { background: rgba(0,0,0,0.025); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 11px;
+  color: #1a1a2e;
+  background: #fff;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+table { border-collapse: collapse; }
 `;
 
-// ─── Branded header block ─────────────────────────────────────────────────────
-function brandedHeader(logoSrc: string): string {
-  return `
-    <div class="header-block" style="display:flex;align-items:center;gap:16px;margin-bottom:8px;page-break-inside:avoid;">
-      <div style="flex-shrink:0;width:190px;">
-        <img src="${logoSrc}" alt="Sunrise School Logo"
-             style="width:100%;height:auto;object-fit:contain;"
-             onerror="this.style.display='none'" />
-      </div>
-      <div style="flex:1;">
-        <div style="font-size:22px;font-weight:800;color:#1b3a6b;letter-spacing:0.5px;line-height:1.1;">${SCHOOL_NAME}</div>
-        <div style="font-size:11px;font-weight:700;color:#d08c16;margin-top:3px;">${SCHOOL_MEDIUM}</div>
-        <div style="font-size:10.5px;color:#555;margin-top:2px;">${SCHOOL_ADDRESS}</div>
-        <div style="font-size:10.5px;color:#555;margin-top:1px;">Ph: ${SCHOOL_PHONE} &nbsp;|&nbsp; Email: ${SCHOOL_EMAIL}</div>
-      </div>
-    </div>
-    <div style="height:4px;background:#e8a020;margin-bottom:3px;"></div>
-    <div style="height:2px;background:#1b3a6b;margin-bottom:14px;"></div>
-  `;
-}
+// ─── Premium Receipt HTML ─────────────────────────────────────────────────────
 
-// ─── Receipt HTML generator ───────────────────────────────────────────────────
 export function generateReceiptHTML(
   transaction: PaymentTransaction,
-  currentUserName?: string
+  opts: { currentUserName?: string; logoBase64?: string; watermarkBase64?: string }
 ): string {
-  const totalAmount = Math.abs(transaction.amount);
-  const amountInWords = `${toIndianWords(totalAmount)} Rupees Only`;
-  const modeLabel = getModeLabel(transaction.method || '');
+  const { currentUserName, logoBase64 = '', watermarkBase64 = '' } = opts;
+
+  const totalAmount   = Math.abs(transaction.amount);
+  const words         = `${toIndianWords(totalAmount)} Rupees Only`;
+  const mode          = modeLabel(transaction.method || '');
+  const receiptNo     = (transaction.id?.slice(-12).toUpperCase() || 'N/A');
 
   const period = (() => {
-    if (transaction.subItems && transaction.subItems.length > 0) {
+    if (transaction.subItems?.length) {
       const months = transaction.subItems.map(i => i.description.split(' ')[0]);
       return months.length > 1
         ? `${months[0]} – ${months[months.length - 1]} (${months.length} Months)`
@@ -130,61 +121,52 @@ export function generateReceiptHTML(
     return transaction.feeType || '—';
   })();
 
-  const metaRows: { label: string; value: string }[] = [
-    { label: 'Receipt No.', value: (transaction.id?.slice(-16).toUpperCase() || 'N/A') },
-    { label: 'Student Name', value: transaction.studentName },
-    ...(transaction.studentCode ? [{ label: 'Student Code', value: transaction.studentCode }] : []),
-    ...(transaction.classInfo ? [{ label: 'Class', value: transaction.classInfo }] : []),
-    { label: 'Period', value: period },
-    {
-      label: 'Payment Date',
-      value: `${transaction.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })},  ${transaction.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`,
-    },
-    { label: 'Payment Mode', value: modeLabel },
-  ];
+  const dateStr = transaction.date
+    ? new Date(transaction.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+    : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  const metaRowsHTML = metaRows.map((row, i) => `
-    <tr style="background:${i % 2 === 0 ? 'rgba(0,0,0,0.025)' : 'transparent'};">
-      <td style="padding:6px 12px;font-weight:700;color:#1b3a6b;width:155px;white-space:nowrap;">${row.label}</td>
-      <td style="padding:6px 4px;font-weight:700;color:#555;width:12px;">:</td>
-      <td style="padding:6px 12px;color:#333;font-weight:600;">${row.value}</td>
-    </tr>
-  `).join('');
+  const timeStr = transaction.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
+  // Fee rows
   const feeRows = (() => {
-    if (transaction.subItems && transaction.subItems.length > 0) {
+    if (transaction.subItems?.length) {
       return transaction.subItems.map((item, i) => `
-        <tr style="background:${i % 2 === 0 ? 'rgba(0,0,0,0.025)' : 'transparent'};border-bottom:1px solid #e4eaf4;page-break-inside:avoid;">
-          <td style="padding:7px 10px;color:#444;width:34px;">${i + 1}</td>
-          <td style="padding:7px 10px;color:#333;">
+        <tr style="background:${i % 2 === 0 ? '#f8fafd' : '#ffffff'};page-break-inside:avoid;">
+          <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;">${i + 1}</td>
+          <td style="padding:8px 12px;color:#1e293b;font-weight:500;border-right:1px solid #e2e8f4;">
             ${item.description}
-            ${item.concessionAmount > 0 ? `<span style="color:#e8a020;font-size:9.5px;margin-left:8px;font-weight:600;">(−₹${item.concessionAmount.toLocaleString('en-IN')} concession)</span>` : ''}
+            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9.5px;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:3px;font-weight:600;">-₹${item.concessionAmount.toLocaleString('en-IN')} off</span>` : ''}
           </td>
-          <td style="padding:7px 10px;color:#555;">${getModeLabel(item.method || transaction.method || '')}</td>
-          <td style="padding:7px 10px;text-align:right;color:#333;font-weight:600;">₹${fmt(item.amount)}</td>
+          <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || '')}</td>
+          <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;">₹${inr(item.amount)}</td>
         </tr>
       `).join('');
     }
     return `
-      <tr style="background:rgba(0,0,0,0.025);border-bottom:1px solid #e4eaf4;">
-        <td style="padding:7px 10px;color:#444;">1</td>
-        <td style="padding:7px 10px;color:#333;">${transaction.feeType || 'Fee Collection'}</td>
-        <td style="padding:7px 10px;color:#555;">${modeLabel}</td>
-        <td style="padding:7px 10px;text-align:right;font-weight:600;">₹${fmt(totalAmount)}</td>
+      <tr style="background:#f8fafd;page-break-inside:avoid;">
+        <td style="padding:8px 10px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;">1</td>
+        <td style="padding:8px 12px;color:#1e293b;font-weight:500;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
+        <td style="padding:8px 10px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
+        <td style="padding:8px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:110px;">₹${inr(totalAmount)}</td>
       </tr>
     `;
   })();
 
   const concessionRow = (!transaction.subItems && transaction.concessionAmount) ? `
-    <tr style="background:rgba(232,160,32,0.05);border-bottom:1px solid #e4eaf4;">
-      <td style="padding:7px 10px;"></td>
-      <td style="padding:7px 10px;color:#e8a020;font-style:italic;">Concession Applied</td>
-      <td style="padding:7px 10px;"></td>
-      <td style="padding:7px 10px;text-align:right;color:#e8a020;font-weight:600;">−₹${(transaction.concessionAmount || 0).toLocaleString('en-IN')}</td>
+    <tr style="background:#fffbeb;page-break-inside:avoid;">
+      <td style="padding:7px 10px;border-right:1px solid #e2e8f4;"></td>
+      <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:600;border-right:1px solid #e2e8f4;">
+        ✦ Concession Applied
+      </td>
+      <td style="border-right:1px solid #e2e8f4;"></td>
+      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;">−₹${(transaction.concessionAmount||0).toLocaleString('en-IN')}</td>
     </tr>
   ` : '';
 
   const signerName = currentUserName ? currentUserName.toUpperCase() : 'AUTHORISED SIGNATORY';
+
+  const logoImg   = logoBase64      ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />` : '';
+  const watermark = watermarkBase64 ? `<img src="${watermarkBase64}" alt="" style="width:380px;height:auto;" />` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -193,263 +175,450 @@ export function generateReceiptHTML(
   <title>Payment Receipt — ${transaction.studentName}</title>
   <style>
     ${BASE_CSS}
-    @page {
-      size: A4 portrait;
-      margin: 10mm 12mm;
-    }
-    body { padding: 0; }
-    .page { position: relative; min-height: 257mm; }
+    @page { size: A4 portrait; margin: 8mm 10mm; }
+
+    /* ── Watermark ── */
     .watermark {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      opacity: 0.07;
-      pointer-events: none;
-      z-index: 0;
-      width: 420px;
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      opacity: 0.055; pointer-events: none; z-index: 0;
     }
     .content { position: relative; z-index: 1; }
-    .title-bar {
-      background: #1b3a6b;
-      color: #fff;
-      text-align: center;
-      padding: 9px 0;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      margin-bottom: 16px;
+
+    /* ── Header ── */
+    .header-wrap {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 0;
       page-break-inside: avoid;
     }
-    .section-header {
-      color: #1b3a6b;
-      font-weight: 800;
-      font-size: 11.5px;
-      letter-spacing: 0.5px;
-      margin-bottom: 5px;
-      border-bottom: 2px solid #1b3a6b;
-      padding-bottom: 3px;
+    .header-logo-col {
+      width: 100px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 6px 10px 6px 0;
+    }
+    .header-divider {
+      width: 3px; background: linear-gradient(to bottom, #e8a020, #1b3a6b);
+      align-self: stretch; margin: 4px 14px;
+      border-radius: 2px;
+    }
+    .header-text { flex: 1; }
+    .school-name {
+      font-size: 23px; font-weight: 900; color: #1b3a6b;
+      letter-spacing: 1.5px; line-height: 1;
+      text-transform: uppercase;
+    }
+    .school-tagline {
+      font-size: 10px; font-weight: 700; color: #b45309;
+      margin-top: 3px; letter-spacing: 0.5px;
+    }
+    .school-addr { font-size: 9.5px; color: #64748b; margin-top: 2px; line-height: 1.5; }
+    .school-contact { font-size: 9.5px; color: #64748b; }
+
+    /* ── Accent lines ── */
+    .accent-gold { height: 3px; background: linear-gradient(to right, #e8a020, #d08c16, #e8a020); margin: 10px 0 2px; }
+    .accent-navy { height: 1.5px; background: #1b3a6b; margin-bottom: 14px; }
+
+    /* ── Receipt title bar ── */
+    .title-bar {
+      background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%);
+      padding: 10px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+      border-radius: 4px;
+      page-break-inside: avoid;
+    }
+    .title-text {
+      font-size: 15px; font-weight: 800; color: #fff;
+      letter-spacing: 4px; text-transform: uppercase;
+    }
+    .receipt-badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 4px; padding: 4px 10px;
+      font-size: 9px; color: rgba(255,255,255,0.9);
+      font-weight: 600; letter-spacing: 0.5px;
+    }
+    .receipt-badge span { display: block; font-size: 10.5px; color: #fff; font-weight: 700; margin-top: 1px; }
+
+    /* ── Two-column info grid ── */
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid #dde4f0;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      page-break-inside: avoid;
+    }
+    .info-col {
+      padding: 12px 14px;
+    }
+    .info-col:first-child {
+      border-right: 1px solid #dde4f0;
+      background: #f8fafd;
+    }
+    .info-col:last-child { background: #fff; }
+    .info-col-header {
+      font-size: 8.5px; font-weight: 800; color: #1b3a6b;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      border-bottom: 2px solid #e8a020;
+      padding-bottom: 5px; margin-bottom: 8px;
+    }
+    .info-row { display: flex; gap: 6px; margin-bottom: 5px; }
+    .info-label { font-size: 9.5px; font-weight: 700; color: #94a3b8; width: 90px; flex-shrink: 0; }
+    .info-value { font-size: 10px; font-weight: 600; color: #1e293b; flex: 1; }
+
+    /* ── Section header ── */
+    .section-hd {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
       page-break-after: avoid;
     }
-    .fee-table th {
-      padding: 8px 10px;
-      background: #516f9e;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .fee-table th:last-child { text-align: right; }
-    .total-row td {
-      padding: 9px 10px;
-      background: #1b3a6b;
-      color: #fff;
-      font-weight: 800;
-    }
-    .total-row td:last-child { text-align: right; font-size: 13px; }
+    .section-hd-bar { width: 4px; height: 16px; background: #e8a020; border-radius: 2px; flex-shrink: 0; }
+    .section-hd-text { font-size: 10.5px; font-weight: 800; color: #1b3a6b; letter-spacing: 0.8px; text-transform: uppercase; }
+
+    /* ── Fee table ── */
+    .fee-table { width: 100%; margin-bottom: 0; border: 1px solid #dde4f0; border-radius: 6px; overflow: hidden; }
+    .fee-table thead tr { background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%); }
+    .fee-table thead th { padding: 9px 10px; color: #fff; font-size: 10px; font-weight: 700; text-align: left; }
+    .fee-table thead th:last-child { text-align: right; }
+    .fee-table tbody tr { border-bottom: 1px solid #e8edf8; }
+    .fee-table tbody tr:last-child { border-bottom: none; }
+    .fee-table tfoot tr { background: linear-gradient(135deg, #e8a020 0%, #d08c16 100%); }
+    .fee-table tfoot td { padding: 11px 12px; color: #1b3a6b; font-weight: 800; }
+    .fee-table tfoot td.total-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+    .fee-table tfoot td.total-amt { text-align: right; font-size: 16px; color: #1b3a6b; }
+
+    /* ── Words box ── */
     .words-box {
+      margin-top: 12px;
       border-left: 4px solid #e8a020;
-      padding: 7px 12px;
-      background: #fffbf0;
-      margin: 12px 0 16px;
-      font-size: 11px;
-      color: #333;
+      background: linear-gradient(to right, #fffbf0, #fff);
+      padding: 9px 14px;
+      border-radius: 0 4px 4px 0;
+      font-size: 10.5px; color: #334155;
       page-break-inside: avoid;
     }
-    .sig-row {
-      display: flex;
-      justify-content: flex-end;
-      align-items: flex-end;
-      margin: 10px 0 18px;
+
+    /* ── Remark box ── */
+    .remark-box {
+      margin-top: 8px;
+      border-left: 4px solid #94a3b8;
+      background: #f8fafd;
+      padding: 7px 14px;
+      border-radius: 0 4px 4px 0;
+      font-size: 10px; color: #475569; font-style: italic;
       page-break-inside: avoid;
     }
-    .sig-line {
-      width: 170px;
-      border-top: 1.5px solid #888;
-      padding-top: 4px;
-      text-align: center;
-    }
-    .footer-box {
-      border-left: 4px solid #e8a020;
-      padding: 7px 12px;
-      background: #fffaf0;
-      font-size: 10px;
-      color: #666;
-      font-style: italic;
+
+    /* ── Signature section ── */
+    .sig-section {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-top: 20px; margin-bottom: 16px;
       page-break-inside: avoid;
     }
+    .sig-block { text-align: center; }
+    .sig-name { font-size: 10px; font-weight: 700; color: #1b3a6b; margin-bottom: 28px; }
+    .sig-line { width: 160px; border-top: 1.5px solid #94a3b8; padding-top: 5px; }
+    .sig-sub { font-size: 8.5px; color: #94a3b8; font-weight: 600; }
+    .stamp-box {
+      width: 100px; height: 70px;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #cbd5e1; font-size: 8px; font-weight: 600;
+      text-align: center; line-height: 1.4;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      page-break-inside: avoid;
+    }
+    .footer-left { font-size: 9px; color: #94a3b8; font-style: italic; line-height: 1.5; }
+    .footer-right { font-size: 9px; color: #94a3b8; text-align: right; }
+    .footer-right strong { color: #1b3a6b; }
   </style>
 </head>
 <body>
-  <img class="watermark" src="${watermarkUrl()}" alt="" />
-  <div class="page">
-    <div class="content">
-      ${brandedHeader(logoUrl())}
+  ${watermark ? `<div class="watermark">${watermark}</div>` : ''}
 
-      <div class="title-bar">PAYMENT RECEIPT</div>
+  <div class="content">
 
-      <table style="margin-bottom:16px;">
-        <tbody>${metaRowsHTML}</tbody>
-      </table>
-
-      <div class="section-header">PAYMENT DETAILS</div>
-
-      <table class="fee-table" style="margin-bottom:6px;">
-        <thead>
-          <tr>
-            <th style="width:34px;text-align:left;">#</th>
-            <th style="text-align:left;">Description</th>
-            <th style="text-align:left;width:110px;">Mode</th>
-            <th style="width:110px;">Amount (₹)</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${feeRows}
-          ${concessionRow}
-        </tbody>
-        <tfoot>
-          <tr class="total-row">
-            <td colspan="3">TOTAL PAID</td>
-            <td>₹ ${fmt(totalAmount)}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <div class="words-box">
-        <strong>Amount in Words:</strong>&nbsp;<em>${amountInWords}</em>
+    <!-- ════ HEADER ════ -->
+    <div class="header-wrap">
+      <div class="header-logo-col" style="width:110px;height:80px;">
+        ${logoImg}
       </div>
-
-      ${transaction.remark ? `
-        <div class="words-box" style="margin-top:-8px;">
-          <strong>Remark:</strong>&nbsp;<em>${transaction.remark}</em>
-        </div>
-      ` : ''}
-
-      <div class="sig-row">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:#333;text-align:center;margin-bottom:34px;">${signerName}</div>
-          <div class="sig-line">
-            <div style="font-size:9px;color:#666;margin-top:2px;">Authorised Signatory</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-box">
-        This is a computer-generated receipt and does not require a physical signature.<br/>
-        For queries, contact: Sunrise Convent School, Railnagar, Rajkot, Gujarat.
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <div class="school-name">${SCH.name}</div>
+        <div class="school-tagline">${SCH.medium}</div>
+        <div class="school-addr">${SCH.address}</div>
+        <div class="school-contact">Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}</div>
       </div>
     </div>
+
+    <div class="accent-gold"></div>
+    <div class="accent-navy"></div>
+
+    <!-- ════ TITLE BAR ════ -->
+    <div class="title-bar">
+      <div class="title-text">Payment Receipt</div>
+      <div class="receipt-badge">
+        RECEIPT NO.<span>${receiptNo}</span>
+      </div>
+    </div>
+
+    <!-- ════ INFO GRID ════ -->
+    <div class="info-grid">
+      <div class="info-col">
+        <div class="info-col-header">Student Information</div>
+        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${transaction.studentName}</span></div>
+        ${transaction.studentCode ? `<div class="info-row"><span class="info-label">Student Code</span><span class="info-value" style="font-family:monospace;">${transaction.studentCode}</span></div>` : ''}
+        ${transaction.classInfo   ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ''}
+        <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
+      </div>
+      <div class="info-col">
+        <div class="info-col-header">Payment Information</div>
+        <div class="info-row"><span class="info-label">Date</span><span class="info-value">${dateStr}</span></div>
+        <div class="info-row"><span class="info-label">Time</span><span class="info-value">${timeStr}</span></div>
+        <div class="info-row"><span class="info-label">Mode</span><span class="info-value">${mode}</span></div>
+        <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#16a34a;font-weight:700;">✓ Payment Received</span></div>
+      </div>
+    </div>
+
+    <!-- ════ FEE TABLE ════ -->
+    <div class="section-hd">
+      <div class="section-hd-bar"></div>
+      <div class="section-hd-text">Payment Details</div>
+    </div>
+
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th style="width:36px;text-align:center;">#</th>
+          <th>Description</th>
+          <th style="width:110px;text-align:center;">Mode</th>
+          <th style="width:110px;text-align:right;">Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${feeRows}
+        ${concessionRow}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="total-label">Total Paid</td>
+          <td class="total-amt">₹ ${inr(totalAmount)}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- ════ AMOUNT IN WORDS ════ -->
+    <div class="words-box">
+      <strong>Amount in Words:</strong>&nbsp;<em>${words}</em>
+    </div>
+
+    ${transaction.remark ? `
+    <div class="remark-box"><strong>Remark:</strong> ${transaction.remark}</div>
+    ` : ''}
+
+    <!-- ════ SIGNATURE ════ -->
+    <div class="sig-section">
+      <div class="sig-block">
+        <div class="stamp-box">SCHOOL<br/>SEAL</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-name">${signerName}</div>
+        <div class="sig-line">
+          <div class="sig-sub">Authorised Signatory</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ FOOTER ════ -->
+    <div class="footer">
+      <div class="footer-left">
+        This is a computer-generated receipt. No physical signature required.<br/>
+        For queries: Sunrise Convent School, Railnagar, Rajkot, Gujarat.
+      </div>
+      <div class="footer-right">
+        <strong>Sunrise Connect</strong><br/>School Administration System
+      </div>
+    </div>
+
   </div>
 </body>
 </html>`;
 }
 
-// ─── Report HTML generator ────────────────────────────────────────────────────
-export function generateReportHTML(report: { type: string; title: string; data: any }): string {
+// ─── Premium Report HTML ──────────────────────────────────────────────────────
+
+export function generateReportHTML(
+  report: { type: string; title: string; data: any },
+  opts: { logoBase64?: string } = {}
+): string {
   const { type, title, data } = report;
-  const todayStr = new Date().toLocaleDateString('en-IN', {
-    year: 'numeric', month: 'long', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
+  const { logoBase64 = '' } = opts;
 
   const isLandscape = type === 'outstanding-dues';
+  const todayStr = new Date().toLocaleDateString('en-IN', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
 
-  const reportBody = (() => {
-    if (type === 'daily-collections') {
-      const rows = (data.transactions || []).map((t: any, idx: number) => `
-        <tr style="page-break-inside:avoid;" class="${idx % 2 === 0 ? 'stripe-even' : ''}">
-          <td>${idx + 1}</td>
-          <td style="font-family:monospace;color:#555;">${t.studentCode || '—'}</td>
-          <td style="font-weight:700;color:#1a1a2e;">${t.studentName}</td>
-          <td>${t.classInfo || '—'}</td>
-          <td>${(t.feeType || '').replace(/\n/g, ', ')}</td>
-          <td style="font-weight:700;text-transform:uppercase;">${t.method || '—'}</td>
-          <td style="color:#666;">${t.time || '—'}</td>
-          <td style="text-align:right;font-weight:700;color:#1b3a6b;">₹${(t.amount || 0).toLocaleString('en-IN')}</td>
-        </tr>
-      `).join('');
+  const logoImg = logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />` : '';
 
-      return `
-        <div class="summary-grid" style="grid-template-columns:repeat(4,1fr);">
-          <div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-val">₹${(data.totalCollected||0).toLocaleString('en-IN')}</div></div>
-          <div class="stat-card"><div class="stat-label">Cash</div><div class="stat-val">₹${(data.cashCollected||0).toLocaleString('en-IN')}</div></div>
-          <div class="stat-card"><div class="stat-label">Online</div><div class="stat-val">₹${(data.onlineCollected||0).toLocaleString('en-IN')}</div></div>
-          <div class="stat-card"><div class="stat-label">Cheque</div><div class="stat-val">₹${(data.chequeCollected||0).toLocaleString('en-IN')}</div></div>
-        </div>
-        <table class="data-table">
-          <thead><tr>
-            <th>S.No</th><th>Code</th><th>Student Name</th><th>Class &amp; Medium</th>
-            <th>Fee Category</th><th>Method</th><th>Time</th><th class="right">Amount</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    }
+  const headerHTML = `
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:0;page-break-inside:avoid;">
+      <div style="width:90px;height:68px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:4px 8px 4px 0;">
+        ${logoImg}
+      </div>
+      <div style="width:3px;background:linear-gradient(to bottom,#e8a020,#1b3a6b);align-self:stretch;margin:3px 12px;border-radius:2px;"></div>
+      <div style="flex:1;">
+        <div style="font-size:20px;font-weight:900;color:#1b3a6b;letter-spacing:1px;">${SCH.name}</div>
+        <div style="font-size:9.5px;font-weight:700;color:#b45309;margin-top:2px;">${SCH.medium}</div>
+        <div style="font-size:9px;color:#64748b;margin-top:1px;">${SCH.address}</div>
+      </div>
+    </div>
+    <div style="height:3px;background:linear-gradient(to right,#e8a020,#d08c16,#e8a020);margin:8px 0 2px;"></div>
+    <div style="height:1.5px;background:#1b3a6b;margin-bottom:12px;"></div>
+    <div style="background:linear-gradient(135deg,#1b3a6b 0%,#2a5298 100%);padding:9px 14px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <div style="font-size:13px;font-weight:800;color:#fff;letter-spacing:3px;text-transform:uppercase;">${title}</div>
+      <div style="font-size:8.5px;color:rgba(255,255,255,0.75);">Generated: ${todayStr}</div>
+    </div>
+  `;
 
-    if (type === 'outstanding-dues') {
-      const rows = (data.students || []).map((s: any, idx: number) => `
-        <tr style="page-break-inside:avoid;" class="${idx % 2 === 0 ? 'stripe-even' : ''}">
-          <td>${idx + 1}</td>
-          <td style="font-family:monospace;color:#555;">${s.studentCode || '—'}</td>
-          <td style="font-weight:700;color:#1a1a2e;">${s.studentName}</td>
-          <td>${s.classInfo || '—'}</td>
-          <td>${s.parentName || '—'}</td>
-          <td style="color:#666;">${s.parentMobile || '—'}</td>
-          <td style="font-weight:700;color:#666;">${s.overdueCount} Months</td>
-          <td style="text-align:right;font-weight:700;color:#ea580c;">₹${(s.educationDue||0).toLocaleString('en-IN')}</td>
-          <td style="text-align:right;font-weight:700;color:#d97706;">₹${(s.transportDue||0).toLocaleString('en-IN')}</td>
-          <td style="text-align:right;font-weight:800;color:#1b3a6b;">₹${(s.totalDue||0).toLocaleString('en-IN')}</td>
-        </tr>
-      `).join('');
+  const statCard = (label: string, val: string, color = '#1a1a2e') => `
+    <div style="border:1px solid #dde4f0;border-radius:6px;padding:8px 12px;background:#f8fafd;">
+      <div style="font-size:8px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">${label}</div>
+      <div style="font-size:14px;font-weight:800;color:${color};margin-top:3px;">${val}</div>
+    </div>
+  `;
 
-      const avgDue = data.studentCount > 0 ? Math.round(data.totalOutstandingAmount / data.studentCount) : 0;
+  const thStyle   = `padding:8px 9px;background:linear-gradient(135deg,#1b3a6b 0%,#2a5298 100%);color:#fff;font-size:9px;font-weight:700;text-align:left;white-space:nowrap;`;
+  const thRStyle  = `${thStyle}text-align:right;`;
+  const tdStyle   = `padding:6px 9px;border-bottom:1px solid #e8edf8;font-size:9.5px;color:#334155;`;
+  const tdRStyle  = `${tdStyle}text-align:right;font-weight:700;`;
 
-      return `
-        <div class="summary-grid" style="grid-template-columns:repeat(4,1fr);">
-          <div class="stat-card"><div class="stat-label">Total Outstanding</div><div class="stat-val red">₹${(data.totalOutstandingAmount||0).toLocaleString('en-IN')}</div></div>
-          <div class="stat-card"><div class="stat-label">Students with Dues</div><div class="stat-val">${data.studentCount||0}</div></div>
-          <div class="stat-card"><div class="stat-label">Avg. Dues / Student</div><div class="stat-val">₹${avgDue.toLocaleString('en-IN')}</div></div>
-          <div class="stat-card"><div class="stat-label">Dues Aging (1M / 2M / 3M+)</div><div class="stat-val">${data.oneDueCount||0} / ${data.twoDueCount||0} / ${data.threePlusDueCount||0}</div></div>
-        </div>
-        <table class="data-table">
-          <thead><tr>
-            <th>S.No</th><th>Code</th><th>Student Name</th><th>Class</th>
-            <th>Parent Name</th><th>Mobile</th><th>Overdue</th>
-            <th class="right">Edu Dues</th><th class="right">Trans Dues</th><th class="right">Total Due</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    }
+  const footerHTML = `
+    <div style="margin-top:20px;border-top:1px solid #e2e8f0;padding-top:10px;display:flex;justify-content:space-between;align-items:flex-end;page-break-inside:avoid;">
+      <div style="font-size:8.5px;color:#94a3b8;font-style:italic;">
+        <strong style="color:#1b3a6b;">Sunrise Connect</strong> — School Administration System<br/>
+        This report is system-generated. Verify figures with the school office.
+      </div>
+      <div style="width:140px;border-top:1px solid #94a3b8;padding-top:5px;text-align:center;font-size:8.5px;color:#64748b;">
+        Authorised Signature<br/><span style="font-size:7.5px;color:#94a3b8;">Office of the School Principal</span>
+      </div>
+    </div>
+  `;
 
-    if (type === 'rte-reconcile') {
-      const rows = (data.students || []).map((s: any, idx: number) => `
-        <tr style="page-break-inside:avoid;" class="${idx % 2 === 0 ? 'stripe-even' : ''}">
-          <td>${idx + 1}</td>
-          <td style="font-family:monospace;color:#555;">${s.studentCode || '—'}</td>
-          <td style="font-weight:700;color:#1a1a2e;">${s.studentName}</td>
-          <td>${s.classInfo || '—'}</td>
-          <td>${s.parentName || '—'}</td>
-          <td style="color:#666;">${s.parentMobile || '—'}</td>
-          <td style="text-align:right;font-weight:800;color:#4338ca;">₹${(s.exemptedAmount||0).toLocaleString('en-IN')}</td>
-        </tr>
-      `).join('');
+  let bodyHTML = '';
 
-      return `
-        <div class="summary-grid" style="grid-template-columns:repeat(2,1fr);">
-          <div class="stat-card"><div class="stat-label">Total RTE Enrolled</div><div class="stat-val">${data.studentCount||0} Students</div></div>
-          <div class="stat-card"><div class="stat-label">Total Exempted Tuition</div><div class="stat-val indigo">₹${(data.totalExemptedAmount||0).toLocaleString('en-IN')}</div></div>
-        </div>
-        <table class="data-table">
-          <thead><tr>
-            <th>S.No</th><th>Code</th><th>Student Name</th><th>Class &amp; Section</th>
-            <th>Parent Name</th><th>Mobile</th><th class="right">Exempted Amount</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    }
+  if (type === 'daily-collections') {
+    const rows = (data.transactions || []).map((t: any, i: number) => `
+      <tr style="background:${i%2===0?'#f8fafd':'#fff'};page-break-inside:avoid;">
+        <td style="${tdStyle}color:#94a3b8;text-align:center;">${i+1}</td>
+        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${t.studentCode||'—'}</td>
+        <td style="${tdStyle}font-weight:700;">${t.studentName}</td>
+        <td style="${tdStyle}">${t.classInfo||'—'}</td>
+        <td style="${tdStyle}">${(t.feeType||'').replace(/\n/g,', ')}</td>
+        <td style="${tdStyle}font-weight:700;text-transform:uppercase;">${t.method||'—'}</td>
+        <td style="${tdStyle}color:#64748b;">${t.time||'—'}</td>
+        <td style="${tdRStyle}color:#1b3a6b;">₹${(t.amount||0).toLocaleString('en-IN')}</td>
+      </tr>
+    `).join('');
 
-    return '<p>Unknown report type.</p>';
-  })();
+    bodyHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+        ${statCard('Total Collected', `₹${(data.totalCollected||0).toLocaleString('en-IN')}`, '#1b3a6b')}
+        ${statCard('Cash', `₹${(data.cashCollected||0).toLocaleString('en-IN')}`)}
+        ${statCard('Online / UPI', `₹${(data.onlineCollected||0).toLocaleString('en-IN')}`)}
+        ${statCard('Cheque', `₹${(data.chequeCollected||0).toLocaleString('en-IN')}`)}
+      </div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;border-radius:6px;overflow:hidden;">
+        <thead><tr>
+          <th style="${thStyle}width:32px;text-align:center;">#</th>
+          <th style="${thStyle}">Code</th><th style="${thStyle}">Student Name</th>
+          <th style="${thStyle}">Class</th><th style="${thStyle}">Fee Category</th>
+          <th style="${thStyle}">Method</th><th style="${thStyle}">Time</th>
+          <th style="${thRStyle}">Amount</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  if (type === 'outstanding-dues') {
+    const avg = data.studentCount > 0 ? Math.round(data.totalOutstandingAmount/data.studentCount) : 0;
+    const rows = (data.students || []).map((s: any, i: number) => `
+      <tr style="background:${i%2===0?'#f8fafd':'#fff'};page-break-inside:avoid;">
+        <td style="${tdStyle}color:#94a3b8;text-align:center;">${i+1}</td>
+        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${s.studentCode||'—'}</td>
+        <td style="${tdStyle}font-weight:700;">${s.studentName}</td>
+        <td style="${tdStyle}">${s.classInfo||'—'}</td>
+        <td style="${tdStyle}">${s.parentName||'—'}</td>
+        <td style="${tdStyle}color:#64748b;">${s.parentMobile||'—'}</td>
+        <td style="${tdStyle}font-weight:700;color:#64748b;">${s.overdueCount} Months</td>
+        <td style="${tdRStyle}color:#ea580c;">₹${(s.educationDue||0).toLocaleString('en-IN')}</td>
+        <td style="${tdRStyle}color:#d97706;">₹${(s.transportDue||0).toLocaleString('en-IN')}</td>
+        <td style="${tdRStyle}color:#1b3a6b;font-size:10px;">₹${(s.totalDue||0).toLocaleString('en-IN')}</td>
+      </tr>
+    `).join('');
+
+    bodyHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+        ${statCard('Total Outstanding', `₹${(data.totalOutstandingAmount||0).toLocaleString('en-IN')}`, '#dc2626')}
+        ${statCard('Students with Dues', `${data.studentCount||0}`)}
+        ${statCard('Avg. Due / Student', `₹${avg.toLocaleString('en-IN')}`)}
+        ${statCard('Aging 1M / 2M / 3M+', `${data.oneDueCount||0} / ${data.twoDueCount||0} / ${data.threePlusDueCount||0}`)}
+      </div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;overflow:hidden;">
+        <thead><tr>
+          <th style="${thStyle}width:30px;text-align:center;">#</th>
+          <th style="${thStyle}">Code</th><th style="${thStyle}">Student Name</th>
+          <th style="${thStyle}">Class</th><th style="${thStyle}">Parent</th>
+          <th style="${thStyle}">Mobile</th><th style="${thStyle}">Overdue</th>
+          <th style="${thRStyle}">Edu Dues</th><th style="${thRStyle}">Trans Dues</th>
+          <th style="${thRStyle}">Total Due</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  if (type === 'rte-reconcile') {
+    const rows = (data.students || []).map((s: any, i: number) => `
+      <tr style="background:${i%2===0?'#f8fafd':'#fff'};page-break-inside:avoid;">
+        <td style="${tdStyle}color:#94a3b8;text-align:center;">${i+1}</td>
+        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${s.studentCode||'—'}</td>
+        <td style="${tdStyle}font-weight:700;">${s.studentName}</td>
+        <td style="${tdStyle}">${s.classInfo||'—'}</td>
+        <td style="${tdStyle}">${s.parentName||'—'}</td>
+        <td style="${tdStyle}color:#64748b;">${s.parentMobile||'—'}</td>
+        <td style="${tdRStyle}color:#4338ca;font-size:10px;">₹${(s.exemptedAmount||0).toLocaleString('en-IN')}</td>
+      </tr>
+    `).join('');
+
+    bodyHTML = `
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">
+        ${statCard('Total RTE Enrolled', `${data.studentCount||0} Students`)}
+        ${statCard('Total Exempted Tuition', `₹${(data.totalExemptedAmount||0).toLocaleString('en-IN')}`, '#4338ca')}
+      </div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;overflow:hidden;">
+        <thead><tr>
+          <th style="${thStyle}width:30px;text-align:center;">#</th>
+          <th style="${thStyle}">Code</th><th style="${thStyle}">Student Name</th>
+          <th style="${thStyle}">Class &amp; Section</th>
+          <th style="${thStyle}">Parent Name</th><th style="${thStyle}">Mobile</th>
+          <th style="${thRStyle}">Exempted Amount</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -458,92 +627,17 @@ export function generateReportHTML(report: { type: string; title: string; data: 
   <title>${title}</title>
   <style>
     ${BASE_CSS}
-    @page {
-      size: A4 ${isLandscape ? 'landscape' : 'portrait'};
-      margin: 10mm 12mm;
-    }
-    body { padding: 0; }
-    .report-header { page-break-inside: avoid; page-break-after: avoid; }
-    .title-bar {
-      background: #1b3a6b;
-      color: #fff;
-      text-align: center;
-      padding: 8px 0;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      margin-bottom: 14px;
-    }
-    .summary-grid {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 16px;
-      page-break-inside: avoid;
-    }
-    .stat-card {
-      border: 1px solid #dde3ed;
-      border-radius: 6px;
-      padding: 8px 12px;
-      background: #f7f9fc;
-    }
-    .stat-label { font-size: 9px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-val { font-size: 14px; font-weight: 800; color: #1a1a2e; margin-top: 3px; }
-    .stat-val.red { color: #dc2626; }
-    .stat-val.indigo { color: #4338ca; }
-    .data-table { font-size: 9.5px; }
-    .data-table thead tr { background: #1b3a6b; }
-    .data-table thead th {
-      padding: 7px 8px;
-      color: #fff;
-      font-weight: 700;
-      text-align: left;
-      white-space: nowrap;
-    }
-    .data-table thead th.right { text-align: right; }
-    .data-table tbody td { padding: 6px 8px; border-bottom: 1px solid #e8edf5; color: #333; }
-    .data-table tbody tr:hover { background: #f0f4ff; }
-    .stripe-even { background: rgba(0,0,0,0.018); }
+    @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; margin: 8mm 10mm; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
-    .footer-box {
-      margin-top: 24px;
-      border-top: 1px solid #dde3ed;
-      padding-top: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      font-size: 9px;
-      color: #888;
-      page-break-inside: avoid;
-    }
-    .sig-line {
-      width: 150px;
-      border-top: 1px solid #aaa;
-      padding-top: 4px;
-      text-align: center;
-      font-size: 9px;
-      color: #555;
-    }
+    tr { page-break-inside: avoid; }
   </style>
 </head>
 <body>
-  <div class="report-header">
-    ${brandedHeader(logoUrl())}
-    <div class="title-bar">${title.toUpperCase()}</div>
-    <div style="font-size:9px;color:#888;text-align:right;margin-top:-10px;margin-bottom:12px;">Generated: ${todayStr}</div>
-  </div>
-
-  ${reportBody}
-
-  <div class="footer-box">
-    <div>
-      <div style="font-weight:700;color:#555;">Sunrise Connect Administration System</div>
-      <div style="font-size:8px;color:#aaa;">Securely verified via Digital Ledger Access Protocol</div>
-    </div>
-    <div class="sig-line">
-      Authorised Signature<br/>
-      <span style="font-size:8px;color:#aaa;">Office of the School Principal</span>
-    </div>
+  <div style="position:relative;">
+    ${headerHTML}
+    ${bodyHTML}
+    ${footerHTML}
   </div>
 </body>
 </html>`;
@@ -551,12 +645,7 @@ export function generateReportHTML(report: { type: string; title: string; data: 
 
 // ─── iframe print engine ──────────────────────────────────────────────────────
 
-/**
- * Injects HTML into a hidden iframe and calls print().
- * The iframe is removed automatically after printing.
- */
 export function printHTML(html: string): void {
-  // Remove any stale iframe
   const existing = document.getElementById('__sunrise-print-frame');
   if (existing) existing.remove();
 
@@ -567,38 +656,25 @@ export function printHTML(html: string): void {
 
   const doc = iframe.contentDocument || iframe.contentWindow?.document;
   if (!doc) return;
-
   doc.open();
   doc.write(html);
   doc.close();
 
-  // Wait for images to load before printing
-  const imgs = doc.querySelectorAll('img');
-  const imgCount = imgs.length;
-
-  if (imgCount === 0) {
-    setTimeout(() => {
-      iframe.contentWindow?.print();
-      setTimeout(() => iframe.remove(), 1000);
-    }, 100);
-  } else {
-    let loaded = 0;
-    const tryPrint = () => {
-      loaded++;
-      if (loaded >= imgCount) {
-        setTimeout(() => {
-          iframe.contentWindow?.print();
-          setTimeout(() => iframe.remove(), 1000);
-        }, 100);
-      }
-    };
-    imgs.forEach(img => {
-      if (img.complete) {
-        tryPrint();
-      } else {
-        img.addEventListener('load', tryPrint);
-        img.addEventListener('error', tryPrint); // print even if logo fails
-      }
-    });
+  // Wait for all images (now base64 — should be instant, but guard anyway)
+  const imgs = Array.from(doc.querySelectorAll('img'));
+  if (imgs.length === 0) {
+    setTimeout(() => { iframe.contentWindow?.print(); setTimeout(() => iframe.remove(), 1500); }, 120);
+    return;
   }
+
+  let loaded = 0;
+  const tryPrint = () => {
+    if (++loaded >= imgs.length) {
+      setTimeout(() => { iframe.contentWindow?.print(); setTimeout(() => iframe.remove(), 1500); }, 120);
+    }
+  };
+  imgs.forEach(img => {
+    if (img.complete) tryPrint();
+    else { img.addEventListener('load', tryPrint); img.addEventListener('error', tryPrint); }
+  });
 }

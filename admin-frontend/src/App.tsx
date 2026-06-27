@@ -21,7 +21,9 @@ import {
 } from 'lucide-react';
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
-import { generateReceiptHTML, generateReportHTML, printHTML } from './utils/printUtils';
+import { generateReceiptHTML, generateReportHTML, printHTML, fetchAsBase64 } from './utils/printUtils';
+import logoPath from './assets/sunrise-logo.png';
+import watermarkPath from './assets/sunrise-round-logo.png';
 
 const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
   const { currentScreen } = useApp();
@@ -176,23 +178,30 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
 export const App: React.FC = () => {
   /**
-   * Receipt printing — generates self-contained HTML and injects it into a
-   * hidden <iframe>, then calls iframe.contentWindow.print().
-   * No DOM state or window.print() hack needed.
+   * Receipt printing — converts logo assets to base64 data URIs first
+   * (fixes intermittent missing-logo issue in iframe), then generates
+   * a fully self-contained HTML string and prints via hidden iframe.
    */
-  const handlePrint = (tx: PaymentTransaction) => {
-    // Read currentUser name from localStorage (same key the store uses)
+  const handlePrint = async (tx: PaymentTransaction) => {
     let currentUserName: string | undefined;
     try {
       const saved = localStorage.getItem('currentUser');
       if (saved) currentUserName = JSON.parse(saved)?.name;
     } catch { /* ignore */ }
-    const html = generateReceiptHTML(tx, currentUserName);
+
+    // Embed images as base64 so they always load in the iframe
+    const [logoBase64, watermarkBase64] = await Promise.all([
+      fetchAsBase64(logoPath),
+      fetchAsBase64(watermarkPath),
+    ]);
+
+    const html = generateReceiptHTML(tx, { currentUserName, logoBase64, watermarkBase64 });
     printHTML(html);
   };
 
-  const handlePrintReport = (report: any) => {
-    const html = generateReportHTML(report);
+  const handlePrintReport = async (report: any) => {
+    const logoBase64 = await fetchAsBase64(logoPath);
+    const html = generateReportHTML(report, { logoBase64 });
     printHTML(html);
   };
 
