@@ -20,10 +20,10 @@ export const Students: React.FC = () => {
     feeStructures
   } = useApp();
 
-  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
-    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'));
-  }, [feeStructures, activeYearName]);
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
+  }, [feeStructures, activeYearName, academicYears]);
 
   const dynamicStandards = useMemo(() => {
     const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
@@ -318,7 +318,7 @@ export const Students: React.FC = () => {
     };
 
     // Calculate remaining months for transport adjustment (mirroring backend logic)
-    const activeYear = academicYears.find((y) => y.isActive);
+    const activeYear = academicYears.find((y) => y.isActive) || academicYears[0];
     let remainingMonths = 0;
     if (activeYear) {
       const now = new Date();

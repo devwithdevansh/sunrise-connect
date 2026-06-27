@@ -16,24 +16,24 @@ export const PromoteStudents: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
 
   // Derive source medium options dynamically from active year fee structures
   const sourceMediumOptions = React.useMemo(() => {
     const configuredMeds = feeStructures
-      .filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'))
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)))
       .map(f => f.medium);
     const medSet = new Set(configuredMeds);
     if (medSet.size === 0) {
       return ['English', 'Gujarati'];
     }
     return Array.from(medSet);
-  }, [feeStructures, activeYearName]);
+  }, [feeStructures, activeYearName, academicYears]);
 
   // Derive source class options dynamically from active year fee structures
   const sourceClassOptions = React.useMemo(() => {
     const configuredStds = feeStructures
-      .filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'))
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)))
       .map(f => f.standard);
     const stdSet = new Set(configuredStds);
     if (stdSet.size === 0) {
@@ -45,7 +45,7 @@ export const PromoteStudents: React.FC = () => {
       const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
       return orderA - orderB;
     });
-  }, [feeStructures, activeYearName]);
+  }, [feeStructures, activeYearName, academicYears]);
 
   // Derive target class options dynamically from target year fee structures
   const targetClassOptions = React.useMemo(() => {

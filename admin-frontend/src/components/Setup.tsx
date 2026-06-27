@@ -206,11 +206,11 @@ export const Setup: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<'academic-year' | 'fee-categories' | 'fee-structure'>('academic-year');
 
-  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
 
   const filteredCategories = React.useMemo(() => {
-    return feeCategories.filter(cat => cat.academicYear === activeYearName || (!cat.academicYear && activeYearName === '2025-26'));
-  }, [feeCategories, activeYearName]);
+    return feeCategories.filter(cat => cat.academicYear === activeYearName || (!cat.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
+  }, [feeCategories, activeYearName, academicYears]);
 
   // Form states
   const [showAYForm, setShowAYForm] = useState(false);

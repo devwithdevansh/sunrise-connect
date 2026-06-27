@@ -298,7 +298,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }));
 
         // Map students (calculate status and populate parent info from parentId object)
-        const activeAcademicYear = (data.academicYears || []).find((y: any) => y.isActive)?.name || '';
+        const activeAcademicYear = (data.academicYears || []).find((y: any) => y.isActive)?.name || (data.academicYears || [])[0]?.name || '';
 
         const mappedStudents = rawStudents.map((s: any) => {
           const overdueLedgers = mappedLedgers.filter((l: any) => {

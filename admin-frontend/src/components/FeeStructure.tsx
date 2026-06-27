@@ -11,7 +11,7 @@ interface CreateFeeModalProps {
 
 const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ onClose, onSave }) => {
   const { academicYears } = useApp();
-  const activeYear = academicYears.find(y => y.isActive)?.name || '2025-26';
+  const activeYear = academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26';
   const [standard, setStandard] = useState('1');
   const [medium, setMedium] = useState('English');
   const [annualFee, setAnnualFee] = useState<number | ''>('');
@@ -416,7 +416,7 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
 /* ─── Main Component ──────────────────────────────────────────────── */
 export const FeeStructure: React.FC = () => {
   const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure, academicYears } = useApp();
-  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || '2025-26', [academicYears]);
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
   const [selectedStandard, setSelectedStandard] = useState<string>('1');
   const [editingFee, setEditingFee] = useState<FeeStructureData | null>(null);
   const [editingTransport, setEditingTransport] = useState<TransportFeeStructureData | null>(null);
@@ -439,8 +439,8 @@ export const FeeStructure: React.FC = () => {
 
   // Filter standard fee structures by academic year
   const filteredFeeStructures = useMemo(() => {
-    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && activeYearName === '2025-26'));
-  }, [feeStructures, activeYearName]);
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
+  }, [feeStructures, activeYearName, academicYears]);
 
   // Get unique sorted standards
   const standards = useMemo(() => {
