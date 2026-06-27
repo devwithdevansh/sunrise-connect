@@ -3,7 +3,7 @@ import { useApp } from '../store';
 import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
-  const { students, setScreen, academicYears } = useApp();
+  const { students, setScreen, academicYears, authFetch } = useApp();
   const [sourceMedium, setSourceMedium] = useState('English');
   const [sourceClass, setSourceClass] = useState('5');
   const [sourceDiv, setSourceDiv] = useState('A');
@@ -70,12 +70,10 @@ export const PromoteStudents: React.FC = () => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      const res = await fetch('/api/v1/students/promote', {
+      const res = await authFetch('/api/v1/students/promote', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           studentIds: selectedStudentIds,

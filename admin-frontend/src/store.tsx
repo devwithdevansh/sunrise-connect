@@ -7,6 +7,8 @@ import type {
 } from './mockData';
 import { isPeriodOverdue } from './utils';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://linen-weasel-242678.hostingersite.com';
+
 export type ScreenType =
   | 'dashboard'
   | 'setup'
@@ -156,6 +158,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Authenticated fetch wrapper that appends Bearer token and handles auto-refresh on 401
   const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
     let token = localStorage.getItem('accessToken');
     const headers = {
       ...(options.headers || {}),
@@ -163,7 +166,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    let res = await fetch(url, { ...options, headers });
+    let res = await fetch(fullUrl, { ...options, headers });
     if (res.status === 401) {
       const savedRefreshToken = localStorage.getItem('refreshToken');
       const userId = localStorage.getItem('userId');
@@ -206,7 +209,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             localStorage.removeItem(dataKey);
 
             try {
-              const refreshRes = await fetch('/api/v1/auth/refresh', {
+              const refreshRes = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -537,7 +540,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/v1/auth/portal/login', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/portal/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
@@ -613,7 +616,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Fire backend logout in the background
     if (token && refreshToken) {
-      fetch('/api/v1/auth/logout', {
+      fetch(`${API_BASE}/api/v1/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
