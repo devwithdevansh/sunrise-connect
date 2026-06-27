@@ -23,6 +23,12 @@ const connectDB = async () => {
   try {
     await mongoose.connect(env.MONGODB_URI);
     logger.info('MongoDB connected');
+    
+    // Auto-sync indexes on startup to clean up any legacy global unique indexes
+    // (e.g. dropping old "name" unique index that blocks multi-year categories)
+    await mongoose.model('FeeCategory').syncIndexes();
+    await mongoose.model('FeeStructure').syncIndexes();
+    logger.info('MongoDB indexes synchronized');
   } catch (err) {
     logger.error('MongoDB connection error:', err);
     process.exit(1);
