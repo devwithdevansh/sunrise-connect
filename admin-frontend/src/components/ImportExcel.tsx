@@ -339,6 +339,18 @@ export const ImportExcel: React.FC = () => {
                   <strong>Parent Sync Logic:</strong> If the primary phone number already exists in the system, the imported student will be automatically linked to that existing parent (registering them as siblings).
                 </p>
               </div>
+
+              <div className="bg-blue-50 border border-blue-150 rounded-xl p-3.5 flex gap-2.5">
+                <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                <div className="text-[10px] text-blue-800 leading-relaxed font-medium">
+                  <strong>Migration of Prior Dues:</strong> To import previous years' payment status, add columns like <code>Year 2025-26</code> in Excel.
+                  <ul className="list-disc pl-4 mt-1 space-y-1">
+                    <li>Use <code>paid</code> or <code>gov paid</code> if fully paid.</li>
+                    <li>Use a month name like <code>oct to may</code> if unpaid from October onwards.</li>
+                    <li>Use <code>term-2 to may</code> if Term 2 is unpaid.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 

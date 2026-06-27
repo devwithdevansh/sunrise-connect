@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
-import { Calendar, Tag, Layers, Plus, Check, X, Pencil, Trash2 } from 'lucide-react';
+import { Calendar, Tag, Layers, Plus, Check, X, Pencil, Trash2, Info } from 'lucide-react';
 import { FeeStructure } from './FeeStructure'; // Reuse existing component for the Fee Structure tab
 
 // ── Edit Academic Year Modal ─────
@@ -228,6 +228,7 @@ export const Setup: React.FC = () => {
   // Modal editing states
   const [editingAY, setEditingAY] = useState<any | null>(null);
   const [editingFC, setEditingFC] = useState<any | null>(null);
+  const [showAYGuide, setShowAYGuide] = useState(false);
 
   const handleCreateAY = async () => {
     if (!newAY.name || !newAY.startDate || !newAY.endDate) return;
@@ -320,7 +321,21 @@ export const Setup: React.FC = () => {
         {activeTab === 'academic-year' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-slate-800">Manage Academic Years</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800">Manage Academic Years</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAYGuide(!showAYGuide)}
+                  className={`p-1.5 rounded-lg border transition-all ${
+                    showAYGuide
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-350'
+                  }`}
+                  title="Show Transition Checklist"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </div>
               <button
                 onClick={() => setShowAYForm(true)}
                 className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm"
@@ -328,6 +343,45 @@ export const Setup: React.FC = () => {
                 <Plus className="w-4 h-4" /> Add Year
               </button>
             </div>
+
+            {showAYGuide && (
+              <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-5 shadow-sm space-y-4 animate-fade-in">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-2">
+                    <span className="text-xl">📅</span>
+                    <div>
+                      <h4 className="font-extrabold text-blue-900 text-sm">Academic Year Transition Checklist</h4>
+                      <p className="text-[11px] text-blue-700/80 font-medium mt-0.5">
+                        Follow these steps exactly when starting a new school year to maintain 100% data and fee integrity.
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAYGuide(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold">
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 1</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Create New Year</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Add the new year (e.g. 2026-27) here. <strong>Keep it INACTIVE for now.</strong></p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 2</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Define Fee Structure</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Go to the <strong>Fee Structure</strong> tab and set up the annual tuition, admission, and kit fees for the new year.</p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 3</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Promote Cohorts</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Go to the <strong>Promote</strong> page. Select students and promote them to the new year & class. This creates their new ledgers.</p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1 text-left">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 4</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Set Active Year</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">After promotions are done, click <strong>"Set Active"</strong> on the new year card to switch the main app context.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {showAYForm && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store';
-import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check } from 'lucide-react';
+import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check, Info, X } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
   const { students, setScreen, academicYears, authFetch, feeStructures } = useApp();
@@ -15,6 +15,7 @@ export const PromoteStudents: React.FC = () => {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPromoInfo, setShowPromoInfo] = useState(false);
 
   const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
 
@@ -198,8 +199,58 @@ export const PromoteStudents: React.FC = () => {
               Advance groups of students to their next standard, customize destination divisions, and assign academic years efficiently.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowPromoInfo(!showPromoInfo)}
+            className={`flex items-center justify-center gap-2 font-extrabold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md active:scale-[0.99] shrink-0 border ${
+              showPromoInfo
+                ? 'bg-white text-indigo-800 border-white hover:bg-indigo-50'
+                : 'bg-indigo-500/30 text-indigo-100 border-indigo-500/50 hover:bg-indigo-500/50 hover:text-white'
+            }`}
+          >
+            <Info className="h-4 w-4" />
+            {showPromoInfo ? 'Hide Promotion Guide' : 'How Promotion Works'}
+          </button>
         </div>
       </div>
+
+      {showPromoInfo && (
+        <div className="bg-indigo-50/60 border border-indigo-150 rounded-2xl p-5 shadow-sm space-y-3.5 animate-fade-in mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex gap-2">
+              <span className="text-xl">🎓</span>
+              <div>
+                <h4 className="font-extrabold text-indigo-900 text-sm">Understanding the Promotion Process</h4>
+                <p className="text-[11px] text-indigo-700/80 font-medium mt-0.5">
+                  Promotions are isolated by academic years. Read these key rules to ensure the process goes smoothly.
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setShowPromoInfo(false)} className="text-indigo-400 hover:text-indigo-600 transition-colors p-1"><X className="w-4 h-4" /></button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
+              <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">1. Pre-requisite</h5>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Before promoting, you <strong>MUST</strong> set up the target year's <strong>Fee Structure</strong> first in Setup. The system needs this to calculate their new monthly fee amounts.
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
+              <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">2. Ledger Generation</h5>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Promoting creates the student's monthly ledgers for the <strong>target academic year</strong> using the fee structure defined for their <strong>promoted standard</strong>.
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
+              <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">3. Ledger Isolation</h5>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Fees from previous years (e.g. 2025-26) remain unchanged at their original rates. The new year's ledgers are fully isolated from the previous year.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {success && (
         <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 font-bold border border-emerald-200 shadow-sm animate-fade-in">
