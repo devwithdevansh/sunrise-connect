@@ -175,70 +175,45 @@ export function generateReceiptHTML(
   <title>Payment Receipt — ${transaction.studentName}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A4 portrait; margin: 8mm 10mm; }
+    @page { size: A4 portrait; margin: 0; }
+
+    body {
+      padding: 0;
+      margin: 0;
+      width: 210mm;
+      height: 297mm;
+      position: relative;
+      background: #fff;
+    }
 
     /* ── Watermark ── */
     .watermark {
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      opacity: 0.055; pointer-events: none; z-index: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-12deg);
+      opacity: 0.055;
+      pointer-events: none;
+      z-index: 0;
+      width: 440px;
+      height: 440px;
+      object-fit: contain;
     }
-    .content { position: relative; z-index: 1; }
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      padding: 0 14mm 0;
+    }
 
-    /* ── Header ── */
-    .header-wrap {
-      display: flex; align-items: center; gap: 0;
-      margin-bottom: 0;
-      page-break-inside: avoid;
+    .main-body {
+      flex: 1;
+      padding-top: 10px;
     }
-    .header-logo-col {
-      width: 100px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      padding: 6px 10px 6px 0;
-    }
-    .header-divider {
-      width: 3px; background: linear-gradient(to bottom, #e8a020, #1b3a6b);
-      align-self: stretch; margin: 4px 14px;
-      border-radius: 2px;
-    }
-    .header-text { flex: 1; }
-    .school-name {
-      font-size: 23px; font-weight: 900; color: #1b3a6b;
-      letter-spacing: 1.5px; line-height: 1;
-      text-transform: uppercase;
-    }
-    .school-tagline {
-      font-size: 10px; font-weight: 700; color: #b45309;
-      margin-top: 3px; letter-spacing: 0.5px;
-    }
-    .school-addr { font-size: 9.5px; color: #64748b; margin-top: 2px; line-height: 1.5; }
-    .school-contact { font-size: 9.5px; color: #64748b; }
-
-    /* ── Accent lines ── */
-    .accent-gold { height: 3px; background: linear-gradient(to right, #e8a020, #d08c16, #e8a020); margin: 10px 0 2px; }
-    .accent-navy { height: 1.5px; background: #1b3a6b; margin-bottom: 14px; }
-
-    /* ── Receipt title bar ── */
-    .title-bar {
-      background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%);
-      padding: 10px 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px;
-      border-radius: 4px;
-      page-break-inside: avoid;
-    }
-    .title-text {
-      font-size: 15px; font-weight: 800; color: #fff;
-      letter-spacing: 4px; text-transform: uppercase;
-    }
-    .receipt-badge {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 4px; padding: 4px 10px;
-      font-size: 9px; color: rgba(255,255,255,0.9);
-      font-weight: 600; letter-spacing: 0.5px;
-    }
-    .receipt-badge span { display: block; font-size: 10.5px; color: #fff; font-weight: 700; margin-top: 1px; }
 
     /* ── Two-column info grid ── */
     .info-grid {
@@ -329,127 +304,140 @@ export function generateReceiptHTML(
       color: #cbd5e1; font-size: 8px; font-weight: 600;
       text-align: center; line-height: 1.4;
     }
-
-    /* ── Footer ── */
-    .footer {
-      border-top: 1px solid #e2e8f0;
-      padding-top: 8px;
-      display: flex; justify-content: space-between; align-items: center;
-      page-break-inside: avoid;
-    }
-    .footer-left { font-size: 9px; color: #94a3b8; font-style: italic; line-height: 1.5; }
-    .footer-right { font-size: 9px; color: #94a3b8; text-align: right; }
-    .footer-right strong { color: #1b3a6b; }
   </style>
 </head>
 <body>
-  ${watermark ? `<div class="watermark">${watermark}</div>` : ''}
+  ${watermark}
 
-  <div class="content">
-
-    <!-- ════ HEADER ════ -->
-    <div class="header-wrap">
-      <div class="header-logo-col" style="width:110px;height:80px;">
+  <!-- ════ HEADER WITH WAVE/CURVED SVG SHAPES ════ -->
+  <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; border-bottom: 3px solid #1b3a6b; page-break-inside: avoid;">
+    <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" viewBox="0 0 718 130" preserveAspectRatio="none">
+      <!-- Gold curved banner on the right -->
+      <path d="M 370 0 L 718 0 L 718 95 C 670 130, 520 130, 420 130 C 460 95, 450 45, 370 0 Z" fill="#e8a020" />
+      <!-- Navy curved banner on the left (overlapping) -->
+      <path d="M 0 0 L 440 0 C 420 85, 380 130, 300 130 L 0 130 Z" fill="#1b3a6b" />
+    </svg>
+    
+    <!-- Left side content: Logo and School details inside the Navy area -->
+    <div style="position: absolute; top: 0; left: 0; width: 58%; height: 130px; z-index: 2; display: flex; align-items: center; padding-left: 20px; color: #fff;">
+      <div style="width: 70px; height: 70px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-right: 15px; flex-shrink: 0;">
         ${logoImg}
       </div>
-      <div class="header-divider"></div>
-      <div class="header-text">
-        <div class="school-name">${SCH.name}</div>
-        <div class="school-tagline">${SCH.medium}</div>
-        <div class="school-addr">${SCH.address}</div>
-        <div class="school-contact">Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}</div>
-      </div>
-    </div>
-
-    <div class="accent-gold"></div>
-    <div class="accent-navy"></div>
-
-    <!-- ════ TITLE BAR ════ -->
-    <div class="title-bar">
-      <div class="title-text">Payment Receipt</div>
-      <div class="receipt-badge">
-        RECEIPT NO.<span>${receiptNo}</span>
-      </div>
-    </div>
-
-    <!-- ════ INFO GRID ════ -->
-    <div class="info-grid">
-      <div class="info-col">
-        <div class="info-col-header">Student Information</div>
-        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${transaction.studentName}</span></div>
-        ${transaction.studentCode ? `<div class="info-row"><span class="info-label">Student Code</span><span class="info-value" style="font-family:monospace;">${transaction.studentCode}</span></div>` : ''}
-        ${transaction.classInfo   ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ''}
-        <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
-      </div>
-      <div class="info-col">
-        <div class="info-col-header">Payment Information</div>
-        <div class="info-row"><span class="info-label">Date</span><span class="info-value">${dateStr}</span></div>
-        <div class="info-row"><span class="info-label">Time</span><span class="info-value">${timeStr}</span></div>
-        <div class="info-row"><span class="info-label">Mode</span><span class="info-value">${mode}</span></div>
-        <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#16a34a;font-weight:700;">✓ Payment Received</span></div>
-      </div>
-    </div>
-
-    <!-- ════ FEE TABLE ════ -->
-    <div class="section-hd">
-      <div class="section-hd-bar"></div>
-      <div class="section-hd-text">Payment Details</div>
-    </div>
-
-    <table class="fee-table">
-      <thead>
-        <tr>
-          <th style="width:36px;text-align:center;">#</th>
-          <th>Description</th>
-          <th style="width:110px;text-align:center;">Mode</th>
-          <th style="width:110px;text-align:right;">Amount (₹)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${feeRows}
-        ${concessionRow}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3" class="total-label">Total Paid</td>
-          <td class="total-amt">₹ ${inr(totalAmount)}</td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <!-- ════ AMOUNT IN WORDS ════ -->
-    <div class="words-box">
-      <strong>Amount in Words:</strong>&nbsp;<em>${words}</em>
-    </div>
-
-    ${transaction.remark ? `
-    <div class="remark-box"><strong>Remark:</strong> ${transaction.remark}</div>
-    ` : ''}
-
-    <!-- ════ SIGNATURE ════ -->
-    <div class="sig-section">
-      <div class="sig-block">
-        <div class="stamp-box">SCHOOL<br/>SEAL</div>
-      </div>
-      <div class="sig-block">
-        <div class="sig-name">${signerName}</div>
-        <div class="sig-line">
-          <div class="sig-sub">Authorised Signatory</div>
+      <div>
+        <div style="font-size: 19px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE CONVENT SCHOOL</div>
+        <div style="font-size: 9px; font-weight: 700; color: #fcd34d; margin-top: 3px; letter-spacing: 0.3px;">${SCH.medium}</div>
+        <div style="font-size: 8.5px; color: #e2e8f0; margin-top: 3px; line-height: 1.3;">
+          ${SCH.address}<br/>
+          Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
         </div>
       </div>
     </div>
 
-    <!-- ════ FOOTER ════ -->
-    <div class="footer">
-      <div class="footer-left">
-        This is a computer-generated receipt. No physical signature required.<br/>
-        For queries: Sunrise Convent School, Railnagar, Rajkot, Gujarat.
-      </div>
-      <div class="footer-right">
-        <strong>Sunrise Connect</strong><br/>School Administration System
+    <!-- Right side content: RECEIPT title and Receipt No inside the Gold area -->
+    <div style="position: absolute; top: 0; right: 0; width: 42%; height: 115px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff;">
+      <div style="font-size: 26px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
+      <div style="font-size: 10px; color: #1b3a6b; font-weight: 700; margin-top: 6px; text-align: right; background: rgba(255,255,255,0.9); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        NO: <span style="font-family: monospace; font-size: 11px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
+  </div>
 
+  <div class="content-wrapper">
+    <div class="main-body">
+
+      <!-- ════ INFO GRID ════ -->
+      <div class="info-grid" style="margin-top: 15px;">
+        <div class="info-col">
+          <div class="info-col-header">Student Information</div>
+          <div class="info-row"><span class="info-label">Name</span><span class="info-value">${transaction.studentName}</span></div>
+          ${transaction.studentCode ? `<div class="info-row"><span class="info-label">Student Code</span><span class="info-value" style="font-family:monospace;">${transaction.studentCode}</span></div>` : ''}
+          ${transaction.classInfo   ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ''}
+          <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
+        </div>
+        <div class="info-col">
+          <div class="info-col-header">Payment Information</div>
+          <div class="info-row"><span class="info-label">Date</span><span class="info-value">${dateStr}</span></div>
+          <div class="info-row"><span class="info-label">Time</span><span class="info-value">${timeStr}</span></div>
+          <div class="info-row"><span class="info-label">Mode</span><span class="info-value">${mode}</span></div>
+          <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#16a34a;font-weight:700;">✓ Payment Received</span></div>
+        </div>
+      </div>
+
+      <!-- ════ FEE TABLE ════ -->
+      <div class="section-hd">
+        <div class="section-hd-bar"></div>
+        <div class="section-hd-text">Payment Details</div>
+      </div>
+
+      <table class="fee-table">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center;">#</th>
+            <th>Description</th>
+            <th style="width:110px;text-align:center;">Mode</th>
+            <th style="width:110px;text-align:right;">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${feeRows}
+          ${concessionRow}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="total-label">Total Paid</td>
+            <td class="total-amt">₹ ${inr(totalAmount)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- ════ AMOUNT IN WORDS ════ -->
+      <div class="words-box">
+        <strong>Amount in Words:</strong>&nbsp;<em>${words}</em>
+      </div>
+
+      ${transaction.remark ? `
+      <div class="remark-box"><strong>Remark:</strong> ${transaction.remark}</div>
+      ` : ''}
+
+      <!-- ════ SIGNATURE ════ -->
+      <div class="sig-section">
+        <div class="sig-block">
+          <div class="stamp-box">SCHOOL<br/>SEAL</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-name">${signerName}</div>
+          <div class="sig-line">
+            <div class="sig-sub">Authorised Signatory</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ FOOTER WITH CURVED SVG SHAPES ════ -->
+  <div class="footer-container" style="position: relative; height: 75px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
+    <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1;" viewBox="0 0 718 75" preserveAspectRatio="none">
+      <!-- Gold curved block on the bottom left (underneath) -->
+      <path d="M 0 30 L 220 30 C 180 65, 140 75, 100 75 L 0 75 Z" fill="#e8a020" />
+      <!-- Navy curved block on the bottom right (overlapping) -->
+      <path d="M 180 30 L 718 30 L 718 75 L 130 75 C 160 75, 160 45, 180 30 Z" fill="#1b3a6b" />
+    </svg>
+    
+    <!-- Left side text (Gold block) -->
+    <div style="position: absolute; bottom: 0; left: 0; width: 22%; height: 45px; z-index: 2; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b;">
+      <span style="font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">THANK YOU</span>
+    </div>
+
+    <!-- Right side text (Navy block) -->
+    <div style="position: absolute; bottom: 0; right: 0; width: 78%; height: 45px; z-index: 2; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 9.5px;">
+      <div style="display: flex; gap: 18px; font-weight: 600; align-items: center; letter-spacing: 0.5px;">
+        <span>📞 ${SCH.phone}</span>
+        <span style="opacity: 0.4;">|</span>
+        <span>✉️ ${SCH.email}</span>
+        <span style="opacity: 0.4;">|</span>
+        <span>🌐 www.sunriseschool.in</span>
+      </div>
+    </div>
   </div>
 </body>
 </html>`;
