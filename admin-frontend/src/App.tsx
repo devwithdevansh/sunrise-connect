@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
+import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CollectFee } from './components/CollectFee';
@@ -154,7 +155,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 };
 
 const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
-  const { currentScreen } = useApp();
+  const { currentScreen, isScreenLoading } = useApp();
 
   if (currentScreen === 'login') {
     return <Login />;
@@ -164,7 +165,11 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
     <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans print:hidden">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
-        <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
+        {isScreenLoading ? (
+          <ScreenSkeleton />
+        ) : (
+          <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
+        )}
       </main>
     </div>
   );
