@@ -489,6 +489,27 @@ class StudentService {
 
       await studentRepository.updateOne({ _id: studentId }, { $set: updates }, { session });
 
+      if (updates.isActive === false) {
+        const today = new Date();
+        const ledgers = await mongoose.model('StudentFeeLedger').find({
+          studentId,
+          status: { $in: ['PENDING', 'PARTIAL'] },
+          dueDate: { $gt: today }
+        }).session(session);
+
+        for (const ledger of ledgers) {
+          if (ledger.status === 'PENDING') {
+            ledger.status = 'CANCELLED';
+            ledger.remainingAmount = 0;
+          } else if (ledger.status === 'PARTIAL') {
+            ledger.concessionAmount += ledger.remainingAmount;
+            ledger.remainingAmount = 0;
+            ledger.status = 'PAID';
+          }
+          await ledger.save({ session });
+        }
+      }
+
       // Fetch Active Academic Year
       const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
       let currentAcademicYearName = activeYear ? activeYear.name : '2025-26';
@@ -694,6 +715,11 @@ class StudentService {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
+      const targetYearDoc = await mongoose.model('AcademicYear').findOne({ name: targetAcademicYear }).session(session);
+      if (!targetYearDoc) {
+        throw new AppError(`Academic year ${targetAcademicYear} does not exist. Please create it first in Setup.`, 400);
+      }
+
       const students = await studentRepository.find({ _id: { $in: studentIds } }, null, { session });
       if (!students.length) throw new AppError('No valid students found', 404);
 
@@ -701,10 +727,13 @@ class StudentService {
       for (const student of students) {
         await studentRepository.updateOne(
           { _id: student._id },
-          { $set: { standard: targetStandard, division: targetDivision } },
+          { $set: { standard: targetStandard, division: targetDivision, isNewAdmission: false } },
           { session }
         );
         updatedStudentIds.push(student._id);
+        
+        // Wait for the ledger generation to complete for the target academic year
+        await this._generateLedgersForAcademicYear(student._id, targetAcademicYear, session);
 
         await AuditService.log(
           { performedBy, targetStudentId: student._id, action: 'STUDENT_UPDATED', details: { reason: 'Promotion', targetStandard, targetDivision, targetAcademicYear } },
@@ -723,34 +752,41 @@ class StudentService {
     }
   }
 
-  /** Regenerate missing fee ledgers for a student (backfill for legacy data) */
-  static async regenerateMissingLedgers(studentId) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  static async _generateLedgersForAcademicYear(studentId, targetAcademicYearStr, parentSession = null) {
+    const session = parentSession || await mongoose.startSession();
+    if (!parentSession) session.startTransaction();
     try {
-      const student = await studentRepository.findById(studentId);
+      const student = await mongoose.model('Student').findById(studentId).session(session);
       if (!student) throw new AppError('Student not found', 404);
 
       const isRTE = student.isRTE || false;
+      const academicYearStr = targetAcademicYearStr;
 
-      const activeAcademicYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
-      const activeAcademicYearStr = activeAcademicYearDoc ? activeAcademicYearDoc.name : '2025-26';
-
-      // Fetch categories (matching activeAcademicYearStr first)
-      const fetchCat = async (type) => {
-        let cat = await mongoose.model('FeeCategory').findOne({ type, academicYear: activeAcademicYearStr }).session(session);
-        if (!cat) cat = await mongoose.model('FeeCategory').findOne({ type }).session(session);
+      const ensureCategory = async (type, name, description) => {
+        let cat = await mongoose.model('FeeCategory').findOne({ type, academicYear: academicYearStr }).session(session);
+        if (!cat) {
+          cat = await mongoose.model('FeeCategory').findOne({ type, name, academicYear: academicYearStr }).session(session);
+        }
+        if (!cat) {
+          cat = await mongoose.model('FeeCategory').create([{
+            name,
+            type,
+            description,
+            academicYear: academicYearStr,
+            isActive: true
+          }], { session }).then(docs => docs[0]);
+        }
         return cat;
       };
-      const educationCategory = await fetchCat('EDUCATION');
-      const transportCategory = await fetchCat('TRANSPORT');
-      const termCategory = await fetchCat('TERM');
-      const admissionCategory = await fetchCat('ADMISSION');
-      const bagKitCategory = await fetchCat('OTHER');
 
-      // Fetch fee structures (matching the active academic year first)
+      const educationCategory = await ensureCategory('EDUCATION', 'Education', 'Education fee category');
+      const transportCategory = await ensureCategory('TRANSPORT', 'Transport', 'Transport fee category');
+      const termCategory = await ensureCategory('TERM', 'Term', 'Term fee category');
+      const admissionCategory = await ensureCategory('ADMISSION', 'Admission', 'Admission fee category');
+      const bagKitCategory = await ensureCategory('OTHER', 'Bag & Kit', 'Bag & Kit fee category');
+
       let feeStruct = await mongoose.model('FeeStructure').findOne(
-        { medium: student.medium, standard: student.standard, academicYear: activeAcademicYearStr, isActive: true },
+        { medium: student.medium, standard: student.standard, academicYear: academicYearStr, isActive: true },
         null,
         { session }
       );
@@ -761,13 +797,17 @@ class StudentService {
           { session }
         );
       }
-      const educationAmount = feeStruct ? Math.round(feeStruct.annualFee / ((feeStruct.educationPartCount || 12) + (feeStruct.termPartCount || 2))) : 0;
-      // Term fee: fall back to same per-part amount if termFee not explicitly set in DB
-      const termAmount = (feeStruct?.termFee !== undefined && feeStruct.termFee > 0)
+
+      if (!feeStruct) {
+        throw new AppError(`No active fee structure found for standard ${student.standard} (${student.medium} medium) in academic year ${academicYearStr}`, 400);
+      }
+
+      const educationAmount = Math.round(feeStruct.annualFee / ((feeStruct.educationPartCount || 12) + (feeStruct.termPartCount || 2)));
+      const termAmount = (feeStruct.termFee !== undefined && feeStruct.termFee > 0)
         ? feeStruct.termFee
         : educationAmount;
-      const admissionAmount = feeStruct?.admissionFee ?? 0;
-      const bagKitAmount = feeStruct?.bagKitFee ?? 0;
+      const admissionAmount = feeStruct.admissionFee ?? 0;
+      const bagKitAmount = feeStruct.bagKitFee ?? 0;
 
       let transportAmount = 0;
       if (student.transportType && student.transportType !== 'None') {
@@ -779,23 +819,26 @@ class StudentService {
         transportAmount = tfs?.amount ?? 0;
       }
 
-      // Get existing ledgers for this student
-      const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id }).session(session);
+      const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id, academicYear: academicYearStr }).session(session);
       const existingKey = (feeType, feePeriod) => existingLedgers.some(l => l.feeType === feeType && l.feePeriod === feePeriod);
 
+      const match = academicYearStr.match(/^(\d{4})/);
+      const startYear = match ? parseInt(match[1], 10) : 2025;
+      const baseYear = startYear + 1;
+
       const allMonths = [
-        { name: 'June', dueDate: '2026-06-15' },
-        { name: 'July', dueDate: '2026-07-15' },
-        { name: 'August', dueDate: '2026-08-15' },
-        { name: 'September', dueDate: '2026-09-15' },
-        { name: 'October', dueDate: '2026-10-15' },
-        { name: 'November', dueDate: '2026-11-15' },
-        { name: 'December', dueDate: '2026-12-15' },
-        { name: 'January', dueDate: '2027-01-15' },
-        { name: 'February', dueDate: '2027-02-15' },
-        { name: 'March', dueDate: '2027-03-15' },
-        { name: 'April', dueDate: '2027-04-15' },
-        { name: 'May', dueDate: '2027-05-15' }
+        { name: 'June', dueDate: `${startYear}-06-15` },
+        { name: 'July', dueDate: `${startYear}-07-15` },
+        { name: 'August', dueDate: `${startYear}-08-15` },
+        { name: 'September', dueDate: `${startYear}-09-15` },
+        { name: 'October', dueDate: `${startYear}-10-15` },
+        { name: 'November', dueDate: `${startYear}-11-15` },
+        { name: 'December', dueDate: `${startYear}-12-15` },
+        { name: 'January', dueDate: `${baseYear}-01-15` },
+        { name: 'February', dueDate: `${baseYear}-02-15` },
+        { name: 'March', dueDate: `${baseYear}-03-15` },
+        { name: 'April', dueDate: `${baseYear}-04-15` },
+        { name: 'May', dueDate: `${baseYear}-05-15` }
       ];
 
       const admissionMonth = student.admissionMonth || 'June';
@@ -804,8 +847,8 @@ class StudentService {
       const months = allMonths.slice(startIndex);
 
       const allTerms = [
-        { name: 'Term 1', dueDate: '2026-06-15' },
-        { name: 'Term 2', dueDate: '2026-12-15' }
+        { name: 'Term 1', dueDate: `${startYear}-06-15` },
+        { name: 'Term 2', dueDate: `${startYear}-12-15` }
       ];
       const terms = startIndex > 5 ? [allTerms[1]] : allTerms;
 
@@ -842,7 +885,6 @@ class StudentService {
         }
       };
 
-      // 1. Education ledgers (12 months)
       if (educationCategory) {
         for (const m of months) {
           if (!existingKey('EDUCATION', m.name)) {
@@ -857,10 +899,10 @@ class StudentService {
               dueDate: new Date(m.dueDate),
               status: isRTE ? 'PAID' : 'PENDING',
               feeCategoryId: educationCategory._id,
-              academicYear: activeAcademicYearStr,
+              academicYear: academicYearStr,
               source: 'MANUAL',
               generatedFrom: 'FEE_STRUCTURE',
-              ledgerNumber: `LEDGER_EDU_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
+              ledgerNumber: `LEDGER_EDU_${academicYearStr.replace('-', '_')}_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
               snapshot
             });
           } else {
@@ -869,7 +911,6 @@ class StudentService {
         }
       }
 
-      // 2. Transport ledgers (12 months, if applicable)
       if (transportCategory && student.transportType && student.transportType !== 'None') {
         for (const m of months) {
           if (!existingKey('TRANSPORT', m.name)) {
@@ -884,10 +925,10 @@ class StudentService {
               dueDate: new Date(m.dueDate),
               status: 'PENDING',
               feeCategoryId: transportCategory._id,
-              academicYear: activeAcademicYearStr,
+              academicYear: academicYearStr,
               source: 'MANUAL',
               generatedFrom: 'TRANSPORT_STRUCTURE',
-              ledgerNumber: `LEDGER_TRA_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
+              ledgerNumber: `LEDGER_TRA_${academicYearStr.replace('-', '_')}_${m.name.toUpperCase()}_${student.studentCode || student._id}`,
               snapshot
             });
           } else {
@@ -896,7 +937,6 @@ class StudentService {
         }
       }
 
-      // 3. Term ledgers
       if (termCategory) {
         for (const t of terms) {
           if (!existingKey('TERM', t.name)) {
@@ -911,10 +951,10 @@ class StudentService {
               dueDate: new Date(t.dueDate),
               status: isRTE ? 'PAID' : 'PENDING',
               feeCategoryId: termCategory._id,
-              academicYear: activeAcademicYearStr,
+              academicYear: academicYearStr,
               source: 'MANUAL',
               generatedFrom: 'FEE_STRUCTURE',
-              ledgerNumber: `LEDGER_TRM_${t.name.replace(' ', '').toUpperCase()}_${student.studentCode || student._id}`,
+              ledgerNumber: `LEDGER_TRM_${academicYearStr.replace('-', '_')}_${t.name.replace(' ', '').toUpperCase()}_${student.studentCode || student._id}`,
               snapshot
             });
           } else {
@@ -923,9 +963,7 @@ class StudentService {
         }
       }
 
-      // 4. Admission & Bag Kit (only for new admissions)
       if (student.isNewAdmission) {
-        // Check both legacy ("Admission") and new ("One-time") period names
         if (admissionCategory && !existingKey('ADMISSION', 'One-time') && !existingKey('ADMISSION', 'Admission')) {
           ledgersToCreate.push({
             studentId: student._id,
@@ -935,13 +973,13 @@ class StudentService {
             paidAmount: 0,
             concessionAmount: 0,
             remainingAmount: admissionAmount,
-            dueDate: new Date('2026-06-15'),
+            dueDate: new Date(`${startYear}-06-15`),
             status: 'PENDING',
             feeCategoryId: admissionCategory._id,
-            academicYear: activeAcademicYearStr,
+            academicYear: academicYearStr,
             source: 'MANUAL',
             generatedFrom: 'FEE_STRUCTURE',
-            ledgerNumber: `LEDGER_ADM_${student.studentCode || student._id}`,
+            ledgerNumber: `LEDGER_ADM_${academicYearStr.replace('-', '_')}_${student.studentCode || student._id}`,
             snapshot
           });
         } else if (admissionCategory) {
@@ -949,27 +987,26 @@ class StudentService {
           await updateLedgerIfNeeded('ADMISSION', 'Admission', admissionAmount);
         }
 
-        if (bagKitCategory && !existingKey('BAG_KIT', 'One-time') && !existingKey('BAG_KIT', 'Bag & Kit')) {
+        if (bagKitCategory && !existingKey('OTHER', 'Bag & Kit')) {
           ledgersToCreate.push({
             studentId: student._id,
-            feePeriod: 'One-time',
-            feeType: 'BAG_KIT',
+            feePeriod: 'Bag & Kit',
+            feeType: 'OTHER',
             totalAmount: bagKitAmount,
             paidAmount: 0,
             concessionAmount: 0,
             remainingAmount: bagKitAmount,
-            dueDate: new Date('2026-06-15'),
+            dueDate: new Date(`${startYear}-06-15`),
             status: 'PENDING',
             feeCategoryId: bagKitCategory._id,
-            academicYear: activeAcademicYearStr,
+            academicYear: academicYearStr,
             source: 'MANUAL',
             generatedFrom: 'FEE_STRUCTURE',
-            ledgerNumber: `LEDGER_BAG_${student.studentCode || student._id}`,
+            ledgerNumber: `LEDGER_BK_${academicYearStr.replace('-', '_')}_${student.studentCode || student._id}`,
             snapshot
           });
         } else if (bagKitCategory) {
-          await updateLedgerIfNeeded('BAG_KIT', 'One-time', bagKitAmount);
-          await updateLedgerIfNeeded('BAG_KIT', 'Bag & Kit', bagKitAmount);
+          await updateLedgerIfNeeded('OTHER', 'Bag & Kit', bagKitAmount);
         }
       }
 
@@ -978,20 +1015,22 @@ class StudentService {
         created = ledgersToCreate.length;
       }
 
-      await AuditService.log(
-        { performedBy: null, targetStudentId: studentId, action: 'LEDGER_CREATED', details: { type: 'REGENERATE_MISSING', count: created, updated } },
-        session
-      );
-
-      await session.commitTransaction();
-      return { created, updated, studentId };
-    } catch (e) {
-      await session.abortTransaction();
-      logger.error('StudentService.regenerateMissingLedgers error', e);
-      throw e;
+      if (!parentSession) await session.commitTransaction();
+      return { created, updated };
+    } catch (error) {
+      if (!parentSession) await session.abortTransaction();
+      logger.error('Error in _generateLedgersForAcademicYear:', error);
+      throw error;
     } finally {
-      session.endSession();
+      if (!parentSession) session.endSession();
     }
+  }
+
+  /** Regenerate missing fee ledgers for a student (backfill for legacy data) */
+  static async regenerateMissingLedgers(studentId) {
+    const activeAcademicYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true });
+    const activeAcademicYearStr = activeAcademicYearDoc ? activeAcademicYearDoc.name : '2025-26';
+    return await this._generateLedgersForAcademicYear(studentId, activeAcademicYearStr);
   }
 
   /**

@@ -135,6 +135,9 @@ class PaymentService {
 
   /** Reverse a payment – creates a reversal record and decrements ledger paidAmount */
   static async reversePayment({ paymentId, reason, performedBy = null }) {
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      throw new AppError('A valid reversal reason is required', 400);
+    }
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
