@@ -442,14 +442,14 @@ export function generateReceiptHTML(
     </div>
 
     <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
-    <div style="position: absolute; top: 0; left: 0; width: 60%; height: 110px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 20px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 20px; flex-shrink: 0;">
+    <div style="position: absolute; top: 0; left: 0; width: 65%; height: 110px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 24px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="width: 76px; height: 76px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 20px; flex-shrink: 0;">
         ${logoImg}
       </div>
       <div>
-        <div style="font-size: 17px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff; margin-bottom:8px;">SUNRISE SCHOOL RAJKOT</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #fcd34d; margin-top: 2px; letter-spacing: 0.3px;margin-bottom:2px;">${SCH.medium}</div>
-        <div style="font-size: 8px; color: #e2e8f0; margin-top: 2px; line-height: 1.25;">
+        <div style="font-size: 18px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff; margin-bottom: 4px;">SUNRISE SCHOOL RAJKOT</div>
+        <div style="font-size: 10px; font-weight: 700; color: #fcd34d; margin-top: 4px; letter-spacing: 0.3px; margin-bottom: 2px;">${SCH.medium}</div>
+        <div style="font-size: 9px; color: #e2e8f0; margin-top: 5px; line-height: 1.35;">
           ${SCH.address}<br/>
           Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
         </div>
