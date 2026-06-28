@@ -159,7 +159,18 @@ export const ImportExcel: React.FC = () => {
           });
 
           const startMonthVal = String(row["Transport Start Month"] || row["transportStartMonth"] || "").trim();
-          const transportStartMonth = startMonthVal ? startMonthVal : undefined;
+          let transportStartMonth: string | undefined = undefined;
+          if (startMonthVal) {
+            const clean = startMonthVal.toLowerCase();
+            const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
+            const fullMonthNames = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+            for (let idx = 0; idx < monthPrefixes.length; idx++) {
+              if (clean.includes(monthPrefixes[idx])) {
+                transportStartMonth = fullMonthNames[idx];
+                break;
+              }
+            }
+          }
 
           return {
             studentName: row["Student Name"] || row["studentName"] || "",
