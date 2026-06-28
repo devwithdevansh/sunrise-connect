@@ -730,17 +730,17 @@ class StudentService {
         const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));
         const ledgersToCreate = [];
 
-        // Always ensure transport ledgers before the start month are deleted
-        // (including PAID ones - so they disappear from the UI completely)
+        // Always ensure unpaid transport ledgers before the start month are deleted
         const monthsBeforeStart = months.slice(0, transportStartIdx < 0 ? 0 : transportStartIdx).map(m => m.name);
-        const idsToDelete = existingLedgers
-          .filter(l => monthsBeforeStart.includes(l.feePeriod))
-          .map(l => l._id);
+        const ledgersToDelete = existingLedgers.filter(l => monthsBeforeStart.includes(l.feePeriod) && l.status !== 'PAID');
+        const idsToDelete = ledgersToDelete.map(l => l._id);
+        
         if (idsToDelete.length > 0) {
           await mongoose.model('StudentFeeLedger').deleteMany({ _id: { $in: idsToDelete } }, { session });
         }
+        
         // Rebuild existingPeriods without the deleted ones
-        monthsBeforeStart.forEach(mName => existingPeriods.delete(mName));
+        ledgersToDelete.forEach(l => existingPeriods.delete(l.feePeriod));
 
         for (let i = 0; i < 12; i++) {
           const m = months[i];
