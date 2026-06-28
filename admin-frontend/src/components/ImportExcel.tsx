@@ -485,7 +485,9 @@ export const ImportExcel: React.FC = () => {
                             <td className="py-3 px-4 space-y-1">
                               <div className="flex gap-1.5 flex-wrap">
                                 {row.transportType && row.transportType !== 'None' && (
-                                  <span className="bg-blue-50 text-blue-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">Transport: {row.transportType}</span>
+                                  <span className="bg-blue-50 text-blue-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
+                                    Transport: {row.transportType} {row.transportStartMonth ? `(${row.transportStartMonth})` : ''}
+                                  </span>
                                 )}
                                 {(String(row.isRTE).toLowerCase() === 'yes' || row.isRTE === 'true' || row.isRTE === true) && (
                                   <span className="bg-purple-50 text-purple-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">RTE</span>
