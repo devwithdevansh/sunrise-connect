@@ -178,16 +178,27 @@ export const CollectFee: React.FC = () => {
   // -------------------------------------------------------------------
   const getApplicablePeriods = (config: ReturnType<typeof buildEduTermConfig>) => {
     if (selectedYear !== activeYearName) return config;
-    if (!selectedStudent || !selectedStudent.admissionMonth) return config;
+    if (!selectedStudent) return config;
+    
     const allMonths = ['June','July','August','September','October','November','December','January','February','March','April','May'];
-    const startIdx = allMonths.indexOf(selectedStudent.admissionMonth);
-    if (startIdx <= 0) return config;
+    
+    const eduStartMonth = selectedStudent.admissionMonth || 'June';
+    const eduStartIdx = allMonths.indexOf(eduStartMonth);
+    const validEduStartIdx = eduStartIdx >= 0 ? eduStartIdx : 0;
+
+    const transportStartMonth = selectedStudent.transportStartMonth || selectedStudent.admissionMonth || 'June';
+    const transportStartIdx = allMonths.indexOf(transportStartMonth);
+    const validTransportStartIdx = transportStartIdx >= 0 ? transportStartIdx : 0;
+
     return config.filter(item => {
-      if (item.type === 'EDUCATION' || item.type === 'TRANSPORT') {
-        return allMonths.indexOf(item.value) >= startIdx;
+      if (item.type === 'TRANSPORT') {
+        return allMonths.indexOf(item.value) >= validTransportStartIdx;
+      }
+      if (item.type === 'EDUCATION') {
+        return allMonths.indexOf(item.value) >= validEduStartIdx;
       }
       if (item.type === 'TERM') {
-        if (item.value === 'Term 1') return startIdx <= 5;
+        if (item.value === 'Term 1') return validEduStartIdx <= 5;
         if (item.value === 'Term 2') return true;
       }
       return true;
