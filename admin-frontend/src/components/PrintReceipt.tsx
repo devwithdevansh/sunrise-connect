@@ -46,7 +46,8 @@ const RECEIPT_STYLES = `
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    padding: 0 24px;       /* Added space from left and right */
+    margin: 24px auto;     /* Centers the receipt on screen and adds space around it */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   }
 
   /* ── Header ─────────────────────────────────────── */
