@@ -264,9 +264,13 @@ export const Setup: React.FC = () => {
   };
 
   const handleDeleteFC = async (fc: any) => {
+    if (fc.type !== 'OTHER') {
+      alert(`Cannot delete system-required category: ${fc.name}`);
+      return;
+    }
     if (window.confirm(`Are you sure you want to delete fee category "${fc.name}"?\nThis action cannot be undone.`)) {
       const ok = await deleteFeeCategory(fc._id);
-      if (!ok) alert("Failed to delete fee category.");
+      if (!ok) alert("Failed to delete fee category. It might be in use.");
     }
   };
 
