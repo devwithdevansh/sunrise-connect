@@ -334,7 +334,12 @@ class StudentService {
 
         // 2. Transport ledgers (12 months, if applicable)
         if (student.transportType && student.transportType !== 'None') {
-          for (const m of monthsToCreate) {
+          const transportStartMonth = student.transportStartMonth || student.admissionMonth || 'June';
+          const transportStartMonthIndex = months.findIndex(m => m.name === transportStartMonth);
+          const tStartIndex = transportStartMonthIndex >= 0 ? transportStartMonthIndex : 0;
+          const transportMonthsToCreate = months.slice(tStartIndex);
+
+          for (const m of transportMonthsToCreate) {
             const { paidAmount, concessionAmount, remainingAmount, status } = getLedgerStatusAndAmounts('TRANSPORT', m.name, transportAmount, isRTE);
             ledgersToCreate.push({
               studentId: student._id,
@@ -495,6 +500,74 @@ class StudentService {
       const transportMonths = updates.transportMonths;
       delete updates.transportMonths;
 
+      // Check if parent updates are requested
+      const parentNameUpdate = updates.parentName;
+      const parentMobileUpdate = updates.parentMobile;
+      const parentSecondaryMobileUpdate = updates.parentSecondaryMobile;
+
+      // Delete parent updates from the student updates object so we don't save them on the Student document
+      delete updates.parentName;
+      delete updates.parentMobile;
+      delete updates.parentSecondaryMobile;
+
+      if (student.parentId && (parentNameUpdate !== undefined || parentMobileUpdate !== undefined || parentSecondaryMobileUpdate !== undefined)) {
+        const parentId = student.parentId._id || student.parentId;
+        const parent = await mongoose.model('Parent').findById(parentId).session(session);
+        if (parent) {
+          const parentUpdates = {};
+          if (parentNameUpdate !== undefined) {
+            parentUpdates.parentName = parentNameUpdate;
+          }
+          if (parentMobileUpdate !== undefined) {
+            let mobile = parentMobileUpdate.replace(/\D/g, '');
+            if (mobile.length > 10) mobile = mobile.slice(-10);
+            if (!/^[6-9]\d{9}$/.test(mobile)) {
+              throw new AppError('Enter Indian number or invalid number for primary mobile', 400);
+            }
+            if (mobile !== parent.primaryMobileNumber) {
+              // Check if another parent already has this number
+              const otherParent = await mongoose.model('Parent').findOne({ primaryMobileNumber: mobile }).session(session);
+              if (otherParent && String(otherParent._id) !== String(parent._id)) {
+                throw new AppError('This primary mobile number is already registered to another parent.', 400);
+              }
+              parentUpdates.primaryMobileNumber = mobile;
+            }
+          }
+          if (parentSecondaryMobileUpdate !== undefined) {
+            if (parentSecondaryMobileUpdate === null || parentSecondaryMobileUpdate === '') {
+              parentUpdates.secondaryMobileNumber = null;
+            } else {
+              let secMobile = parentSecondaryMobileUpdate.replace(/\D/g, '');
+              if (secMobile.length > 10) secMobile = secMobile.slice(-10);
+              if (!/^[6-9]\d{9}$/.test(secMobile)) {
+                throw new AppError('Enter Indian number or invalid number for secondary mobile', 400);
+              }
+              if (secMobile !== parent.secondaryMobileNumber) {
+                // Check if another parent already has this secondary mobile number
+                const otherParent = await mongoose.model('Parent').findOne({
+                  $or: [
+                    { primaryMobileNumber: secMobile },
+                    { secondaryMobileNumber: secMobile }
+                  ]
+                }).session(session);
+                if (otherParent && String(otherParent._id) !== String(parent._id)) {
+                  throw new AppError('This secondary mobile number is already in use by another parent.', 400);
+                }
+                parentUpdates.secondaryMobileNumber = secMobile;
+              }
+            }
+          }
+
+          if (Object.keys(parentUpdates).length > 0) {
+            await mongoose.model('Parent').updateOne({ _id: parentId }, { $set: parentUpdates }, { session });
+            await AuditService.log(
+              { performedBy, targetStudentId: studentId, action: 'PARENT_UPDATED', details: parentUpdates },
+              session
+            );
+          }
+        }
+      }
+
       await studentRepository.updateOne({ _id: studentId }, { $set: updates }, { session });
 
       // Handle buyBagKit optional toggle
@@ -537,8 +610,14 @@ class StudentService {
       const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
       let currentAcademicYearName = activeYear ? activeYear.name : '2025-26';
 
-      // We only do transport adjustments if transportType changed
-      if (newTransport && newTransport !== oldTransport) {
+      const oldStartMonth = student.transportStartMonth || student.admissionMonth || 'June';
+      const newStartMonth = updates.transportStartMonth !== undefined ? updates.transportStartMonth : oldStartMonth;
+      const effectiveTransportType = newTransport !== undefined ? newTransport : oldTransport;
+
+      const transportTypeChanged = newTransport !== undefined && newTransport !== oldTransport;
+      const transportStartMonthChanged = updates.transportStartMonth !== undefined && updates.transportStartMonth !== oldStartMonth;
+
+      if (transportTypeChanged || transportStartMonthChanged) {
         let transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT' }).session(session);
         if (!transportCategory) {
           transportCategory = await mongoose.model('FeeCategory').create([{
@@ -554,15 +633,14 @@ class StudentService {
 
         if (oldTransport !== 'None') {
           const oldStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: oldTransport }).session(session);
-          if (!oldStruct) {
-            throw new AppError(`Transport fee structure not found for ${oldTransport}`, 404);
+          if (oldStruct) {
+            oldRate = oldStruct.amount;
           }
-          oldRate = oldStruct.amount;
         }
-        if (newTransport !== 'None') {
-          const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true }).session(session);
+        if (effectiveTransportType !== 'None') {
+          const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: effectiveTransportType, isActive: true }).session(session);
           if (!newStruct) {
-            throw new AppError(`Active transport fee structure not found for ${newTransport}`, 404);
+            throw new AppError(`Active transport fee structure not found for ${effectiveTransportType}`, 404);
           }
           newRate = newStruct.amount;
         }
@@ -583,12 +661,14 @@ class StudentService {
         ];
 
         const allMonthsStr = months.map(m => m.name);
-        const admissionIdx = allMonthsStr.indexOf(student.admissionMonth || 'June');
-        let startIndex = Math.max(0, admissionIdx);
 
-        if (newTransport !== 'None' && oldTransport === 'None' && transportMonths !== undefined) {
-          startIndex = Math.max(0, Math.min(11, 12 - transportMonths));
+        let calculatedStartMonth = updates.transportStartMonth;
+        if (!calculatedStartMonth && transportMonths !== undefined) {
+          const idx = Math.max(0, Math.min(11, 12 - transportMonths));
+          calculatedStartMonth = months[idx].name;
         }
+        const transportStartMonth = calculatedStartMonth || oldStartMonth;
+        const transportStartIdx = allMonthsStr.indexOf(transportStartMonth);
 
         const existingLedgers = await mongoose.model('StudentFeeLedger').find({
           studentId: student._id,
@@ -599,23 +679,28 @@ class StudentService {
         const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));
         const ledgersToCreate = [];
 
-        for (let i = startIndex; i < 12; i++) {
+        for (let i = 0; i < 12; i++) {
           const m = months[i];
+          const isTransportActiveForMonth = effectiveTransportType !== 'None' && i >= transportStartIdx;
 
-          if (newTransport !== 'None') {
+          if (isTransportActiveForMonth) {
             if (existingPeriods.has(m.name)) {
-              // UPDATE existing pending ledger for this month
+              // UPDATE existing pending/cancelled ledger for this month
               const ledger = existingLedgers.find(l => l.feePeriod === m.name);
               if (ledger && ledger.status !== 'PAID') {
                 const paidSoFar = ledger.paidAmount || 0;
                 ledger.totalAmount = newRate;
                 ledger.remainingAmount = Math.max(0, newRate - paidSoFar - (ledger.concessionAmount || 0));
-                if (ledger.remainingAmount === 0) {
-                  ledger.status = 'PAID';
-                } else if (paidSoFar > 0) {
-                  ledger.status = 'PARTIAL';
+                if (ledger.status === 'CANCELLED') {
+                  ledger.status = ledger.remainingAmount === 0 ? 'PAID' : (paidSoFar > 0 ? 'PARTIAL' : 'PENDING');
                 } else {
-                  ledger.status = 'PENDING';
+                  if (ledger.remainingAmount === 0) {
+                    ledger.status = 'PAID';
+                  } else if (paidSoFar > 0) {
+                    ledger.status = 'PARTIAL';
+                  } else {
+                    ledger.status = 'PENDING';
+                  }
                 }
                 await ledger.save({ session });
               }
@@ -641,16 +726,16 @@ class StudentService {
                   medium: student.medium,
                   standard: student.standard,
                   division: student.division,
-                  transportType: newTransport,
+                  transportType: effectiveTransportType,
                   isRTE: student.isRTE
                 }
               });
             }
           } else {
-            // STOP transport: cancel remaining unpaid ledgers
+            // STOP transport or month is prior to start month: cancel remaining unpaid ledgers
             if (existingPeriods.has(m.name)) {
               const ledger = existingLedgers.find(l => l.feePeriod === m.name);
-              if (ledger && ledger.status !== 'PAID') {
+              if (ledger && ledger.status !== 'PAID' && ledger.status !== 'CANCELLED') {
                 ledger.status = 'CANCELLED';
                 ledger.remainingAmount = 0;
                 await ledger.save({ session });

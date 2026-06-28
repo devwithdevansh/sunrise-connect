@@ -66,6 +66,14 @@ const studentSchema = new mongoose.Schema(
         message: '{VALUE} is not a valid month',
       },
     },
+    transportStartMonth: {
+      type: String,
+      default: 'June',
+      enum: {
+        values: ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'],
+        message: '{VALUE} is not a valid month',
+      },
+    },
     isActive: {
       type: Boolean,
       default: true,
