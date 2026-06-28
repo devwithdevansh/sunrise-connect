@@ -124,6 +124,7 @@ interface AppContextType {
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
   importStudents: (students: any[]) => Promise<any>;
+  fixTransportLedgers: (studentIds: string[], transportStartMonth: string) => Promise<any>;
   selectedStudentIdForFee: string | null;
   setSelectedStudentIdForFee: (id: string | null) => void;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
@@ -1055,6 +1056,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const fixTransportLedgers = async (studentIds: string[], transportStartMonth: string) => {
+    try {
+      const res = await authFetch('/api/v1/students/fix-transport', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds, transportStartMonth })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Fix failed');
+      debouncedFetchAll();
+      return data.data;
+    } catch (err: any) {
+      console.error(err);
+      throw err;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1095,6 +1113,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         regenerateLedgers,
         addCustomFee,
         importStudents,
+        fixTransportLedgers,
         selectedStudentIdForFee,
         setSelectedStudentIdForFee,
         isLoadingDetails,

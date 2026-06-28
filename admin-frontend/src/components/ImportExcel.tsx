@@ -203,6 +203,11 @@ export const ImportExcel: React.FC = () => {
           };
         });
 
+        console.log('[ImportExcel] Parsed rows:', mapped.map(r => ({
+          name: r.studentName,
+          transportType: r.transportType,
+          transportStartMonth: r.transportStartMonth
+        })));
         setPreviewData(mapped);
       } catch (err: any) {
         console.error(err);
@@ -460,6 +465,7 @@ export const ImportExcel: React.FC = () => {
                         <th className="py-3 px-4">Student Info</th>
                         <th className="py-3 px-4">Medium/Class</th>
                         <th className="py-3 px-4">Parent Details</th>
+                        <th className="py-3 px-4">Transport</th>
                         <th className="py-3 px-4">Other Flags</th>
                         <th className="py-3 px-4 text-center">Validation</th>
                       </tr>
@@ -482,13 +488,29 @@ export const ImportExcel: React.FC = () => {
                               <span className="font-bold text-slate-700 block">{row.parentName || '-'}</span>
                               <span className="text-[10px] text-slate-400 font-mono">{row.parentMobile || '-'}</span>
                             </td>
+                            {/* Dedicated Transport column */}
+                            <td className="py-3 px-4">
+                              {row.transportType && row.transportType !== 'None' ? (
+                                <div className="space-y-1">
+                                  <span className="bg-blue-50 text-blue-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase block">
+                                    {row.transportType}
+                                  </span>
+                                  {row.transportStartMonth ? (
+                                    <span className="bg-green-50 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase block">
+                                      From: {row.transportStartMonth}
+                                    </span>
+                                  ) : (
+                                    <span className="bg-slate-100 text-slate-400 text-[8px] font-bold px-1.5 py-0.5 rounded block">
+                                      From: June (default)
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-slate-300 text-[9px]">—</span>
+                              )}
+                            </td>
                             <td className="py-3 px-4 space-y-1">
                               <div className="flex gap-1.5 flex-wrap">
-                                {row.transportType && row.transportType !== 'None' && (
-                                  <span className="bg-blue-50 text-blue-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
-                                    Transport: {row.transportType} {row.transportStartMonth ? `(${row.transportStartMonth})` : ''}
-                                  </span>
-                                )}
                                 {(String(row.isRTE).toLowerCase() === 'yes' || row.isRTE === 'true' || row.isRTE === true) && (
                                   <span className="bg-purple-50 text-purple-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">RTE</span>
                                 )}

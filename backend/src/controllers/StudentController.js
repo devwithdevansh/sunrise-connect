@@ -76,6 +76,22 @@ class StudentController {
     const result = await StudentService.importStudents(students);
     sendResponse(res, 200, result);
   });
+
+  /** PATCH /api/v1/students/fix-transport
+   * Body: { studentIds: string[], transportStartMonth: string }
+   * Deletes wrong transport ledgers and regenerates from correct start month.
+   */
+  static fixTransportLedgers = catchAsync(async (req, res) => {
+    const { studentIds, transportStartMonth } = req.body;
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      throw new AppError('studentIds array is required', 400);
+    }
+    if (!transportStartMonth) {
+      throw new AppError('transportStartMonth is required', 400);
+    }
+    const result = await StudentService.fixTransportLedgers(studentIds, transportStartMonth);
+    sendResponse(res, 200, result, `Fixed ${result.fixedCount} student(s)`);
+  });
 }
 
 export default StudentController;

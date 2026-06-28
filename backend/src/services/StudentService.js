@@ -1362,6 +1362,138 @@ class StudentService {
       results
     };
   }
+
+  /**
+   * Bulk-fix transport start month for already-imported students.
+   * Updates transportStartMonth on the student record, deletes all existing
+   * TRANSPORT ledgers for that student in the active academic year, then
+   * regenerates them from the new start month.
+   *
+   * POST /api/v1/students/fix-transport
+   * Body: { studentIds: string[], transportStartMonth: string }
+   */
+  static async fixTransportLedgers(studentIds, newStartMonth) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const validMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+      if (!validMonths.includes(newStartMonth)) {
+        throw new AppError(`Invalid month: ${newStartMonth}`, 400);
+      }
+
+      const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
+      const activeYear = activeYearDoc ? activeYearDoc.name : '2025-26';
+
+      const getMonthsForAcademicYear = (yearStr) => {
+        const match = yearStr.match(/^(\d{4})/);
+        const startYear = match ? parseInt(match[1], 10) : 2025;
+        const base = startYear + 1;
+        return [
+          { name: 'June',      dueDate: `${base}-06-15` },
+          { name: 'July',      dueDate: `${base}-07-15` },
+          { name: 'August',    dueDate: `${base}-08-15` },
+          { name: 'September', dueDate: `${base}-09-15` },
+          { name: 'October',   dueDate: `${base}-10-15` },
+          { name: 'November',  dueDate: `${base}-11-15` },
+          { name: 'December',  dueDate: `${base}-12-15` },
+          { name: 'January',   dueDate: `${base + 1}-01-15` },
+          { name: 'February',  dueDate: `${base + 1}-02-15` },
+          { name: 'March',     dueDate: `${base + 1}-03-15` },
+          { name: 'April',     dueDate: `${base + 1}-04-15` },
+          { name: 'May',       dueDate: `${base + 1}-05-15` },
+        ];
+      };
+
+      const months = getMonthsForAcademicYear(activeYear);
+      const startIdx = months.findIndex(m => m.name === newStartMonth);
+      const transportMonths = startIdx >= 0 ? months.slice(startIdx) : months;
+
+      const transportCategory = await mongoose.model('FeeCategory').findOne({ type: 'TRANSPORT', isActive: true }, null, { session });
+      if (!transportCategory) {
+        throw new AppError('Transport fee category not found', 404);
+      }
+
+      const results = [];
+
+      for (const rawId of studentIds) {
+        try {
+          const studentId = new mongoose.Types.ObjectId(rawId);
+          const student = await mongoose.model('Student').findById(studentId, null, { session });
+          if (!student) {
+            results.push({ id: rawId, status: 'failed', error: 'Student not found' });
+            continue;
+          }
+
+          if (!student.transportType || student.transportType === 'None') {
+            results.push({ id: rawId, status: 'skipped', error: 'Student has no transport' });
+            continue;
+          }
+
+          // 1. Update transportStartMonth on student record
+          await mongoose.model('Student').updateOne(
+            { _id: studentId },
+            { $set: { transportStartMonth: newStartMonth } },
+            { session }
+          );
+
+          // 2. Delete ALL existing transport ledgers for this student in the active year
+          await mongoose.model('StudentFeeLedger').deleteMany(
+            { studentId, feeType: 'TRANSPORT', academicYear: activeYear },
+            { session }
+          );
+
+          // 3. Fetch transport amount
+          const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
+            { transportType: student.transportType, isActive: true },
+            null,
+            { session }
+          );
+          const transportAmount = transportStruct ? transportStruct.amount : 0;
+
+          // 4. Regenerate transport ledgers from new start month
+          const newLedgers = transportMonths.map(m => ({
+            studentId,
+            feePeriod: m.name,
+            feeType: 'TRANSPORT',
+            totalAmount: transportAmount,
+            paidAmount: 0,
+            concessionAmount: 0,
+            remainingAmount: transportAmount,
+            dueDate: new Date(m.dueDate),
+            status: 'PENDING',
+            feeCategoryId: transportCategory._id,
+            academicYear: activeYear,
+            source: 'MANUAL',
+            generatedFrom: 'TRANSPORT_STRUCTURE',
+            ledgerNumber: `LEDGER_TRA_${m.name.toUpperCase()}_${activeYear.replace('-', '_')}_${student.studentCode || studentId}_FIX`,
+            snapshot: {
+              studentName: student.studentName,
+              medium: student.medium,
+              standard: student.standard,
+              division: student.division,
+              transportType: student.transportType,
+              isRTE: student.isRTE
+            }
+          }));
+
+          await mongoose.model('StudentFeeLedger').insertMany(newLedgers, { session });
+
+          results.push({ id: rawId, studentName: student.studentName, status: 'fixed', monthsGenerated: transportMonths.length });
+        } catch (err) {
+          results.push({ id: rawId, status: 'failed', error: err.message });
+        }
+      }
+
+      await session.commitTransaction();
+      return { results, fixedCount: results.filter(r => r.status === 'fixed').length };
+    } catch (error) {
+      await session.abortTransaction();
+      logger.error('StudentService.fixTransportLedgers error', error);
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
 }
 
 export default StudentService;
