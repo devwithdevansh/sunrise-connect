@@ -507,7 +507,8 @@ export const CollectFee: React.FC = () => {
               <div className="flex bg-slate-200/50 p-0.5 rounded-lg border border-slate-200/20 flex-wrap">
                 {(['EDUCATION', 'TRANSPORT', 'ADMISSION', 'BAG_KIT', 'OTHER'] as const)
                   .filter((cat) => {
-                    if ((cat === 'ADMISSION' || cat === 'BAG_KIT') && !selectedStudent.isNewAdmission) return false;
+                    if (cat === 'ADMISSION' && !selectedStudent.isNewAdmission) return false;
+                    if (cat === 'BAG_KIT' && !selectedStudent.buyBagKit) return false;
                     return true;
                   })
                   .map((cat) => (
