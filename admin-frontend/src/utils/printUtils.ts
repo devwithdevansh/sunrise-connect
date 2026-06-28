@@ -300,25 +300,23 @@ export function generateReceiptHTML(
       padding: 0;
       margin: 0;
       width: 210mm;
+      min-height: 297mm;
       height: 297mm;
       position: relative;
       background: #fff;
+      display: flex;
+      flex-direction: column;
     }
 
     .content-wrapper {
       position: relative;
-      z-index: 2; /* Sits above the watermark */
-      height: calc(100% - 110px - 60px);
+      z-index: 2;
+      flex: 1;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
-      padding: 0;
-      background: transparent; /* Allows watermark to show through */
-    }
-
-    .main-body {
-      flex: 1;
-      padding: 14px 14mm 0;
+      padding: 16px 14mm 80px; /* bottom padding clears footer (60px) + breathing room */
+      background: transparent;
     }
 
     /* ── Two-column info grid ── */
@@ -403,7 +401,8 @@ export function generateReceiptHTML(
     /* ── Signature section ── */
     .sig-section {
       display: flex; justify-content: space-between; align-items: flex-end;
-      margin-top: 30px; margin-bottom: 20px;
+      margin-top: auto;
+      padding-top: 24px;
       page-break-inside: avoid;
     }
     .sig-block { text-align: center; }
@@ -458,10 +457,9 @@ export function generateReceiptHTML(
   </div>
 
   <div class="content-wrapper">
-    <div class="main-body">
 
       <!-- ════ INFO GRID ════ -->
-      <div class="info-grid" style="margin-top: 16px;">
+      <div class="info-grid">
         <div class="info-col">
           <div class="info-col-header">Student Information</div>
           <div class="info-row"><span class="info-label">Name</span><span class="info-value" style="font-size: 12px; color: #1b3a6b; font-weight: 700;">${transaction.studentName}</span></div>
@@ -521,7 +519,6 @@ export function generateReceiptHTML(
           </div>
         </div>
       </div>
-    </div>
   </div>
 
   <!-- ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
