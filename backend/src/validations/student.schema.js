@@ -17,6 +17,7 @@ export const createStudentSchema = {
     isNewAdmission: z.boolean().optional(),
     buyBagKit: z.boolean().optional(),
     admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
+    transportStartMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
   }),
 };
 
@@ -32,7 +33,11 @@ export const updateStudentSchema = {
     isNewAdmission: z.boolean().optional(),
     buyBagKit: z.boolean().optional(),
     admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
+    transportStartMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
     isActive: z.boolean().optional(),
+    parentName: z.string().optional(),
+    parentMobile: z.string().optional(),
+    parentSecondaryMobile: z.string().nullable().optional(),
   }),
   params: z.object({ id: z.string().min(1) }),
 };

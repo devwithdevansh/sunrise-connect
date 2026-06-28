@@ -81,6 +81,7 @@ export const Students: React.FC = () => {
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
   const [newSBuyBagKit, setNewSBuyBagKit] = useState(false);
   const [newSAdmissionMonth, setNewSAdmissionMonth] = useState('June');
+  const [newSTransportStartMonth, setNewSTransportStartMonth] = useState('June');
 
   // Edit Student Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -91,6 +92,11 @@ export const Students: React.FC = () => {
   const [editSDivision, setEditSDivision] = useState('A');
   const [editSTransport, setEditSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [originalTransport, setOriginalTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
+  const [editSTransportStartMonth, setEditSTransportStartMonth] = useState('June');
+  const [originalTransportStartMonth, setOriginalTransportStartMonth] = useState('June');
+  const [editSParentName, setEditSParentName] = useState('');
+  const [editSParentMobile, setEditSParentMobile] = useState('');
+  const [editSParentSecondaryMobile, setEditSParentSecondaryMobile] = useState('');
   const [editSIsRTE, setEditSIsRTE] = useState(false);
   const [editSBuyBagKit, setEditSBuyBagKit] = useState(false);
 
@@ -277,6 +283,7 @@ export const Students: React.FC = () => {
       isNewAdmission: newSIsNewAdmission,
       buyBagKit: newSBuyBagKit,
       admissionMonth: newSAdmissionMonth,
+      transportStartMonth: newSTransportStartMonth,
       isActive: true
     });
 
@@ -293,6 +300,7 @@ export const Students: React.FC = () => {
     setNewSIsNewAdmission(true);
     setNewSBuyBagKit(false);
     setNewSAdmissionMonth('June');
+    setNewSTransportStartMonth('June');
     setIsModalOpen(false);
   };
 
@@ -304,6 +312,11 @@ export const Students: React.FC = () => {
     setEditSDivision(s.division);
     setEditSTransport(s.transportType || 'None');
     setOriginalTransport(s.transportType || 'None');
+    setEditSTransportStartMonth(s.transportStartMonth || 'June');
+    setOriginalTransportStartMonth(s.transportStartMonth || 'June');
+    setEditSParentName(s.parentName || '');
+    setEditSParentMobile(s.parentMobile || '');
+    setEditSParentSecondaryMobile(s.parentSecondaryMobile || '');
     setEditSIsRTE(s.isRTE || false);
     setEditSBuyBagKit(s.buyBagKit || false);
     setIsEditModalOpen(true);
@@ -319,6 +332,10 @@ export const Students: React.FC = () => {
       standard: editSStandard,
       division: editSDivision,
       transportType: editSTransport,
+      transportStartMonth: editSTransportStartMonth,
+      parentName: editSParentName,
+      parentMobile: editSParentMobile,
+      parentSecondaryMobile: editSParentSecondaryMobile || null,
       isRTE: editSIsRTE,
       buyBagKit: editSBuyBagKit,
     };
@@ -1137,6 +1154,21 @@ export const Students: React.FC = () => {
                   </select>
                 </div>
 
+                {newSTransport !== 'None' && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
+                    <select
+                      value={newSTransportStartMonth}
+                      onChange={(e) => setNewSTransportStartMonth(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    >
+                      {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Fee Starting Month</label>
                   <select
@@ -1237,6 +1269,47 @@ export const Students: React.FC = () => {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Parent Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editSParentName}
+                    onChange={(e) => setEditSParentName(e.target.value)}
+                    placeholder="Enter parent's full name"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Parent Mobile</label>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={editSParentMobile}
+                    onChange={(e) => setEditSParentMobile(e.target.value.replace(/\D/g, ''))}
+                    placeholder="9876543210"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Secondary Mobile</label>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    value={editSParentSecondaryMobile}
+                    onChange={(e) => setEditSParentSecondaryMobile(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Optional secondary number"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Medium</label>
                   <select
                     value={editSMedium}
@@ -1248,9 +1321,7 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Standard (Class)</label>
                   <select
@@ -1263,7 +1334,9 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Division</label>
                   <select
@@ -1276,20 +1349,35 @@ export const Students: React.FC = () => {
                     <option value="C">Division C</option>
                   </select>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
-                <select
-                  value={editSTransport}
-                  onChange={(e) => setEditSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                >
-                  <option value="None">None</option>
-                  {transportFeeStructures.map((t) => (
-                    <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
-                  ))}
-                </select>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
+                  <select
+                    value={editSTransport}
+                    onChange={(e) => setEditSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="None">None</option>
+                    {transportFeeStructures.map((t) => (
+                      <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
+                    ))}
+                  </select>
+                </div>
+
+                {editSTransport !== 'None' && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
+                    <select
+                      value={editSTransportStartMonth}
+                      onChange={(e) => setEditSTransportStartMonth(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    >
+                      {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-3 pt-2">
@@ -1318,7 +1406,7 @@ export const Students: React.FC = () => {
                 </label>
               </div>
 
-              {editSTransport !== originalTransport && (
+              {(editSTransport !== originalTransport || editSTransportStartMonth !== originalTransportStartMonth) && editSTransport !== 'None' && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                   <p className="text-xs text-blue-800 font-semibold">
                     The transport fee will be automatically calculated based on the current active academic year and remaining months.

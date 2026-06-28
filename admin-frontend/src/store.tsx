@@ -327,6 +327,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             id: s._id,
             parentName: s.parentId?.parentName || '',
             parentMobile: s.parentId?.primaryMobileNumber || '',
+            parentSecondaryMobile: s.parentId?.secondaryMobileNumber || '',
+            transportStartMonth: s.transportStartMonth || 'June',
             status
           };
         });

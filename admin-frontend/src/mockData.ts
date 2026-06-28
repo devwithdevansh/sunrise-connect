@@ -11,6 +11,7 @@ export interface Student {
   isNewAdmission?: boolean;
   buyBagKit?: boolean;
   admissionMonth?: string;
+  transportStartMonth?: string;
   isActive: boolean;
   parentId?: string;
   parentName: string;
