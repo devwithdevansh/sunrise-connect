@@ -100,7 +100,7 @@ interface EditFCModalProps {
 
 const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
   const [name, setName] = useState(cat.name);
-  const [type, setType] = useState(cat.type);
+  const [type] = useState(cat.type);
   const [description, setDescription] = useState(cat.description || '');
   const [isActive, setIsActive] = useState(cat.isActive !== false);
   const [saving, setSaving] = useState(false);
@@ -146,15 +146,16 @@ const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">System Type</label>
             <select
-              className="w-full border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 transition-all outline-none"
+              className="w-full border border-slate-200 bg-slate-100 cursor-not-allowed opacity-70 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 transition-all outline-none"
               value={type}
-              onChange={e => setType(e.target.value)}
+              disabled={true}
             >
               <option value="EDUCATION">EDUCATION</option>
               <option value="TERM">TERM</option>
               <option value="TRANSPORT">TRANSPORT</option>
               <option value="ADMISSION">ADMISSION</option>
-              <option value="OTHER">OTHER</option>
+              <option value="BAG_KIT">BAG_KIT</option>
+              <option value="OTHER">OTHER (Custom Fee)</option>
             </select>
           </div>
           <div>
@@ -494,15 +495,11 @@ export const Setup: React.FC = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">System Type</label>
                     <select
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none cursor-not-allowed opacity-70"
                       value={newFC.type}
-                      onChange={e => setNewFC({ ...newFC, type: e.target.value })}
+                      disabled={true}
                     >
-                      <option value="EDUCATION">EDUCATION</option>
-                      <option value="TERM">TERM</option>
-                      <option value="TRANSPORT">TRANSPORT</option>
-                      <option value="ADMISSION">ADMISSION</option>
-                      <option value="OTHER">OTHER</option>
+                      <option value="OTHER">OTHER (Custom Fee)</option>
                     </select>
                   </div>
                   <div>
