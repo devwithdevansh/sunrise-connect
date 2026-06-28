@@ -1154,20 +1154,19 @@ export const Students: React.FC = () => {
                   </select>
                 </div>
 
-                {newSTransport !== 'None' && (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
-                    <select
-                      value={newSTransportStartMonth}
-                      onChange={(e) => setNewSTransportStartMonth(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                    >
-                      {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
+                  <select
+                    value={newSTransportStartMonth}
+                    disabled={newSTransport === 'None'}
+                    onChange={(e) => setNewSTransportStartMonth(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Fee Starting Month</label>
@@ -1364,20 +1363,19 @@ export const Students: React.FC = () => {
                   </select>
                 </div>
 
-                {editSTransport !== 'None' && (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
-                    <select
-                      value={editSTransportStartMonth}
-                      onChange={(e) => setEditSTransportStartMonth(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                    >
-                      {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
+                  <select
+                    value={editSTransportStartMonth}
+                    disabled={editSTransport === 'None'}
+                    onChange={(e) => setEditSTransportStartMonth(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-2">
