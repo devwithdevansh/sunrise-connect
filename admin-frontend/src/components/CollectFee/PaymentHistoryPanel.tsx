@@ -4,6 +4,7 @@ import { History, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 export interface TxItem {
   id: string; feeType: string; amount: number; concessionAmount?: number;
   status: string; method: string; remark?: string; date: string; time: string;
+  academicYear?: string;
 }
 
 const CATEGORY_GROUPS = [
@@ -38,10 +39,10 @@ const CATEGORY_GROUPS = [
 
 export const PaymentHistoryPanel: React.FC<{
   allTxs: TxItem[];
-  totalCollected: number;
   reversePayment: (txId: string) => void;
-}> = ({ allTxs, totalCollected, reversePayment }) => {
+}> = ({ allTxs, reversePayment }) => {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>('All');
 
   const methodBadge = (method: string) => {
     if (method === 'CASH') return 'bg-emerald-50 text-emerald-600 border-emerald-100';
@@ -51,35 +52,56 @@ export const PaymentHistoryPanel: React.FC<{
     return 'bg-slate-100 text-slate-500 border-slate-200';
   };
 
+  // Extract unique academic years from all transactions
+  const uniqueYears = Array.from(new Set(allTxs.map(tx => tx.academicYear).filter(Boolean))) as string[];
+  uniqueYears.sort((a, b) => b.localeCompare(a)); // Descending
+
+  // Filter transactions by selected year
+  const filteredTxs = selectedYear === 'All' ? allTxs : allTxs.filter(tx => tx.academicYear === selectedYear);
+
   // Categorize transactions into groups
   const grouped: { group: typeof CATEGORY_GROUPS[number]; items: TxItem[] }[] = [];
   for (const group of CATEGORY_GROUPS) {
-    const matched = allTxs.filter(tx => group.match(tx.feeType));
+    const matched = filteredTxs.filter(tx => group.match(tx.feeType));
     if (matched.length > 0) {
       grouped.push({ group, items: matched });
     }
   }
 
+  const displayedTotal = filteredTxs.filter(tx => tx.status !== 'REVERSED').reduce((sum, tx) => sum + tx.amount, 0);
+
   return (
     <div className="mt-8 border-t border-slate-100 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           <History className="h-4 w-4 text-blue-500" />
           <h4 className="text-sm font-extrabold text-slate-800">Fee Collection History</h4>
           <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200">
-            {allTxs.length} records
+            {filteredTxs.length} records
           </span>
+          {uniqueYears.length > 1 && (
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="ml-2 bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+            >
+              <option value="All">All Years</option>
+              {uniqueYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          )}
         </div>
-        {allTxs.length > 0 && (
+        {filteredTxs.length > 0 && (
           <div className="text-xs text-slate-500 font-semibold">
             Total Collected:&nbsp;
-            <span className="text-emerald-600 font-extrabold">₹{totalCollected.toLocaleString('en-IN')}</span>
+            <span className="text-emerald-600 font-extrabold">₹{displayedTotal.toLocaleString('en-IN')}</span>
           </div>
         )}
       </div>
 
-      {allTxs.length === 0 ? (
+      {filteredTxs.length === 0 ? (
         <div className="bg-slate-50 border border-slate-100 rounded-2xl py-10 text-center">
           <History className="h-8 w-8 text-slate-300 mx-auto mb-2" />
           <p className="text-sm text-slate-400 font-semibold">No payment history yet</p>

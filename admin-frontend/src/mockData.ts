@@ -50,7 +50,7 @@ export interface PaymentTransaction {
   status: 'PAID' | 'PARTIAL' | 'RTE' | 'REVERSED' | 'PARTIALLY_REVERSED' | 'PENDING';
   date: string; // e.g. "2026-06-11"
   remark?: string;
-  subItems?: { id?: string; description: string; amount: number; concessionAmount: number; method?: string; status?: string }[];
+  subItems?: { id?: string; description: string; amount: number; concessionAmount: number; method?: string; status?: string; academicYear?: string }[];
   reversalIds?: string;
   paymentBreakdown?: { method: string; amount: number }[];
 }

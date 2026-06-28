@@ -725,7 +725,8 @@ export const CollectFee: React.FC = () => {
                       status: sub.status || tx.status,
                       remark: tx.remark,
                       date: tx.date,
-                      time: tx.time
+                      time: tx.time,
+                      academicYear: sub.academicYear || (tx as any).academicYear
                     }));
                   }
                   return [{
@@ -737,7 +738,8 @@ export const CollectFee: React.FC = () => {
                     status: tx.status,
                     remark: tx.remark,
                     date: tx.date,
-                    time: tx.time
+                    time: tx.time,
+                    academicYear: (tx as any).academicYear
                   }];
                 })
                 .sort((a, b) => {
@@ -745,11 +747,9 @@ export const CollectFee: React.FC = () => {
                   return dateCompare !== 0 ? dateCompare : b.time.localeCompare(a.time);
                 });
 
-              const totalCollected = studentTxs.filter(tx => tx.status !== 'REVERSED').reduce((sum, tx) => sum + tx.amount, 0);
               return (
                 <PaymentHistoryPanel
                   allTxs={studentTxs}
-                  totalCollected={totalCollected}
                   reversePayment={reversePayment}
                 />
               );

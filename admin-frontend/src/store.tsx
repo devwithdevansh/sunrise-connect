@@ -398,7 +398,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               amount: tx.amount || 0,
               concessionAmount: tx.concessionAmount || 0,
               method: tx.method,
-              status: status
+              status: status,
+              academicYear: ledger ? ledger.academicYear : undefined
             });
           });
 
@@ -417,6 +418,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
           const status = groupIsReversal ? 'REVERSED' : groupIsPartiallyReversed ? 'PARTIALLY_REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
 
+          // Extract primary academic year from the first subItem
+          const primaryAcademicYear = subItems.length > 0 ? subItems[0].academicYear : undefined;
+
           mappedTransactions.push({
             id: groupId,
             studentId: student ? student.id : '',
@@ -433,7 +437,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             remark: firstTx.details?.remark || firstTx.details?.reason || '',
             subItems: subItems,
             reversalIds: reversalIds.join(','),
-            paymentBreakdown: paymentBreakdown
+            paymentBreakdown: paymentBreakdown,
+            academicYear: primaryAcademicYear
           });
         });
 
