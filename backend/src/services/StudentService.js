@@ -305,7 +305,7 @@ class StudentService {
         const months = getMonthsForAcademicYear(academicYear);
         const terms = getTermsForAcademicYear(academicYear);
 
-        const admissionMonth = student.admissionMonth || 'June';
+        const admissionMonth = academicYear === earliestYear ? (student.admissionMonth || 'June') : 'June';
         const startMonthIndex = months.findIndex(m => m.name === admissionMonth);
         const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
         const monthsToCreate = months.slice(startIndex);
@@ -341,7 +341,7 @@ class StudentService {
 
         // 2. Transport ledgers (12 months, if applicable)
         if (student.transportType && student.transportType !== 'None') {
-          const transportStartMonth = student.transportStartMonth || student.admissionMonth || 'June';
+          const transportStartMonth = academicYear === earliestYear ? (student.transportStartMonth || student.admissionMonth || 'June') : 'June';
           logger.info(`[createStudent] ledger loop: transportStartMonth=${transportStartMonth} (student.transportStartMonth=${student.transportStartMonth})`);
           const transportStartMonthIndex = months.findIndex(m => m.name === transportStartMonth);
           const tStartIndex = transportStartMonthIndex >= 0 ? transportStartMonthIndex : 0;
