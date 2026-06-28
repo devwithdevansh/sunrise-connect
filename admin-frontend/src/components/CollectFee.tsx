@@ -184,7 +184,7 @@ export const CollectFee: React.FC = () => {
     
     const eduStartMonth = selectedStudent.admissionMonth || 'June';
     const eduStartIdx = allMonths.indexOf(eduStartMonth);
-    const validEduStartIdx = eduStartIdx >= 0 ? eduStartIdx : 0;
+    const validEduStartIdx = (selectedStudent.isNewAdmission !== false && eduStartIdx >= 0) ? eduStartIdx : 0;
 
     const transportStartMonth = selectedStudent.transportStartMonth || selectedStudent.admissionMonth || 'June';
     const transportStartIdx = allMonths.indexOf(transportStartMonth);

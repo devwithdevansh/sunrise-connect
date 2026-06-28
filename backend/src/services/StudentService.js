@@ -926,12 +926,15 @@ class StudentService {
       // Determine standard to use (historical standard from existing ledgers' snapshots, or current standard as fallback)
       let standardToUse = student.standard;
       const ledgerWithSnapshot = existingLedgers.find(l => l.snapshot && l.snapshot.standard);
-      
+
       // If ledgers exist but their snapshot standard differs from the student's current standard,
-      // it means the student's standard was updated (e.g., mid-year correction or promotion).
-      // We should use the updated student.standard and update the snapshots.
+      // we ONLY update the snapshot if we are generating ledgers for the CURRENT active academic year
+      // (to allow for mid-year corrections). We MUST NOT update snapshots for past years.
       if (ledgerWithSnapshot) {
-        if (ledgerWithSnapshot.snapshot.standard !== student.standard) {
+        const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
+        const activeYearName = activeYearDoc ? activeYearDoc.name : '2025-26';
+
+        if (ledgerWithSnapshot.snapshot.standard !== student.standard && academicYearStr === activeYearName) {
           standardToUse = student.standard;
           // Update snapshots of existing ledgers so they don't block future syncs
           for (const l of existingLedgers) {
