@@ -75,7 +75,9 @@ class StudentService {
       // Strip pendingFees from the student object itself
       delete studentData.pendingFees;
 
+      logger.info(`[createStudent] transportStartMonth in data: ${data.transportStartMonth} | in studentData: ${studentData.transportStartMonth}`);
       const student = await studentRepository.create(studentData, { session });
+      logger.info(`[createStudent] student saved: transportStartMonth=${student.transportStartMonth}, transportType=${student.transportType}`);
       await AuditService.log(
         { performedBy, targetStudentId: student._id, action: 'STUDENT_CREATED', details: { name: student.studentName } },
         session
@@ -335,6 +337,7 @@ class StudentService {
         // 2. Transport ledgers (12 months, if applicable)
         if (student.transportType && student.transportType !== 'None') {
           const transportStartMonth = student.transportStartMonth || student.admissionMonth || 'June';
+          logger.info(`[createStudent] ledger loop: transportStartMonth=${transportStartMonth} (student.transportStartMonth=${student.transportStartMonth})`);
           const transportStartMonthIndex = months.findIndex(m => m.name === transportStartMonth);
           const tStartIndex = transportStartMonthIndex >= 0 ? transportStartMonthIndex : 0;
           const transportMonthsToCreate = months.slice(tStartIndex);
@@ -1334,6 +1337,7 @@ class StudentService {
           studentName: data.studentName,
           status: 'success',
           studentCode: student.studentCode,
+          transportStartMonth: student.transportStartMonth,
           id: student._id
         });
         successCount++;
