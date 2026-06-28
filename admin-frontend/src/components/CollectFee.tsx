@@ -176,7 +176,7 @@ export const CollectFee: React.FC = () => {
   // -------------------------------------------------------------------
   // Period selection
   // -------------------------------------------------------------------
-  const getApplicablePeriods = (config: ReturnType<typeof buildEduTermConfig>) => {
+  const getApplicablePeriods = (config: ReturnType<typeof buildEduTermConfig>, overrideCategory?: string) => {
     if (selectedYear !== activeYearName) return config;
     if (!selectedStudent) return config;
     
@@ -191,13 +191,14 @@ export const CollectFee: React.FC = () => {
     const validTransportStartIdx = transportStartIdx >= 0 ? transportStartIdx : 0;
 
     return config.filter(item => {
-      if (item.type === 'TRANSPORT') {
+      const activeType = overrideCategory === 'TRANSPORT' ? 'TRANSPORT' : item.type;
+      if (activeType === 'TRANSPORT') {
         return allMonths.indexOf(item.value) >= validTransportStartIdx;
       }
-      if (item.type === 'EDUCATION') {
+      if (activeType === 'EDUCATION') {
         return allMonths.indexOf(item.value) >= validEduStartIdx;
       }
-      if (item.type === 'TERM') {
+      if (activeType === 'TERM') {
         if (item.value === 'Term 1') return validEduStartIdx <= 5;
         if (item.value === 'Term 2') return true;
       }
@@ -219,7 +220,8 @@ export const CollectFee: React.FC = () => {
     }
 
     const configList = getApplicablePeriods(
-      category === 'EDUCATION' || category === 'TERM' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG
+      category === 'EDUCATION' || category === 'TERM' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG,
+      category === 'TRANSPORT' ? 'TRANSPORT' : undefined
     );
     const clickedIndex = configList.findIndex(c => c.value === period);
 
@@ -259,7 +261,7 @@ export const CollectFee: React.FC = () => {
         return [...otherCategories, ...pending.map((p) => ({ category: p.type, period: p.value }))];
       });
     } else {
-      const periods = getApplicablePeriods(MONTHS_CONFIG).map((m) => m.value);
+      const periods = getApplicablePeriods(MONTHS_CONFIG, feeCategory === 'TRANSPORT' ? 'TRANSPORT' : undefined).map((m) => m.value);
       const pending = periods.filter((p) => getDueAmount(feeCategory, p) > 0);
       setSelectedFees((prev) => {
         const otherCategories = prev.filter((p) => p.category !== feeCategory);
@@ -277,7 +279,7 @@ export const CollectFee: React.FC = () => {
         return [...otherCategories, ...toSelect.map((p) => ({ category: p.type, period: p.value }))];
       });
     } else if (feeCategory === 'TRANSPORT') {
-      const periods = getApplicablePeriods(MONTHS_CONFIG).map((m) => m.value);
+      const periods = getApplicablePeriods(MONTHS_CONFIG, 'TRANSPORT').map((m) => m.value);
       const toSelect = periods.filter((p) => getDueAmount(feeCategory, p) > 0).slice(0, n);
       setSelectedFees((prev) => {
         const otherCategories = prev.filter((p) => p.category !== feeCategory);
@@ -404,7 +406,7 @@ export const CollectFee: React.FC = () => {
     }
 
     if (!needsSync && selectedStudent.transportType !== 'None') {
-      const transConfig = getApplicablePeriods(MONTHS_CONFIG);
+      const transConfig = getApplicablePeriods(MONTHS_CONFIG, 'TRANSPORT');
       for (const item of transConfig) {
         const entry = getLedger('TRANSPORT', item.value);
         if (!entry) { needsSync = true; break; }

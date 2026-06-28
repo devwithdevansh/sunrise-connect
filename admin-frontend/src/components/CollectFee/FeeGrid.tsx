@@ -35,7 +35,7 @@ interface FeeGridProps {
   COMBINED_EDU_TERM_CONFIG: EduTermConfig;
   MONTHS_CONFIG: EduTermConfig;
   studentFeeConfig: StudentFeeConfig;
-  getApplicablePeriods: (config: EduTermConfig) => EduTermConfig;
+  getApplicablePeriods: (config: EduTermConfig, overrideCategory?: string) => EduTermConfig;
   getLedger: (category: string, period: string) => LedgerEntry | undefined;
   getDueAmount: (category: string, period: string) => number;
   isOverdue: (category: string, period: string) => boolean;
@@ -223,7 +223,8 @@ export const FeeGrid: React.FC<FeeGridProps> = ({
       {!(feeCategory === 'TRANSPORT' && selectedStudent.transportType === 'None') && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
           {getApplicablePeriods(
-            feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG
+            feeCategory === 'EDUCATION' ? COMBINED_EDU_TERM_CONFIG : MONTHS_CONFIG,
+            feeCategory
           ).map((item) => {
             const activeCat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
             const entry = getLedger(activeCat, item.value);
