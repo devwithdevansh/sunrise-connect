@@ -910,28 +910,41 @@ class StudentService {
         }
         return cat;
       };
-
       const educationCategory = await ensureCategory('EDUCATION', 'Education', 'Education fee category');
       const transportCategory = await ensureCategory('TRANSPORT', 'Transport', 'Transport fee category');
       const termCategory = await ensureCategory('TERM', 'Term', 'Term fee category');
       const admissionCategory = await ensureCategory('ADMISSION', 'Admission', 'Admission fee category');
       const bagKitCategory = await ensureCategory('OTHER', 'Bag & Kit', 'Bag & Kit fee category');
 
+      const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id, academicYear: academicYearStr }).session(session);
+      
+      if (existingLedgers.length === 0 && !forceCreate) {
+        if (!parentSession) await session.commitTransaction();
+        return { created: 0, updated: 0 };
+      }
+
+      // Determine standard to use (historical standard from existing ledgers' snapshots, or current standard as fallback)
+      let standardToUse = student.standard;
+      const ledgerWithSnapshot = existingLedgers.find(l => l.snapshot && l.snapshot.standard);
+      if (ledgerWithSnapshot) {
+        standardToUse = ledgerWithSnapshot.snapshot.standard;
+      }
+
       let feeStruct = await mongoose.model('FeeStructure').findOne(
-        { medium: student.medium, standard: student.standard, academicYear: academicYearStr, isActive: true },
+        { medium: student.medium, standard: standardToUse, academicYear: academicYearStr, isActive: true },
         null,
         { session }
       );
       if (!feeStruct) {
         feeStruct = await mongoose.model('FeeStructure').findOne(
-          { medium: student.medium, standard: student.standard, isActive: true },
+          { medium: student.medium, standard: standardToUse, isActive: true },
           null,
           { session }
         );
       }
 
       if (!feeStruct) {
-        throw new AppError(`No active fee structure found for standard ${student.standard} (${student.medium} medium) in academic year ${academicYearStr}`, 400);
+        throw new AppError(`No active fee structure found for standard ${standardToUse} (${student.medium} medium) in academic year ${academicYearStr}`, 400);
       }
 
       const educationAmount = Math.round(feeStruct.annualFee / ((feeStruct.educationPartCount || 12) + (feeStruct.termPartCount || 2)));
@@ -949,13 +962,6 @@ class StudentService {
           { session }
         );
         transportAmount = tfs?.amount ?? 0;
-      }
-
-      const existingLedgers = await mongoose.model('StudentFeeLedger').find({ studentId: student._id, academicYear: academicYearStr }).session(session);
-      
-      if (existingLedgers.length === 0 && !forceCreate) {
-        if (!parentSession) await session.commitTransaction();
-        return { created: 0, updated: 0 };
       }
 
       const existingKey = (feeType, feePeriod) => existingLedgers.some(l => l.feeType === feeType && l.feePeriod === feePeriod);
@@ -993,7 +999,7 @@ class StudentService {
       const snapshot = {
         studentName: student.studentName,
         medium: student.medium,
-        standard: student.standard,
+        standard: standardToUse,
         division: student.division,
         transportType: student.transportType || 'None',
         isRTE: isRTE
