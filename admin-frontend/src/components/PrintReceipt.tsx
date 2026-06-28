@@ -46,6 +46,7 @@ const RECEIPT_STYLES = `
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    padding: 0 24px;       /* Added space from left and right */
   }
 
   /* ── Header ─────────────────────────────────────── */
@@ -67,8 +68,8 @@ const RECEIPT_STYLES = `
   }
 
   .rcp-logo-circle {
-    width: 52px;
-    height: 52px;
+    width: 72px;           /* Increased logo size */
+    height: 72px;          /* Increased logo size */
     border-radius: 50%;
     background: #fff;
     display: flex;
@@ -85,7 +86,7 @@ const RECEIPT_STYLES = `
   }
 
   .rcp-logo-placeholder {
-    font-size: 10px;
+    font-size: 16px;       /* Increased placeholder font size */
     font-weight: 900;
     color: #003366;
     text-align: center;
@@ -490,8 +491,8 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({
                 <span className="rcp-logo-placeholder">☀️</span>
               </div>
               <div>
-                <div className="rcp-school-name">{schoolName}</div>
-                <div className="rcp-school-tagline">{schoolTagline}</div>
+                <div className="rcp-school-name">  {schoolName}</div>
+                <div className="rcp-school-tagline">  {schoolTagline}</div>
                 <div className="rcp-school-meta">
                   {schoolAddress}<br />
                   Ph: {schoolPhone} &nbsp;·&nbsp; {schoolEmail}
