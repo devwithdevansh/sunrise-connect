@@ -58,19 +58,29 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ initialAcademicYear, on
     if (bagKitFee !== '' && Number(bagKitFee) < 0) { setError('Bag & Kit fee cannot be negative'); return; }
     setError('');
     setSaving(true);
-    const ok = await onSave({
+    
+    const baseData = {
       academicYear,
       standard,
-      medium,
       annualFee: Number(annualFee),
       educationPartCount: EDUCATION_PARTS,
       termPartCount: TERM_PARTS,
       termFee: monthlyEdu,
       admissionFee: Number(admissionFee) || 0,
       bagKitFee: Number(bagKitFee) || 0,
-    });
-    setSaving(false);
-    if (ok) onClose(); else setError('Failed to create. Standard may already exist for this academic year and medium.');
+    };
+
+    if (medium === 'Both') {
+      const ok1 = await onSave({ ...baseData, medium: 'English' });
+      const ok2 = await onSave({ ...baseData, medium: 'Gujarati' });
+      setSaving(false);
+      if (ok1 && ok2) onClose();
+      else setError('Failed to create for one or both mediums. They may already exist.');
+    } else {
+      const ok = await onSave({ ...baseData, medium });
+      setSaving(false);
+      if (ok) onClose(); else setError('Failed to create. Standard may already exist for this academic year and medium.');
+    }
   };
 
   return (
@@ -124,6 +134,7 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ initialAcademicYear, on
               <select value={medium} onChange={e => setMedium(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                 <option value="English">English</option>
                 <option value="Gujarati">Gujarati</option>
+                <option value="Both">Both (English & Gujarati)</option>
               </select>
             </div>
           </div>

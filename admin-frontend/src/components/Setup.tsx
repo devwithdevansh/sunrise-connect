@@ -433,8 +433,8 @@ export const Setup: React.FC = () => {
                       )}
                     </div>
                     <div className="text-xs text-slate-500 space-y-1">
-                      <p><strong className="text-slate-700">Start:</strong> {new Date(ay.startDate).toLocaleDateString()}</p>
-                      <p><strong className="text-slate-700">End:</strong> {new Date(ay.endDate).toLocaleDateString()}</p>
+                      <p><strong className="text-slate-700">Start:</strong> {new Date(ay.startDate).toLocaleDateString('en-GB')}</p>
+                      <p><strong className="text-slate-700">End:</strong> {new Date(ay.endDate).toLocaleDateString('en-GB')}</p>
                     </div>
                   </div>
 
