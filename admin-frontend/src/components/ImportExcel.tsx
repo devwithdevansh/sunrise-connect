@@ -593,7 +593,18 @@ export const ImportExcel: React.FC = () => {
                       </td>
                       <td className="py-2.5 px-4 text-xs font-semibold">
                         {res.status === 'success' ? (
-                          <span className="text-slate-400 font-mono">Assigned Code: {res.studentCode}</span>
+                          <div className="space-y-0.5">
+                            <span className="text-slate-400 font-mono block">Code: {res.studentCode}</span>
+                            {res.transportStartMonth ? (
+                              <span className="text-green-600 font-bold block text-[9px] uppercase">
+                                ✓ Transport from: {res.transportStartMonth}
+                              </span>
+                            ) : (
+                              <span className="text-orange-500 font-bold block text-[9px] uppercase">
+                                ⚠ TransportStartMonth: null/none
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-red-500 flex items-center gap-1">
                             <XCircle className="h-3.5 w-3.5 shrink-0" />
