@@ -24,9 +24,25 @@ import {
   ArrowLeft,
   ChevronRight,
   Database,
-  Info
+  Info,
+  Pencil
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+
+const cleanMobileNumber = (val: any): string => {
+  if (val === undefined || val === null) return '';
+  let str = String(val).trim();
+  if (str.endsWith('.0')) {
+    str = str.slice(0, -2);
+  } else if (str.endsWith('.00')) {
+    str = str.slice(0, -3);
+  }
+  let digits = str.replace(/\D/g, '');
+  if (digits.length > 10) {
+    digits = digits.slice(-10);
+  }
+  return digits;
+};
 
 interface ExcelRow {
   studentName: string;
@@ -57,6 +73,122 @@ export const ImportExcel: React.FC = () => {
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editContext, setEditContext] = useState<'preview' | 'report' | null>(null);
+  const [editForm, setEditForm] = useState<ExcelRow | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleEditClick = (idx: number, context: 'preview' | 'report') => {
+    setEditingIndex(idx);
+    setEditContext(context);
+    const original = context === 'preview' ? previewData[idx] : successReport?.results[idx]?.originalData;
+    setEditForm(original ? { ...original } : null);
+    setEditError(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingIndex === null || !editForm) return;
+    setEditError(null);
+
+    // Basic validation check before saving
+    if (!String(editForm.studentName || '').trim()) {
+      setEditError("Student Name is required");
+      return;
+    }
+    if (!editForm.medium || !['English', 'Gujarati'].includes(editForm.medium)) {
+      setEditError("Medium must be 'English' or 'Gujarati'");
+      return;
+    }
+    if (!String(editForm.standard || '').trim()) {
+      setEditError("Standard is required");
+      return;
+    }
+    if (!String(editForm.division || '').trim()) {
+      setEditError("Division is required");
+      return;
+    }
+    if (!String(editForm.parentName || '').trim()) {
+      setEditError("Parent Name is required");
+      return;
+    }
+    const cleanMobile = cleanMobileNumber(editForm.parentMobile);
+    if (!cleanMobile) {
+      setEditError("Parent Mobile number is required");
+      return;
+    } else if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
+      setEditError("Enter a valid 10-digit Indian parent mobile number");
+      return;
+    }
+
+    if (editForm.parentSecondaryMobile) {
+      const cleanSec = cleanMobileNumber(editForm.parentSecondaryMobile);
+      if (cleanSec && !/^[6-9]\d{9}$/.test(cleanSec)) {
+        setEditError("Enter a valid 10-digit secondary mobile number");
+        return;
+      }
+    }
+
+    if (editContext === 'preview') {
+      // In preview, just update local state
+      const updated = [...previewData];
+      updated[editingIndex] = {
+        ...editForm,
+        parentMobile: cleanMobile,
+        parentSecondaryMobile: editForm.parentSecondaryMobile ? cleanMobileNumber(editForm.parentSecondaryMobile) : ''
+      };
+      setPreviewData(updated);
+      setEditingIndex(null);
+      setEditContext(null);
+      setEditForm(null);
+    } else if (editContext === 'report' && successReport) {
+      // In report, retry import of this specific row
+      setIsRetrying(true);
+      try {
+        const cleanedRow = {
+          ...editForm,
+          parentMobile: cleanMobile,
+          parentSecondaryMobile: editForm.parentSecondaryMobile ? cleanMobileNumber(editForm.parentSecondaryMobile) : ''
+        };
+        const report = await importStudents([cleanedRow]);
+        const singleResult = report.results[0];
+
+        if (singleResult.status === 'success') {
+          const updatedResults = [...successReport.results];
+          const previousStatus = updatedResults[editingIndex].status;
+
+          updatedResults[editingIndex] = {
+            ...updatedResults[editingIndex],
+            status: 'success',
+            studentCode: singleResult.studentCode,
+            transportStartMonth: singleResult.transportStartMonth,
+            originalData: cleanedRow,
+            error: undefined
+          };
+
+          const diffSuccess = previousStatus === 'failed' ? 1 : 0;
+          const diffFail = previousStatus === 'failed' ? -1 : 0;
+
+          setSuccessReport({
+            successCount: successReport.successCount + diffSuccess,
+            failCount: successReport.failCount + diffFail,
+            results: updatedResults
+          });
+
+          setEditingIndex(null);
+          setEditContext(null);
+          setEditForm(null);
+        } else {
+          setEditError(singleResult.error || "Retry failed");
+        }
+      } catch (err: any) {
+        setEditError(err.message || "An unexpected error occurred during retry");
+      } finally {
+        setIsRetrying(false);
+      }
+    }
+  };
 
   const fieldsSchema = [
     { name: 'Student Name', dbName: 'studentName', required: true, example: 'Rahul Sharma', desc: 'Full name of the student' },
@@ -169,8 +301,8 @@ export const ImportExcel: React.FC = () => {
           const std = getExcelValue("Standard") || row["standard"] || "";
           const div = getExcelValue("Division") || row["division"] || "";
           const pName = getExcelValue("Parent Name") || row["parentName"] || "";
-          const pMobile = getExcelValue("Parent Mobile") || row["parentMobile"] || "";
-          const pSecMobile = getExcelValue("Parent Secondary Mobile") || row["parentSecondaryMobile"] || "";
+          const pMobile = cleanMobileNumber(getExcelValue("Parent Mobile") || row["parentMobile"]);
+          const pSecMobile = cleanMobileNumber(getExcelValue("Parent Secondary Mobile") || row["parentSecondaryMobile"]);
           const tType = getExcelValue("Transport Type") || row["transportType"] || "None";
           const startMonthVal = getExcelValue("Transport Start Month") || row["transportStartMonth"] || "";
 
@@ -248,7 +380,14 @@ export const ImportExcel: React.FC = () => {
     setErrorMsg(null);
     try {
       const report = await importStudents(previewData);
-      setSuccessReport(report);
+      const enrichedResults = report.results.map((res: any, idx: number) => ({
+        ...res,
+        originalData: previewData[idx]
+      }));
+      setSuccessReport({
+        ...report,
+        results: enrichedResults
+      });
       setPreviewData([]);
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred during import.");
@@ -269,13 +408,13 @@ export const ImportExcel: React.FC = () => {
   // Basic row-level validation warnings displayed directly in frontend preview table
   const validateRow = (row: ExcelRow) => {
     const errors: string[] = [];
-    if (!row.studentName.trim()) errors.push("Name missing");
+    if (!String(row.studentName || '').trim()) errors.push("Name missing");
     if (!row.medium || !['English', 'Gujarati'].includes(row.medium)) errors.push("Medium must be English/Gujarati");
-    if (!row.standard.trim()) errors.push("Standard missing");
-    if (!row.division.trim()) errors.push("Division missing");
-    if (!row.parentName.trim()) errors.push("Parent name missing");
+    if (!String(row.standard || '').trim()) errors.push("Standard missing");
+    if (!String(row.division || '').trim()) errors.push("Division missing");
+    if (!String(row.parentName || '').trim()) errors.push("Parent name missing");
 
-    const mobileClean = row.parentMobile.replace(/\D/g, '');
+    const mobileClean = String(row.parentMobile || '').replace(/\D/g, '');
     if (!mobileClean) {
       errors.push("Primary mobile missing");
     } else if (!/^[6-9]\d{9}$/.test(mobileClean)) {
@@ -283,7 +422,7 @@ export const ImportExcel: React.FC = () => {
     }
 
     if (row.parentSecondaryMobile) {
-      const secMobile = row.parentSecondaryMobile.replace(/\D/g, '');
+      const secMobile = String(row.parentSecondaryMobile || '').replace(/\D/g, '');
       if (secMobile && !/^[6-9]\d{9}$/.test(secMobile)) {
         errors.push("Invalid backup mobile");
       }
@@ -295,7 +434,7 @@ export const ImportExcel: React.FC = () => {
 
     if (row.pendingFees) {
       Object.keys(row.pendingFees).forEach(year => {
-        const val = row.pendingFees![year].toLowerCase();
+        const val = String(row.pendingFees![year] || '').toLowerCase();
         if (val && val !== 'paid' && val !== 'gov paid') {
           if (!/^[a-z0-9\- ]+ to may$/i.test(val)) {
             errors.push(`Invalid ${year} status (e.g. "oct to may")`);
@@ -468,6 +607,7 @@ export const ImportExcel: React.FC = () => {
                         <th className="py-3 px-4">Transport</th>
                         <th className="py-3 px-4">Other Flags</th>
                         <th className="py-3 px-4 text-center">Validation</th>
+                        <th className="py-3 px-4 text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -537,6 +677,15 @@ export const ImportExcel: React.FC = () => {
                                 </span>
                               )}
                             </td>
+                            <td className="py-3 px-4 text-center">
+                              <button
+                                onClick={() => handleEditClick(idx, 'preview')}
+                                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                                title="Edit Row"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -577,6 +726,7 @@ export const ImportExcel: React.FC = () => {
                     <th className="py-2.5 px-4">Student</th>
                     <th className="py-2.5 px-4">Status</th>
                     <th className="py-2.5 px-4">Details</th>
+                    <th className="py-2.5 px-4 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -612,6 +762,17 @@ export const ImportExcel: React.FC = () => {
                           </span>
                         )}
                       </td>
+                      <td className="py-2.5 px-4 text-center">
+                        {res.status === 'failed' && (
+                          <button
+                            onClick={() => handleEditClick(idx, 'report')}
+                            className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors inline-flex items-center justify-center"
+                            title="Edit & Retry Row"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -632,6 +793,192 @@ export const ImportExcel: React.FC = () => {
             >
               Go to Students Screen
             </button>
+          </div>
+        </div>
+      )}
+        {/* Edit Row Modal */}
+      {editingIndex !== null && editForm !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-2xl max-w-2xl w-full space-y-5 animate-in fade-in zoom-in duration-200">
+            <header className="flex items-center justify-between border-b border-slate-150 pb-3">
+              <h3 className="font-extrabold text-base text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                <Pencil className="h-5 w-5 text-blue-600" />
+                Edit Row {editingIndex + 1} ({editContext === 'preview' ? 'Preview' : 'Failed Record'})
+              </h3>
+              <button
+                onClick={() => { setEditingIndex(null); setEditForm(null); }}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <XCircle className="h-5 w-5 animate-none text-slate-400" />
+              </button>
+            </header>
+
+            {editError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-3.5 rounded-xl text-xs font-bold flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+              {/* Student Name */}
+              <div className="space-y-1.5 col-span-1 sm:col-span-2">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Student Name *</label>
+                <input
+                  type="text"
+                  value={editForm.studentName || ''}
+                  onChange={(e) => setEditForm({ ...editForm, studentName: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              {/* Medium */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Medium *</label>
+                <select
+                  value={editForm.medium || ''}
+                  onChange={(e) => setEditForm({ ...editForm, medium: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                >
+                  <option value="">Select Medium</option>
+                  <option value="English">English</option>
+                  <option value="Gujarati">Gujarati</option>
+                </select>
+              </div>
+
+              {/* Standard */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Standard *</label>
+                <input
+                  type="text"
+                  value={editForm.standard || ''}
+                  onChange={(e) => setEditForm({ ...editForm, standard: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              {/* Division */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Division *</label>
+                <input
+                  type="text"
+                  value={editForm.division || ''}
+                  onChange={(e) => setEditForm({ ...editForm, division: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              {/* Parent Name */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Parent Name *</label>
+                <input
+                  type="text"
+                  value={editForm.parentName || ''}
+                  onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              {/* Parent Mobile */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Parent Mobile *</label>
+                <input
+                  type="text"
+                  value={editForm.parentMobile || ''}
+                  onChange={(e) => setEditForm({ ...editForm, parentMobile: e.target.value })}
+                  placeholder="e.g. 9876543210"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                />
+              </div>
+
+              {/* Parent Secondary Mobile */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Secondary Mobile</label>
+                <input
+                  type="text"
+                  value={editForm.parentSecondaryMobile || ''}
+                  onChange={(e) => setEditForm({ ...editForm, parentSecondaryMobile: e.target.value })}
+                  placeholder="Optional backup contact"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                />
+              </div>
+
+              {/* Transport Type */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Transport Type</label>
+                <select
+                  value={editForm.transportType || 'None'}
+                  onChange={(e) => setEditForm({ ...editForm, transportType: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                >
+                  <option value="None">None</option>
+                  <option value="Railnagar">Railnagar</option>
+                  <option value="Outside Railnagar">Outside Railnagar</option>
+                </select>
+              </div>
+
+              {/* Transport Start Month */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Transport Start Month</label>
+                <select
+                  value={editForm.transportStartMonth || ''}
+                  onChange={(e) => setEditForm({ ...editForm, transportStartMonth: e.target.value || undefined })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                >
+                  <option value="">Default (June / Admission Month)</option>
+                  {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* RTE */}
+              <div className="flex items-center gap-2 pt-4">
+                <input
+                  type="checkbox"
+                  id="rte-checkbox"
+                  checked={String(editForm.isRTE).toLowerCase() === 'yes' || editForm.isRTE === 'true' || editForm.isRTE === true}
+                  onChange={(e) => setEditForm({ ...editForm, isRTE: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="rte-checkbox" className="text-xs font-extrabold text-slate-600 select-none">
+                  Right To Education (RTE) Quota
+                </label>
+              </div>
+
+              {/* New Admission */}
+              <div className="flex items-center gap-2 pt-4">
+                <input
+                  type="checkbox"
+                  id="new-adm-checkbox"
+                  checked={String(editForm.isNewAdmission).toLowerCase() === 'yes' || editForm.isNewAdmission === 'true' || editForm.isNewAdmission === true}
+                  onChange={(e) => setEditForm({ ...editForm, isNewAdmission: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="new-adm-checkbox" className="text-xs font-extrabold text-slate-600 select-none">
+                  Is New Admission (Applies one-time fee)
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-150">
+              <button
+                type="button"
+                onClick={() => { setEditingIndex(null); setEditForm(null); }}
+                disabled={isRetrying}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-2 rounded-xl text-xs transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={isRetrying}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all disabled:opacity-50"
+              >
+                {isRetrying ? "Processing..." : editContext === 'preview' ? "Save Changes" : "Save & Retry Import"}
+              </button>
+            </div>
           </div>
         </div>
       )}

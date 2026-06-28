@@ -130,4 +130,32 @@ describe('Student excel import multi-year fee generation tests', () => {
     const adm25 = year2526.find(l => l.feeType === 'ADMISSION');
     expect(adm25).toBeUndefined();
   });
+
+  it('correctly handles parent mobile numbers with floating point suffix from Excel', async () => {
+    const importData = [
+      {
+        studentName: 'Karan Patel',
+        medium: 'English',
+        standard: '5',
+        division: 'A',
+        parentName: 'Suresh Patel',
+        parentMobile: '9876543210.0',
+        parentSecondaryMobile: '9876543211.00',
+        transportType: 'None',
+        isRTE: 'No',
+        isNewAdmission: 'No'
+      }
+    ];
+
+    const result = await StudentService.importStudents(importData);
+    expect(result.successCount).toBe(1);
+    expect(result.failCount).toBe(0);
+    expect(result.results[0].status).toBe('success');
+
+    // Retrieve parent record
+    const parent = await mongoose.model('Parent').findOne({ primaryMobileNumber: '9876543210' });
+    expect(parent).toBeDefined();
+    expect(parent.parentName).toBe('Suresh Patel');
+    expect(parent.secondaryMobileNumber).toBe('9876543211');
+  });
 });
