@@ -1437,11 +1437,23 @@ class StudentService {
         data.isRTE = parseBool(data.isRTE);
         data.isNewAdmission = parseBool(data.isNewAdmission);
 
-        if (data.parentMobile) {
-          data.parentMobile = String(data.parentMobile).replace(/\D/g, '');
-          if (data.parentMobile.length > 10) {
-            data.parentMobile = data.parentMobile.slice(-10);
+        const cleanMobileNumber = (val) => {
+          if (val === undefined || val === null) return '';
+          let str = String(val).trim();
+          if (str.endsWith('.0')) {
+            str = str.slice(0, -2);
+          } else if (str.endsWith('.00')) {
+            str = str.slice(0, -3);
           }
+          let digits = str.replace(/\D/g, '');
+          if (digits.length > 10) {
+            digits = digits.slice(-10);
+          }
+          return digits;
+        };
+
+        if (data.parentMobile) {
+          data.parentMobile = cleanMobileNumber(data.parentMobile);
           if (!/^[6-9]\d{9}$/.test(data.parentMobile)) {
             throw new Error('Enter Indian number or invalid number');
           }
@@ -1450,11 +1462,8 @@ class StudentService {
         }
 
         if (data.parentSecondaryMobile) {
-          data.parentSecondaryMobile = String(data.parentSecondaryMobile).replace(/\D/g, '');
-          if (data.parentSecondaryMobile.length > 10) {
-            data.parentSecondaryMobile = data.parentSecondaryMobile.slice(-10);
-          }
-          if (!/^[6-9]\d{9}$/.test(data.parentSecondaryMobile)) {
+          data.parentSecondaryMobile = cleanMobileNumber(data.parentSecondaryMobile);
+          if (data.parentSecondaryMobile && !/^[6-9]\d{9}$/.test(data.parentSecondaryMobile)) {
             throw new Error('Enter Indian number or invalid number');
           }
         }
