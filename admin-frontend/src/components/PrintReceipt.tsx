@@ -1,609 +1,570 @@
-import React from 'react';
+/**
+ * PrintReceipt.tsx
+ * ─────────────────────────────────────────────────────────────────────────────
+ * This component is kept as a React screen-preview only.
+ * Actual printing is handled by printUtils.ts via an iframe.
+ *
+ * It renders a visual preview of the receipt inside the app UI
+ * (e.g. inside a modal or slide-in panel) when needed.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 
-/* ─── Types ────────────────────────────────────────────────────────── */
-interface ReceiptLineItem {
-  id: number;
-  description: string;
-  mode: string;
-  amount: number;
-}
+import React from 'react';
+import type { PaymentTransaction } from '../mockData';
+import { useApp } from '../store';
+import logoPath from '../assets/sunrise-logo.png';
+import watermarkLogoPath from '../assets/sunrise-round-logo.png';
 
 interface PrintReceiptProps {
-  receiptNo: string;
-  studentName: string;
-  studentClass: string;
-  period: string;
-  date: string;
-  time: string;
-  status?: string;
-  lineItems: ReceiptLineItem[];
-  totalPaid: number;
-  amountInWords: string;
-  schoolName?: string;
-  schoolAddress?: string;
-  schoolPhone?: string;
-  schoolEmail?: string;
-  schoolWebsite?: string;
-  schoolTagline?: string;
+  transaction: PaymentTransaction | null;
 }
 
-/* ─── Styles (injected once) ───────────────────────────────────────── */
-const RECEIPT_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* ─── Indian number-to-words ─────────────────────────────────────── */
+function toIndianWords(amount: number): string {
+  const parts = amount.toFixed(2).split('.');
+  const rupees = parseInt(parts[0], 10);
+  const paise = parseInt(parts[1], 10);
 
-  .receipt-root * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  const convertPart = (num: number): string => {
+    if (num === 0) return '';
+    const ones = [
+      '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+      'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+      'Seventeen', 'Eighteen', 'Nineteen',
+    ];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    const below100 = (n: number): string =>
+      n < 20 ? ones[n] : tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+
+    const below1000 = (n: number): string =>
+      n < 100
+        ? below100(n)
+        : ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + below100(n % 100) : '');
+
+    let result = '';
+    let n = num;
+    const crore = Math.floor(n / 10_000_000); n %= 10_000_000;
+    const lakh = Math.floor(n / 100_000); n %= 100_000;
+    const thousand = Math.floor(n / 1_000); n %= 1_000;
+
+    if (crore)    result += below1000(crore)    + ' Crore ';
+    if (lakh)     result += below1000(lakh)     + ' Lakh ';
+    if (thousand) result += below1000(thousand) + ' Thousand ';
+    if (n)        result += below1000(n);
+
+    return result.trim();
+  };
+
+  if (rupees === 0 && paise === 0) return 'Zero Rupees Only';
+
+  let words = '';
+  if (rupees > 0) {
+    words += convertPart(rupees) + ' Rupees';
+  }
+  if (paise > 0) {
+    if (rupees > 0) words += ' and ';
+    words += convertPart(paise) + ' Paise';
+  }
+  return words + ' Only';
+}
+
+/* ─── Payment-mode label ─────────────────────────────────────────── */
+type PaymentMode = 'cash' | 'online' | 'cheque' | 'upi' | 'neft' | string;
+
+function getModeLabel(method: PaymentMode): string {
+  const m = (method || '').toLowerCase();
+  if (m === 'cash')   return 'Cash';
+  if (m === 'upi')    return 'UPI / Online';
+  if (m === 'online') return 'Online';
+  if (m === 'cheque') return 'Cheque';
+  if (m === 'neft' || m === 'rtgs' || m === 'imps') return m.toUpperCase();
+  return method ? method.charAt(0).toUpperCase() + method.slice(1) : 'N/A';
+}
+
+interface SubItem {
+  id?: string;
+  description: string;
+  amount: number;
+  concessionAmount: number;
+  method?: string;
+  status?: string;
+}
+
+function groupSubItems(items: SubItem[]): SubItem[] {
+  if (!items || items.length === 0) return [];
+
+  const MONTH_ORDER = [
+    'April', 'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December', 'January', 'February', 'March'
+  ];
+
+  const groups: { [key: string]: { items: SubItem[]; months: string[] } } = {};
+
+  for (const item of items) {
+    const match = item.description.match(/^(.+?)\s*-\s*(January|February|March|April|May|June|July|August|September|October|November|December)$/i);
+    if (match) {
+      const rawPrefix = match[1].trim();
+      const rawMonth = match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase();
+      if (!groups[rawPrefix]) {
+        groups[rawPrefix] = { items: [], months: [] };
+      }
+      groups[rawPrefix].items.push(item);
+      groups[rawPrefix].months.push(rawMonth);
+    } else {
+      const desc = item.description.trim();
+      if (!groups[desc]) {
+        groups[desc] = { items: [], months: [] };
+      }
+      groups[desc].items.push(item);
+    }
   }
 
-  .receipt-root {
-    font-family: 'Inter', sans-serif;
-    background: #ffffff;
-    width: 794px;          /* A4 width at 96 dpi */
-    min-height: 1123px;    /* A4 height */
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    margin: 24px auto;     /* Centers the receipt on screen and adds space around it */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  const result: SubItem[] = [];
+
+  for (const key of Object.keys(groups)) {
+    const g = groups[key];
+    if (g.months.length > 0) {
+      g.months.sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
+      const startMonth = g.months[0];
+      const endMonth = g.months[g.months.length - 1];
+
+      const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
+      const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+      const first = g.items[0];
+
+      const description = startMonth === endMonth
+        ? `${key} - ${startMonth}`
+        : `${key} - ${startMonth} to ${endMonth}`;
+
+      result.push({
+        description,
+        amount: totalAmt,
+        concessionAmount: totalConcession,
+        method: first.method,
+        status: first.status,
+      });
+    } else {
+      if (g.items.length === 1) {
+        result.push(g.items[0]);
+      } else {
+        const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
+        const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+        const first = g.items[0];
+        result.push({
+          description: key,
+          amount: totalAmt,
+          concessionAmount: totalConcession,
+          method: first.method,
+          status: first.status,
+        });
+      }
+    }
   }
 
-  /* ── Header ─────────────────────────────────────── */
-  .rcp-header {
-    background: #003366;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 28px;
-    gap: 16px;
-  }
+  return result;
+}
 
-  .rcp-logo-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-  }
+/* ─── Component ─────────────────────────────────────────────────── */
+export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
+  const { currentUser } = useApp();
 
-  .rcp-logo-circle {
-    width: 72px;           /* Increased logo size */
-    height: 72px;          /* Increased logo size */
-    border-radius: 50%;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
+  if (!transaction) return null;
 
-  .rcp-logo-circle img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
+  const totalAmount    = Math.abs(transaction.amount);
+  const amountInWords  = toIndianWords(totalAmount);
+  const modeLabel      = getModeLabel(transaction.method || '');
 
-  .rcp-logo-placeholder {
-    font-size: 16px;       /* Increased placeholder font size */
-    font-weight: 900;
-    color: #003366;
-    text-align: center;
-    line-height: 1.1;
-  }
+  /* Build period string as fees year */
+  const period = (() => {
+    if (transaction.studentCode) {
+      const match = transaction.studentCode.match(/\/(\d{4})-(\d{2})\//);
+      if (match) {
+        const startYear = match[1];
+        const endYear = startYear.slice(0, 2) + match[2];
+        return `${startYear} – ${endYear}`;
+      }
+    }
+    const yearPart = transaction.date ? new Date(transaction.date).getFullYear() : new Date().getFullYear();
+    return `${yearPart} – ${yearPart + 1}`;
+  })();
 
-  .rcp-school-name {
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 0.03em;
-    line-height: 1.15;
-  }
+  const dateStr = transaction.date
+    ? new Date(transaction.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+    : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  .rcp-school-tagline {
-    font-size: 9.5px;
-    font-weight: 500;
-    color: #fbbf24;
-    margin-top: 2px;
-    letter-spacing: 0.05em;
-  }
+  const timeStr = transaction.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-  .rcp-school-meta {
-    font-size: 8.5px;
-    color: #cbd5e1;
-    margin-top: 4px;
-    line-height: 1.5;
-  }
+  /* ── Inline styles (screen preview — uses mm-based width for A4 feel) ── */
+  const S = {
+    page: {
+      width: '210mm',
+      minHeight: '297mm',
+      margin: '0 auto',
+      padding: '20mm 12mm 14mm',
+      backgroundColor: '#ffffff',
+      color: '#1a1a2e',
+      fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+      fontSize: '11px',
+      lineHeight: 1.45,
+      boxSizing: 'border-box' as const,
+      position: 'relative' as const,
+    } as React.CSSProperties,
 
-  .rcp-receipt-badge {
-    background: #f59e0b;
-    color: #fff;
-    border-radius: 8px;
-    padding: 10px 20px;
-    text-align: center;
-    flex-shrink: 0;
-  }
+    headerRow: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+      marginBottom: '8px',
+    } as React.CSSProperties,
 
-  .rcp-receipt-badge-label {
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    line-height: 1;
-  }
+    logoCircle: {
+      width: '190px',
+      flexShrink: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    } as React.CSSProperties,
 
-  .rcp-receipt-badge-no {
-    font-size: 10px;
-    font-weight: 700;
-    margin-top: 4px;
-    letter-spacing: 0.05em;
-  }
+    schoolName: {
+      fontSize: '22px',
+      fontWeight: 800,
+      color: '#1b3a6b',
+      letterSpacing: '0.5px',
+      lineHeight: 1.1,
+    } as React.CSSProperties,
 
-  /* ── Info Section ────────────────────────────────── */
-  .rcp-info-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    border-bottom: 1px solid #e2e8f0;
-    margin: 0 28px;
-    padding: 16px 0;
-  }
+    schoolMedium: {
+      fontSize: '11px',
+      fontWeight: 700,
+      color: '#d08c16',
+      marginTop: '3px',
+    } as React.CSSProperties,
 
-  .rcp-info-col {
-    padding: 0 8px;
-  }
+    schoolAddr: {
+      fontSize: '10.5px',
+      color: '#555',
+      marginTop: '2px',
+    } as React.CSSProperties,
 
-  .rcp-info-col:first-child {
-    padding-left: 0;
-    border-right: 1px solid #e2e8f0;
-    padding-right: 24px;
-  }
+    ruleGold: {
+      height: '4px',
+      backgroundColor: '#e8a020',
+      marginBottom: '3px',
+    } as React.CSSProperties,
 
-  .rcp-info-col:last-child {
-    padding-left: 24px;
-    padding-right: 0;
-  }
+    ruleNavy: {
+      height: '2px',
+      backgroundColor: '#1b3a6b',
+      marginBottom: '14px',
+    } as React.CSSProperties,
 
-  .rcp-info-heading {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #003366;
-    border-bottom: 2px solid #f59e0b;
-    padding-bottom: 5px;
-    margin-bottom: 10px;
-    display: inline-block;
-  }
+    titleBar: {
+      backgroundColor: '#1b3a6b',
+      color: '#fff',
+      textAlign: 'center' as const,
+      padding: '9px 0',
+      fontSize: '15px',
+      fontWeight: 700,
+      letterSpacing: '3px',
+      marginBottom: '16px',
+    } as React.CSSProperties,
 
-  .rcp-info-grid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    row-gap: 5px;
-    column-gap: 12px;
-    font-size: 10px;
-  }
+    metaTable: {
+      width: '100%',
+      borderCollapse: 'collapse' as const,
+      marginBottom: '16px',
+    } as React.CSSProperties,
 
-  .rcp-info-label {
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    font-size: 8.5px;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-    align-self: center;
-  }
+    metaTdLabel: {
+      padding: '6px 12px',
+      fontWeight: 700,
+      color: '#1b3a6b',
+      width: '155px',
+      fontSize: '11px',
+      whiteSpace: 'nowrap' as const,
+    } as React.CSSProperties,
 
-  .rcp-info-value {
-    font-weight: 700;
-    color: #1e293b;
-    font-size: 10.5px;
-  }
+    metaTdColon: {
+      padding: '6px 4px',
+      fontWeight: 700,
+      color: '#555',
+      width: '12px',
+    } as React.CSSProperties,
 
-  .rcp-info-value.status-paid {
-    color: #16a34a;
-    font-weight: 800;
-  }
+    metaTdValue: {
+      padding: '6px 12px',
+      color: '#333',
+      fontSize: '11px',
+      fontWeight: 600,
+    } as React.CSSProperties,
 
-  /* ── Payment Details Table ───────────────────────── */
-  .rcp-table-section {
-    margin: 0 28px;
-    padding: 16px 0;
-    flex: 1;
-  }
+    sectionHeader: {
+      color: '#1b3a6b',
+      fontWeight: 800,
+      fontSize: '11.5px',
+      letterSpacing: '0.5px',
+      marginBottom: '5px',
+      borderBottom: '2px solid #1b3a6b',
+      paddingBottom: '3px',
+    } as React.CSSProperties,
 
-  .rcp-table-heading {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #003366;
-    border-bottom: 2px solid #f59e0b;
-    padding-bottom: 5px;
-    margin-bottom: 12px;
-    display: inline-block;
-  }
+    feeTable: {
+      width: '100%',
+      borderCollapse: 'collapse' as const,
+      marginBottom: '6px',
+    } as React.CSSProperties,
 
-  .rcp-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10.5px;
-  }
+    thLeft: {
+      padding: '8px 10px',
+      textAlign: 'left' as const,
+      fontSize: '11px',
+      fontWeight: 700,
+      color: '#fff',
+      backgroundColor: '#516f9e',
+    } as React.CSSProperties,
 
-  .rcp-table thead tr {
-    background: #003366;
-    color: #fff;
-  }
+    thRight: {
+      padding: '8px 10px',
+      textAlign: 'right' as const,
+      fontSize: '11px',
+      fontWeight: 700,
+      color: '#fff',
+      backgroundColor: '#516f9e',
+    } as React.CSSProperties,
 
-  .rcp-table thead th {
-    padding: 8px 12px;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-align: left;
-  }
+    tdNum: {
+      padding: '5px 8px',
+      color: '#444',
+      fontSize: '11px',
+      width: '34px',
+    } as React.CSSProperties,
 
-  .rcp-table thead th:last-child {
-    text-align: right;
-  }
+    tdDesc: {
+      padding: '5px 8px',
+      color: '#333',
+      fontSize: '11px',
+    } as React.CSSProperties,
 
-  .rcp-table tbody tr {
-    border-bottom: 1px solid #f1f5f9;
-  }
+    tdAmt: {
+      padding: '5px 8px',
+      textAlign: 'right' as const,
+      color: '#333',
+      fontSize: '11px',
+      fontWeight: 600,
+      whiteSpace: 'nowrap' as const,
+    } as React.CSSProperties,
 
-  .rcp-table tbody tr:nth-child(even) {
-    background: #f8fafc;
-  }
+    totalRow: {
+      backgroundColor: '#1b3a6b',
+      color: '#fff',
+    } as React.CSSProperties,
 
-  .rcp-table tbody td {
-    padding: 9px 12px;
-    color: #334155;
-    font-weight: 500;
-  }
+    totalLabel: {
+      padding: '7px 8px',
+      fontWeight: 800,
+      fontSize: '12px',
+      letterSpacing: '1px',
+      color: '#fff',
+    } as React.CSSProperties,
 
-  .rcp-table tbody td:first-child {
-    color: #94a3b8;
-    font-weight: 600;
-    font-size: 10px;
-    width: 32px;
-  }
+    totalAmt: {
+      padding: '7px 8px',
+      textAlign: 'right' as const,
+      fontWeight: 800,
+      fontSize: '13px',
+      color: '#fff',
+      whiteSpace: 'nowrap' as const,
+    } as React.CSSProperties,
 
-  .rcp-table tbody td:last-child {
-    text-align: right;
-    font-weight: 700;
-    color: #1e293b;
-  }
+    wordsBox: {
+      borderLeft: '4px solid #e8a020',
+      padding: '7px 12px',
+      background: '#fffbf0',
+      margin: '12px 0 16px',
+      fontSize: '11px',
+    } as React.CSSProperties,
+  };
 
-  /* ── Total Row ───────────────────────────────────── */
-  .rcp-total-row {
-    background: #003366;
-    color: #fff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    margin-top: 0;
-    border-radius: 0 0 6px 6px;
-  }
-
-  .rcp-total-label {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .rcp-total-amount {
-    font-size: 14px;
-    font-weight: 900;
-    color: #fbbf24;
-    letter-spacing: 0.02em;
-  }
-
-  /* ── Words & Signature ───────────────────────────── */
-  .rcp-words-sig {
-    margin: 0 28px;
-    padding: 14px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 24px;
-    border-top: 1px solid #e2e8f0;
-  }
-
-  .rcp-words {
-    flex: 1;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 10px 14px;
-  }
-
-  .rcp-words-label {
-    font-size: 8px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 4px;
-  }
-
-  .rcp-words-text {
-    font-size: 10px;
-    font-weight: 600;
-    color: #334155;
-    font-style: italic;
-    line-height: 1.4;
-  }
-
-  .rcp-sig {
-    text-align: center;
-    min-width: 130px;
-  }
-
-  .rcp-sig-name {
-    font-size: 11px;
-    font-weight: 800;
-    color: #1e293b;
-    letter-spacing: 0.05em;
-  }
-
-  .rcp-sig-line {
-    border-top: 1.5px solid #334155;
-    margin-top: 36px;
-    padding-top: 6px;
-  }
-
-  .rcp-sig-sub {
-    font-size: 7.5px;
-    font-weight: 600;
-    color: #94a3b8;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  /* ── Watermark ───────────────────────────────────── */
-  .rcp-watermark {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 220px;
-    height: 220px;
-    opacity: 0.045;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .rcp-watermark svg {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ── Footer ──────────────────────────────────────── */
-  .rcp-footer {
-    background: #003366;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 28px;
-    gap: 12px;
-    margin-top: auto;
-  }
-
-  .rcp-footer-thank {
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #fbbf24;
-    white-space: nowrap;
-  }
-
-  .rcp-footer-contacts {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    font-size: 8.5px;
-    font-weight: 600;
-    color: #cbd5e1;
-  }
-
-  .rcp-footer-contact-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-  }
-
-  .rcp-footer-contact-icon {
-    width: 14px;
-    height: 14px;
-    background: #f59e0b;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 7px;
-    flex-shrink: 0;
-  }
-
-  /* ── Utilities ───────────────────────────────────── */
-  .rcp-content {
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-`;
-
-/* ─── Component ────────────────────────────────────────────────────── */
-export const PrintReceipt: React.FC<PrintReceiptProps> = ({
-  receiptNo,
-  studentName,
-  studentClass,
-  period,
-  date,
-  time,
-  status = 'Payment Received',
-  lineItems,
-  totalPaid,
-  amountInWords,
-  schoolName = 'SUNRISE SCHOOL RAJKOT',
-  schoolTagline = 'English & Gujarati Medium',
-  schoolAddress = 'Railnagar, Rajkot, Gujarat — 360 001',
-  schoolPhone = '+91 XXXXX XXXXX',
-  schoolEmail = 'info@sunriseschool.in',
-  schoolWebsite = 'www.sunriseschool.in',
-}) => {
   return (
     <>
-      <style>{RECEIPT_STYLES}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+      `}</style>
 
-      <div className="receipt-root">
-        {/* Watermark */}
-        <div className="rcp-watermark" aria-hidden="true">
-          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="96" stroke="#003366" strokeWidth="4" />
-            <circle cx="100" cy="100" r="78" stroke="#003366" strokeWidth="2" />
-            <text x="100" y="90" textAnchor="middle" fontSize="22" fontWeight="900" fill="#003366" fontFamily="Inter,sans-serif">SUNRISE</text>
-            <text x="100" y="114" textAnchor="middle" fontSize="12" fontWeight="700" fill="#003366" fontFamily="Inter,sans-serif">SCHOOL</text>
-            <text x="100" y="130" textAnchor="middle" fontSize="9" fontWeight="600" fill="#f59e0b" fontFamily="Inter,sans-serif">RAJKOT</text>
-            {/* Sun rays */}
-            {Array.from({ length: 12 }).map((_, i) => {
-              const angle = (i * 30 * Math.PI) / 180;
-              const x1 = 100 + 56 * Math.cos(angle);
-              const y1 = 100 + 56 * Math.sin(angle);
-              const x2 = 100 + 68 * Math.cos(angle);
-              const y2 = 100 + 68 * Math.sin(angle);
-              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#003366" strokeWidth="2" strokeLinecap="round" />;
-            })}
-          </svg>
+      {/* Screen-preview — visible on screen, hidden when printing (print handled by iframe) */}
+      <div style={{ ...S.page, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '297mm', fontFamily: "'Inter', sans-serif", color: '#1e293b', margin: '24px auto', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+
+        {/* ── WATERMARK ── */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, width: '210mm', height: '297mm',
+          zIndex: 1, pointerEvents: 'none',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+        }}>
+          <img src={watermarkLogoPath} alt="Watermark" style={{ width: '440px', height: '440px', opacity: 0.08, transform: 'rotate(-12deg)', objectFit: 'contain' }} />
         </div>
 
-        <div className="rcp-content">
-          {/* ── Header ── */}
-          <div className="rcp-header">
-            <div className="rcp-logo-wrap">
-              <div className="rcp-logo-circle">
-                <span className="rcp-logo-placeholder">☀️</span>
-              </div>
-              <div>
-                <div className="rcp-school-name">  {schoolName}</div>
-                <div className="rcp-school-tagline">  {schoolTagline}</div>
-                <div className="rcp-school-meta">
-                  {schoolAddress}<br />
-                  Ph: {schoolPhone} &nbsp;·&nbsp; {schoolEmail}
-                </div>
-              </div>
-            </div>
-            <div className="rcp-receipt-badge">
-              <div className="rcp-receipt-badge-label">RECEIPT</div>
-              <div className="rcp-receipt-badge-no">No: {receiptNo}</div>
+        {/* ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
+        <div className="header-container" style={{ position: 'relative', height: '110px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
+          {/* Right Gold Block (Shorter, tucked behind) */}
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '80px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
+            <div style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)', fontFamily: "'Outfit', sans-serif" }}>RECEIPT</div>
+            <div style={{ fontSize: '9px', color: '#1b3a6b', fontWeight: 700, marginTop: '4px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+              NO: <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
             </div>
           </div>
 
-          {/* ── Student & Payment Info ── */}
-          <div className="rcp-info-row">
-            {/* Left: Student */}
-            <div className="rcp-info-col">
-              <div className="rcp-info-heading">Student Information</div>
-              <div className="rcp-info-grid">
-                <span className="rcp-info-label">Name</span>
-                <span className="rcp-info-value">{studentName}</span>
-                <span className="rcp-info-label">Class</span>
-                <span className="rcp-info-value">{studentClass}</span>
-                <span className="rcp-info-label">Period</span>
-                <span className="rcp-info-value">{period}</span>
-              </div>
+          {/* Left Navy Block (Full height, overlapping, with bottom-right curve) */}
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '65%', height: '110px', background: '#1b3a6b', zIndex: 2, borderBottomRightRadius: '35px', display: 'flex', alignItems: 'center', paddingLeft: '24px', color: '#fff' }}>
+            <div style={{ width: '76px', height: '76px', borderRadius: '50%', background: '#fff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.15)', marginRight: '20px', flexShrink: 0 }}>
+              <img src={logoPath} alt="Sunrise School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
-
-            {/* Right: Payment */}
-            <div className="rcp-info-col">
-              <div className="rcp-info-heading">Payment Information</div>
-              <div className="rcp-info-grid">
-                <span className="rcp-info-label">Date</span>
-                <span className="rcp-info-value">{date}</span>
-                <span className="rcp-info-label">Time</span>
-                <span className="rcp-info-value">{time}</span>
-                <span className="rcp-info-label">Status</span>
-                <span className="rcp-info-value status-paid">{status}</span>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>SUNRISE CONVENT SCHOOL</div>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: '#fcd34d', marginTop: '4px', letterSpacing: '0.3px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
+              <div style={{ fontSize: '9px', color: '#e2e8f0', marginTop: '5px', lineHeight: 1.35 }}>
+                Railnagar, Rajkot, Gujarat — 360 001<br/>
+                Ph: +91 XXXXX XXXXX &nbsp;·&nbsp; info@sunriseschool.in
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ── Payment Details Table ── */}
-          <div className="rcp-table-section">
-            <div className="rcp-table-heading">Payment Details</div>
+        <div style={{ position: 'relative', zIndex: 2, height: 'calc(100% - 110px - 60px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', padding: '0 14mm 0', background: 'transparent' }}>
+          <div style={{ flex: 1, paddingTop: '10px' }}>
+            
+            {/* ════ INFO GRID ════ */}
+            <div style={{ ...S.metaTable, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', border: 'none', overflow: 'visible', marginBottom: '10px' }}>
+              <div style={{ padding: '8px 12px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '6px', background: 'rgba(248, 250, 253, 0.65)' }}>
+                <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '4px', marginBottom: '6px', fontFamily: "'Outfit', sans-serif" }}>Student Information</div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Name</span><span style={{ fontSize: '12px', fontWeight: 700, color: '#1b3a6b', flex: 1 }}>{transaction.studentName}</span></div>
+                {transaction.classInfo && <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Class</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{transaction.classInfo}</span></div>}
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Period</span><span style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', flex: 1 }}>{period}</span></div>
+              </div>
+              <div style={{ padding: '8px 12px', border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.65)' }}>
+                <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '1.2px', textTransform: 'uppercase', borderBottom: '2px solid #e8a020', paddingBottom: '4px', marginBottom: '6px', fontFamily: "'Outfit', sans-serif" }}>Payment Information</div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Date</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{dateStr}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Time</span><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#1e293b', flex: 1, fontFamily: "'JetBrains Mono', monospace" }}>{timeStr}</span></div>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'baseline' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#64748b', width: '90px', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: "'Outfit', sans-serif" }}>Status</span><span style={{ fontSize: '10px', fontWeight: 700, color: '#16a34a', flex: 1 }}>Payment Received</span></div>
+              </div>
+            </div>
 
-            <table className="rcp-table">
+            {/* ════ PAYMENT DETAILS SECTION HEADER ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: '4px', height: '16px', background: '#e8a020', borderRadius: '2px' }}></div>
+              <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#1b3a6b', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Payment Details</div>
+            </div>
+
+            {/* ── FEE TABLE ── */}
+            <table style={{ ...S.feeTable, border: '1px solid rgba(226, 232, 240, 0.8)', borderRadius: '8px', overflow: 'hidden' }}>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Description</th>
-                  <th>Mode</th>
-                  <th>Amount (₹)</th>
+                <tr style={{ background: 'linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%)' }}>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'center', width: '36px', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>#</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'left', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Description</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'center', width: '110px', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Mode</th>
+                  <th style={{ padding: '10px 12px', color: '#fff', fontSize: '9.5px', fontWeight: 700, textAlign: 'right', width: '110px', letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>Amount (₹)</th>
                 </tr>
               </thead>
               <tbody>
-                {lineItems.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.id}</td>
-                    <td>{item.description}</td>
-                    <td>{item.mode}</td>
-                    <td>
-                      {item.amount.toLocaleString('en-IN')} &nbsp;₹
+                {transaction.subItems && transaction.subItems.length > 0 ? (
+                  groupSubItems(transaction.subItems).map((item, i) => (
+                    <tr
+                      key={i}
+                      style={{
+                        backgroundColor: i % 2 === 0 ? 'rgba(248, 250, 253, 0.7)' : 'rgba(255, 255, 255, 0.75)',
+                        borderBottom: '1px solid #e8edf8',
+                      }}
+                    >
+                      <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</td>
+                      <td style={{ ...S.tdDesc, fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>
+                        {item.description}
+                        {item.concessionAmount > 0 && (
+                          <span style={{ display: 'inline-block', marginLeft: '8px', fontSize: '9px', color: '#b45309', background: 'rgba(254, 243, 199, 0.85)', border: '1px solid rgba(252, 211, 77, 0.5)', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
+                            -{item.concessionAmount.toLocaleString('en-IN')} ₹ off
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{getModeLabel(item.method || transaction.method || '')}</td>
+                      <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{Math.abs(item.amount).toLocaleString('en-IN')} ₹</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr style={{ backgroundColor: 'rgba(248, 250, 253, 0.7)' }}>
+                    <td style={{ ...S.tdNum, textAlign: 'center', borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}>1</td>
+                    <td style={{ ...S.tdDesc, fontWeight: 600, borderRight: '1px solid #e2e8f4' }}>{transaction.feeType || 'Fee Collection'}</td>
+                    <td style={{ ...S.tdDesc, textAlign: 'center', borderRight: '1px solid #e2e8f4' }}>{modeLabel}</td>
+                    <td style={{ ...S.tdAmt, color: '#1b3a6b', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{totalAmount.toLocaleString('en-IN')} ₹</td>
+                  </tr>
+                )}
+
+                {/* Top-level concession row */}
+                {!transaction.subItems && transaction.concessionAmount ? (
+                  <tr style={{ backgroundColor: 'rgba(255, 251, 235, 0.7)' }}>
+                    <td style={{ borderRight: '1px solid #e2e8f4', fontFamily: "'JetBrains Mono', monospace" }}></td>
+                    <td style={{ ...S.tdDesc, color: '#b45309', fontStyle: 'italic', fontWeight: 700, borderRight: '1px solid #e2e8f4' }}>
+                      ✦ Concession Applied
+                    </td>
+                    <td style={{ borderRight: '1px solid #e2e8f4' }}></td>
+                    <td style={{ ...S.tdAmt, color: '#b45309', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
+                      −{(transaction.concessionAmount || 0).toLocaleString('en-IN')} ₹
                     </td>
                   </tr>
-                ))}
+                ) : null}
               </tbody>
+
+              <tfoot>
+                <tr style={{ background: 'linear-gradient(to bottom, #e8a020, #d97706)' }}>
+                  <td colSpan={3} style={{ ...S.totalLabel, borderBottom: '3px double #1b3a6b' }}>TOTAL PAID</td>
+                  <td style={{ ...S.totalAmt, borderBottom: '3px double #1b3a6b', fontSize: '14px' }}>{totalAmount.toLocaleString('en-IN')} ₹</td>
+                </tr>
+              </tfoot>
             </table>
 
-            {/* Total */}
-            <div className="rcp-total-row">
-              <span className="rcp-total-label">Total Paid</span>
-              <span className="rcp-total-amount">
-                {totalPaid.toLocaleString('en-IN')} ₹
-              </span>
+            {/* ── AMOUNT IN WORDS ── */}
+            <div style={{ borderLeft: '4px solid #e8a020', background: 'linear-gradient(to right, rgba(255, 251, 240, 0.85), rgba(255, 255, 255, 0.85))', padding: '10px 14px', borderRadius: '0 6px 6px 0', fontSize: '10px', color: '#334155', marginTop: '12px', borderTop: '1px solid rgba(226, 232, 240, 0.3)', borderBottom: '1px solid rgba(226, 232, 240, 0.3)', borderRight: '1px solid rgba(226, 232, 240, 0.3)' }}>
+              <strong>Amount in Words:</strong>&nbsp;
+              <em>{amountInWords}</em>
             </div>
+
+            {transaction.remark && (
+              <div style={{ borderLeft: '4px solid #94a3b8', background: 'rgba(248, 250, 253, 0.85)', padding: '8px 14px', borderRadius: '0 6px 6px 0', fontSize: '9.5px', color: '#475569', fontStyle: 'italic', marginTop: '8px', borderTop: '1px solid rgba(226, 232, 240, 0.3)', borderBottom: '1px solid rgba(226, 232, 240, 0.3)', borderRight: '1px solid rgba(226, 232, 240, 0.3)' }}>
+                <strong>Remark:</strong>&nbsp;
+                <em>{transaction.remark}</em>
+              </div>
+            )}
+
+            {/* ── SIGNATURES ── */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', marginTop: '25px', marginBottom: '16px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#1b3a6b', marginBottom: '28px', fontFamily: "'Outfit', sans-serif", letterSpacing: '0.5px' }}>
+                  {currentUser?.name ? currentUser.name.toUpperCase() : 'AUTHORISED SIGNATORY'}
+                </div>
+                <div style={{ width: '170px', borderTop: '1.5px solid #94a3b8', paddingTop: '5px' }}>
+                  <div style={{ fontSize: '8.5px', color: '#94a3b8', fontWeight: 600, fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Authorised Signatory
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
+        <div className="footer-container" style={{ position: 'absolute', bottom: 0, left: 0, height: '60px', width: '100%', overflow: 'hidden', background: '#fff', zIndex: 10 }}>
+          {/* Left Gold Block (Shorter, tucked behind) */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '45%', height: '45px', background: '#e8a020', zIndex: 1, display: 'flex', alignItems: 'center', paddingLeft: '20px', color: '#1b3a6b' }}>
+            <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>THANK YOU</span>
           </div>
 
-          {/* ── Amount in Words + Signature ── */}
-          <div className="rcp-words-sig">
-            <div className="rcp-words">
-              <div className="rcp-words-label">Amount in Words</div>
-              <div className="rcp-words-text">{amountInWords}</div>
-            </div>
-            <div className="rcp-sig">
-              <div className="rcp-sig-line">
-                <div className="rcp-sig-name">ADMIN</div>
-                <div className="rcp-sig-sub">Authorised Signatory</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Spacer to push footer down */}
-          <div style={{ flex: 1, minHeight: 28 }} />
-
-          {/* ── Footer ── */}
-          <div className="rcp-footer">
-            <div className="rcp-footer-thank">Thank You</div>
-            <div className="rcp-footer-contacts">
-              <div className="rcp-footer-contact-item">
-                <div className="rcp-footer-contact-icon">📞</div>
-                {schoolPhone}
-              </div>
-              <div className="rcp-footer-contact-item">
-                <div className="rcp-footer-contact-icon">✉</div>
-                {schoolEmail}
-              </div>
-              <div className="rcp-footer-contact-item">
-                <div className="rcp-footer-contact-icon">🌐</div>
-                {schoolWebsite}
-              </div>
+          {/* Right Navy Block (Full height, overlapping, with top-left curve) */}
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '70%', height: '60px', background: '#1b3a6b', zIndex: 2, borderTopLeftRadius: '35px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '25px', color: '#fff', fontSize: '9.5px' }}>
+            <div style={{ display: 'flex', gap: '18px', fontWeight: 600, alignItems: 'center', letterSpacing: '0.5px' }}>
+              <span>📞 +91 XXXXX XXXXX</span>
+              <span style={{ opacity: 0.4 }}>|</span>
+              <span>✉️ info@sunriseschool.in</span>
+              <span style={{ opacity: 0.4 }}>|</span>
+              <span>🌐 www.sunriseschool.in</span>
             </div>
           </div>
         </div>
@@ -611,24 +572,3 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({
     </>
   );
 };
-
-/* ─── Usage Example ─────────────────────────────────────────────────
-import { PrintReceipt } from './PrintReceipt';
-
-<PrintReceipt
-  receiptNo="7651657_3FYK"
-  studentName="Danav"
-  studentClass="2 - A Gujarati"
-  period="2026 - 2027"
-  date="28 June 2026"
-  time="08:10 PM"
-  status="Payment Received"
-  lineItems={[
-    { id: 1, description: 'Term Fee - Term 2', mode: 'Cash', amount: 714 },
-    { id: 2, description: 'Education Fee - June to November', mode: 'Cash', amount: 4284 },
-    { id: 3, description: 'Term Fee - Term 1', mode: 'Cash', amount: 714 },
-  ]}
-  totalPaid={5712}
-  amountInWords="Five Thousand Seven Hundred Twelve Rupees Only"
-/>
-─────────────────────────────────────────────────────────────────── */
