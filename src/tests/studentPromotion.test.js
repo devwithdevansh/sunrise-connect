@@ -287,4 +287,108 @@ describe('Student Promotion & Ledger Isolation', () => {
     const sureshLedgers25 = await StudentFeeLedger.find({ studentId: nonTransportStudent._id, academicYear: '2025-26', feeType: 'TRANSPORT' });
     expect(sureshLedgers25.length).toBe(0);
   });
+
+  it('correctly handles RTE toggle, standard edits, student reactivation, and strict year fallbacks', async () => {
+    // 1. Setup Academic Years (make 2026-27 active for future due dates relative to June 2026)
+    const ay25 = await AcademicYear.create({
+      name: '2025-26',
+      startDate: new Date('2025-06-01'),
+      endDate: new Date('2026-05-31'),
+      isActive: false,
+    });
+
+    const ay26 = await AcademicYear.create({
+      name: '2026-27',
+      startDate: new Date('2026-06-01'),
+      endDate: new Date('2027-05-31'),
+      isActive: true,
+    });
+
+    // 2. Setup Fee Structures for 2026-27
+    await FeeStructure.create({
+      standard: '1',
+      medium: 'English',
+      annualFee: 14000, // 1000 per part
+      educationPartCount: 12,
+      termPartCount: 2,
+      academicYear: '2026-27',
+      isActive: true,
+    });
+
+    await FeeStructure.create({
+      standard: '2',
+      medium: 'English',
+      annualFee: 28000, // 2000 per part
+      educationPartCount: 12,
+      termPartCount: 2,
+      academicYear: '2026-27',
+      isActive: true,
+    });
+
+    // 3. Create Student in 2026-27 (Non-RTE, Standard 1)
+    const student = await StudentService.createStudent({
+      studentName: 'Vijay Kumar',
+      medium: 'English',
+      standard: '1',
+      division: 'A',
+      parentMobile: '9876543215',
+      parentName: 'Mr. Kumar',
+      isRTE: false,
+    });
+
+    // Verify education ledger for July is PENDING, amount 1000, concession 0
+    let ledgers = await StudentFeeLedger.find({ studentId: student._id, feeType: 'EDUCATION', feePeriod: 'July' });
+    expect(ledgers[0].status).toBe('PENDING');
+    expect(ledgers[0].totalAmount).toBe(1000);
+    expect(ledgers[0].concessionAmount).toBe(0);
+
+    // --- CASE B: RTE TOGGLE SYNC ---
+    // Toggle RTE to true
+    await StudentService.updateStudent(student._id, { isRTE: true });
+    ledgers = await StudentFeeLedger.find({ studentId: student._id, feeType: 'EDUCATION', feePeriod: 'July' });
+    expect(ledgers[0].status).toBe('PAID');
+    expect(ledgers[0].concessionAmount).toBe(1000);
+    expect(ledgers[0].remainingAmount).toBe(0);
+
+    // Toggle RTE back to false
+    await StudentService.updateStudent(student._id, { isRTE: false });
+    ledgers = await StudentFeeLedger.find({ studentId: student._id, feeType: 'EDUCATION', feePeriod: 'July' });
+    expect(ledgers[0].status).toBe('PENDING');
+    expect(ledgers[0].concessionAmount).toBe(0);
+    expect(ledgers[0].remainingAmount).toBe(1000);
+
+    // --- CASE A: STANDARD UPDATE SYNC ---
+    // Change standard to 2
+    await StudentService.updateStudent(student._id, { standard: '2' });
+    ledgers = await StudentFeeLedger.find({ studentId: student._id, feeType: 'EDUCATION', feePeriod: 'July' });
+    // Verify rate is updated to standard 2 (2000)
+    expect(ledgers[0].totalAmount).toBe(2000);
+    expect(ledgers[0].remainingAmount).toBe(2000);
+
+    // --- CASE C: REACTIVATION RESTORATION ---
+    // Deactivate student
+    await StudentService.updateStudent(student._id, { isActive: false });
+    ledgers = await StudentFeeLedger.find({ studentId: student._id, feeType: 'EDUCATION', feePeriod: 'July' });
+    // Verify July ledger is CANCELLED (due date is July 15, which is in the future)
+    expect(ledgers[0].status).toBe('CANCELLED');
+    expect(ledgers[0].remainingAmount).toBe(0);
+
+    // Reactivate student
+    await StudentService.updateStudent(student._id, { isActive: true });
+    ledgers = await StudentFeeLedger.find({ studentId: student._id, feeType: 'EDUCATION', feePeriod: 'July' });
+    // Verify July ledger is restored to PENDING and remainingAmount is recalculated
+    expect(ledgers[0].status).toBe('PENDING');
+    expect(ledgers[0].remainingAmount).toBe(2000);
+
+    // --- CASE D: STRICT YEAR FALLBACK ---
+    // Try to promote or generate ledgers for 2025-26 (where standard 2 structure is missing in 2025-26)
+    ay26.isActive = false;
+    await ay26.save();
+    ay25.isActive = true;
+    await ay25.save();
+
+    await expect(
+      StudentService._generateLedgersForAcademicYear(student._id, '2025-26', null, { forceCreate: true })
+    ).rejects.toThrow('No active fee structure found for standard 2 (English medium) in academic year 2025-26');
+  });
 });
