@@ -934,7 +934,16 @@ class StudentService {
         const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
         const activeYearName = activeYearDoc ? activeYearDoc.name : '2025-26';
 
-        if (ledgerWithSnapshot.snapshot.standard !== student.standard && academicYearStr === activeYearName) {
+        // Check if there is a newer academic year in this student's ledgers to protect historical years
+        const allLedgerYears = await mongoose.model('StudentFeeLedger').distinct('academicYear', { studentId: student._id }).session(session);
+        const getStartYear = (yrStr) => {
+          if (!yrStr) return 0;
+          const match = yrStr.match(/^(\d{4})/);
+          return match ? parseInt(match[1], 10) : 0;
+        };
+        const newerYearExists = allLedgerYears.some(yr => getStartYear(yr) > getStartYear(academicYearStr));
+
+        if (ledgerWithSnapshot.snapshot.standard !== student.standard && academicYearStr === activeYearName && !newerYearExists) {
           standardToUse = student.standard;
           // Update snapshots of existing ledgers so they don't block future syncs
           for (const l of existingLedgers) {
