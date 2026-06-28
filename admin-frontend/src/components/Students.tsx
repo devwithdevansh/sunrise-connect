@@ -98,6 +98,7 @@ export const Students: React.FC = () => {
   const [editSParentMobile, setEditSParentMobile] = useState('');
   const [editSParentSecondaryMobile, setEditSParentSecondaryMobile] = useState('');
   const [editSIsRTE, setEditSIsRTE] = useState(false);
+  const [editSAdmissionMonth, setEditSAdmissionMonth] = useState('June');
   const [editSBuyBagKit, setEditSBuyBagKit] = useState(false);
 
   // Sibling Modal State
@@ -128,6 +129,24 @@ export const Students: React.FC = () => {
       setNewSMedium(dynamicMediums[0] as any);
     }
   }, [dynamicMediums, newSMedium]);
+
+  useEffect(() => {
+    const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const admIdx = allMonths.indexOf(newSAdmissionMonth);
+    const trIdx = allMonths.indexOf(newSTransportStartMonth);
+    if (trIdx < admIdx && admIdx !== -1) {
+      setNewSTransportStartMonth(newSAdmissionMonth);
+    }
+  }, [newSAdmissionMonth, newSTransportStartMonth]);
+
+  useEffect(() => {
+    const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const admIdx = allMonths.indexOf(editSAdmissionMonth);
+    const trIdx = allMonths.indexOf(editSTransportStartMonth);
+    if (trIdx < admIdx && admIdx !== -1) {
+      setEditSTransportStartMonth(editSAdmissionMonth);
+    }
+  }, [editSAdmissionMonth, editSTransportStartMonth]);
 
   useEffect(() => {
     if (dynamicStandards.length > 0 && !dynamicStandards.includes(editSStandard)) {
@@ -314,6 +333,7 @@ export const Students: React.FC = () => {
     setOriginalTransport(s.transportType || 'None');
     setEditSTransportStartMonth(s.transportStartMonth || 'June');
     setOriginalTransportStartMonth(s.transportStartMonth || 'June');
+    setEditSAdmissionMonth(s.admissionMonth || 'June');
     setEditSParentName(s.parentName || '');
     setEditSParentMobile(s.parentMobile || '');
     setEditSParentSecondaryMobile(s.parentSecondaryMobile || '');
@@ -1167,9 +1187,14 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSTransportStartMonth(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
                   >
-                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
+                      .filter(m => {
+                        const all = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+                        return all.indexOf(m) >= all.indexOf(newSAdmissionMonth);
+                      })
+                      .map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
                   </select>
                 </div>
 
@@ -1378,9 +1403,14 @@ export const Students: React.FC = () => {
                     onChange={(e) => setEditSTransportStartMonth(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
                   >
-                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
+                      .filter(m => {
+                        const all = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+                        return all.indexOf(m) >= all.indexOf(editSAdmissionMonth);
+                      })
+                      .map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
                   </select>
                 </div>
                 <div />
