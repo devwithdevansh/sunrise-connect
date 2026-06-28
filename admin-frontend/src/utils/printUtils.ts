@@ -315,7 +315,7 @@ export function generateReceiptHTML(
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
-      padding: 16px 14mm 80px; /* bottom padding clears footer (60px) + breathing room */
+      padding: 16px 14mm 80px;
       background: transparent;
     }
 
@@ -431,24 +431,24 @@ export function generateReceiptHTML(
   ` : ''}
 
   <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="header-container" style="position: relative; height: 110px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 3;">
+  <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 3;">
     <!-- Right Gold Block (Shorter, tucked behind) -->
-    <div style="position: absolute; top: 0; right: 0; width: 48%; height: 80px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 25px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="font-size: 24px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">RECEIPT</div>
-      <div style="font-size: 9px; color: #1b3a6b; font-weight: 700; marginTop: 10px; text-align: right; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
+    <div style="position: absolute; top: 0; right: 0; width: 48%; height: 96px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 28px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 3px rgba(0,0,0,0.18);">RECEIPT</div>
+      <div style="font-size: 9.5px; color: #1b3a6b; font-weight: 700; margin-top: 8px; text-align: right; background: rgba(255,255,255,0.92); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
+        NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
 
     <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
-    <div style="position: absolute; top: 0; left: 0; width: 65%; height: 110px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 35px; display: flex; align-items: center; padding-left: 24px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="width: 76px; height: 76px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; boxShadow: 0 4px 10px rgba(0,0,0,0.15); marginRight: 20px; flex-shrink: 0;">
+    <div style="position: absolute; top: 0; left: 0; width: 65%; height: 130px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 40px; display: flex; align-items: center; padding-left: 28px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="width: 88px; height: 88px; border-radius: 50%; background: #fff; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-right: 18px; flex-shrink: 0;">
         ${logoImg}
       </div>
-      <div>
-        <div style="font-size: 18px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff; margin-bottom: 4px;">SUNRISE SCHOOL RAJKOT</div>
-        <div style="font-size: 10px; font-weight: 700; color: #fcd34d; margin-top: 4px; letter-spacing: 0.3px; margin-bottom: 2px;">${SCH.medium}</div>
-        <div style="font-size: 9px; color: #e2e8f0; margin-top: 5px; line-height: 1.35;">
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <div style="font-size: 20px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE SCHOOL RAJKOT</div>
+        <div style="font-size: 11px; font-weight: 700; color: #fcd34d; letter-spacing: 0.4px;">English &amp; Gujarati Medium</div>
+        <div style="font-size: 9.5px; color: #e2e8f0; line-height: 1.5;">
           ${SCH.address}<br/>
           Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
         </div>

@@ -405,24 +405,24 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
         </div>
 
         {/* ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ */}
-        <div className="header-container" style={{ position: 'relative', height: '110px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
+        <div className="header-container" style={{ position: 'relative', height: '130px', width: '100%', overflow: 'hidden', background: '#fff', borderBottom: '3px solid #1b3a6b' }}>
           {/* Right Gold Block (Shorter, tucked behind) */}
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '80px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '25px', color: '#fff' }}>
-            <div style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 2px rgba(0,0,0,0.15)', fontFamily: "'Outfit', sans-serif" }}>RECEIPT</div>
-            <div style={{ fontSize: '9px', color: '#1b3a6b', fontWeight: 700, marginTop: '4px', textAlign: 'right', background: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-              NO: <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '48%', height: '96px', background: '#e8a020', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: '28px', color: '#fff' }}>
+            <div style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '3px', textTransform: 'uppercase', color: '#fff', lineHeight: 1, textShadow: '1px 1px 3px rgba(0,0,0,0.18)', fontFamily: "'Outfit', sans-serif" }}>RECEIPT</div>
+            <div style={{ fontSize: '9.5px', color: '#1b3a6b', fontWeight: 700, marginTop: '8px', textAlign: 'right', background: 'rgba(255,255,255,0.92)', padding: '3px 8px', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
+              NO: <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10.5px', fontWeight: 900, color: '#1b3a6b', letterSpacing: '0.5px' }}>{(transaction.id?.slice(-12).toUpperCase() || 'N/A')}</span>
             </div>
           </div>
 
           {/* Left Navy Block (Full height, overlapping, with bottom-right curve) */}
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '65%', height: '110px', background: '#1b3a6b', zIndex: 2, borderBottomRightRadius: '35px', display: 'flex', alignItems: 'center', paddingLeft: '24px', color: '#fff' }}>
-            <div style={{ width: '76px', height: '76px', borderRadius: '50%', background: '#fff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.15)', marginRight: '20px', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '65%', height: '130px', background: '#1b3a6b', zIndex: 2, borderBottomRightRadius: '40px', display: 'flex', alignItems: 'center', paddingLeft: '28px', color: '#fff' }}>
+            <div style={{ width: '88px', height: '88px', borderRadius: '50%', background: '#fff', padding: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', marginRight: '18px', flexShrink: 0 }}>
               <img src={logoPath} alt="Sunrise School Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
-            <div>
-              <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>SUNRISE CONVENT SCHOOL</div>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: '#fcd34d', marginTop: '4px', letterSpacing: '0.3px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
-              <div style={{ fontSize: '9px', color: '#e2e8f0', marginTop: '5px', lineHeight: 1.35 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div style={{ fontSize: '20px', fontWeight: 900, letterSpacing: '0.5px', lineHeight: 1.1, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>SUNRISE CONVENT SCHOOL</div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#fcd34d', letterSpacing: '0.4px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
+              <div style={{ fontSize: '9.5px', color: '#e2e8f0', lineHeight: 1.5 }}>
                 Railnagar, Rajkot, Gujarat — 360 001<br />
                 Ph: +91 XXXXX XXXXX &nbsp;·&nbsp; info@sunriseschool.in
               </div>
