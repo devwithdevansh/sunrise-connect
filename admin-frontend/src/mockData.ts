@@ -31,7 +31,7 @@ export interface LedgerEntry {
   concessionAmount: number;
   remainingAmount: number;
   dueDate: string;
-  status: 'PENDING' | 'PARTIAL' | 'PAID';
+  status: 'PENDING' | 'PARTIAL' | 'PAID' | 'CANCELLED';
   academicYear?: string; // e.g. "2025-26" — used for year-scoped ledger lookup
 }
 

@@ -118,6 +118,7 @@ export const CollectFee: React.FC = () => {
       (l) =>
         l.studentId === sId &&
         l.feeType === 'TRANSPORT' &&
+        l.status !== 'CANCELLED' &&
         !STANDARD_MONTH_PERIODS.has(l.feePeriod) &&
         (l.academicYear === selectedYear || (!l.academicYear && selectedYear === activeYearName))
     );

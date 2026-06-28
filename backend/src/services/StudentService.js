@@ -645,19 +645,21 @@ class StudentService {
           newRate = newStruct.amount;
         }
 
+        const match = currentAcademicYearName.match(/^(\d{4})/);
+        const startYear = match ? parseInt(match[1], 10) : 2025;
         const months = [
-          { name: 'June', dueDate: '2026-06-15' },
-          { name: 'July', dueDate: '2026-07-15' },
-          { name: 'August', dueDate: '2026-08-15' },
-          { name: 'September', dueDate: '2026-09-15' },
-          { name: 'October', dueDate: '2026-10-15' },
-          { name: 'November', dueDate: '2026-11-15' },
-          { name: 'December', dueDate: '2026-12-15' },
-          { name: 'January', dueDate: '2027-01-15' },
-          { name: 'February', dueDate: '2027-02-15' },
-          { name: 'March', dueDate: '2027-03-15' },
-          { name: 'April', dueDate: '2027-04-15' },
-          { name: 'May', dueDate: '2027-05-15' }
+          { name: 'June', dueDate: `${startYear}-06-15` },
+          { name: 'July', dueDate: `${startYear}-07-15` },
+          { name: 'August', dueDate: `${startYear}-08-15` },
+          { name: 'September', dueDate: `${startYear}-09-15` },
+          { name: 'October', dueDate: `${startYear}-10-15` },
+          { name: 'November', dueDate: `${startYear}-11-15` },
+          { name: 'December', dueDate: `${startYear}-12-15` },
+          { name: 'January', dueDate: `${startYear + 1}-01-15` },
+          { name: 'February', dueDate: `${startYear + 1}-02-15` },
+          { name: 'March', dueDate: `${startYear + 1}-03-15` },
+          { name: 'April', dueDate: `${startYear + 1}-04-15` },
+          { name: 'May', dueDate: `${startYear + 1}-05-15` }
         ];
 
         const allMonthsStr = months.map(m => m.name);
@@ -673,7 +675,11 @@ class StudentService {
         const existingLedgers = await mongoose.model('StudentFeeLedger').find({
           studentId: student._id,
           feeType: 'TRANSPORT',
-          academicYear: currentAcademicYearName
+          $or: [
+            { academicYear: currentAcademicYearName },
+            { academicYear: null },
+            { academicYear: { $exists: false } }
+          ]
         }).session(session);
 
         const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));

@@ -1111,9 +1111,7 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Standard</label>
                   <select
@@ -1126,7 +1124,9 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Division</label>
                   <select
@@ -1153,7 +1153,9 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
                   <select
@@ -1335,7 +1337,7 @@ export const Students: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Division</label>
                   <select
@@ -1362,7 +1364,9 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
                   <select
@@ -1376,6 +1380,7 @@ export const Students: React.FC = () => {
                     ))}
                   </select>
                 </div>
+                <div />
               </div>
 
               <div className="flex items-center gap-3 pt-2">

@@ -227,6 +227,12 @@ export const FeeGrid: React.FC<FeeGridProps> = ({
           ).map((item) => {
             const activeCat = feeCategory === 'EDUCATION' ? item.type : feeCategory;
             const entry = getLedger(activeCat, item.value);
+
+            // Hide transport months that are cancelled or do not exist (not within active transport months)
+            if (activeCat === 'TRANSPORT' && (!entry || entry.status === 'CANCELLED')) {
+              return null;
+            }
+
             const isPaid = entry?.status === 'PAID';
             const isPending = entry && entry.status !== 'PAID';
             const isNew = !entry;
