@@ -514,8 +514,11 @@ export const Students: React.FC = () => {
               .map(id => studentMap.get(id))
               .filter((sib): sib is typeof students[0] => !!sib);
 
-            // Look up pre-calculated ledger entries for this student
-            const studentLedgers = studentLedgersMap.get(s._id || s.id) || [];
+            // Look up pre-calculated ledger entries for this student, filtered by active academic year
+            const allStudentLedgers = studentLedgersMap.get(s._id || s.id) || [];
+            const studentLedgers = allStudentLedgers.filter(l => 
+              l.academicYear === activeYearName || (!l.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name))
+            );
             const totalLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
             const totalPaidLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
             const totalConcessionLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.concessionAmount || 0), 0);
