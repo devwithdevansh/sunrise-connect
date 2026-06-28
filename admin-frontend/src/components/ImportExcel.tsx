@@ -37,6 +37,7 @@ interface ExcelRow {
   parentMobile: string;
   parentSecondaryMobile: string;
   transportType: string;
+  transportStartMonth?: string;
   isRTE: boolean | string;
   isNewAdmission: boolean | string;
   pendingFees?: Record<string, string>;
@@ -66,6 +67,7 @@ export const ImportExcel: React.FC = () => {
     { name: 'Parent Mobile', dbName: 'parentMobile', required: true, example: '9876543210', desc: '10-digit Indian mobile number' },
     { name: 'Parent Secondary Mobile', dbName: 'parentSecondaryMobile', required: false, example: '9876543211', desc: 'Optional backup contact' },
     { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: '"Railnagar", "Outside Railnagar", or "None"' },
+    { name: 'Transport Start Month', dbName: 'transportStartMonth', required: false, example: 'November', desc: 'Starting month of transport (e.g. "June", "November"). Defaults to admission month or "June".' },
     { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Right to Education quota ("Yes", "No", true, false)' },
     { name: 'Is New Admission', dbName: 'isNewAdmission', required: false, example: 'Yes', desc: 'Applies admission charges ("Yes", "No", true, false)' },
     { name: 'Year YYYY-YY (e.g. Year 2025-26)', dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Set payment status: "paid", "gov paid", or a range like "oct to may", "term-2 to may"' },
@@ -82,6 +84,7 @@ export const ImportExcel: React.FC = () => {
         "Parent Mobile": "9876543210",
         "Parent Secondary Mobile": "9876543211",
         "Transport Type": "Railnagar",
+        "Transport Start Month": "November",
         "Is RTE": "No",
         "Is New Admission": "Yes",
         "Year 2025-26": "oct to may"
@@ -95,6 +98,7 @@ export const ImportExcel: React.FC = () => {
         "Parent Mobile": "9988776655",
         "Parent Secondary Mobile": "",
         "Transport Type": "None",
+        "Transport Start Month": "",
         "Is RTE": "Yes",
         "Is New Admission": "No",
         "Year 2025-26": "gov paid"
@@ -154,6 +158,9 @@ export const ImportExcel: React.FC = () => {
             }
           });
 
+          const startMonthVal = String(row["Transport Start Month"] || row["transportStartMonth"] || "").trim();
+          const transportStartMonth = startMonthVal ? startMonthVal : undefined;
+
           return {
             studentName: row["Student Name"] || row["studentName"] || "",
             medium: row["Medium"] || row["medium"] || "",
@@ -163,6 +170,7 @@ export const ImportExcel: React.FC = () => {
             parentMobile: String(row["Parent Mobile"] || row["parentMobile"] || ""),
             parentSecondaryMobile: String(row["Parent Secondary Mobile"] || row["parentSecondaryMobile"] || ""),
             transportType: row["Transport Type"] || row["transportType"] || "None",
+            transportStartMonth,
             isRTE: parseRTE,
             isNewAdmission: parseNew,
             pendingFees,
