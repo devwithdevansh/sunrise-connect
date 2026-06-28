@@ -499,6 +499,10 @@ class StudentService {
       const student = await studentRepository.findById(studentId);
       if (!student) throw new AppError('Student not found', 404);
 
+      // Fetch Active Academic Year
+      const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
+      const currentAcademicYearName = activeYear ? activeYear.name : '2025-26';
+
       const oldTransport = student.transportType;
       const transportMonths = updates.transportMonths;
       delete updates.transportMonths;
@@ -609,9 +613,31 @@ class StudentService {
         }
       }
 
-      // Fetch Active Academic Year
-      const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
-      let currentAcademicYearName = activeYear ? activeYear.name : '2025-26';
+      const reactivated = updates.isActive === true && student.isActive === false;
+      if (reactivated) {
+        const cancelledLedgers = await mongoose.model('StudentFeeLedger').find({
+          studentId,
+          academicYear: currentAcademicYearName,
+          status: 'CANCELLED'
+        }).session(session);
+
+        for (const ledger of cancelledLedgers) {
+          ledger.status = 'PENDING';
+          ledger.remainingAmount = ledger.totalAmount - (ledger.paidAmount || 0) - (ledger.concessionAmount || 0);
+          await ledger.save({ session });
+        }
+      }
+
+      const standardChanged = updates.standard !== undefined && updates.standard !== student.standard;
+      const mediumChanged = updates.medium !== undefined && updates.medium !== student.medium;
+      const divisionChanged = updates.division !== undefined && updates.division !== student.division;
+      const rteChanged = updates.isRTE !== undefined && updates.isRTE !== student.isRTE;
+
+      if (standardChanged || mediumChanged || divisionChanged || rteChanged || reactivated) {
+        await this._generateLedgersForAcademicYear(studentId, currentAcademicYearName, session, { forceCreate: false });
+      }
+
+      // Fetch Active Academic Year (resolved at start of try block)
 
       const oldStartMonth = student.transportStartMonth || student.admissionMonth || 'June';
       const newStartMonth = updates.transportStartMonth !== undefined ? updates.transportStartMonth : oldStartMonth;
@@ -939,40 +965,42 @@ class StudentService {
       let standardToUse = student.standard;
       const ledgerWithSnapshot = existingLedgers.find(l => l.snapshot && l.snapshot.standard);
 
-      // If ledgers exist but their snapshot standard differs from the student's current standard,
-      // we ONLY update the snapshot if we are generating ledgers for the CURRENT active academic year
-      // (to allow for mid-year corrections). We MUST NOT update snapshots for past years.
       if (ledgerWithSnapshot) {
         const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
         const activeYearName = activeYearDoc ? activeYearDoc.name : '2025-26';
 
-        if (ledgerWithSnapshot.snapshot.standard !== student.standard && academicYearStr === activeYearName && !newerYearExists) {
+        if (academicYearStr === activeYearName && !newerYearExists) {
           standardToUse = student.standard;
-          // Update snapshots of existing ledgers so they don't block future syncs
-          for (const l of existingLedgers) {
-            if (l.snapshot) {
-              l.snapshot.standard = standardToUse;
-              l.markModified('snapshot');
-              await l.save({ session });
-            }
-          }
         } else {
           standardToUse = ledgerWithSnapshot.snapshot.standard;
         }
       }
 
-      let feeStruct = await mongoose.model('FeeStructure').findOne(
+      // Keep snapshots of existing ledgers in sync for the active year
+      if (!newerYearExists) {
+        for (const l of existingLedgers) {
+          if (l.snapshot) {
+            let changed = false;
+            if (l.snapshot.studentName !== student.studentName) { l.snapshot.studentName = student.studentName; changed = true; }
+            if (l.snapshot.medium !== student.medium) { l.snapshot.medium = student.medium; changed = true; }
+            if (l.snapshot.standard !== standardToUse) { l.snapshot.standard = standardToUse; changed = true; }
+            if (l.snapshot.division !== student.division) { l.snapshot.division = student.division; changed = true; }
+            if (l.snapshot.transportType !== (student.transportType || 'None')) { l.snapshot.transportType = student.transportType || 'None'; changed = true; }
+            if (l.snapshot.isRTE !== isRTE) { l.snapshot.isRTE = isRTE; changed = true; }
+            
+            if (changed) {
+              l.markModified('snapshot');
+              await l.save({ session });
+            }
+          }
+        }
+      }
+
+      const feeStruct = await mongoose.model('FeeStructure').findOne(
         { medium: student.medium, standard: standardToUse, academicYear: academicYearStr, isActive: true },
         null,
         { session }
       );
-      if (!feeStruct) {
-        feeStruct = await mongoose.model('FeeStructure').findOne(
-          { medium: student.medium, standard: standardToUse, isActive: true },
-          null,
-          { session }
-        );
-      }
 
       if (!feeStruct) {
         throw new AppError(`No active fee structure found for standard ${standardToUse} (${student.medium} medium) in academic year ${academicYearStr}`, 400);
@@ -1047,7 +1075,35 @@ class StudentService {
 
       const updateLedgerIfNeeded = async (feeType, feePeriod, newAmount) => {
         const ledger = existingLedgers.find(l => l.feeType === feeType && l.feePeriod === feePeriod);
-        if (ledger && ledger.status !== 'PAID' && !isRTE) {
+        if (!ledger) return;
+
+        if (feeType === 'EDUCATION' || feeType === 'TERM') {
+          if (isRTE) {
+            // RTE dynamic sync
+            if (ledger.concessionAmount !== newAmount || ledger.status !== 'PAID') {
+              ledger.totalAmount = newAmount;
+              ledger.concessionAmount = newAmount;
+              ledger.remainingAmount = 0;
+              ledger.status = 'PAID';
+              await ledger.save({ session });
+              updated++;
+            }
+            return;
+          } else {
+            // RTE revocation sync (100% concession with 0 paid is reset)
+            if (ledger.concessionAmount === ledger.totalAmount && (ledger.paidAmount || 0) === 0) {
+              ledger.concessionAmount = 0;
+              ledger.totalAmount = newAmount;
+              ledger.remainingAmount = newAmount;
+              ledger.status = 'PENDING';
+              await ledger.save({ session });
+              updated++;
+              return;
+            }
+          }
+        }
+
+        if (ledger.status !== 'PAID') {
           if (ledger.totalAmount !== newAmount) {
             const paidSoFar = ledger.paidAmount || 0;
             ledger.totalAmount = newAmount;
