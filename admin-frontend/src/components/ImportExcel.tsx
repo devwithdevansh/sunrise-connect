@@ -932,6 +932,23 @@ export const ImportExcel: React.FC = () => {
                 </select>
               </div>
 
+              {/* Dynamic Pending Fees */}
+              {editForm.pendingFees && Object.keys(editForm.pendingFees).map(year => (
+                <div key={year} className="space-y-1.5 col-span-1 sm:col-span-2">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Pending Fees: {year}</label>
+                  <input
+                    type="text"
+                    value={editForm.pendingFees?.[year] || ''}
+                    onChange={(e) => {
+                      const updatedFees = { ...editForm.pendingFees, [year]: e.target.value };
+                      setEditForm({ ...editForm, pendingFees: updatedFees });
+                    }}
+                    placeholder='e.g. paid, gov paid, oct to may'
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+              ))}
+
               {/* RTE */}
               <div className="flex items-center gap-2 pt-4">
                 <input
