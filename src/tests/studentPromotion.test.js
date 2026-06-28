@@ -114,5 +114,19 @@ describe('Student Promotion & Ledger Isolation', () => {
     const finalLedgers25 = await StudentFeeLedger.find({ studentId: student._id, academicYear: '2025-26' });
     const finalEduLedger25 = finalLedgers25.find(l => l.feeType === 'EDUCATION');
     expect(finalEduLedger25.totalAmount).toBe(1000);
+
+    // 7. Change active year back to 2025-26 and run regenerate ledgers for Rohan (who is now std 2 in DB)
+    ay26.isActive = false;
+    await ay26.save();
+    ay25.isActive = true;
+    await ay25.save();
+
+    const regenRes = await StudentService.regenerateMissingLedgers(student._id);
+    expect(regenRes.updated).toBe(0); // Should not update any amounts to Std 2 because snapshot has Std 1
+
+    // Verify 2025-26 ledgers STILL remain at standard 1 fees (1000 per part)
+    const finalLedgers25AfterRegen = await StudentFeeLedger.find({ studentId: student._id, academicYear: '2025-26' });
+    const finalEduLedger25AfterRegen = finalLedgers25AfterRegen.find(l => l.feeType === 'EDUCATION');
+    expect(finalEduLedger25AfterRegen.totalAmount).toBe(1000);
   });
 });
