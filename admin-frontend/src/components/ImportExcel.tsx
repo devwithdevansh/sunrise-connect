@@ -158,7 +158,22 @@ export const ImportExcel: React.FC = () => {
             }
           });
 
-          const startMonthVal = String(row["Transport Start Month"] || row["transportStartMonth"] || "").trim();
+          const getExcelValue = (targetKey: string): string => {
+            const normalizedTarget = targetKey.toLowerCase().replace(/\s+/g, '');
+            const k = Object.keys(row).find(keyStr => keyStr.toLowerCase().replace(/\s+/g, '') === normalizedTarget);
+            return k ? String(row[k] || '').trim() : '';
+          };
+
+          const sName = getExcelValue("Student Name") || row["studentName"] || "";
+          const med = getExcelValue("Medium") || row["medium"] || "";
+          const std = getExcelValue("Standard") || row["standard"] || "";
+          const div = getExcelValue("Division") || row["division"] || "";
+          const pName = getExcelValue("Parent Name") || row["parentName"] || "";
+          const pMobile = getExcelValue("Parent Mobile") || row["parentMobile"] || "";
+          const pSecMobile = getExcelValue("Parent Secondary Mobile") || row["parentSecondaryMobile"] || "";
+          const tType = getExcelValue("Transport Type") || row["transportType"] || "None";
+          const startMonthVal = getExcelValue("Transport Start Month") || row["transportStartMonth"] || "";
+
           let transportStartMonth: string | undefined = undefined;
           if (startMonthVal) {
             const clean = startMonthVal.toLowerCase();
@@ -173,14 +188,14 @@ export const ImportExcel: React.FC = () => {
           }
 
           return {
-            studentName: row["Student Name"] || row["studentName"] || "",
-            medium: row["Medium"] || row["medium"] || "",
-            standard: String(row["Standard"] || row["standard"] || ""),
-            division: String(row["Division"] || row["division"] || ""),
-            parentName: row["Parent Name"] || row["parentName"] || "",
-            parentMobile: String(row["Parent Mobile"] || row["parentMobile"] || ""),
-            parentSecondaryMobile: String(row["Parent Secondary Mobile"] || row["parentSecondaryMobile"] || ""),
-            transportType: row["Transport Type"] || row["transportType"] || "None",
+            studentName: sName,
+            medium: med,
+            standard: std,
+            division: div,
+            parentName: pName,
+            parentMobile: pMobile,
+            parentSecondaryMobile: pSecMobile,
+            transportType: tType,
             transportStartMonth,
             isRTE: parseRTE,
             isNewAdmission: parseNew,
