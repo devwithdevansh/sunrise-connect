@@ -334,6 +334,32 @@ export const ImportExcel: React.FC = () => {
           return;
         }
 
+        // Validate Headers (using first row's keys)
+        const headers = Object.keys(rawJson[0]);
+        
+        // 1. Strict YYYY-YYYY validation for any 'Year' columns
+        const invalidYearCol = headers.find(key => {
+          if (key.toLowerCase().startsWith('year ')) {
+            return !/^year\s+\d{4}-\d{4}$/i.test(key);
+          }
+          return false;
+        });
+
+        if (invalidYearCol) {
+          setErrorMsg(`Invalid column format: "${invalidYearCol}". Year columns must strictly follow the YYYY-YYYY format (e.g., "Year 2026-2027"). Please fix the column name in your Excel file and try again.`);
+          return;
+        }
+
+        // 2. Validate required columns exist
+        const requiredHeaders = ["Student Name", "Medium", "Standard", "Division", "Parent Name", "Parent Mobile"];
+        const normalizedHeaders = headers.map(h => h.toLowerCase().replace(/\s+/g, ''));
+        const missingHeaders = requiredHeaders.filter(req => !normalizedHeaders.includes(req.toLowerCase().replace(/\s+/g, '')));
+        
+        if (missingHeaders.length > 0) {
+          setErrorMsg(`Missing required columns: ${missingHeaders.join(', ')}. Please use the downloaded template.`);
+          return;
+        }
+
         const mapped: ExcelRow[] = rawJson.map((row: any) => {
           // Normalize RTE flag
           const parseRTE = row["Is RTE"] !== undefined ? row["Is RTE"] : row["isRTE"];
@@ -341,7 +367,7 @@ export const ImportExcel: React.FC = () => {
           // Parse any dynamic academic year columns (e.g. Year 2026-2027)
           const pendingFees: Record<string, string> = {};
           Object.keys(row).forEach(key => {
-            const match = key.match(/^year\s+(\d{4}-\d{2,4})$/i);
+            const match = key.match(/^year\s+(\d{4}-\d{4})$/i);
             if (match) {
               const year = match[1];
               pendingFees[year] = String(row[key] || '').trim();
