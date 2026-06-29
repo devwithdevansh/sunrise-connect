@@ -361,8 +361,14 @@ export const ImportExcel: React.FC = () => {
         }
 
         const mapped: ExcelRow[] = rawJson.map((row: any) => {
+          const getExcelValue = (targetKey: string): string => {
+            const normalizedTarget = targetKey.toLowerCase().replace(/\s+/g, '');
+            const k = Object.keys(row).find(keyStr => keyStr.toLowerCase().replace(/\s+/g, '') === normalizedTarget);
+            return k ? String(row[k] || '').trim() : '';
+          };
+
           // Normalize RTE flag
-          const parseRTE = row["Is RTE"] !== undefined ? row["Is RTE"] : row["isRTE"];
+          const parseRTE = getExcelValue("Is RTE") || row["isRTE"] || "";
 
           // Parse any dynamic academic year columns (e.g. Year 2026-2027)
           const pendingFees: Record<string, string> = {};
@@ -373,12 +379,6 @@ export const ImportExcel: React.FC = () => {
               pendingFees[year] = String(row[key] || '').trim();
             }
           });
-
-          const getExcelValue = (targetKey: string): string => {
-            const normalizedTarget = targetKey.toLowerCase().replace(/\s+/g, '');
-            const k = Object.keys(row).find(keyStr => keyStr.toLowerCase().replace(/\s+/g, '') === normalizedTarget);
-            return k ? String(row[k] || '').trim() : '';
-          };
 
           const sName = getExcelValue("Student Name") || row["studentName"] || "";
           const med = getExcelValue("Medium") || row["medium"] || "";
