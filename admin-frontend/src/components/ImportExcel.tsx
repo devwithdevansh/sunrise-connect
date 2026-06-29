@@ -584,6 +584,13 @@ export const ImportExcel: React.FC = () => {
                   <strong>👨‍👩‍👧 Parent Sync:</strong> If a parent's mobile already exists in the system, the new student is automatically linked to that parent as a sibling — no duplicate parent created.
                 </p>
               </div>
+
+              <div className="bg-purple-50 border border-purple-100 rounded-xl p-3.5 flex gap-2.5">
+                <Info className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-purple-800 leading-relaxed font-medium">
+                  <strong>🎓 Standards & Promotion:</strong> When importing old students, enter their standard from the <strong>PREVIOUS</strong> academic year to match their old fees accurately. Once imported, simply use the "Promote Students" tool to bump them to their new standard.
+                </p>
+              </div>
             </div>
           </div>
 
