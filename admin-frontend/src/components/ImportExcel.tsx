@@ -93,9 +93,20 @@ export const ImportExcel: React.FC = () => {
     setPromoteMsg(null);
     try {
       const res = await autoPromoteBatch(successIds);
-      setPromoteMsg({ type: 'success', text: `Successfully auto-promoted ${res.promotedCount} students. Skipped ${res.skippedCount}.` });
+      let text = `✅ Auto-promoted ${res.promotedCount} student(s).`;
+      if (res.skippedCount > 0) {
+        text += ` ⚠️ Skipped ${res.skippedCount} student(s) — `;
+        // Show the first unique reason
+        const firstReason = res.skipped?.[0]?.reason;
+        if (firstReason) text += firstReason;
+        else text += 'see server logs for details.';
+      }
+      if (res.groupErrors?.length > 0) {
+        text += ` ❌ ${res.groupErrors.length} group(s) failed: ${res.groupErrors[0]?.error}`;
+      }
+      setPromoteMsg({ type: res.promotedCount > 0 ? 'success' : 'error', text });
     } catch (err: any) {
-      setPromoteMsg({ type: 'error', text: err.message || 'Auto-promotion failed' });
+      setPromoteMsg({ type: 'error', text: err.message || 'Auto-promotion failed. Please check server logs.' });
     } finally {
       setIsPromoting(false);
     }
