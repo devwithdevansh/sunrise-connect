@@ -204,9 +204,9 @@ export const UnpaidFees: React.FC = () => {
       }
     });
     
-    const academicYears = Array.from(yearsSet).sort();
-    if (academicYears.length === 0) {
-      academicYears.push('2025-26'); // safe fallback
+    const exportYears = Array.from(yearsSet).sort();
+    if (exportYears.length === 0) {
+      exportYears.push('2025-26'); // safe fallback
     }
 
     // 2. Build the title row (matching standard/medium filter + current date + monthly rate)
@@ -252,7 +252,7 @@ export const UnpaidFees: React.FC = () => {
 
     // 3. Header Rows Setup
     const headers = ['NAME', 'PARENTS NUMBER', 'MEDIUM'];
-    academicYears.forEach(year => {
+    exportYears.forEach(year => {
       headers.push(`YEAR ${year}`);
       headers.push(year);
     });
@@ -312,14 +312,14 @@ export const UnpaidFees: React.FC = () => {
     // 4. Fill Student Row Data
     let grandTotal = 0;
     const yearTotals = new Map<string, number>();
-    academicYears.forEach(y => yearTotals.set(y, 0));
+    exportYears.forEach(y => yearTotals.set(y, 0));
 
     unpaidStudents.forEach(s => {
       const sId = getSid(s);
       const rowData: any[] = [s.studentName.toUpperCase(), s.parentMobile || '', s.medium.toUpperCase()];
       
       let studentTotal = 0;
-      academicYears.forEach(year => {
+      exportYears.forEach(year => {
         const periodStr = getUnpaidPeriodString(sId!, year);
         const amount = getUnpaidAmountForYear(sId!, year);
         
@@ -337,7 +337,7 @@ export const UnpaidFees: React.FC = () => {
 
     // 5. Fill Grand Total Sum Row
     const totalRow: any[] = ['GRAND TOTAL', '', ''];
-    academicYears.forEach(year => {
+    exportYears.forEach(year => {
       totalRow.push('');
       totalRow.push(yearTotals.get(year) || 0);
     });
