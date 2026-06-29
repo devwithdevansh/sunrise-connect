@@ -386,9 +386,18 @@ export function generateReceiptHTML(
     ${BASE_CSS}
     @page { size: A5 portrait; margin: 0; }
 
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
     body {
       padding: 0;
       margin: 0;
+      background-color: ${white};
+    }
+
+    .page {
       width: 148mm;
       height: 210mm;
       overflow: hidden;
@@ -397,13 +406,13 @@ export function generateReceiptHTML(
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 9px;
       color: #1e293b;
-      background-color: ${white};
       box-sizing: border-box;
       position: relative;
     }
   </style>
 </head>
 <body>
+  <div class="page">
   <!-- ══════════ LEFT NAVY PANEL (56 mm) ══════════ -->
   <div style="width: 56mm; flex-shrink: 0; background-color: ${navy}; display: flex; flex-direction: column; position: relative; overflow: hidden;">
     <!-- Subtle diagonal accent strip at top-right of left panel -->
@@ -556,6 +565,7 @@ export function generateReceiptHTML(
       </div>
 
     </div>
+  </div>
   </div>
 </body>
 </html>`;
