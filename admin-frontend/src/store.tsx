@@ -59,6 +59,7 @@ export interface FeeStructureData {
 
 export interface TransportFeeStructureData {
   _id: string;
+  academicYear?: string;
   transportType: string;
   amount: number;
   frequency: string;
@@ -125,6 +126,7 @@ interface AppContextType {
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
   importStudents: (students: any[]) => Promise<any>;
   fixTransportLedgers: (studentIds: string[], transportStartMonth: string) => Promise<any>;
+  copyFeeStructures: (fromYear: string, toYear: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   selectedStudentIdForFee: string | null;
   setSelectedStudentIdForFee: (id: string | null) => void;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
@@ -846,6 +848,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const copyFeeStructures = async (fromYear: string, toYear: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+    try {
+      const res = await authFetch('/api/v1/fee-structures/copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromYear, toYear })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Copy failed');
+      debouncedFetchAll();
+      return { success: true, message: data.message };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, error: err.message };
+    }
+  };
+
   const createAcademicYear = async (data: Partial<AcademicYearData>): Promise<boolean> => {
     try {
       const res = await authFetch('/api/v1/academic-years', {
@@ -1119,6 +1138,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addCustomFee,
         importStudents,
         fixTransportLedgers,
+        copyFeeStructures,
         selectedStudentIdForFee,
         setSelectedStudentIdForFee,
         isLoadingDetails,

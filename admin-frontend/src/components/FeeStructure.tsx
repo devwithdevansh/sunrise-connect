@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import type { FeeStructureData, TransportFeeStructureData } from '../store';
-import { AlertCircle, Bus, ChevronDown, Award, Pencil, X, Check, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, Bus, ChevronDown, Award, Pencil, X, Check, Loader2, Plus, Trash2, Copy } from 'lucide-react';
 
 /* ─── Create Modal for Standard Fee ───────────────────────────────── */
 interface CreateFeeModalProps {
@@ -191,11 +191,12 @@ const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ initialAcademicYear, on
 
 /* ─── Create Modal for Transport Fee ──────────────────────────────── */
 interface CreateTransportModalProps {
+  initialAcademicYear: string;
   onClose: () => void;
   onSave: (data: Partial<TransportFeeStructureData>) => Promise<boolean>;
 }
 
-const CreateTransportModal: React.FC<CreateTransportModalProps> = ({ onClose, onSave }) => {
+const CreateTransportModal: React.FC<CreateTransportModalProps> = ({ initialAcademicYear, onClose, onSave }) => {
   const [transportType, setTransportType] = useState('Railnagar');
   const [amount, setAmount] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
@@ -205,9 +206,9 @@ const CreateTransportModal: React.FC<CreateTransportModalProps> = ({ onClose, on
     if (amount === '' || Number(amount) < 0) { setError('Amount cannot be negative'); return; }
     setError('');
     setSaving(true);
-    const ok = await onSave({ transportType, amount: Number(amount), frequency: 'MONTHLY' });
+    const ok = await onSave({ transportType, amount: Number(amount), frequency: 'MONTHLY', academicYear: initialAcademicYear });
     setSaving(false);
-    if (ok) onClose(); else setError('Failed to create. Zone may already exist.');
+    if (ok) onClose(); else setError('Failed to create. Zone may already exist for this year.');
   };
 
   return (
@@ -489,7 +490,7 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
 
 /* ─── Main Component ──────────────────────────────────────────────── */
 export const FeeStructure: React.FC = () => {
-  const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure, academicYears } = useApp();
+  const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure, copyFeeStructures, academicYears } = useApp();
   const defaultYear = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
   const [selectedYear, setSelectedYear] = useState<string>('');
   const activeYearName = selectedYear || defaultYear;
@@ -505,6 +506,41 @@ export const FeeStructure: React.FC = () => {
   const [editingTransport, setEditingTransport] = useState<TransportFeeStructureData | null>(null);
   const [isCreatingFee, setIsCreatingFee] = useState(false);
   const [isCreatingTransport, setIsCreatingTransport] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+  const [copyMsg, setCopyMsg] = useState<string | null>(null);
+
+  // Filter transport by selected academic year (with legacy fallback)
+  const filteredTransportStructures = useMemo(() => {
+    const byYear = transportFeeStructures.filter(t => t.academicYear === activeYearName);
+    if (byYear.length > 0) return byYear;
+    // Legacy fallback — show unscoped records for the first/default year only
+    const isDefaultYear = activeYearName === academicYears[0]?.name || activeYearName === '2025-26';
+    return isDefaultYear ? transportFeeStructures.filter(t => !t.academicYear) : [];
+  }, [transportFeeStructures, activeYearName, academicYears]);
+
+  const handleCopyFromPrevYear = async () => {
+    const sortedYears = [...academicYears].sort((a, b) => {
+      const getY = (n: string) => parseInt(n.match(/^(\d{4})/)?.[1] || '0', 10);
+      return getY(a.name) - getY(b.name);
+    });
+    const currentIdx = sortedYears.findIndex(y => y.name === activeYearName);
+    if (currentIdx <= 0) {
+      alert('No previous academic year found to copy from.');
+      return;
+    }
+    const prevYear = sortedYears[currentIdx - 1].name;
+    if (!window.confirm(`Copy all fee rates from ${prevYear} to ${activeYearName}?\n\nExisting rates in ${activeYearName} will NOT be overwritten.`)) return;
+    setIsCopying(true);
+    setCopyMsg(null);
+    const result = await copyFeeStructures(prevYear, activeYearName);
+    setIsCopying(false);
+    if (result.success) {
+      setCopyMsg(result.message || 'Copied successfully!');
+      setTimeout(() => setCopyMsg(null), 4000);
+    } else {
+      alert(`Copy failed: ${result.error}`);
+    }
+  };
 
   const handleDeleteFee = async (structure: FeeStructureData) => {
     if (window.confirm(`Are you sure you want to delete the fee structure for Standard ${structure.standard} (${structure.medium} Medium)?\nThis action cannot be undone.`)) {
@@ -603,6 +639,15 @@ export const FeeStructure: React.FC = () => {
           >
             <Plus className="h-4 w-4" /> Add Standard
           </button>
+          <button
+            onClick={handleCopyFromPrevYear}
+            disabled={isCopying || academicYears.length < 2}
+            title="Copy all fee rates from the previous academic year"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isCopying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+            {isCopying ? 'Copying...' : 'Copy from Prev Year'}
+          </button>
           {/* Academic Year Selector */}
           <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1">
             <label htmlFor="year-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
@@ -648,6 +693,13 @@ export const FeeStructure: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Copy success banner */}
+      {copyMsg && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-700 flex items-center gap-2 animate-[fadeIn_0.2s_ease-out]">
+          <Check className="h-4 w-4" /> {copyMsg}
+        </div>
+      )}
 
       {/* Info Warning Banner */}
       <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-xs font-semibold text-indigo-700 flex items-start sm:items-center gap-3 shadow-sm transition-all hover:bg-indigo-100/50">
@@ -847,7 +899,7 @@ export const FeeStructure: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-          {transportFeeStructures.map((trans) => (
+          {filteredTransportStructures.map((trans) => (
             <div
               key={trans._id}
               className="border border-slate-100 hover:border-slate-200 rounded-xl p-4 flex justify-between items-center hover:bg-slate-50/40 transition-all"
@@ -880,8 +932,8 @@ export const FeeStructure: React.FC = () => {
               </div>
             </div>
           ))}
-          {transportFeeStructures.length === 0 && (
-            <p className="text-xs font-semibold text-slate-400 py-4 col-span-2 text-center">No transport routes config loaded from database.</p>
+          {filteredTransportStructures.length === 0 && (
+            <p className="text-xs font-semibold text-slate-400 py-4 col-span-2 text-center">No transport rates configured for {activeYearName}. Add a zone or copy from a previous year.</p>
           )}
         </div>
       </section>
@@ -912,6 +964,7 @@ export const FeeStructure: React.FC = () => {
       )}
       {isCreatingTransport && (
         <CreateTransportModal
+          initialAcademicYear={activeYearName}
           onClose={() => setIsCreatingTransport(false)}
           onSave={createTransportFeeStructure}
         />
