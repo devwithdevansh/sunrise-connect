@@ -357,18 +357,34 @@ class StudentService {
           const tStartIndex = transportStartMonthIndex >= 0 ? transportStartMonthIndex : 0;
           const transportMonthsToCreate = months.slice(tStartIndex);
 
+          // transportAllPaid: transport type set but no pending month — all months are already fully paid
+          const allTransportPaid = data.transportAllPaid === true;
+
           for (const m of transportMonthsToCreate) {
-            const { paidAmount, concessionAmount, remainingAmount, status } = getLedgerStatusAndAmounts('TRANSPORT', m.name, transportAmount, isRTE);
+            let tPaid, tConcession, tRemaining, tStatus;
+            if (allTransportPaid) {
+              // All transport months are already paid — record them as PAID for accurate historical ledger
+              tPaid = transportAmount;
+              tConcession = 0;
+              tRemaining = 0;
+              tStatus = 'PAID';
+            } else {
+              const result = getLedgerStatusAndAmounts('TRANSPORT', m.name, transportAmount, isRTE);
+              tPaid = result.paidAmount;
+              tConcession = result.concessionAmount;
+              tRemaining = result.remainingAmount;
+              tStatus = result.status;
+            }
             ledgersToCreate.push({
               studentId: student._id,
               feePeriod: m.name,
               feeType: 'TRANSPORT',
               totalAmount: transportAmount,
-              paidAmount,
-              concessionAmount,
-              remainingAmount,
+              paidAmount: tPaid,
+              concessionAmount: tConcession,
+              remainingAmount: tRemaining,
               dueDate: new Date(m.dueDate),
-              status,
+              status: tStatus,
               feeCategoryId: trCat._id,
               academicYear,
               source: 'MANUAL',
@@ -1465,7 +1481,8 @@ class StudentService {
         };
 
         data.isRTE = parseBool(data.isRTE);
-        data.isNewAdmission = parseBool(data.isNewAdmission);
+        // This import is ALWAYS for existing students (migrations), never new admissions
+        data.isNewAdmission = false;
 
         const cleanMobileNumber = (val) => {
           if (val === undefined || val === null) return '';
@@ -1499,7 +1516,12 @@ class StudentService {
         }
 
         const rawStartMonth = data.transportStartMonth || data["Transport Start Month"] || data["transportStartMonth"] || data["transport_start_month"];
-        if (rawStartMonth) {
+        // transportAllPaid: transport type is set but no pending month = all transport months are already paid
+        const transportAllPaid = data.transportAllPaid === true;
+        if (transportAllPaid) {
+          // Flag on data so createStudent can see it
+          data.transportAllPaid = true;
+        } else if (rawStartMonth) {
           const cleanStart = String(rawStartMonth).toLowerCase().trim();
           const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
           const fullMonthNames = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
