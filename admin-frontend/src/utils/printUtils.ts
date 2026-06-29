@@ -92,8 +92,8 @@ function toIndianWords(amount: number): string {
       n < 100
         ? below100(n)
         : ones[Math.floor(n / 100)] +
-          " Hundred" +
-          (n % 100 ? " " + below100(n % 100) : "");
+        " Hundred" +
+        (n % 100 ? " " + below100(n % 100) : "");
 
     let result = "";
     let n = num;
@@ -320,6 +320,11 @@ export function generateReceiptHTML(
       minute: "2-digit",
     });
 
+  const navy = '#1b3a6b';
+  const gold = '#e8a020';
+  const gold2 = '#d97706';
+  const white = '#ffffff';
+
   // Fee rows
   const feeRows = (() => {
     if (transaction.subItems?.length) {
@@ -327,25 +332,25 @@ export function generateReceiptHTML(
       return grouped
         .map(
           (item, i) => `
-        <tr style="background:${i % 2 === 0 ? "rgba(248,250,253,0.7)" : "rgba(255,255,255,0.75)"};page-break-inside:avoid;">
-          <td style="padding:7px 12px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">${i + 1}</td>
-          <td style="padding:7px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">
+        <tr style="background:${i % 2 === 0 ? "rgba(248,250,253,0.75)" : white};border-bottom:1px solid #e8edf8;page-break-inside:avoid;">
+          <td style="padding:5px 7px;color:#64748b;text-align:center;font-family:'JetBrains Mono', monospace;font-size:8px;border-right:1px solid #e2e8f4;">${i + 1}</td>
+          <td style="padding:5px 7px;color:#1e293b;font-weight:600;font-size:8.5px;border-right:1px solid #e2e8f4;">
             ${item.description}
-            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9px;color:#b45309;background:rgba(254,243,199,0.85);border:1px solid rgba(252,211,77,0.5);padding:2px 8px;border-radius:9999px;font-weight:700;font-family:'Inter',sans-serif;">-${item.concessionAmount.toLocaleString("en-IN")} &nbsp;₹ off</span>` : ""}
+            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:5px;font-size:7px;color:#b45309;background:rgba(254,243,199,0.9);border:1px solid rgba(252,211,77,0.5);padding:1px 5px;border-radius:9999px;font-weight:700;font-family:'Inter', sans-serif;">−${item.concessionAmount.toLocaleString("en-IN")} ₹ off</span>` : ""}
           </td>
-          <td style="padding:7px 12px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || "")}</td>
-          <td style="padding:7px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:120px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${inr(item.amount)} &nbsp;₹</td>
+          <td style="padding:5px 7px;color:#475569;text-align:center;font-size:8px;border-right:1px solid #e2e8f4;">${modeLabel(item.method || transaction.method || "")}</td>
+          <td style="padding:5px 7px;text-align:right;color:${navy};font-weight:700;font-family:'JetBrains Mono', monospace;font-size:8.5px;white-space:nowrap;">${inr(item.amount)} ₹</td>
         </tr>
       `,
         )
         .join("");
     }
     return `
-      <tr style="background:rgba(248,250,253,0.7);page-break-inside:avoid;">
-        <td style="padding:7px 12px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">1</td>
-        <td style="padding:7px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">${transaction.feeType || "Fee Collection"}</td>
-        <td style="padding:7px 12px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
-        <td style="padding:7px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:120px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${inr(totalAmount)} &nbsp;₹</td>
+      <tr style="background:rgba(248,250,253,0.75);page-break-inside:avoid;">
+        <td style="padding:5px 7px;color:#64748b;text-align:center;font-family:'JetBrains Mono', monospace;font-size:8px;border-right:1px solid #e2e8f4;">1</td>
+        <td style="padding:5px 7px;color:#1e293b;font-weight:600;font-size:8.5px;border-right:1px solid #e2e8f4;">${transaction.feeType || "Fee Collection"}</td>
+        <td style="padding:5px 7px;color:#475569;text-align:center;font-size:8px;border-right:1px solid #e2e8f4;">${mode}</td>
+        <td style="padding:5px 7px;text-align:right;color:${navy};font-weight:700;font-family:'JetBrains Mono', monospace;font-size:8.5px;white-space:nowrap;">${inr(totalAmount)} ₹</td>
       </tr>
     `;
   })();
@@ -353,13 +358,13 @@ export function generateReceiptHTML(
   const concessionRow =
     !transaction.subItems && transaction.concessionAmount
       ? `
-    <tr style="background:rgba(255,251,235,0.7);page-break-inside:avoid;">
-      <td style="padding:7px 12px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;"></td>
-      <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:700;border-right:1px solid #e2e8f4;">
+    <tr style="background:rgba(255,251,235,0.75);page-break-inside:avoid;">
+      <td style="padding:5px 7px;border-right:1px solid #e2e8f4;"></td>
+      <td style="padding:5px 7px;color:#b45309;font-style:italic;font-weight:700;font-size:8px;border-right:1px solid #e2e8f4;">
         ✦ Concession Applied
       </td>
       <td style="border-right:1px solid #e2e8f4;"></td>
-      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">−${(transaction.concessionAmount || 0).toLocaleString("en-IN")} &nbsp;₹</td>
+      <td style="padding:5px 7px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono', monospace;font-size:8.5px;white-space:nowrap;">−${(transaction.concessionAmount || 0).toLocaleString("en-IN")} ₹</td>
     </tr>
   `
       : "";
@@ -379,203 +384,134 @@ export function generateReceiptHTML(
   <title>Payment Receipt — ${transaction.studentName}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A4 portrait; margin: 0; }
+    @page { size: A5 portrait; margin: 0; }
 
     body {
       padding: 0;
       margin: 0;
-      width: 210mm;
-      min-height: 297mm;
-      height: 297mm;
-      position: relative;
-      background: #fff;
+      width: 148mm;
+      height: 210mm;
+      overflow: hidden;
       display: flex;
-      flex-direction: column;
-    }
-
-    .content-wrapper {
-      position: relative;
-      z-index: 2;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 9px;
+      color: #1e293b;
+      background-color: ${white};
       box-sizing: border-box;
-      padding: 16px 14mm 80px;
-      background: transparent;
-    }
-
-    /* ── Two-column info grid ── */
-    .info-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 14px;
-      page-break-inside: avoid;
-    }
-    .info-col {
-      padding: 10px 14px;
-      border: 1px solid rgba(226, 232, 240, 0.8);
-      border-radius: 6px;
-    }
-    .info-col:first-child {
-      background: rgba(248, 250, 253, 0.65); /* Semi-transparent */
-    }
-    .info-col:last-child {
-      background: rgba(255, 255, 255, 0.65); /* Semi-transparent */
-    }
-    .info-col-header {
-      font-family: 'Outfit', sans-serif;
-      font-size: 8.5px; font-weight: 800; color: #1b3a6b;
-      letter-spacing: 1.2px; text-transform: uppercase;
-      border-bottom: 2px solid #e8a020;
-      padding-bottom: 4px; margin-bottom: 6px;
-    }
-    .info-row { display: flex; gap: 8px; margin-bottom: 5px; align-items: baseline; }
-    .info-label { font-family: 'Outfit', sans-serif; font-size: 8px; font-weight: 700; color: #64748b; width: 72px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.8px; }
-    .info-value { font-size: 9.5px; font-weight: 600; color: #1e293b; flex: 1; }
-
-    /* ── Section header ── */
-    .section-hd {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 8px;
-      page-break-after: avoid;
-    }
-    .section-hd-bar { width: 4px; height: 14px; background: #e8a020; border-radius: 2px; flex-shrink: 0; }
-    .section-hd-text { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 800; color: #1b3a6b; letter-spacing: 0.8px; text-transform: uppercase; }
-
-    /* ── Fee table ── */
-    .fee-table { width: 100%; margin-bottom: 0; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 6px; overflow: hidden; }
-    .fee-table thead tr { background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%); }
-    .fee-table thead th { font-family: 'Outfit', sans-serif; padding: 9px 12px; color: #fff; font-size: 9px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; }
-    .fee-table thead th:last-child { text-align: right; }
-    .fee-table tbody td { padding: 7px 12px; }
-    .fee-table tbody tr { border-bottom: 1px solid #e8edf8; }
-    .fee-table tbody tr:last-child { border-bottom: none; }
-    .fee-table tfoot tr { background: linear-gradient(to bottom, #e8a020, #d97706); }
-    .fee-table tfoot td { padding: 10px 12px; color: #1b3a6b; font-weight: 800; font-family: 'Outfit', sans-serif; border-bottom: 3px double #1b3a6b; }
-    .fee-table tfoot td.total-label { font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; }
-    .fee-table tfoot td.total-amt { text-align: right; font-size: 14px; color: #1b3a6b; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
-
-    /* ── Words box ── */
-    .words-box {
-      margin-top: 14px;
-      border-left: 4px solid #e8a020;
-      background: linear-gradient(to right, rgba(255, 251, 240, 0.85), rgba(255, 255, 255, 0.85)); /* Semi-transparent */
-      padding: 10px 16px;
-      border-radius: 0 6px 6px 0;
-      font-size: 10px; color: #334155;
-      border-top: 1px solid rgba(226, 232, 240, 0.3);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.3);
-      border-right: 1px solid rgba(226, 232, 240, 0.3);
-      page-break-inside: avoid;
-    }
-
-    /* ── Remark box ── */
-    .remark-box {
-      margin-top: 10px;
-      border-left: 4px solid #94a3b8;
-      background: rgba(248, 250, 253, 0.85); /* Semi-transparent */
-      padding: 9px 16px;
-      border-radius: 0 6px 6px 0;
-      font-size: 9.5px; color: #475569; font-style: italic;
-      border-top: 1px solid rgba(226, 232, 240, 0.3);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.3);
-      border-right: 1px solid rgba(226, 232, 240, 0.3);
-      page-break-inside: avoid;
-    }
-
-    /* ── Signature section ── */
-    .sig-section {
-      display: flex; justify-content: space-between; align-items: flex-end;
-      margin-top: auto;
-      padding-top: 24px;
-      page-break-inside: avoid;
-    }
-    .sig-block { text-align: center; }
-    .sig-name { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 700; color: #1b3a6b; margin-bottom: 30px; letter-spacing: 0.5px; }
-    .sig-line { width: 170px; border-top: 1.5px solid #94a3b8; padding-top: 6px; }
-    .sig-sub { font-family: 'Outfit', sans-serif; font-size: 8.5px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stamp-box {
-      width: 76px; height: 76px;
-      border: 2px double #cbd5e1;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1; font-size: 8px; font-weight: 800;
-      text-align: center; line-height: 1.3;
-      font-family: 'Outfit', sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      position: relative;
     }
   </style>
 </head>
 <body>
-  <!-- WATERMARK CONTAINER (Rendered at z-index: 1, under content at z-index: 2) -->
-  ${
-    watermarkBase64
-      ? `
-  <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-    <img src="${watermarkBase64}" style="width: 460px; height: 460px; opacity: 0.08; transform: rotate(-12deg); object-fit: contain;" />
-  </div>
-  `
-      : ""
-  }
+  <!-- ══════════ LEFT NAVY PANEL (56 mm) ══════════ -->
+  <div style="width: 56mm; flex-shrink: 0; background-color: ${navy}; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+    <!-- Subtle diagonal accent strip at top-right of left panel -->
+    <div style="position: absolute; top: 0; right: 0; width: 30px; height: 140px; background: linear-gradient(to bottom-left, rgba(232,160,32,0.18), transparent); pointer-events: none;"></div>
 
-  <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 3;">
-    <!-- Right Gold Block (Shorter, tucked behind) -->
-    <div style="position: absolute; top: 0; right: 0; width: 48%; height: 96px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 28px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 3px rgba(0,0,0,0.18);">RECEIPT</div>
-      <div style="font-size: 9.5px; color: #1b3a6b; font-weight: 700; margin-top: 8px; text-align: right; background: rgba(255,255,255,0.92); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-        NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
-      </div>
-    </div>
-
-    <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
-    <div style="position: absolute; top: 0; left: 0; width: 65%; height: 130px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 40px; display: flex; align-items: center; padding-left: 28px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="width: 88px; height: 88px; border-radius: 50%; background: #fff; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-right: 18px; flex-shrink: 0;">
+    <!-- ── Logo + School Name Header ── -->
+    <div style="padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.10); display: flex; align-items: center; gap: 9px;">
+      <div style="width: 46px; height: 46px; border-radius: 50%; background-color: ${white}; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 3px 10px rgba(0,0,0,0.28);">
         ${logoImg}
       </div>
-      <div style="display: flex; flex-direction: column; gap: 5px;">
-        <div style="font-size: 20px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE SCHOOL RAJKOT</div>
-        <div style="font-size: 11px; font-weight: 700; color: #fcd34d; letter-spacing: 0.4px;">English &amp; Gujarati Medium</div>
-        <div style="font-size: 9.5px; color: #e2e8f0; line-height: 1.5;">
-          ${SCH.address}<br/>
-          Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
+      <div>
+        <div style="font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 900; color: ${white}; line-height: 1.2; letter-spacing: 0.3px;">
+          SUNRISE SCHOOL<br />RAJKOT
         </div>
+        <div style="font-family: 'Outfit', sans-serif; font-size: 7px; font-weight: 700; color: #fcd34d; margin-top: 3px;">
+          English &amp; Gujarati Medium
+        </div>
+        <div style="font-size: 6.5px; color: rgba(226,232,240,0.75); margin-top: 2px; line-height: 1.5;">
+          ${SCH.address}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Receipt Badge ── -->
+    <div style="margin: 10px 14px 0; background-color: ${gold}; border-radius: 6px; padding: 7px 11px;">
+      <div style="font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 900; color: ${white}; letter-spacing: 3px; line-height: 1; text-transform: uppercase; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);">
+        RECEIPT
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 700; color: ${navy}; background-color: rgba(255,255,255,0.90); padding: 2px 6px; border-radius: 3px; margin-top: 5px; display: inline-block; letter-spacing: 0.4px;">
+        NO: ${receiptNo}
+      </div>
+    </div>
+
+    <!-- ── Student Information ── -->
+    <div style="padding: 10px 14px 0; flex: 1;">
+      <div style="font-family: 'Outfit', sans-serif; font-size: 6.5px; font-weight: 800; color: #fcd34d; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid rgba(232,160,32,0.35); padding-bottom: 3px; margin-bottom: 7px;">
+        Student Information
+      </div>
+
+      <div style="display: flex; gap: 5px; margin-bottom: 5px; align-items: baseline;">
+        <span style="font-family: 'Outfit', sans-serif; font-size: 6px; font-weight: 700; color: rgba(148,163,184,0.85); text-transform: uppercase; letter-spacing: 0.6px; width: 40px; flex-shrink: 0;">Name</span>
+        <span style="font-size: 10px; font-weight: 800; color: ${white}; flex: 1;">${transaction.studentName}</span>
+      </div>
+      ${transaction.classInfo ? `<div style="display: flex; gap: 5px; margin-bottom: 5px; align-items: baseline;">
+        <span style="font-family: 'Outfit', sans-serif; font-size: 6px; font-weight: 700; color: rgba(148,163,184,0.85); text-transform: uppercase; letter-spacing: 0.6px; width: 40px; flex-shrink: 0;">Class</span>
+        <span style="font-size: 8px; font-weight: 600; color: ${white}; flex: 1;">${transaction.classInfo}</span>
+      </div>` : ""}
+      <div style="display: flex; gap: 5px; margin-bottom: 5px; align-items: baseline;">
+        <span style="font-family: 'Outfit', sans-serif; font-size: 6px; font-weight: 700; color: rgba(148,163,184,0.85); text-transform: uppercase; letter-spacing: 0.6px; width: 40px; flex-shrink: 0;">Period</span>
+        <span style="font-size: 8px; font-weight: 600; color: ${white}; flex: 1;">${period}</span>
+      </div>
+    </div>
+
+    <!-- ── Left Footer (Gold) ── -->
+    <div style="background-color: ${gold}; padding: 8px 14px;">
+      <div style="font-family: 'Outfit', sans-serif; font-size: 8.5px; font-weight: 900; color: ${navy}; letter-spacing: 1.5px; text-transform: uppercase;">
+        Thank You
+      </div>
+      <div style="font-size: 6px; color: rgba(27,58,107,0.72); margin-top: 1px;">
+        ${SCH.phone} · ${SCH.email}
       </div>
     </div>
   </div>
 
-  <div class="content-wrapper">
+  <!-- ══════════ RIGHT WHITE PANEL ══════════ -->
+  <div style="flex: 1; display: flex; flex-direction: column; padding: 12px 13px 10px; background-color: ${white}; position: relative; overflow: hidden;">
+    
+    <!-- Watermark -->
+    ${watermarkBase64 ? `
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+      <img src="${watermarkBase64}" alt="" style="width: 200px; height: 200px; opacity: 0.06; transform: rotate(-10deg); object-fit: contain;" />
+    </div>` : ""}
 
-      <!-- ════ INFO GRID ════ -->
-      <div class="info-grid">
-        <div class="info-col">
-          <div class="info-col-header">Student Information</div>
-          <div class="info-row"><span class="info-label">Name</span><span class="info-value" style="font-size: 12px; color: #1b3a6b; font-weight: 700;">${transaction.studentName}</span></div>
-          ${transaction.classInfo ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ""}
-          <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
+    <!-- All right-panel content sits above watermark -->
+    <div style="position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column;">
+      
+      <!-- ── Date / Time / Status strip ── -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 9px;">
+        <div style="background-color: rgba(248,250,253,0.85); border: 1px solid rgba(226,232,240,0.80); border-radius: 5px; padding: 5px 7px;">
+          <div style="font-family: 'Outfit', sans-serif; font-size: 6px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px;">Date</div>
+          <div style="font-size: 7.5px; font-weight: 600; color: #1e293b; margin-top: 2px;">${dateStr}</div>
         </div>
-        <div class="info-col">
-          <div class="info-col-header">Payment Information</div>
-          <div class="info-row"><span class="info-label">Date</span><span class="info-value">${dateStr}</span></div>
-          <div class="info-row"><span class="info-label">Time</span><span class="info-value">${timeStr}</span></div>
-          <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#16a34a;font-weight:700;">Payment Received</span></div>
+        <div style="background-color: rgba(248,250,253,0.85); border: 1px solid rgba(226,232,240,0.80); border-radius: 5px; padding: 5px 7px;">
+          <div style="font-family: 'Outfit', sans-serif; font-size: 6px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px;">Time</div>
+          <div style="font-size: 7.5px; font-weight: 600; color: #1e293b; margin-top: 2px;">${timeStr}</div>
+        </div>
+        <div style="background-color: rgba(248,250,253,0.85); border: 1px solid rgba(226,232,240,0.80); border-radius: 5px; padding: 5px 7px;">
+          <div style="font-family: 'Outfit', sans-serif; font-size: 6px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px;">Status</div>
+          <div style="font-size: 7.5px; font-weight: 600; color: #16a34a; margin-top: 2px;">Payment Received</div>
         </div>
       </div>
 
-      <!-- ════ FEE TABLE ════ -->
-      <div class="section-hd">
-        <div class="section-hd-bar"></div>
-        <div class="section-hd-text">Payment Details</div>
+      <!-- ── Section Header: Payment Details ── -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+        <div style="width: 3px; height: 11px; background-color: ${gold}; border-radius: 2px; flex-shrink: 0;"></div>
+        <div style="font-family: 'Outfit', sans-serif; font-size: 7.5px; font-weight: 800; color: ${navy}; letter-spacing: 0.8px; text-transform: uppercase;">
+          Payment Details
+        </div>
       </div>
 
-      <table class="fee-table">
+      <!-- ── Fee Table ── -->
+      <table style="width: 100%; border-collapse: collapse; border: 1px solid rgba(226,232,240,0.80); border-radius: 5px; overflow: hidden; margin-bottom: 0;">
         <thead>
-          <tr>
-            <th style="width:36px;text-align:center;">#</th>
-            <th>Description</th>
-            <th style="width:110px;text-align:center;">Mode</th>
-            <th style="width:110px;text-align:right;">Amount (₹)</th>
+          <tr style="background: linear-gradient(135deg, ${navy} 0%, #2a5298 100%);">
+            <th style="padding: 5px 7px; color: ${white}; font-size: 6.5px; font-weight: 700; text-align: center; width: 22px; letter-spacing: 0.8px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">#</th>
+            <th style="padding: 5px 7px; color: ${white}; font-size: 6.5px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Description</th>
+            <th style="padding: 5px 7px; color: ${white}; font-size: 6.5px; font-weight: 700; text-align: center; width: 72px; letter-spacing: 0.8px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Mode</th>
+            <th style="padding: 5px 7px; color: ${white}; font-size: 6.5px; font-weight: 700; text-align: right; width: 78px; letter-spacing: 0.8px; text-transform: uppercase; font-family: 'Outfit', sans-serif;">Amount (₹)</th>
           </tr>
         </thead>
         <tbody>
@@ -583,53 +519,42 @@ export function generateReceiptHTML(
           ${concessionRow}
         </tbody>
         <tfoot>
-          <tr>
-            <td colspan="3" class="total-label">Total Paid</td>
-            <td class="total-amt">${inr(totalAmount)} ₹</td>
+          <tr style="background: linear-gradient(to right, ${gold}, ${gold2});">
+            <td colspan="3" style="padding: 6px 8px; color: ${navy}; font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 7.5px; letter-spacing: 2px; text-transform: uppercase;">
+              TOTAL PAID
+            </td>
+            <td style="padding: 6px 8px; text-align: right; color: ${navy}; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap;">
+              ${inr(totalAmount)} ₹
+            </td>
           </tr>
         </tfoot>
       </table>
 
-      <!-- ════ AMOUNT IN WORDS ════ -->
-      <div class="words-box">
+      <!-- ── Amount in Words ── -->
+      <div style="background-color: rgba(255,251,240,0.85); padding: 5px 9px; border-radius: 0 4px 4px 0; font-size: 7.5px; color: #334155; margin-top: 7px; border: 1px solid rgba(226,232,240,0.3); border-left: 3px solid ${gold};">
         <strong>Amount in Words:</strong>&nbsp;<em>${words}</em>
       </div>
 
-      ${
-        transaction.remark
-          ? `
-      <div class="remark-box"><strong>Remark:</strong> ${transaction.remark}</div>
-      `
-          : ""
-      }
+      <!-- ── Remark (optional) ── -->
+      ${transaction.remark ? `
+      <div style="background-color: rgba(248,250,253,0.85); padding: 5px 9px; border-radius: 0 4px 4px 0; font-size: 7.5px; color: #475569; font-style: italic; margin-top: 5px; border: 1px solid rgba(226,232,240,0.3); border-left: 3px solid #94a3b8;">
+        <strong>Remark:</strong>&nbsp;<em>${transaction.remark}</em>
+      </div>` : ""}
 
-      <!-- ════ SIGNATURE ════ -->
-      <div class="sig-section" style="justify-content: flex-end;">
-        <div class="sig-block">
-          <div class="sig-name">${signerName}</div>
-          <div class="sig-line">
-            <div class="sig-sub">Authorised Signatory</div>
+      <!-- ── Signature ── -->
+      <div style="display: flex; justify-content: flex-end; align-items: flex-end; margin-top: auto; padding-top: 10px;">
+        <div style="text-align: center;">
+          <div style="font-family: 'Outfit', sans-serif; font-size: 8px; font-weight: 700; color: ${navy}; margin-bottom: 16px; letter-spacing: 0.4px;">
+            ${signerName}
+          </div>
+          <div style="width: 120px; border-top: 1px solid #94a3b8; padding-top: 4px;">
+            <div style="font-family: 'Outfit', sans-serif; font-size: 6.5px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">
+              Authorised Signatory
+            </div>
           </div>
         </div>
       </div>
-  </div>
 
-  <!-- ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="footer-container" style="position: absolute; bottom: 0; left: 0; height: 60px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
-    <!-- Left Gold Block (Shorter, tucked behind) -->
-    <div style="position: absolute; bottom: 0; left: 0; width: 45%; height: 45px; background: #e8a020; z-index: 1; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <span style="font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">THANK YOU</span>
-    </div>
-
-    <!-- Right Navy Block (Full height, overlapping, with top-left curve) -->
-    <div style="position: absolute; bottom: 0; right: 0; width: 70%; height: 60px; background: #1b3a6b; z-index: 2; border-top-left-radius: 35px; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 9.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="display: flex; gap: 18px; font-weight: 600; align-items: center; letter-spacing: 0.5px;">
-        <span>📞 ${SCH.phone}</span>
-        <span style="opacity: 0.4;">|</span>
-        <span>✉️ ${SCH.email}</span>
-        <span style="opacity: 0.4;">|</span>
-        <span>🌐 www.sunriseschool.in</span>
-      </div>
     </div>
   </div>
 </body>
