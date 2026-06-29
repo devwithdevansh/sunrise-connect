@@ -189,13 +189,13 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
 
       {/*
         ══════════════════════════════════════════════════
-        A5 PORTRAIT  148 × 210 mm
-        Split into LEFT navy panel (56 mm) + RIGHT white panel (flex)
+        A5 LANDSCAPE  210 × 148 mm
+        Split into LEFT navy panel (75 mm) + RIGHT white panel (flex)
         ══════════════════════════════════════════════════
       */}
       <div style={{
-        width: '148mm',
-        height: '210mm',
+        width: '210mm',
+        height: '148mm',
         display: 'flex',
         flexDirection: 'row',
         fontFamily: "'Inter', system-ui, sans-serif",
@@ -210,9 +210,9 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
         position: 'relative',
       }}>
 
-        {/* ══════════ LEFT NAVY PANEL (56 mm) ══════════ */}
+        {/* ══════════ LEFT NAVY PANEL (75 mm) ══════════ */}
         <div style={{
-          width: '56mm',
+          width: '75mm',
           flexShrink: 0,
           backgroundColor: navy,
           display: 'flex',

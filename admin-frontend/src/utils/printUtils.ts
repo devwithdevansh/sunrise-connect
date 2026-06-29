@@ -384,7 +384,7 @@ export function generateReceiptHTML(
   <title>Payment Receipt — ${transaction.studentName}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A5 portrait; margin: 0; }
+    @page { size: A5 landscape; margin: 0; }
 
     html, body {
       width: 100%;
@@ -398,8 +398,8 @@ export function generateReceiptHTML(
     }
 
     .page {
-      width: 148mm;
-      height: 210mm;
+      width: 210mm;
+      height: 148mm;
       overflow: hidden;
       display: flex;
       flex-direction: row;
@@ -413,8 +413,8 @@ export function generateReceiptHTML(
 </head>
 <body>
   <div class="page">
-  <!-- ══════════ LEFT NAVY PANEL (56 mm) ══════════ -->
-  <div style="width: 56mm; flex-shrink: 0; background-color: ${navy}; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+  <!-- ══════════ LEFT NAVY PANEL (75 mm) ══════════ -->
+  <div style="width: 75mm; flex-shrink: 0; background-color: ${navy}; display: flex; flex-direction: column; position: relative; overflow: hidden;">
     <!-- Subtle diagonal accent strip at top-right of left panel -->
     <div style="position: absolute; top: 0; right: 0; width: 30px; height: 140px; background: linear-gradient(to bottom-left, rgba(232,160,32,0.18), transparent); pointer-events: none;"></div>
 
