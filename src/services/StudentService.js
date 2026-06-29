@@ -61,6 +61,18 @@ class StudentService {
 
       let studentCode = data.studentCode;
       if (!studentCode) {
+        // Prevent duplicate imports: if student with exact name, std, div, and parent exists, reject
+        const existingStudent = await mongoose.model('Student').findOne({
+          studentName: data.studentName,
+          standard: data.standard,
+          division: data.division,
+          parentId: parentId
+        }, null, { session });
+        
+        if (existingStudent) {
+          throw new AppError(`Student ${data.studentName} (${data.standard} ${data.division}) already exists with this parent number.`, 400);
+        }
+
         const count = await mongoose.model('Student').countDocuments({}, { session });
         const rand = Math.floor(10 + Math.random() * 90);
         studentCode = `STU${String(count + 1).padStart(3, '0')}-${rand}`;
