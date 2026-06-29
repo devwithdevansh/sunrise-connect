@@ -400,7 +400,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
             {/* <div style={S.schoolName}>SUNRISE SCHOOL</div> */}
             <div style={S.schoolMedium}>English &amp; Gujarati Medium</div>
             <div style={S.schoolAddr}>Railnagar, Rajkot, Gujarat</div>
-            <div style={S.schoolAddr}>Ph: +91 XXXXX XXXXX &nbsp;|&nbsp; Email: info@sunriseschool.in</div>
+            <div style={S.schoolAddr}>Ph: +91 97236 55151 &nbsp;|&nbsp; Email: info@sunriseschool.in</div>
           </div>
         </div>
 
