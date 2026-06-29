@@ -127,14 +127,24 @@ class StudentService {
       let transportAmount = 0;
       if (student.transportType && student.transportType !== 'None') {
         const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
-          { transportType: student.transportType, isActive: true },
+          { transportType: student.transportType, academicYear: activeYear, isActive: true },
           null,
           { session }
         );
-        if (!transportStruct) {
-          throw new AppError(`Active transport fee structure not found for ${student.transportType}`, 404);
+        if (transportStruct) {
+          transportAmount = transportStruct.amount;
+        } else {
+          // Fallback: try without year filter (legacy / migration gap)
+          const tfsFallback = await mongoose.model('TransportFeeStructure').findOne(
+            { transportType: student.transportType, isActive: true },
+            null,
+            { session }
+          );
+          if (!tfsFallback) {
+            throw new AppError(`Active transport fee structure not found for ${student.transportType} in year ${activeYear}`, 404);
+          }
+          transportAmount = tfsFallback.amount;
         }
-        transportAmount = transportStruct.amount;
       }
 
       const isRTE = student.isRTE || false;
@@ -305,7 +315,7 @@ class StudentService {
         const months = getMonthsForAcademicYear(academicYear);
         const terms = getTermsForAcademicYear(academicYear);
 
-        const admissionMonth = student.admissionMonth || 'June';
+        const admissionMonth = academicYear === earliestYear ? (student.admissionMonth || 'June') : 'June';
         const startMonthIndex = months.findIndex(m => m.name === admissionMonth);
         const startIndex = startMonthIndex >= 0 ? startMonthIndex : 0;
         const monthsToCreate = months.slice(startIndex);
@@ -341,7 +351,7 @@ class StudentService {
 
         // 2. Transport ledgers (12 months, if applicable)
         if (student.transportType && student.transportType !== 'None') {
-          const transportStartMonth = student.transportStartMonth || student.admissionMonth || 'June';
+          const transportStartMonth = academicYear === earliestYear ? (student.transportStartMonth || student.admissionMonth || 'June') : 'June';
           logger.info(`[createStudent] ledger loop: transportStartMonth=${transportStartMonth} (student.transportStartMonth=${student.transportStartMonth})`);
           const transportStartMonthIndex = months.findIndex(m => m.name === transportStartMonth);
           const tStartIndex = transportStartMonthIndex >= 0 ? transportStartMonthIndex : 0;
@@ -491,12 +501,7 @@ class StudentService {
   /** Update mutable fields */
   static async updateStudent(studentId, updates, performedBy = null) {
     const newTransport = updates.transportType;
-    if (newTransport && newTransport !== 'None') {
-      const activeStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: newTransport, isActive: true });
-      if (!activeStruct) {
-        throw new AppError(`Active transport fee structure not found for ${newTransport}`, 404);
-      }
-    }
+    // Note: we validate transport existence inside the session block where we know the active year
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -677,15 +682,15 @@ class StudentService {
         let newRate = 0;
 
         if (oldTransport !== 'None') {
-          const oldStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: oldTransport }).session(session);
+          const oldStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: oldTransport, academicYear: currentAcademicYearName }).session(session);
           if (oldStruct) {
             oldRate = oldStruct.amount;
           }
         }
         if (effectiveTransportType !== 'None') {
-          const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: effectiveTransportType, isActive: true }).session(session);
+          const newStruct = await mongoose.model('TransportFeeStructure').findOne({ transportType: effectiveTransportType, academicYear: currentAcademicYearName, isActive: true }).session(session);
           if (!newStruct) {
-            throw new AppError(`Active transport fee structure not found for ${effectiveTransportType}`, 404);
+            throw new AppError(`Active transport fee structure not found for ${effectiveTransportType} in year ${currentAcademicYearName}`, 404);
           }
           newRate = newStruct.amount;
         }
@@ -730,17 +735,17 @@ class StudentService {
         const existingPeriods = new Set(existingLedgers.map(l => l.feePeriod));
         const ledgersToCreate = [];
 
-        // Always ensure transport ledgers before the start month are deleted
-        // (including PAID ones - so they disappear from the UI completely)
+        // Always ensure unpaid transport ledgers before the start month are deleted
         const monthsBeforeStart = months.slice(0, transportStartIdx < 0 ? 0 : transportStartIdx).map(m => m.name);
-        const idsToDelete = existingLedgers
-          .filter(l => monthsBeforeStart.includes(l.feePeriod))
-          .map(l => l._id);
+        const ledgersToDelete = existingLedgers.filter(l => monthsBeforeStart.includes(l.feePeriod) && l.status !== 'PAID');
+        const idsToDelete = ledgersToDelete.map(l => l._id);
+        
         if (idsToDelete.length > 0) {
           await mongoose.model('StudentFeeLedger').deleteMany({ _id: { $in: idsToDelete } }, { session });
         }
+        
         // Rebuild existingPeriods without the deleted ones
-        monthsBeforeStart.forEach(mName => existingPeriods.delete(mName));
+        ledgersToDelete.forEach(l => existingPeriods.delete(l.feePeriod));
 
         for (let i = 0; i < 12; i++) {
           const m = months[i];
@@ -1035,11 +1040,21 @@ class StudentService {
           transportAmount = existingTransportLedger.totalAmount;
         } else {
           const tfs = await mongoose.model('TransportFeeStructure').findOne(
-            { transportType: student.transportType, isActive: true },
+            { transportType: student.transportType, academicYear: academicYearStr, isActive: true },
             null,
             { session }
           );
-          transportAmount = tfs?.amount ?? 0;
+          if (!tfs) {
+            // Fallback: try without year filter (legacy data)
+            const tfsFallback = await mongoose.model('TransportFeeStructure').findOne(
+              { transportType: student.transportType, isActive: true },
+              null,
+              { session }
+            );
+            transportAmount = tfsFallback?.amount ?? 0;
+          } else {
+            transportAmount = tfs.amount;
+          }
         }
       }
 
@@ -1620,11 +1635,15 @@ class StudentService {
 
           // 3. Fetch transport amount
           const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
-            { transportType: student.transportType, isActive: true },
+            { transportType: student.transportType, academicYear: activeYear, isActive: true },
             null,
             { session }
           );
-          const transportAmount = transportStruct ? transportStruct.amount : 0;
+          // Fallback if no year-scoped rate found (legacy data)
+          const transportFallback = !transportStruct
+            ? await mongoose.model('TransportFeeStructure').findOne({ transportType: student.transportType, isActive: true }, null, { session })
+            : null;
+          const transportAmount = (transportStruct ?? transportFallback)?.amount ?? 0;
 
           // 4. Regenerate transport ledgers from new start month
           const newLedgers = transportMonths.map(m => ({

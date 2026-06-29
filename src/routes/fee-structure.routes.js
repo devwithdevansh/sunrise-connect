@@ -19,6 +19,7 @@ router.use(authenticate);
 router.get('/', FeeStructureController.list);
 
 // POST/PUT — ADMIN only
+router.post('/copy', authorize('ADMIN'), FeeStructureController.copyFeeStructures);
 router.post('/', authorize('ADMIN'), validate(createFeeStructureSchema), FeeStructureController.createFeeStructure);
 router.post('/transport', authorize('ADMIN'), validate(createTransportFeeStructureSchema), FeeStructureController.createTransportFeeStructure);
 router.put('/:id', authorize('ADMIN'), validate(updateFeeStructureSchema), FeeStructureController.updateFeeStructure);

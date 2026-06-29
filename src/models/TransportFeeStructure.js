@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const transportFeeStructureSchema = new mongoose.Schema(
   {
+    academicYear: {
+      type: String,
+      required: [true, 'Academic year mapping is required'],
+      trim: true,
+    },
     transportType: {
       type: String,
       required: [true, 'Transport type is required'],
@@ -37,10 +42,9 @@ const transportFeeStructureSchema = new mongoose.Schema(
 // Indexes
 
 // 1. Partial Unique Index (Crucial for preventing duplicates)
-// This strictly enforces that there can be ONLY ONE "Active" configuration per transport type at any time.
-// However, it allows you to have unlimited "Inactive" (historical/legacy) configurations for the same route from previous years.
+// This strictly enforces that there can be ONLY ONE "Active" configuration per transport type and year at any time.
 transportFeeStructureSchema.index(
-  { transportType: 1 },
+  { academicYear: 1, transportType: 1 },
   { 
     unique: true, 
     partialFilterExpression: { isActive: true } 
@@ -48,8 +52,7 @@ transportFeeStructureSchema.index(
 );
 
 // 2. Query Optimization Index
-// During cron jobs or monthly ledger generation, the engine will query specifically for { isActive: true, transportType: 'Railnagar' }
-transportFeeStructureSchema.index({ transportType: 1, isActive: 1 });
+transportFeeStructureSchema.index({ academicYear: 1, transportType: 1, isActive: 1 });
 
 const TransportFeeStructure = mongoose.model('TransportFeeStructure', transportFeeStructureSchema);
 
