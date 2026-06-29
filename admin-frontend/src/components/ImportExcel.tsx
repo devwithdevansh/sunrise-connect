@@ -54,8 +54,8 @@ interface ExcelRow {
   parentSecondaryMobile: string;
   transportType: string;
   transportStartMonth?: string;
+  transportAllPaid?: boolean; // true = has transport but all months are paid
   isRTE: boolean | string;
-  isNewAdmission: boolean | string;
   pendingFees?: Record<string, string>;
 }
 
@@ -191,18 +191,17 @@ export const ImportExcel: React.FC = () => {
   };
 
   const fieldsSchema = [
-    { name: 'Student Name', dbName: 'studentName', required: true, example: 'Rahul Sharma', desc: 'Full name of the student' },
+    { name: 'Student Name', dbName: 'studentName', required: true, example: 'Dhruv Solanki', desc: 'Full name of the student' },
     { name: 'Medium', dbName: 'medium', required: true, example: 'English', desc: 'Must be "English" or "Gujarati"' },
-    { name: 'Standard', dbName: 'standard', required: true, example: '5', desc: 'Class standard (e.g. 3, 5, 6, 7, 8, 9, 10)' },
-    { name: 'Division', dbName: 'division', required: true, example: 'A', desc: 'Section/division code (e.g. A, B, C)' },
-    { name: 'Parent Name', dbName: 'parentName', required: true, example: 'Amit Sharma', desc: 'Full name of parent' },
-    { name: 'Parent Mobile', dbName: 'parentMobile', required: true, example: '9876543210', desc: '10-digit Indian mobile number' },
-    { name: 'Parent Secondary Mobile', dbName: 'parentSecondaryMobile', required: false, example: '9876543211', desc: 'Optional backup contact' },
-    { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: '"Railnagar", "Outside Railnagar", or "None"' },
-    { name: 'Transport fees pending from month', dbName: 'transportStartMonth', required: false, example: 'November', desc: 'Month from which transport fees are pending (e.g. "June", "November"). Leave blank if fully paid or no transport.' },
-    { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Right to Education quota ("Yes", "No", true, false)' },
-    { name: 'Is New Admission', dbName: 'isNewAdmission', required: false, example: 'No', desc: 'Applies admission charges ("Yes", "No"). Defaults to "No".' },
-    { name: 'Year YYYY-YY (e.g. Year 2025-26)', dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Set payment status: "paid", "gov paid", or a range like "oct to may", "term-2 to may"' },
+    { name: 'Standard', dbName: 'standard', required: true, example: 'Nursery', desc: 'Class standard (e.g. Nursery, LKG, UKG, 1, 2 ... 10)' },
+    { name: 'Division', dbName: 'division', required: true, example: 'A', desc: 'Section/division (A, B, C)' },
+    { name: 'Parent Name', dbName: 'parentName', required: true, example: 'Bhavesh Solanki', desc: 'Full name of parent or guardian' },
+    { name: 'Parent Mobile', dbName: 'parentMobile', required: true, example: '9009637290', desc: '10-digit Indian mobile number (no country code)' },
+    { name: 'Parent Secondary Mobile', dbName: 'parentSecondaryMobile', required: false, example: '9191421620', desc: 'Optional second contact number. Leave blank if none.' },
+    { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: 'Write "Railnagar", "Outside Railnagar", "None", or leave blank. "None"/blank = no transport enrolled.' },
+    { name: 'Transport fees pending from month', dbName: 'transportStartMonth', required: false, example: 'June', desc: 'Only fill this if the student has PENDING transport fees. Write the month from which fees are due (e.g. "June", "August"). Leave blank if transport fees are fully paid.' },
+    { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Is the student admitted under Right to Education (RTE) scheme? Write "Yes" or "No". Leave blank = No.' },
+    { name: 'Year YYYY-YY (e.g. Year 2025-26)', dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Education fee pending status. Write "paid" / "gov paid" if fully paid, or a month range like "oct to may" if fees are pending from October.' },
   ];
 
   const downloadTemplate = () => {
@@ -242,7 +241,20 @@ export const ImportExcel: React.FC = () => {
         "Parent Mobile": "9533666586",
         "Parent Secondary Mobile": "",
         "Transport Type": "Railnagar",
-        "Transport fees pending from month": "August",
+        "Transport fees pending from month": "",
+        "Is RTE": "Yes",
+        "Year 2025-26": "gov paid"
+      },
+      {
+        "Student Name": "Jiya Mehta",
+        "Medium": "English",
+        "Standard": "LKG",
+        "Division": "B",
+        "Parent Name": "Manish Mehta",
+        "Parent Mobile": "9417949139",
+        "Parent Secondary Mobile": "",
+        "Transport Type": "None",
+        "Transport fees pending from month": "",
         "Is RTE": "Yes",
         "Year 2025-26": "gov paid"
       }
@@ -287,10 +299,8 @@ export const ImportExcel: React.FC = () => {
         }
 
         const mapped: ExcelRow[] = rawJson.map((row: any) => {
-          // Normalize boolean inputs from strings
+          // Normalize RTE flag
           const parseRTE = row["Is RTE"] !== undefined ? row["Is RTE"] : row["isRTE"];
-          const rawNewAdm = row["Is New Admission"] !== undefined ? row["Is New Admission"] : row["isNewAdmission"];
-          const parseNew = rawNewAdm !== undefined ? rawNewAdm : 'No';
 
           // Parse any dynamic academic year columns (e.g. Year 2025-26)
           const pendingFees: Record<string, string> = {};
@@ -315,18 +325,33 @@ export const ImportExcel: React.FC = () => {
           const pName = getExcelValue("Parent Name") || row["parentName"] || "";
           const pMobile = cleanMobileNumber(getExcelValue("Parent Mobile") || row["parentMobile"]);
           const pSecMobile = cleanMobileNumber(getExcelValue("Parent Secondary Mobile") || row["parentSecondaryMobile"]);
-          const tType = getExcelValue("Transport Type") || row["transportType"] || "None";
-          const startMonthVal = getExcelValue("Transport fees pending from month") || getExcelValue("Transport Start Month") || row["transportStartMonth"] || "";
+
+          // Transport Type logic:
+          // blank or 'None' → no transport
+          // has value + blank pending month → transport exists, all months PAID
+          // has value + pending month specified → transport PENDING from that month
+          const rawTransport = (getExcelValue("Transport Type") || row["transportType"] || '').trim();
+          const tType = !rawTransport || rawTransport.toLowerCase() === 'none' ? 'None' : rawTransport;
+
+          const startMonthVal = tType !== 'None'
+            ? (getExcelValue("Transport fees pending from month") || getExcelValue("Transport Start Month") || row["transportStartMonth"] || '').trim()
+            : '';
 
           let transportStartMonth: string | undefined = undefined;
-          if (startMonthVal) {
-            const clean = startMonthVal.toLowerCase();
-            const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
-            const fullMonthNames = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-            for (let idx = 0; idx < monthPrefixes.length; idx++) {
-              if (clean.includes(monthPrefixes[idx])) {
-                transportStartMonth = fullMonthNames[idx];
-                break;
+          let transportAllPaid = false;
+          if (tType !== 'None') {
+            if (!startMonthVal) {
+              // No pending month specified → all transport fees are paid
+              transportAllPaid = true;
+            } else {
+              const clean = startMonthVal.toLowerCase();
+              const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
+              const fullMonthNames = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+              for (let idx = 0; idx < monthPrefixes.length; idx++) {
+                if (clean.includes(monthPrefixes[idx])) {
+                  transportStartMonth = fullMonthNames[idx];
+                  break;
+                }
               }
             }
           }
@@ -341,8 +366,9 @@ export const ImportExcel: React.FC = () => {
             parentSecondaryMobile: pSecMobile,
             transportType: tType,
             transportStartMonth,
+            transportAllPaid,
             isRTE: parseRTE,
-            isNewAdmission: parseNew,
+            isNewAdmission: false, // Always false for migration imports (not new admissions)
             pendingFees,
           };
         });
@@ -525,21 +551,35 @@ export const ImportExcel: React.FC = () => {
 
               <div className="bg-amber-50 border border-amber-100 rounded-xl p-3.5 flex gap-2.5">
                 <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-amber-800 leading-relaxed font-medium">
-                  <strong>Parent Sync Logic:</strong> If the primary phone number already exists in the system, the imported student will be automatically linked to that existing parent (registering them as siblings).
-                </p>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-150 rounded-xl p-3.5 flex gap-2.5">
-                <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-[10px] text-blue-800 leading-relaxed font-medium">
-                  <strong>Migration of Prior Dues:</strong> To import previous years' payment status, add columns like <code>Year 2025-26</code> in Excel.
+                <div className="text-[10px] text-amber-800 leading-relaxed font-medium">
+                  <strong>🚌 Transport Rules:</strong>
                   <ul className="list-disc pl-4 mt-1 space-y-1">
-                    <li>Use <code>paid</code> or <code>gov paid</code> if fully paid.</li>
-                    <li>Use a month name like <code>oct to may</code> if unpaid from October onwards.</li>
-                    <li>Use <code>term-2 to may</code> if Term 2 is unpaid.</li>
+                    <li><strong>Transport Type = None</strong> or blank → Student has no transport.</li>
+                    <li><strong>Transport Type filled + month blank</strong> → Student uses transport but all fees are already paid.</li>
+                    <li><strong>Transport Type filled + month written</strong> (e.g. "August") → Transport fees are pending from that month onwards.</li>
                   </ul>
                 </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex gap-2.5">
+                <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                <div className="text-[10px] text-blue-800 leading-relaxed font-medium">
+                  <strong>📋 Education Fees Column (Year 2025-26):</strong>
+                  <ul className="list-disc pl-4 mt-1 space-y-1">
+                    <li>Write <code>paid</code> if the student has paid all education fees.</li>
+                    <li>Write <code>gov paid</code> if fees are covered by the government (RTE).</li>
+                    <li>Write <code>oct to may</code> if fees are pending from October onwards.</li>
+                    <li>Write <code>may to may</code> if only May month is pending.</li>
+                    <li>Leave blank if all fees are unpaid (pending from June).</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-green-50 border border-green-100 rounded-xl p-3.5 flex gap-2.5">
+                <Info className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-green-800 leading-relaxed font-medium">
+                  <strong>👨‍👩‍👧 Parent Sync:</strong> If a parent's mobile already exists in the system, the new student is automatically linked to that parent as a sibling — no duplicate parent created.
+                </p>
               </div>
             </div>
           </div>
@@ -647,27 +687,28 @@ export const ImportExcel: React.FC = () => {
                                   <span className="bg-blue-50 text-blue-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase block">
                                     {row.transportType}
                                   </span>
-                                  {row.transportStartMonth ? (
-                                    <span className="bg-green-50 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase block">
-                                      From: {row.transportStartMonth}
+                                  {row.transportAllPaid ? (
+                                    <span className="bg-emerald-50 text-emerald-700 text-[8px] font-bold px-1.5 py-0.5 rounded block">
+                                      ✓ All Paid
+                                    </span>
+                                  ) : row.transportStartMonth ? (
+                                    <span className="bg-amber-50 text-amber-700 text-[8px] font-bold px-1.5 py-0.5 rounded block">
+                                      Pending from: {row.transportStartMonth}
                                     </span>
                                   ) : (
-                                    <span className="bg-slate-100 text-slate-400 text-[8px] font-bold px-1.5 py-0.5 rounded block">
-                                      From: June (default)
+                                    <span className="bg-amber-50 text-amber-600 text-[8px] font-bold px-1.5 py-0.5 rounded block">
+                                      Pending from: June
                                     </span>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-slate-300 text-[9px]">—</span>
+                                <span className="text-slate-300 text-[9px]">— No Transport</span>
                               )}
                             </td>
                             <td className="py-3 px-4 space-y-1">
                               <div className="flex gap-1.5 flex-wrap">
                                 {(String(row.isRTE).toLowerCase() === 'yes' || row.isRTE === 'true' || row.isRTE === true) && (
                                   <span className="bg-purple-50 text-purple-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">RTE</span>
-                                )}
-                                {(String(row.isNewAdmission).toLowerCase() === 'yes' || row.isNewAdmission === 'true' || row.isNewAdmission === true) && (
-                                  <span className="bg-emerald-50 text-emerald-600 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">New</span>
                                 )}
                                 {row.pendingFees && Object.keys(row.pendingFees).map(yr => (
                                   <span key={yr} className="bg-amber-50 text-amber-700 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
@@ -975,19 +1016,8 @@ export const ImportExcel: React.FC = () => {
                 </label>
               </div>
 
-              {/* New Admission */}
-              <div className="flex items-center gap-2 pt-4">
-                <input
-                  type="checkbox"
-                  id="new-adm-checkbox"
-                  checked={String(editForm.isNewAdmission).toLowerCase() === 'yes' || editForm.isNewAdmission === 'true' || editForm.isNewAdmission === true}
-                  onChange={(e) => setEditForm({ ...editForm, isNewAdmission: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="new-adm-checkbox" className="text-xs font-extrabold text-slate-600 select-none">
-                  Is New Admission (Applies one-time fee)
-                </label>
-              </div>
+
+
             </div>
 
             <div className="flex justify-end gap-3 pt-3 border-t border-slate-150">
