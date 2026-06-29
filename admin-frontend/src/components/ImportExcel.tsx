@@ -60,7 +60,9 @@ interface ExcelRow {
 }
 
 export const ImportExcel: React.FC = () => {
-  const { importStudents, setScreen } = useApp();
+  const { importStudents, autoPromoteBatch, setScreen } = useApp();
+  const [isPromoting, setIsPromoting] = useState(false);
+  const [promoteMsg, setPromoteMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   const [previewData, setPreviewData] = useState<ExcelRow[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -79,6 +81,25 @@ export const ImportExcel: React.FC = () => {
   const [editForm, setEditForm] = useState<ExcelRow | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleAutoPromote = async () => {
+    if (!successReport) return;
+    const successIds = successReport.results
+      .filter((r: any) => r.status === 'success' && r.id)
+      .map((r: any) => r.id);
+    if (successIds.length === 0) return;
+
+    setIsPromoting(true);
+    setPromoteMsg(null);
+    try {
+      const res = await autoPromoteBatch(successIds);
+      setPromoteMsg({ type: 'success', text: `Successfully auto-promoted ${res.promotedCount} students. Skipped ${res.skippedCount}.` });
+    } catch (err: any) {
+      setPromoteMsg({ type: 'error', text: err.message || 'Auto-promotion failed' });
+    } finally {
+      setIsPromoting(false);
+    }
+  };
 
   const handleEditClick = (idx: number, context: 'preview' | 'report') => {
     setEditingIndex(idx);
@@ -430,6 +451,7 @@ export const ImportExcel: React.FC = () => {
         results: enrichedResults
       });
       setPreviewData([]);
+      setPromoteMsg(null);
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred during import.");
     } finally {
@@ -843,19 +865,43 @@ export const ImportExcel: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button
-              onClick={handleReset}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-xs transition-all"
-            >
-              Import Another File
-            </button>
-            <button
-              onClick={() => setScreen('students')}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all"
-            >
-              Go to Students Screen
-            </button>
+          <div className="flex justify-between items-end pt-4 border-t border-slate-100">
+            <div className="max-w-md">
+              {promoteMsg && (
+                <div className={`p-2.5 rounded-xl text-xs font-bold flex items-start gap-2.5 ${promoteMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                  {promoteMsg.type === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" /> : <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />}
+                  <span>{promoteMsg.text}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleReset}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-xs transition-all"
+              >
+                Import Another File
+              </button>
+              {successReport.successCount > 0 && !promoteMsg && (
+                <button
+                  onClick={handleAutoPromote}
+                  disabled={isPromoting}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md shadow-purple-500/10 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isPromoting ? (
+                    <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  Auto-Promote Imported Batch
+                </button>
+              )}
+              <button
+                onClick={() => setScreen('students')}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all"
+              >
+                Go to Students Screen
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -125,6 +125,7 @@ interface AppContextType {
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
   importStudents: (students: any[]) => Promise<any>;
+  autoPromoteBatch: (studentIds: string[]) => Promise<any>;
   fixTransportLedgers: (studentIds: string[], transportStartMonth: string) => Promise<any>;
   copyFeeStructures: (fromYear: string, toYear: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   selectedStudentIdForFee: string | null;
@@ -1080,6 +1081,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const autoPromoteBatch = async (studentIds: string[]) => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/v1/students/auto-promote-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds })
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || 'Auto-promotion failed');
+      }
+      const data = await res.json();
+      debouncedFetchAll();
+      return data.data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
   const fixTransportLedgers = async (studentIds: string[], transportStartMonth: string) => {
     try {
       const res = await authFetch('/api/v1/students/fix-transport', {
@@ -1137,6 +1158,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         regenerateLedgers,
         addCustomFee,
         importStudents,
+        autoPromoteBatch,
         fixTransportLedgers,
         copyFeeStructures,
         selectedStudentIdForFee,
