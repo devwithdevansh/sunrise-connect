@@ -20,9 +20,9 @@ export const Students: React.FC = () => {
     feeStructures
   } = useApp();
 
-  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
-    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)));
   }, [feeStructures, activeYearName, academicYears]);
 
   const dynamicStandards = useMemo(() => {
@@ -52,7 +52,7 @@ export const Students: React.FC = () => {
     const byYear = transportFeeStructures.filter(t => t.academicYear === activeYearName);
     if (byYear.length > 0) return byYear;
     // Legacy fallback — show unscoped records for the first/default year only
-    const isDefaultYear = activeYearName === academicYears[0]?.name || activeYearName === '2025-26';
+    const isDefaultYear = activeYearName === academicYears[0]?.name;
     return isDefaultYear ? transportFeeStructures.filter(t => !t.academicYear) : [];
   }, [transportFeeStructures, activeYearName, academicYears]);
 
@@ -545,7 +545,7 @@ export const Students: React.FC = () => {
             // Look up pre-calculated ledger entries for this student, filtered by active academic year
             const allStudentLedgers = studentLedgersMap.get(s._id || s.id) || [];
             const studentLedgers = allStudentLedgers.filter(l => 
-              l.academicYear === activeYearName || (!l.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name))
+              l.academicYear === activeYearName || (!l.academicYear && (activeYearName === academicYears[0]?.name))
             );
             const totalLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
             const totalPaidLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);

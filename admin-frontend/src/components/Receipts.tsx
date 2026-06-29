@@ -17,9 +17,9 @@ interface ReceiptsProps {
 export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const { transactions, reversePayment, feeStructures, academicYears } = useApp();
 
-  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
-    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)));
   }, [feeStructures, activeYearName, academicYears]);
 
   const dynamicStandards = useMemo(() => {

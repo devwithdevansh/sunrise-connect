@@ -15,7 +15,7 @@ import {
 export const UnpaidFees: React.FC = () => {
   const { students, ledgerEntries, transactions, feeStructures, academicYears, setScreen } = useApp();
   
-  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
@@ -206,7 +206,7 @@ export const UnpaidFees: React.FC = () => {
     
     const exportYears = Array.from(yearsSet).sort();
     if (exportYears.length === 0) {
-      exportYears.push('2025-26'); // safe fallback
+      if (activeYearName) exportYears.push(activeYearName);
     }
 
     // 2. Build the title row (matching standard/medium filter + current date + monthly rate)
@@ -236,7 +236,7 @@ export const UnpaidFees: React.FC = () => {
     if (stdFilter !== 'All Standards' && mediumFilter !== 'All Mediums') {
       const stdNum = stdFilter.replace('Class ', '').trim();
       const medName = mediumFilter.replace(' Medium', '');
-      const isDefaultYear = activeYearName === academicYears[0]?.name || activeYearName === '2025-26';
+      const isDefaultYear = activeYearName === academicYears[0]?.name;
       const fs = feeStructures.find(f => f.standard === stdNum && f.medium === medName && (f.academicYear === activeYearName || (!f.academicYear && isDefaultYear)));
       if (fs) {
         const annualFee = fs.annualFee || 0;

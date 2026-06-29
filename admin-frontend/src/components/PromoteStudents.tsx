@@ -17,12 +17,12 @@ export const PromoteStudents: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [showPromoInfo, setShowPromoInfo] = useState(false);
 
-  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
 
   // Derive source medium options dynamically from active year fee structures
   const sourceMediumOptions = React.useMemo(() => {
     const configuredMeds = feeStructures
-      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)))
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)))
       .map(f => f.medium);
     const medSet = new Set(configuredMeds);
     if (medSet.size === 0) {
@@ -34,7 +34,7 @@ export const PromoteStudents: React.FC = () => {
   // Derive source class options dynamically from active year fee structures
   const sourceClassOptions = React.useMemo(() => {
     const configuredStds = feeStructures
-      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)))
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)))
       .map(f => f.standard);
     const stdSet = new Set(configuredStds);
     if (stdSet.size === 0) {
@@ -245,7 +245,7 @@ export const PromoteStudents: React.FC = () => {
             <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
               <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">3. Ledger Isolation</h5>
               <p className="text-[10px] text-slate-500 leading-relaxed">
-                Fees from previous years (e.g. 2025-26) remain unchanged at their original rates. The new year's ledgers are fully isolated from the previous year.
+                Fees from previous years remain unchanged at their original rates. The new year's ledgers are fully isolated from the previous year.
               </p>
             </div>
           </div>
@@ -396,7 +396,9 @@ export const PromoteStudents: React.FC = () => {
                     ))
                   ) : (
                     <>
-                      <option value="2025-26">2025-26</option>
+                      {academicYears.map(ay => (
+                        <option key={ay._id} value={ay.name}>{ay.name}</option>
+                      ))}
                       <option value="2026-27">2026-27</option>
                     </>
                   )}

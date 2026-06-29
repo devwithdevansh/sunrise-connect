@@ -491,7 +491,7 @@ const EditTransportModal: React.FC<EditTransportModalProps> = ({ structure, onCl
 /* ─── Main Component ──────────────────────────────────────────────── */
 export const FeeStructure: React.FC = () => {
   const { feeStructures, transportFeeStructures, updateFeeStructure, updateTransportFeeStructure, deleteFeeStructure, deleteTransportFeeStructure, createFeeStructure, createTransportFeeStructure, copyFeeStructures, academicYears } = useApp();
-  const defaultYear = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
+  const defaultYear = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const [selectedYear, setSelectedYear] = useState<string>('');
   const activeYearName = selectedYear || defaultYear;
 
@@ -514,7 +514,7 @@ export const FeeStructure: React.FC = () => {
     const byYear = transportFeeStructures.filter(t => t.academicYear === activeYearName);
     if (byYear.length > 0) return byYear;
     // Legacy fallback — show unscoped records for the first/default year only
-    const isDefaultYear = activeYearName === academicYears[0]?.name || activeYearName === '2025-26';
+    const isDefaultYear = activeYearName === academicYears[0]?.name;
     return isDefaultYear ? transportFeeStructures.filter(t => !t.academicYear) : [];
   }, [transportFeeStructures, activeYearName, academicYears]);
 
@@ -549,7 +549,7 @@ export const FeeStructure: React.FC = () => {
 
   // Filter standard fee structures by academic year
   const filteredFeeStructures = useMemo(() => {
-    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === '2025-26' || activeYearName === academicYears[0]?.name)));
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)));
   }, [feeStructures, activeYearName, academicYears]);
 
   // Get unique sorted standards

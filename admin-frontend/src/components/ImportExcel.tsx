@@ -60,7 +60,8 @@ interface ExcelRow {
 }
 
 export const ImportExcel: React.FC = () => {
-  const { importStudents, autoPromoteBatch, setScreen } = useApp();
+  const { importStudents, autoPromoteBatch, setScreen, academicYears } = useApp();
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const [isPromoting, setIsPromoting] = useState(false);
   const [promoteMsg, setPromoteMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
@@ -236,7 +237,7 @@ export const ImportExcel: React.FC = () => {
     { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: 'Write "Railnagar", "Outside Railnagar", "None", or leave blank. "None"/blank = no transport enrolled.' },
     { name: 'Transport fees pending from month', dbName: 'transportStartMonth', required: false, example: 'June', desc: 'Only fill this if the student has PENDING transport fees. Write the month from which fees are due (e.g. "June", "August"). Leave blank if transport fees are fully paid.' },
     { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Is the student admitted under Right to Education (RTE) scheme? Write "Yes" or "No". Leave blank = No.' },
-    { name: 'Year YYYY-YY (e.g. Year 2025-26)', dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Education fee pending status. Write "paid" / "gov paid" if fully paid, or a month range like "oct to may" if fees are pending from October.' },
+    { name: `Year YYYY-YYYY (e.g. Year ${activeYearName || '2026-2027'})`, dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Education fee pending status. Write "paid" / "gov paid" if fully paid, or a month range like "oct to may" if fees are pending from October.' },
   ];
 
   const downloadTemplate = () => {
@@ -252,7 +253,7 @@ export const ImportExcel: React.FC = () => {
         "Transport Type": "Railnagar",
         "Transport fees pending from month": "June",
         "Is RTE": "No",
-        "Year 2025-26": "may to may"
+        [`Year ${activeYearName || '2026-2027'}`]: "may to may"
       },
       {
         "Student Name": "Parth Trivedi",
@@ -265,7 +266,7 @@ export const ImportExcel: React.FC = () => {
         "Transport Type": "Outside Railnagar",
         "Transport fees pending from month": "July",
         "Is RTE": "No",
-        "Year 2025-26": "nov to may"
+        [`Year ${activeYearName || '2026-2027'}`]: "nov to may"
       },
       {
         "Student Name": "Aditya Makwana",
@@ -278,7 +279,7 @@ export const ImportExcel: React.FC = () => {
         "Transport Type": "Railnagar",
         "Transport fees pending from month": "",
         "Is RTE": "Yes",
-        "Year 2025-26": "gov paid"
+        [`Year ${activeYearName || '2026-2027'}`]: "gov paid"
       },
       {
         "Student Name": "Jiya Mehta",
@@ -291,7 +292,7 @@ export const ImportExcel: React.FC = () => {
         "Transport Type": "None",
         "Transport fees pending from month": "",
         "Is RTE": "Yes",
-        "Year 2025-26": "gov paid"
+        [`Year ${activeYearName || '2026-2027'}`]: "gov paid"
       }
     ];
 
@@ -337,10 +338,10 @@ export const ImportExcel: React.FC = () => {
           // Normalize RTE flag
           const parseRTE = row["Is RTE"] !== undefined ? row["Is RTE"] : row["isRTE"];
 
-          // Parse any dynamic academic year columns (e.g. Year 2025-26)
+          // Parse any dynamic academic year columns (e.g. Year 2026-2027)
           const pendingFees: Record<string, string> = {};
           Object.keys(row).forEach(key => {
-            const match = key.match(/^year\s+(\d{4}-\d{2})$/i);
+            const match = key.match(/^year\s+(\d{4}-\d{2,4})$/i);
             if (match) {
               const year = match[1];
               pendingFees[year] = String(row[key] || '').trim();
@@ -600,7 +601,7 @@ export const ImportExcel: React.FC = () => {
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex gap-2.5">
                 <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-[10px] text-blue-800 leading-relaxed font-medium">
-                  <strong>📋 Education Fees Column (Year 2025-26):</strong>
+                  <strong>📋 Education Fees Column (Year {activeYearName || '2026-2027'}):</strong>
                   <ul className="list-disc pl-4 mt-1 space-y-1">
                     <li>Write <code>paid</code> if the student has paid all education fees.</li>
                     <li>Write <code>gov paid</code> if fees are covered by the government (RTE).</li>

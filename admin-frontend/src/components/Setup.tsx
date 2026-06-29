@@ -223,7 +223,15 @@ export const Setup: React.FC = () => {
 
   const handleCreateAY = async () => {
     if (!newAY.name || !newAY.startDate || !newAY.endDate) return;
-    const ok = await createAcademicYear(newAY);
+    
+    // Validate format YYYY-YYYY
+    const ayRegex = /^\d{4}-\d{4}$/;
+    if (!ayRegex.test(newAY.name.trim())) {
+      alert("Academic Year Name must be in 'YYYY-YYYY' format (e.g., '2026-2027').");
+      return;
+    }
+
+    const ok = await createAcademicYear({ ...newAY, name: newAY.name.trim() });
     if (ok) {
       setShowAYForm(false);
       setNewAY({ name: '', startDate: '', endDate: '' });

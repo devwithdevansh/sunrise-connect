@@ -86,7 +86,7 @@ export const CollectFee: React.FC = () => {
   const studentFeeConfig = useMemo(() => {
     if (!selectedStudent) return { education: 0, term: 0, transport: 0, admission: 0, bagKit: 0 };
 
-    const isDefaultYear = selectedYear === academicYears[0]?.name || selectedYear === '2025-26';
+    const isDefaultYear = selectedYear === academicYears[0]?.name;
     const fs = feeStructures.find(
       (f) => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard && (f.academicYear === selectedYear || (!f.academicYear && isDefaultYear))
     );
@@ -394,7 +394,7 @@ export const CollectFee: React.FC = () => {
   useEffect(() => {
     if (!selectedStudent || isRegenerating) return;
 
-    const isDefaultYear = selectedYear === academicYears[0]?.name || selectedYear === '2025-26';
+    const isDefaultYear = selectedYear === academicYears[0]?.name;
     const fs = feeStructures.find(f => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard && (f.academicYear === selectedYear || (!f.academicYear && isDefaultYear)));
     const ts = transportFeeStructures.find(t => t.transportType === selectedStudent.transportType && (t.academicYear === selectedYear || (!t.academicYear && isDefaultYear)));
     const currentSignature = `${selectedStudent._id || selectedStudent.id}-${JSON.stringify(fs || {})}-${JSON.stringify(ts || {})}`;
