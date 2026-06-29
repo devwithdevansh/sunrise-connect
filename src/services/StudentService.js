@@ -1726,6 +1726,89 @@ class StudentService {
       session.endSession();
     }
   }
+
+  /**
+   * Automatically promotes a batch of students (by ID) to their next logical standard.
+   * Each student keeps the same division. New fee ledgers are generated for the active academic year.
+   * 
+   * Does NOT use a wrapping session to avoid nested transaction conflicts — each call to
+   * promoteStudents manages its own session internally.
+   */
+  static async autoPromoteBatch(studentIds, performedBy = null) {
+    try {
+      // Fetch active academic year
+      const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true });
+      if (!activeYearDoc) {
+        throw new AppError('No active academic year found. Please set one in Setup before promoting.', 400);
+      }
+      const activeYear = activeYearDoc.name;
+
+      // Map of how standards advance
+      const preSchoolMap = { 'nursery': 'LKG', 'lkg': 'UKG', 'ukg': '1' };
+      const getNextStandard = (currentStd) => {
+        const stdLower = String(currentStd).toLowerCase().trim();
+        if (preSchoolMap[stdLower]) return preSchoolMap[stdLower];
+        const num = parseInt(stdLower, 10);
+        if (!isNaN(num) && num < 12) return (num + 1).toString();
+        return null; // Std 12 or invalid — skip
+      };
+
+      // Fetch all students in the given batch
+      const students = await mongoose.model('Student').find({ _id: { $in: studentIds } });
+
+      // Group by nextStandard + division so we can call promoteStudents once per group
+      const promotionGroups = {};
+      const skipped = [];
+
+      for (const student of students) {
+        const nextStd = getNextStandard(student.standard);
+        if (!nextStd) {
+          skipped.push({ id: student._id, name: student.studentName, reason: `Already in Std ${student.standard} (max or invalid)` });
+          continue;
+        }
+        const key = `${nextStd}__${student.division}`;
+        if (!promotionGroups[key]) {
+          promotionGroups[key] = {
+            targetStandard: nextStd,
+            targetDivision: student.division,
+            studentIds: []
+          };
+        }
+        promotionGroups[key].studentIds.push(student._id.toString());
+      }
+
+      let promotedCount = 0;
+      const groupErrors = [];
+
+      // Call promoteStudents for each group — each manages its own DB session
+      for (const key of Object.keys(promotionGroups)) {
+        const group = promotionGroups[key];
+        try {
+          await StudentService.promoteStudents(
+            group.studentIds,
+            group.targetStandard,
+            group.targetDivision,
+            activeYear,
+            performedBy
+          );
+          promotedCount += group.studentIds.length;
+        } catch (err) {
+          logger.error(`autoPromoteBatch: group ${key} failed: ${err.message}`);
+          groupErrors.push({ group: key, error: err.message });
+        }
+      }
+
+      return {
+        promotedCount,
+        skippedCount: skipped.length,
+        skipped,
+        groupErrors
+      };
+    } catch (error) {
+      logger.error('StudentService.autoPromoteBatch error', error);
+      throw error;
+    }
+  }
 }
 
 export default StudentService;
