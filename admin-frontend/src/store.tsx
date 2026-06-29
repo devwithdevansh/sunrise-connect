@@ -121,6 +121,7 @@ interface AppContextType {
   logout: () => void;
   checkMobile: (primary: string, secondary: string) => Promise<any>;
   deleteStudent: (id: string) => Promise<boolean>;
+  restoreStudent: (id: string) => Promise<boolean>;
   updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<{ success: boolean; error?: string }>;
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
@@ -424,12 +425,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // Extract primary academic year from the first subItem
           const primaryAcademicYear = subItems.length > 0 ? subItems[0].academicYear : undefined;
 
+          // We want to get the student's name, standard, and medium from the ledger's snapshot!
+          const primaryLedger = mappedLedgersMap.get(firstTx.ledgerId);
+          let studentName = 'Unknown';
+          let studentCode = 'N/A';
+          let classInfo = 'N/A';
+          let isDeleted = false;
+
+          if (student) {
+            studentName = student.studentName;
+            studentCode = student.studentCode || 'N/A';
+            isDeleted = student.isActive === false;
+            // Get standard from snapshot if available, otherwise fallback to current student
+            const std = primaryLedger?.snapshot?.standard || student.standard;
+            const div = primaryLedger?.snapshot?.division || student.division;
+            const med = primaryLedger?.snapshot?.medium || student.medium;
+            classInfo = `${std} - ${div} ${med}`;
+          } else if (primaryLedger && primaryLedger.snapshot) {
+            // Student might have been hard-deleted, but we have the snapshot!
+            studentName = primaryLedger.snapshot.studentName || 'Unknown';
+            studentCode = 'N/A'; 
+            const std = primaryLedger.snapshot.standard || 'N/A';
+            const div = primaryLedger.snapshot.division || 'N/A';
+            const med = primaryLedger.snapshot.medium || 'N/A';
+            classInfo = `${std} - ${div} ${med}`;
+            isDeleted = true;
+          }
+
           mappedTransactions.push({
             id: groupId,
-            studentId: student ? student.id : '',
-            studentName: student ? student.studentName : 'Unknown',
-            studentCode: student ? student.studentCode : 'N/A',
-            classInfo: student ? `${student.standard} - ${student.division} ${student.medium}` : 'N/A',
+            studentId: student ? student.id : (primaryLedger?.studentId || ''),
+            studentName: studentName,
+            studentCode: studentCode,
+            classInfo: classInfo,
             feeType: feeTypes.join('\n'),
             amount: totalAmount,
             concessionAmount: totalConcession,
@@ -441,7 +469,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             subItems: subItems,
             reversalIds: reversalIds.join(','),
             paymentBreakdown: paymentBreakdown,
-            academicYear: primaryAcademicYear
+            academicYear: primaryAcademicYear,
+            isDeleted: isDeleted
           });
         });
 
@@ -1011,6 +1040,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const restoreStudent = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/v1/students/${id}/restore`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        console.error('Failed to restore student');
+        return false;
+      }
+      debouncedFetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   const updateStudent = async (id: string, updates: Partial<Student> & { transportMonths?: number }): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await authFetch(`/api/v1/students/${id}`, {
@@ -1154,6 +1200,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logout,
         checkMobile,
         deleteStudent,
+        restoreStudent,
         updateStudent,
         regenerateLedgers,
         addCustomFee,

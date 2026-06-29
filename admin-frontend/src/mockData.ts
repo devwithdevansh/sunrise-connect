@@ -53,6 +53,8 @@ export interface PaymentTransaction {
   subItems?: { id?: string; description: string; amount: number; concessionAmount: number; method?: string; status?: string; academicYear?: string }[];
   reversalIds?: string;
   paymentBreakdown?: { method: string; amount: number }[];
+  isDeleted?: boolean;
+  academicYear?: string;
 }
 
 

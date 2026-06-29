@@ -9,6 +9,7 @@ export const Students: React.FC = () => {
     setScreen,
     checkMobile,
     deleteStudent,
+    restoreStudent,
     updateStudent,
     setSelectedStudentIdForFee,
     ledgerEntries,
@@ -70,6 +71,7 @@ export const Students: React.FC = () => {
 
   // Quick filter chips: 'ALL' | 'RTE' | 'TRANSPORT'
   const [chipFilter, setChipFilter] = useState<'ALL' | 'RTE' | 'TRANSPORT'>('ALL');
+  const [showInactive, setShowInactive] = useState(false);
 
   // Pagination states (10 per page)
   const [currentPage, setCurrentPage] = useState(1);
@@ -249,6 +251,13 @@ export const Students: React.FC = () => {
 
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
+      // Active status filter
+      if (showInactive) {
+        if (s.isActive !== false) return false;
+      } else {
+        if (s.isActive === false) return false;
+      }
+
       // Quick filter chips
       if (chipFilter === 'RTE' && !s.isRTE) return false;
       if (chipFilter === 'TRANSPORT' && s.transportType === 'None') return false;
@@ -269,7 +278,7 @@ export const Students: React.FC = () => {
       }
       return true;
     });
-  }, [students, chipFilter, classFilter, divFilter, medFilter, searchQuery]);
+  }, [students, chipFilter, classFilter, divFilter, medFilter, searchQuery, showInactive]);
 
   // Slice list for pagination
   const paginatedStudents = useMemo(() => {
@@ -508,6 +517,17 @@ export const Students: React.FC = () => {
             >
               With Transport
             </button>
+            <div className="h-4 w-px bg-slate-300 mx-1"></div>
+            <button
+              onClick={() => setShowInactive(!showInactive)}
+              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${showInactive
+                  ? 'bg-red-100 text-red-700 shadow-sm border border-red-200'
+                  : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {showInactive ? 'Hide Inactive' : 'Show Inactive'}
+            </button>
           </div>
 
           {(currentUser?.role === 'ADMIN' || currentUser?.role === 'STAFF') && (
@@ -590,6 +610,11 @@ export const Students: React.FC = () => {
                             New
                           </span>
                         )}
+                        {s.isActive === false && (
+                          <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            Deleted
+                          </span>
+                        )}
                       </div>
 
                       <p className="text-xs text-slate-500">
@@ -654,37 +679,54 @@ export const Students: React.FC = () => {
                           </>
                         )}
                       </button>
-                      {!s.isRTE && (
+                      {s.isActive === false ? (
                         <button
                           onClick={() => {
-                            setSelectedStudentIdForFee(s._id || s.id);
-                            setScreen('collect-fee');
+                            if (window.confirm("Are you sure you want to restore this deleted student?")) {
+                              restoreStudent(s._id || s.id);
+                            }
                           }}
-                          className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
+                          className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5"
+                          title="Restore Student"
                         >
-                          Collect
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          Restore
                         </button>
-                      )}
-                      {currentUser?.role === 'ADMIN' && (
+                      ) : (
                         <>
-                          <button
-                            onClick={() => openEditModal(s)}
-                            className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                            title="Edit Student"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm("Are you sure you want to permanently delete this student, their ledgers, and all their payments? This action cannot be undone.")) {
-                                deleteStudent(s._id || s.id);
-                              }
-                            }}
-                            className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                            title="Delete Student"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {!s.isRTE && (
+                            <button
+                              onClick={() => {
+                                setSelectedStudentIdForFee(s._id || s.id);
+                                setScreen('collect-fee');
+                              }}
+                              className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
+                            >
+                              Collect
+                            </button>
+                          )}
+                          {currentUser?.role === 'ADMIN' && (
+                            <>
+                              <button
+                                onClick={() => openEditModal(s)}
+                                className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                                title="Edit Student"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this student? If they have payments, they will be marked as inactive. If no payments exist, they will be permanently deleted.")) {
+                                    deleteStudent(s._id || s.id);
+                                  }
+                                }}
+                                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                                title="Delete Student"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
                         </>
                       )}
                     </div>

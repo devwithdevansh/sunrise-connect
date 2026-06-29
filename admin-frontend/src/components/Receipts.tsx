@@ -55,6 +55,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const [customDate, setCustomDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [classFilter, setClassFilter] = useState('All Classes');
   const [mediumFilter, setMediumFilter] = useState('All Mediums');
+  const [academicYearFilter, setAcademicYearFilter] = useState('All Years');
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -120,9 +121,14 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
         if (!tx.classInfo.toLowerCase().includes(med.toLowerCase())) return false;
       }
 
+      // 6. Academic Year Filter
+      if (academicYearFilter !== 'All Years') {
+        if (tx.academicYear !== academicYearFilter) return false;
+      }
+
       return true;
     });
-  }, [transactions, searchQuery, dateFilterMode, customDate, methodFilter, classFilter, mediumFilter, todayString]);
+  }, [transactions, searchQuery, dateFilterMode, customDate, methodFilter, classFilter, mediumFilter, academicYearFilter, todayString]);
 
   // Paginated transactions computation
   const paginatedTransactions = useMemo(() => {
@@ -203,6 +209,21 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
               <option value="CHEQUE">CHEQUE</option>
               <option value="CARD">CARD</option>
               <option value="NET BANKING">NET BANKING</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* Academic Year Filter */}
+          <div className="md:col-span-2 relative">
+            <select
+              value={academicYearFilter}
+              onChange={(e) => setAcademicYearFilter(e.target.value)}
+              className="appearance-none w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-655 focus:outline-none transition-all shadow-sm cursor-pointer"
+            >
+              <option value="All Years">All Years</option>
+              {academicYears.map((yr) => (
+                <option key={yr.name} value={yr.name}>{yr.name}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
@@ -290,7 +311,14 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
                             {initials}
                           </div>
                           <div>
-                            <span className="font-extrabold text-slate-800 block">{t.studentName}</span>
+                            <span className="font-extrabold text-slate-800 flex items-center gap-2">
+                              {t.studentName}
+                              {t.isDeleted && (
+                                <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200 uppercase tracking-wider font-bold">
+                                  Deleted
+                                </span>
+                              )}
+                            </span>
                             <span className="text-[10px] text-slate-400 block font-mono font-medium">{t.studentCode} · {t.classInfo}</span>
                           </div>
                         </td>
