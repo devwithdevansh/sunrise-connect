@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import type { PaymentTransaction } from '../mockData';
+import type { PaymentTransaction } from "../mockData";
 
 // ─── Image → Base64 ───────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ import type { PaymentTransaction } from '../mockData';
 export async function fetchAsBase64(url: string): Promise<string> {
   try {
     const resp = await fetch(url);
-    if (!resp.ok) return '';
+    if (!resp.ok) return "";
     const blob = await resp.blob();
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -35,73 +35,108 @@ export async function fetchAsBase64(url: string): Promise<string> {
       reader.readAsDataURL(blob);
     });
   } catch {
-    return '';
+    return "";
   }
 }
 
 // ─── Text helpers ─────────────────────────────────────────────────────────────
 
 function toIndianWords(amount: number): string {
-  const parts = amount.toFixed(2).split('.');
+  const parts = amount.toFixed(2).split(".");
   const rupees = parseInt(parts[0], 10);
   const paise = parseInt(parts[1], 10);
 
   const convertPart = (num: number): string => {
-    if (num === 0) return '';
+    if (num === 0) return "";
     const ones = [
-      '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
-      'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
-      'Seventeen', 'Eighteen', 'Nineteen',
+      "",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten",
+      "Eleven",
+      "Twelve",
+      "Thirteen",
+      "Fourteen",
+      "Fifteen",
+      "Sixteen",
+      "Seventeen",
+      "Eighteen",
+      "Nineteen",
     ];
-    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const tens = [
+      "",
+      "",
+      "Twenty",
+      "Thirty",
+      "Forty",
+      "Fifty",
+      "Sixty",
+      "Seventy",
+      "Eighty",
+      "Ninety",
+    ];
 
     const below100 = (n: number): string =>
-      n < 20 ? ones[n] : tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+      n < 20
+        ? ones[n]
+        : tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
 
     const below1000 = (n: number): string =>
       n < 100
         ? below100(n)
-        : ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + below100(n % 100) : '');
+        : ones[Math.floor(n / 100)] +
+          " Hundred" +
+          (n % 100 ? " " + below100(n % 100) : "");
 
-    let result = '';
+    let result = "";
     let n = num;
-    const crore = Math.floor(n / 10_000_000); n %= 10_000_000;
-    const lakh = Math.floor(n / 100_000); n %= 100_000;
-    const thousand = Math.floor(n / 1_000); n %= 1_000;
+    const crore = Math.floor(n / 10_000_000);
+    n %= 10_000_000;
+    const lakh = Math.floor(n / 100_000);
+    n %= 100_000;
+    const thousand = Math.floor(n / 1_000);
+    n %= 1_000;
 
-    if (crore) result += below1000(crore) + ' Crore ';
-    if (lakh) result += below1000(lakh) + ' Lakh ';
-    if (thousand) result += below1000(thousand) + ' Thousand ';
+    if (crore) result += below1000(crore) + " Crore ";
+    if (lakh) result += below1000(lakh) + " Lakh ";
+    if (thousand) result += below1000(thousand) + " Thousand ";
     if (n) result += below1000(n);
 
     return result.trim();
   };
 
-  if (rupees === 0 && paise === 0) return 'Zero Rupees Only';
+  if (rupees === 0 && paise === 0) return "Zero Rupees Only";
 
-  let words = '';
+  let words = "";
   if (rupees > 0) {
-    words += convertPart(rupees) + ' Rupees';
+    words += convertPart(rupees) + " Rupees";
   }
   if (paise > 0) {
-    if (rupees > 0) words += ' and ';
-    words += convertPart(paise) + ' Paise';
+    if (rupees > 0) words += " and ";
+    words += convertPart(paise) + " Paise";
   }
-  return words + ' Only';
+  return words + " Only";
 }
 
 function modeLabel(method: string): string {
-  const m = (method || '').toLowerCase();
-  if (m === 'cash') return 'Cash';
-  if (m === 'upi') return 'UPI / Online';
-  if (m === 'online') return 'Online Transfer';
-  if (m === 'cheque') return 'Cheque';
-  if (['neft', 'rtgs', 'imps'].includes(m)) return m.toUpperCase();
-  return method ? method.charAt(0).toUpperCase() + method.slice(1) : 'N/A';
+  const m = (method || "").toLowerCase();
+  if (m === "cash") return "Cash";
+  if (m === "upi") return "UPI / Online";
+  if (m === "online") return "Online Transfer";
+  if (m === "cheque") return "Cheque";
+  if (["neft", "rtgs", "imps"].includes(m)) return m.toUpperCase();
+  return method ? method.charAt(0).toUpperCase() + method.slice(1) : "N/A";
 }
 
 function inr(n: number): string {
-  return Math.abs(n).toLocaleString('en-IN');
+  return Math.abs(n).toLocaleString("en-IN");
 }
 
 export interface SubItem {
@@ -117,17 +152,30 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
   if (!items || items.length === 0) return [];
 
   const MONTH_ORDER = [
-    'April', 'May', 'June', 'July', 'August', 'September',
-    'October', 'November', 'December', 'January', 'February', 'March'
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+    "January",
+    "February",
+    "March",
   ];
 
   const groups: { [key: string]: { items: SubItem[]; months: string[] } } = {};
 
   for (const item of items) {
-    const match = item.description.match(/^(.+?)\s*-\s*(January|February|March|April|May|June|July|August|September|October|November|December)$/i);
+    const match = item.description.match(
+      /^(.+?)\s*-\s*(January|February|March|April|May|June|July|August|September|October|November|December)$/i,
+    );
     if (match) {
       const rawPrefix = match[1].trim();
-      const rawMonth = match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase();
+      const rawMonth =
+        match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase();
       if (!groups[rawPrefix]) {
         groups[rawPrefix] = { items: [], months: [] };
       }
@@ -152,12 +200,16 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
       const endMonth = g.months[g.months.length - 1];
 
       const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
-      const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+      const totalConcession = g.items.reduce(
+        (sum, x) => sum + x.concessionAmount,
+        0,
+      );
       const first = g.items[0];
 
-      const description = startMonth === endMonth
-        ? `${key} - ${startMonth}`
-        : `${key} - ${startMonth} to ${endMonth}`;
+      const description =
+        startMonth === endMonth
+          ? `${key} - ${startMonth}`
+          : `${key} - ${startMonth} to ${endMonth}`;
 
       result.push({
         description,
@@ -171,7 +223,10 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
         result.push(g.items[0]);
       } else {
         const totalAmt = g.items.reduce((sum, x) => sum + x.amount, 0);
-        const totalConcession = g.items.reduce((sum, x) => sum + x.concessionAmount, 0);
+        const totalConcession = g.items.reduce(
+          (sum, x) => sum + x.concessionAmount,
+          0,
+        );
         const first = g.items[0];
         result.push({
           description: key,
@@ -190,11 +245,11 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
 // ─── School constants ─────────────────────────────────────────────────────────
 
 const SCH = {
-  name: 'SUNRISE SCHOOL RAJKOT',
-  medium: 'English &amp; Gujarati Medium',
-  address: 'Railnagar, Rajkot, Gujarat — 360 001',
-  phone: '+91 XXXXX XXXXX',
-  email: 'info@sunriseschool.in',
+  name: "SUNRISE SCHOOL RAJKOT",
+  medium: "English &amp; Gujarati Medium",
+  address: "Railnagar, Rajkot, Gujarat — 360 001",
+  phone: "+91 97236 55151",
+  email: "info@sunriseschoolrajkot.com",
 };
 
 // ─── Shared base CSS ──────────────────────────────────────────────────────────
@@ -218,14 +273,18 @@ table { border-collapse: collapse; }
 
 export function generateReceiptHTML(
   transaction: PaymentTransaction,
-  opts: { currentUserName?: string; logoBase64?: string; watermarkBase64?: string }
+  opts: {
+    currentUserName?: string;
+    logoBase64?: string;
+    watermarkBase64?: string;
+  },
 ): string {
-  const { currentUserName, logoBase64 = '', watermarkBase64 = '' } = opts;
+  const { currentUserName, logoBase64 = "", watermarkBase64 = "" } = opts;
 
   const totalAmount = Math.abs(transaction.amount);
   const words = toIndianWords(totalAmount);
-  const mode = modeLabel(transaction.method || '');
-  const receiptNo = (transaction.id?.slice(-12).toUpperCase() || 'N/A');
+  const mode = modeLabel(transaction.method || "");
+  const receiptNo = transaction.id?.slice(-12).toUpperCase() || "N/A";
 
   const period = (() => {
     if (transaction.studentCode) {
@@ -236,56 +295,82 @@ export function generateReceiptHTML(
         return `${startYear} – ${endYear}`;
       }
     }
-    const yearPart = transaction.date ? new Date(transaction.date).getFullYear() : new Date().getFullYear();
+    const yearPart = transaction.date
+      ? new Date(transaction.date).getFullYear()
+      : new Date().getFullYear();
     return `${yearPart} – ${yearPart + 1}`;
   })();
 
   const dateStr = transaction.date
-    ? new Date(transaction.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
-    : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    ? new Date(transaction.date).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : new Date().toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
 
-  const timeStr = transaction.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const timeStr =
+    transaction.time ||
+    new Date().toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   // Fee rows
   const feeRows = (() => {
     if (transaction.subItems?.length) {
       const grouped = groupSubItems(transaction.subItems);
-      return grouped.map((item, i) => `
-        <tr style="background:${i % 2 === 0 ? 'rgba(248,250,253,0.7)' : 'rgba(255,255,255,0.75)'};page-break-inside:avoid;">
+      return grouped
+        .map(
+          (item, i) => `
+        <tr style="background:${i % 2 === 0 ? "rgba(248,250,253,0.7)" : "rgba(255,255,255,0.75)"};page-break-inside:avoid;">
           <td style="padding:7px 12px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">${i + 1}</td>
           <td style="padding:7px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">
             ${item.description}
-            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9px;color:#b45309;background:rgba(254,243,199,0.85);border:1px solid rgba(252,211,77,0.5);padding:2px 8px;border-radius:9999px;font-weight:700;font-family:'Inter',sans-serif;">-${item.concessionAmount.toLocaleString('en-IN')} &nbsp;₹ off</span>` : ''}
+            ${item.concessionAmount > 0 ? `<span style="display:inline-block;margin-left:8px;font-size:9px;color:#b45309;background:rgba(254,243,199,0.85);border:1px solid rgba(252,211,77,0.5);padding:2px 8px;border-radius:9999px;font-weight:700;font-family:'Inter',sans-serif;">-${item.concessionAmount.toLocaleString("en-IN")} &nbsp;₹ off</span>` : ""}
           </td>
-          <td style="padding:7px 12px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || '')}</td>
+          <td style="padding:7px 12px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${modeLabel(item.method || transaction.method || "")}</td>
           <td style="padding:7px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:120px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${inr(item.amount)} &nbsp;₹</td>
         </tr>
-      `).join('');
+      `,
+        )
+        .join("");
     }
     return `
       <tr style="background:rgba(248,250,253,0.7);page-break-inside:avoid;">
         <td style="padding:7px 12px;color:#64748b;text-align:center;width:36px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;">1</td>
-        <td style="padding:7px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">${transaction.feeType || 'Fee Collection'}</td>
+        <td style="padding:7px 12px;color:#1e293b;font-weight:600;border-right:1px solid #e2e8f4;">${transaction.feeType || "Fee Collection"}</td>
         <td style="padding:7px 12px;color:#475569;text-align:center;border-right:1px solid #e2e8f4;width:110px;">${mode}</td>
         <td style="padding:7px 12px;text-align:right;color:#1b3a6b;font-weight:700;width:120px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">${inr(totalAmount)} &nbsp;₹</td>
       </tr>
     `;
   })();
 
-  const concessionRow = (!transaction.subItems && transaction.concessionAmount) ? `
+  const concessionRow =
+    !transaction.subItems && transaction.concessionAmount
+      ? `
     <tr style="background:rgba(255,251,235,0.7);page-break-inside:avoid;">
       <td style="padding:7px 12px;border-right:1px solid #e2e8f4;font-family:'JetBrains Mono',monospace;"></td>
       <td style="padding:7px 12px;color:#b45309;font-style:italic;font-weight:700;border-right:1px solid #e2e8f4;">
         ✦ Concession Applied
       </td>
       <td style="border-right:1px solid #e2e8f4;"></td>
-      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">−${(transaction.concessionAmount || 0).toLocaleString('en-IN')} &nbsp;₹</td>
+      <td style="padding:7px 12px;text-align:right;color:#b45309;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;">−${(transaction.concessionAmount || 0).toLocaleString("en-IN")} &nbsp;₹</td>
     </tr>
-  ` : '';
+  `
+      : "";
 
-  const signerName = currentUserName ? currentUserName.toUpperCase() : 'AUTHORISED SIGNATORY';
+  const signerName = currentUserName
+    ? currentUserName.toUpperCase()
+    : "AUTHORISED SIGNATORY";
 
-  const logoImg = logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />` : '';
+  const logoImg = logoBase64
+    ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -424,11 +509,15 @@ export function generateReceiptHTML(
 </head>
 <body>
   <!-- WATERMARK CONTAINER (Rendered at z-index: 1, under content at z-index: 2) -->
-  ${watermarkBase64 ? `
+  ${
+    watermarkBase64
+      ? `
   <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
     <img src="${watermarkBase64}" style="width: 460px; height: 460px; opacity: 0.08; transform: rotate(-12deg); object-fit: contain;" />
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 
   <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
   <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 3;">
@@ -463,7 +552,7 @@ export function generateReceiptHTML(
         <div class="info-col">
           <div class="info-col-header">Student Information</div>
           <div class="info-row"><span class="info-label">Name</span><span class="info-value" style="font-size: 12px; color: #1b3a6b; font-weight: 700;">${transaction.studentName}</span></div>
-          ${transaction.classInfo ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ''}
+          ${transaction.classInfo ? `<div class="info-row"><span class="info-label">Class</span><span class="info-value">${transaction.classInfo}</span></div>` : ""}
           <div class="info-row"><span class="info-label">Period</span><span class="info-value">${period}</span></div>
         </div>
         <div class="info-col">
@@ -506,9 +595,13 @@ export function generateReceiptHTML(
         <strong>Amount in Words:</strong>&nbsp;<em>${words}</em>
       </div>
 
-      ${transaction.remark ? `
+      ${
+        transaction.remark
+          ? `
       <div class="remark-box"><strong>Remark:</strong> ${transaction.remark}</div>
-      ` : ''}
+      `
+          : ""
+      }
 
       <!-- ════ SIGNATURE ════ -->
       <div class="sig-section" style="justify-content: flex-end;">
@@ -547,17 +640,23 @@ export function generateReceiptHTML(
 
 export function generateReportHTML(
   report: { type: string; title: string; data: any },
-  opts: { logoBase64?: string } = {}
+  opts: { logoBase64?: string } = {},
 ): string {
   const { type, title, data } = report;
-  const { logoBase64 = '' } = opts;
+  const { logoBase64 = "" } = opts;
 
-  const isLandscape = type === 'outstanding-dues';
-  const todayStr = new Date().toLocaleDateString('en-IN', {
-    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  const isLandscape = type === "outstanding-dues";
+  const todayStr = new Date().toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-  const logoImg = logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />` : '';
+  const logoImg = logoBase64
+    ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`
+    : "";
 
   const headerHTML = `
     <div style="display:flex;align-items:center;gap:0;margin-bottom:0;page-break-inside:avoid;">
@@ -579,7 +678,7 @@ export function generateReportHTML(
     </div>
   `;
 
-  const statCard = (label: string, val: string, color = '#1a1a2e') => `
+  const statCard = (label: string, val: string, color = "#1a1a2e") => `
     <div style="border:1px solid #dde4f0;border-radius:6px;padding:8px 12px;background:#f8fafd;">
       <div style="font-size:8px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">${label}</div>
       <div style="font-size:14px;font-weight:800;color:${color};margin-top:3px;">${val}</div>
@@ -603,28 +702,32 @@ export function generateReportHTML(
     </div>
   `;
 
-  let bodyHTML = '';
+  let bodyHTML = "";
 
-  if (type === 'daily-collections') {
-    const rows = (data.transactions || []).map((t: any, i: number) => `
-      <tr style="background:${i % 2 === 0 ? '#f8fafd' : '#fff'};page-break-inside:avoid;">
+  if (type === "daily-collections") {
+    const rows = (data.transactions || [])
+      .map(
+        (t: any, i: number) => `
+      <tr style="background:${i % 2 === 0 ? "#f8fafd" : "#fff"};page-break-inside:avoid;">
         <td style="${tdStyle}color:#94a3b8;text-align:center;">${i + 1}</td>
-        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${t.studentCode || '—'}</td>
+        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${t.studentCode || "—"}</td>
         <td style="${tdStyle}font-weight:700;">${t.studentName}</td>
-        <td style="${tdStyle}">${t.classInfo || '—'}</td>
-        <td style="${tdStyle}">${(t.feeType || '').replace(/\n/g, ', ')}</td>
-        <td style="${tdStyle}font-weight:700;text-transform:uppercase;">${t.method || '—'}</td>
-        <td style="${tdStyle}color:#64748b;">${t.time || '—'}</td>
-        <td style="${tdRStyle}color:#1b3a6b;">₹${(t.amount || 0).toLocaleString('en-IN')}</td>
+        <td style="${tdStyle}">${t.classInfo || "—"}</td>
+        <td style="${tdStyle}">${(t.feeType || "").replace(/\n/g, ", ")}</td>
+        <td style="${tdStyle}font-weight:700;text-transform:uppercase;">${t.method || "—"}</td>
+        <td style="${tdStyle}color:#64748b;">${t.time || "—"}</td>
+        <td style="${tdRStyle}color:#1b3a6b;">₹${(t.amount || 0).toLocaleString("en-IN")}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join("");
 
     bodyHTML = `
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
-        ${statCard('Total Collected', `₹${(data.totalCollected || 0).toLocaleString('en-IN')}`, '#1b3a6b')}
-        ${statCard('Cash', `₹${(data.cashCollected || 0).toLocaleString('en-IN')}`)}
-        ${statCard('Online / UPI', `₹${(data.onlineCollected || 0).toLocaleString('en-IN')}`)}
-        ${statCard('Cheque', `₹${(data.chequeCollected || 0).toLocaleString('en-IN')}`)}
+        ${statCard("Total Collected", `₹${(data.totalCollected || 0).toLocaleString("en-IN")}`, "#1b3a6b")}
+        ${statCard("Cash", `₹${(data.cashCollected || 0).toLocaleString("en-IN")}`)}
+        ${statCard("Online / UPI", `₹${(data.onlineCollected || 0).toLocaleString("en-IN")}`)}
+        ${statCard("Cheque", `₹${(data.chequeCollected || 0).toLocaleString("en-IN")}`)}
       </div>
       <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;border-radius:6px;overflow:hidden;">
         <thead><tr>
@@ -639,29 +742,36 @@ export function generateReportHTML(
     `;
   }
 
-  if (type === 'outstanding-dues') {
-    const avg = data.studentCount > 0 ? Math.round(data.totalOutstandingAmount / data.studentCount) : 0;
-    const rows = (data.students || []).map((s: any, i: number) => `
-      <tr style="background:${i % 2 === 0 ? '#f8fafd' : '#fff'};page-break-inside:avoid;">
+  if (type === "outstanding-dues") {
+    const avg =
+      data.studentCount > 0
+        ? Math.round(data.totalOutstandingAmount / data.studentCount)
+        : 0;
+    const rows = (data.students || [])
+      .map(
+        (s: any, i: number) => `
+      <tr style="background:${i % 2 === 0 ? "#f8fafd" : "#fff"};page-break-inside:avoid;">
         <td style="${tdStyle}color:#94a3b8;text-align:center;">${i + 1}</td>
-        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${s.studentCode || '—'}</td>
+        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${s.studentCode || "—"}</td>
         <td style="${tdStyle}font-weight:700;">${s.studentName}</td>
-        <td style="${tdStyle}">${s.classInfo || '—'}</td>
-        <td style="${tdStyle}">${s.parentName || '—'}</td>
-        <td style="${tdStyle}color:#64748b;">${s.parentMobile || '—'}</td>
+        <td style="${tdStyle}">${s.classInfo || "—"}</td>
+        <td style="${tdStyle}">${s.parentName || "—"}</td>
+        <td style="${tdStyle}color:#64748b;">${s.parentMobile || "—"}</td>
         <td style="${tdStyle}font-weight:700;color:#64748b;">${s.overdueCount} Months</td>
-        <td style="${tdRStyle}color:#ea580c;">₹${(s.educationDue || 0).toLocaleString('en-IN')}</td>
-        <td style="${tdRStyle}color:#d97706;">₹${(s.transportDue || 0).toLocaleString('en-IN')}</td>
-        <td style="${tdRStyle}color:#1b3a6b;font-size:10px;">₹${(s.totalDue || 0).toLocaleString('en-IN')}</td>
+        <td style="${tdRStyle}color:#ea580c;">₹${(s.educationDue || 0).toLocaleString("en-IN")}</td>
+        <td style="${tdRStyle}color:#d97706;">₹${(s.transportDue || 0).toLocaleString("en-IN")}</td>
+        <td style="${tdRStyle}color:#1b3a6b;font-size:10px;">₹${(s.totalDue || 0).toLocaleString("en-IN")}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join("");
 
     bodyHTML = `
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
-        ${statCard('Total Outstanding', `₹${(data.totalOutstandingAmount || 0).toLocaleString('en-IN')}`, '#dc2626')}
-        ${statCard('Students with Dues', `${data.studentCount || 0}`)}
-        ${statCard('Avg. Due / Student', `₹${avg.toLocaleString('en-IN')}`)}
-        ${statCard('Aging 1M / 2M / 3M+', `${data.oneDueCount || 0} / ${data.twoDueCount || 0} / ${data.threePlusDueCount || 0}`)}
+        ${statCard("Total Outstanding", `₹${(data.totalOutstandingAmount || 0).toLocaleString("en-IN")}`, "#dc2626")}
+        ${statCard("Students with Dues", `${data.studentCount || 0}`)}
+        ${statCard("Avg. Due / Student", `₹${avg.toLocaleString("en-IN")}`)}
+        ${statCard("Aging 1M / 2M / 3M+", `${data.oneDueCount || 0} / ${data.twoDueCount || 0} / ${data.threePlusDueCount || 0}`)}
       </div>
       <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;overflow:hidden;">
         <thead><tr>
@@ -677,23 +787,27 @@ export function generateReportHTML(
     `;
   }
 
-  if (type === 'rte-reconcile') {
-    const rows = (data.students || []).map((s: any, i: number) => `
-      <tr style="background:${i % 2 === 0 ? '#f8fafd' : '#fff'};page-break-inside:avoid;">
+  if (type === "rte-reconcile") {
+    const rows = (data.students || [])
+      .map(
+        (s: any, i: number) => `
+      <tr style="background:${i % 2 === 0 ? "#f8fafd" : "#fff"};page-break-inside:avoid;">
         <td style="${tdStyle}color:#94a3b8;text-align:center;">${i + 1}</td>
-        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${s.studentCode || '—'}</td>
+        <td style="${tdStyle}font-family:monospace;font-size:9px;color:#64748b;">${s.studentCode || "—"}</td>
         <td style="${tdStyle}font-weight:700;">${s.studentName}</td>
-        <td style="${tdStyle}">${s.classInfo || '—'}</td>
-        <td style="${tdStyle}">${s.parentName || '—'}</td>
-        <td style="${tdStyle}color:#64748b;">${s.parentMobile || '—'}</td>
-        <td style="${tdRStyle}color:#4338ca;font-size:10px;">₹${(s.exemptedAmount || 0).toLocaleString('en-IN')}</td>
+        <td style="${tdStyle}">${s.classInfo || "—"}</td>
+        <td style="${tdStyle}">${s.parentName || "—"}</td>
+        <td style="${tdStyle}color:#64748b;">${s.parentMobile || "—"}</td>
+        <td style="${tdRStyle}color:#4338ca;font-size:10px;">₹${(s.exemptedAmount || 0).toLocaleString("en-IN")}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join("");
 
     bodyHTML = `
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">
-        ${statCard('Total RTE Enrolled', `${data.studentCount || 0} Students`)}
-        ${statCard('Total Exempted Tuition', `₹${(data.totalExemptedAmount || 0).toLocaleString('en-IN')}`, '#4338ca')}
+        ${statCard("Total RTE Enrolled", `${data.studentCount || 0} Students`)}
+        ${statCard("Total Exempted Tuition", `₹${(data.totalExemptedAmount || 0).toLocaleString("en-IN")}`, "#4338ca")}
       </div>
       <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;overflow:hidden;">
         <thead><tr>
@@ -715,7 +829,7 @@ export function generateReportHTML(
   <title>${title}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A4 ${isLandscape ? 'landscape' : 'portrait'}; }
+    @page { size: A4 ${isLandscape ? "landscape" : "portrait"}; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     tr { page-break-inside: avoid; }
@@ -734,12 +848,13 @@ export function generateReportHTML(
 // ─── iframe print engine ──────────────────────────────────────────────────────
 
 export function printHTML(html: string): void {
-  const existing = document.getElementById('__sunrise-print-frame');
+  const existing = document.getElementById("__sunrise-print-frame");
   if (existing) existing.remove();
 
-  const iframe = document.createElement('iframe');
-  iframe.id = '__sunrise-print-frame';
-  iframe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;border:0;visibility:hidden;';
+  const iframe = document.createElement("iframe");
+  iframe.id = "__sunrise-print-frame";
+  iframe.style.cssText =
+    "position:fixed;top:0;left:0;width:0;height:0;border:0;visibility:hidden;";
   document.body.appendChild(iframe);
 
   const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -749,20 +864,29 @@ export function printHTML(html: string): void {
   doc.close();
 
   // Wait for all images (now base64 — should be instant, but guard anyway)
-  const imgs = Array.from(doc.querySelectorAll('img'));
+  const imgs = Array.from(doc.querySelectorAll("img"));
   if (imgs.length === 0) {
-    setTimeout(() => { iframe.contentWindow?.print(); setTimeout(() => iframe.remove(), 1500); }, 120);
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => iframe.remove(), 1500);
+    }, 120);
     return;
   }
 
   let loaded = 0;
   const tryPrint = () => {
     if (++loaded >= imgs.length) {
-      setTimeout(() => { iframe.contentWindow?.print(); setTimeout(() => iframe.remove(), 1500); }, 120);
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        setTimeout(() => iframe.remove(), 1500);
+      }, 120);
     }
   };
-  imgs.forEach(img => {
+  imgs.forEach((img) => {
     if (img.complete) tryPrint();
-    else { img.addEventListener('load', tryPrint); img.addEventListener('error', tryPrint); }
+    else {
+      img.addEventListener("load", tryPrint);
+      img.addEventListener("error", tryPrint);
+    }
   });
 }

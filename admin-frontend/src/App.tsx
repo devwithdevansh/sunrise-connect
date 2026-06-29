@@ -16,8 +16,7 @@ import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
 import {
   MessageSquare,
-  Bell,
-  Sun
+  Bell
 } from 'lucide-react';
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
@@ -94,8 +93,8 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
             <div className="pt-4 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <div className="bg-[#F59E0B] p-1.5 rounded-lg text-slate-900 shrink-0">
-                  <Sun className="h-4 w-4" />
+                <div className="shrink-0">
+                  <img src={watermarkPath} alt="Sunrise Connect" className="h-6 w-6 object-contain" />
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs text-slate-800">Sunrise Parent App</h4>

@@ -15,9 +15,9 @@ import {
   Activity,
   BarChart3,
   LogOut,
-  Sun,
   Settings
 } from 'lucide-react';
+import logo from '../assets/sunrise-round-logo.png';
 
 interface MenuItem {
   id: ScreenType;
@@ -95,8 +95,8 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-[#1E293B] text-slate-300 flex flex-col h-screen sticky top-0 shrink-0 border-r border-slate-700/50">
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-700/50 flex items-center gap-3">
-        <div className="bg-[#F59E0B] p-2 rounded-lg text-white">
-          <Sun className="h-6 w-6 animate-spin-slow" />
+        <div className="flex-shrink-0">
+          <img src={logo} alt="Sunrise Connect" className="h-10 w-10 object-contain" />
         </div>
         <div>
           <h1 className="font-bold text-white tracking-wide text-lg">Sunrise Connect</h1>

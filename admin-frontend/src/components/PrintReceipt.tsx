@@ -424,7 +424,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#fcd34d', letterSpacing: '0.4px', fontFamily: "'Outfit', sans-serif" }}>English &amp; Gujarati Medium</div>
               <div style={{ fontSize: '9.5px', color: '#e2e8f0', lineHeight: 1.5 }}>
                 Railnagar, Rajkot, Gujarat — 360 001<br />
-                Ph: +91 XXXXX XXXXX &nbsp;·&nbsp; info@sunriseschool.in
+                Ph: +91 97236 55151 &nbsp;·&nbsp; info@sunriseschoolrajkot.com
               </div>
             </div>
           </div>
