@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
+import { ScreenSkeleton } from './components/ScreenSkeleton';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CollectFee } from './components/CollectFee';
@@ -15,13 +16,13 @@ import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
 import {
   MessageSquare,
-  Bell,
-  Sun
+  Bell
 } from 'lucide-react';
-import { PrintReceipt } from './components/PrintReceipt';
 import { Reports } from './components/Reports';
-import { PrintReport } from './components/PrintReport';
 import { Receipts } from './components/Receipts';
+import { generateReceiptHTML, generateReportHTML, printHTML, fetchAsBase64 } from './utils/printUtils';
+import logoPath from './assets/sunrise-logo.png';
+import watermarkPath from './assets/sunrise-round-logo.png';
 
 const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
   const { currentScreen } = useApp();
@@ -92,8 +93,8 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
             <div className="pt-4 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <div className="bg-[#F59E0B] p-1.5 rounded-lg text-slate-900 shrink-0">
-                  <Sun className="h-4 w-4" />
+                <div className="shrink-0">
+                  <img src={watermarkPath} alt="Sunrise Connect" className="h-6 w-6 object-contain" />
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs text-slate-800">Sunrise Parent App</h4>
@@ -154,60 +155,58 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 };
 
 const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
-  const { currentScreen } = useApp();
+  const { currentScreen, isScreenLoading } = useApp();
 
   if (currentScreen === 'login') {
     return <Login />;
   }
 
   return (
-    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans print:hidden">
+    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0">
-        <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
+        {isScreenLoading ? (
+          <ScreenSkeleton />
+        ) : (
+          <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
+        )}
       </main>
     </div>
   );
 };
 
 export const App: React.FC = () => {
-  const [printingTx, setPrintingTx] = useState<PaymentTransaction | null>(null);
-  const [printingReport, setPrintingReport] = useState<any | null>(null);
+  /**
+   * Receipt printing — converts logo assets to base64 data URIs first
+   * (fixes intermittent missing-logo issue in iframe), then generates
+   * a fully self-contained HTML string and prints via hidden iframe.
+   */
+  const handlePrint = async (tx: PaymentTransaction) => {
+    let currentUserName: string | undefined;
+    try {
+      const saved = localStorage.getItem('currentUser');
+      if (saved) currentUserName = JSON.parse(saved)?.name;
+    } catch { /* ignore */ }
 
-  const handlePrint = (tx: PaymentTransaction) => {
-    setPrintingTx(tx);
-    // Give react time to render the print view before opening print dialog
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    // Embed images as base64 so they always load in the iframe
+    const [logoBase64, watermarkBase64] = await Promise.all([
+      fetchAsBase64(logoPath),
+      fetchAsBase64(watermarkPath),
+    ]);
+
+    const html = generateReceiptHTML(tx, { currentUserName, logoBase64, watermarkBase64 });
+    printHTML(html);
   };
 
-  const handlePrintReport = (report: any) => {
-    setPrintingReport(report);
-    // Give react time to render the print view before opening print dialog
-    setTimeout(() => {
-      window.print();
-    }, 150);
+  const handlePrintReport = async (report: any) => {
+    const logoBase64 = await fetchAsBase64(logoPath);
+    const html = generateReportHTML(report, { logoBase64 });
+    printHTML(html);
   };
-
-  // Listen for afterprint to hide the receipt again (optional, it's hidden by CSS print:block anyway)
-  useEffect(() => {
-    const afterPrint = () => {
-      setPrintingTx(null);
-      setPrintingReport(null);
-    };
-    window.addEventListener('afterprint', afterPrint);
-    return () => window.removeEventListener('afterprint', afterPrint);
-  }, []);
 
   return (
     <React.StrictMode>
-      {/* The main app is hidden during print via print:hidden */}
       <MainAppLayout onPrint={handlePrint} onPrintReport={handlePrintReport} />
-
-      {/* The receipt is only visible during print via print:block */}
-      {printingTx && <PrintReceipt transaction={printingTx} />}
-      {printingReport && <PrintReport report={printingReport} />}
     </React.StrictMode>
   );
 };

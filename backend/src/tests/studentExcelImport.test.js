@@ -31,11 +31,12 @@ beforeEach(async () => {
     { name: 'Transport', type: 'TRANSPORT', isActive: true },
     { name: 'Term', type: 'TERM', isActive: true },
     { name: 'Admission', type: 'ADMISSION', isActive: true },
-    { name: 'Bag & Kit', type: 'OTHER', isActive: true }
+    { name: 'Bag & Kit', type: 'BAG_KIT', isActive: true }
   ]);
 
   // Create Fee Structure
   await mongoose.model('FeeStructure').create({
+    academicYear: '2025-26',
     medium: 'English',
     standard: '5',
     annualFee: 14000,
@@ -65,6 +66,7 @@ describe('Student excel import multi-year fee generation tests', () => {
       standard: '5',
       division: 'A',
       isNewAdmission: true,
+      buyBagKit: true,
       pendingFees: {
         '2024-25': 'oct to may',
         '2025-26': 'paid'
@@ -127,5 +129,33 @@ describe('Student excel import multi-year fee generation tests', () => {
     // Check no Admission or Bag & Kit for 2025-26
     const adm25 = year2526.find(l => l.feeType === 'ADMISSION');
     expect(adm25).toBeUndefined();
+  });
+
+  it('correctly handles parent mobile numbers with floating point suffix from Excel', async () => {
+    const importData = [
+      {
+        studentName: 'Karan Patel',
+        medium: 'English',
+        standard: '5',
+        division: 'A',
+        parentName: 'Suresh Patel',
+        parentMobile: '9876543210.0',
+        parentSecondaryMobile: '9876543211.00',
+        transportType: 'None',
+        isRTE: 'No',
+        isNewAdmission: 'No'
+      }
+    ];
+
+    const result = await StudentService.importStudents(importData);
+    expect(result.successCount).toBe(1);
+    expect(result.failCount).toBe(0);
+    expect(result.results[0].status).toBe('success');
+
+    // Retrieve parent record
+    const parent = await mongoose.model('Parent').findOne({ primaryMobileNumber: '9876543210' });
+    expect(parent).toBeDefined();
+    expect(parent.parentName).toBe('Suresh Patel');
+    expect(parent.secondaryMobileNumber).toBe('9876543211');
   });
 });

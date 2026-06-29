@@ -1,0 +1,89 @@
+import React from 'react';
+import { Search } from 'lucide-react';
+import type { Student } from '../../mockData';
+
+export interface StudentDueInfo {
+  text: string;
+  color: string;
+}
+
+interface StudentSidebarProps {
+  filteredStudents: Student[];
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  selectedStudent: Student | null;
+  onSelectStudent: (student: Student) => void;
+  getStudentDueLabel: (student: Student) => StudentDueInfo;
+}
+
+export const StudentSidebar: React.FC<StudentSidebarProps> = ({
+  filteredStudents,
+  searchQuery,
+  setSearchQuery,
+  selectedStudent,
+  onSelectStudent,
+  getStudentDueLabel,
+}) => {
+  return (
+    <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
+      <h3 className="text-base font-bold text-slate-800 mb-4">1. Find Student</h3>
+
+      <div className="relative mb-5">
+        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+          <Search className="h-4 w-4" />
+        </span>
+        <input
+          type="text"
+          placeholder="Type student name or code..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:border-blue-500 shadow-sm"
+        />
+      </div>
+
+      <div className="flex-grow overflow-y-auto space-y-3 pr-1">
+        {filteredStudents.length === 0 ? (
+          <div className="text-center text-xs text-slate-400 py-10">No students found</div>
+        ) : (
+          filteredStudents.map((student) => {
+            const isSelected = selectedStudent?._id === student._id;
+            const dueInfo = getStudentDueLabel(student);
+            return (
+              <div
+                key={student._id}
+                onClick={() => onSelectStudent(student)}
+                className={`p-4 border rounded-2xl cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? 'bg-blue-50/50 border-blue-500 shadow-sm ring-1 ring-blue-500/20'
+                    : 'bg-white border-slate-100 shadow-sm hover:border-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="font-bold text-slate-800 text-sm">{student.studentName}</h4>
+                      {student.isRTE && (
+                        <span className="bg-blue-50 text-blue-600 text-[8px] font-extrabold px-1.5 py-0.5 rounded border border-blue-200 uppercase tracking-wider scale-95 origin-left shrink-0">
+                          RTE
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Std {student.standard} · {student.division} · {student.medium}
+                    </p>
+                    <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                      {student.studentCode}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 ${dueInfo.color}`}>
+                    {dueInfo.text}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+};

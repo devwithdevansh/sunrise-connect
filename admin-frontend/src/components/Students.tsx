@@ -9,6 +9,7 @@ export const Students: React.FC = () => {
     setScreen,
     checkMobile,
     deleteStudent,
+    restoreStudent,
     updateStudent,
     setSelectedStudentIdForFee,
     ledgerEntries,
@@ -16,9 +17,46 @@ export const Students: React.FC = () => {
     reversePayment,
     currentUser,
     academicYears,
-    transportFeeStructures
+    transportFeeStructures,
+    feeStructures
   } = useApp();
-  
+
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
+  const activeYearFeeStructures = useMemo(() => {
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)));
+  }, [feeStructures, activeYearName, academicYears]);
+
+  const dynamicStandards = useMemo(() => {
+    const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
+    const list = Array.from(stdSet);
+    if (list.length === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    return list.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [activeYearFeeStructures]);
+
+  const dynamicMediums = useMemo(() => {
+    const medSet = new Set(activeYearFeeStructures.map(f => f.medium));
+    const list = Array.from(medSet);
+    if (list.length === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return list;
+  }, [activeYearFeeStructures]);
+
+  const activeYearTransportStructures = useMemo(() => {
+    const byYear = transportFeeStructures.filter(t => t.academicYear === activeYearName);
+    if (byYear.length > 0) return byYear;
+    // Legacy fallback — show unscoped records for the first/default year only
+    const isDefaultYear = activeYearName === academicYears[0]?.name;
+    return isDefaultYear ? transportFeeStructures.filter(t => !t.academicYear) : [];
+  }, [transportFeeStructures, activeYearName, academicYears]);
+
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
   // Debounced search query state (throttles filter processing)
@@ -33,6 +71,7 @@ export const Students: React.FC = () => {
 
   // Quick filter chips: 'ALL' | 'RTE' | 'TRANSPORT'
   const [chipFilter, setChipFilter] = useState<'ALL' | 'RTE' | 'TRANSPORT'>('ALL');
+  const [showInactive, setShowInactive] = useState(false);
 
   // Pagination states (10 per page)
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,7 +89,9 @@ export const Students: React.FC = () => {
   const [newSTransport, setNewSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
+  const [newSBuyBagKit, setNewSBuyBagKit] = useState(false);
   const [newSAdmissionMonth, setNewSAdmissionMonth] = useState('June');
+  const [newSTransportStartMonth, setNewSTransportStartMonth] = useState('June');
 
   // Edit Student Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -61,7 +102,14 @@ export const Students: React.FC = () => {
   const [editSDivision, setEditSDivision] = useState('A');
   const [editSTransport, setEditSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
   const [originalTransport, setOriginalTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
+  const [editSTransportStartMonth, setEditSTransportStartMonth] = useState('June');
+  const [originalTransportStartMonth, setOriginalTransportStartMonth] = useState('June');
+  const [editSParentName, setEditSParentName] = useState('');
+  const [editSParentMobile, setEditSParentMobile] = useState('');
+  const [editSParentSecondaryMobile, setEditSParentSecondaryMobile] = useState('');
   const [editSIsRTE, setEditSIsRTE] = useState(false);
+  const [editSAdmissionMonth, setEditSAdmissionMonth] = useState('June');
+  const [editSBuyBagKit, setEditSBuyBagKit] = useState(false);
 
   // Sibling Modal State
   const [siblingModalData, setSiblingModalData] = useState<{ parentName: string, parentId: string } | null>(null);
@@ -78,6 +126,49 @@ export const Students: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [chipFilter, classFilter, divFilter, medFilter, searchQuery]);
+
+  // Sync modal standard & medium defaults with dynamic options
+  useEffect(() => {
+    if (dynamicStandards.length > 0 && !dynamicStandards.includes(newSStandard)) {
+      setNewSStandard(dynamicStandards[0]);
+    }
+  }, [dynamicStandards, newSStandard]);
+
+  useEffect(() => {
+    if (dynamicMediums.length > 0 && !dynamicMediums.includes(newSMedium)) {
+      setNewSMedium(dynamicMediums[0] as any);
+    }
+  }, [dynamicMediums, newSMedium]);
+
+  useEffect(() => {
+    const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const admIdx = allMonths.indexOf(newSAdmissionMonth);
+    const trIdx = allMonths.indexOf(newSTransportStartMonth);
+    if (trIdx < admIdx && admIdx !== -1) {
+      setNewSTransportStartMonth(newSAdmissionMonth);
+    }
+  }, [newSAdmissionMonth, newSTransportStartMonth]);
+
+  useEffect(() => {
+    const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const admIdx = allMonths.indexOf(editSAdmissionMonth);
+    const trIdx = allMonths.indexOf(editSTransportStartMonth);
+    if (trIdx < admIdx && admIdx !== -1) {
+      setEditSTransportStartMonth(editSAdmissionMonth);
+    }
+  }, [editSAdmissionMonth, editSTransportStartMonth]);
+
+  useEffect(() => {
+    if (dynamicStandards.length > 0 && !dynamicStandards.includes(editSStandard)) {
+      setEditSStandard(dynamicStandards[0]);
+    }
+  }, [dynamicStandards, editSStandard]);
+
+  useEffect(() => {
+    if (dynamicMediums.length > 0 && !dynamicMediums.includes(editSMedium)) {
+      setEditSMedium(dynamicMediums[0] as any);
+    }
+  }, [dynamicMediums, editSMedium]);
 
   // Helper to get parent ID string
   const getParentIdStr = (student: any) => {
@@ -160,6 +251,13 @@ export const Students: React.FC = () => {
 
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
+      // Active status filter
+      if (showInactive) {
+        if (s.isActive !== false) return false;
+      } else {
+        if (s.isActive === false) return false;
+      }
+
       // Quick filter chips
       if (chipFilter === 'RTE' && !s.isRTE) return false;
       if (chipFilter === 'TRANSPORT' && s.transportType === 'None') return false;
@@ -180,7 +278,7 @@ export const Students: React.FC = () => {
       }
       return true;
     });
-  }, [students, chipFilter, classFilter, divFilter, medFilter, searchQuery]);
+  }, [students, chipFilter, classFilter, divFilter, medFilter, searchQuery, showInactive]);
 
   // Slice list for pagination
   const paginatedStudents = useMemo(() => {
@@ -219,7 +317,9 @@ export const Students: React.FC = () => {
       transportType: newSTransport,
       isRTE: newSIsRTE,
       isNewAdmission: newSIsNewAdmission,
+      buyBagKit: newSBuyBagKit,
       admissionMonth: newSAdmissionMonth,
+      transportStartMonth: newSTransportStartMonth,
       isActive: true
     });
 
@@ -234,7 +334,9 @@ export const Students: React.FC = () => {
     setNewSTransport('None');
     setNewSIsRTE(false);
     setNewSIsNewAdmission(true);
+    setNewSBuyBagKit(false);
     setNewSAdmissionMonth('June');
+    setNewSTransportStartMonth('June');
     setIsModalOpen(false);
   };
 
@@ -246,7 +348,14 @@ export const Students: React.FC = () => {
     setEditSDivision(s.division);
     setEditSTransport(s.transportType || 'None');
     setOriginalTransport(s.transportType || 'None');
+    setEditSTransportStartMonth(s.transportStartMonth || 'June');
+    setOriginalTransportStartMonth(s.transportStartMonth || 'June');
+    setEditSAdmissionMonth(s.admissionMonth || 'June');
+    setEditSParentName(s.parentName || '');
+    setEditSParentMobile(s.parentMobile || '');
+    setEditSParentSecondaryMobile(s.parentSecondaryMobile || '');
     setEditSIsRTE(s.isRTE || false);
+    setEditSBuyBagKit(s.buyBagKit || false);
     setIsEditModalOpen(true);
   };
 
@@ -260,11 +369,16 @@ export const Students: React.FC = () => {
       standard: editSStandard,
       division: editSDivision,
       transportType: editSTransport,
+      transportStartMonth: editSTransportStartMonth,
+      parentName: editSParentName,
+      parentMobile: editSParentMobile,
+      parentSecondaryMobile: editSParentSecondaryMobile || null,
       isRTE: editSIsRTE,
+      buyBagKit: editSBuyBagKit,
     };
 
     // Calculate remaining months for transport adjustment (mirroring backend logic)
-    const activeYear = academicYears.find((y) => y.isActive);
+    const activeYear = academicYears.find((y) => y.isActive) || academicYears[0];
     let remainingMonths = 0;
     if (activeYear) {
       const now = new Date();
@@ -335,8 +449,8 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Classes">All Classes</option>
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
-                <option key={cls} value={`Class ${cls}`}>Std {cls}</option>
+              {dynamicStandards.map((cls) => (
+                <option key={cls} value={`Class ${cls}`}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
@@ -365,8 +479,9 @@ export const Students: React.FC = () => {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
             >
               <option value="All Mediums">All Mediums</option>
-              <option value="English Medium">English</option>
-              <option value="Gujarati Medium">Gujarati</option>
+              {dynamicMediums.map((med) => (
+                <option key={med} value={`${med} Medium`}>{med}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
@@ -402,6 +517,17 @@ export const Students: React.FC = () => {
             >
               With Transport
             </button>
+            <div className="h-4 w-px bg-slate-300 mx-1"></div>
+            <button
+              onClick={() => setShowInactive(!showInactive)}
+              className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${showInactive
+                  ? 'bg-red-100 text-red-700 shadow-sm border border-red-200'
+                  : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {showInactive ? 'Hide Inactive' : 'Show Inactive'}
+            </button>
           </div>
 
           {(currentUser?.role === 'ADMIN' || currentUser?.role === 'STAFF') && (
@@ -436,8 +562,11 @@ export const Students: React.FC = () => {
               .map(id => studentMap.get(id))
               .filter((sib): sib is typeof students[0] => !!sib);
 
-            // Look up pre-calculated ledger entries for this student
-            const studentLedgers = studentLedgersMap.get(s._id || s.id) || [];
+            // Look up pre-calculated ledger entries for this student, filtered by active academic year
+            const allStudentLedgers = studentLedgersMap.get(s._id || s.id) || [];
+            const studentLedgers = allStudentLedgers.filter(l => 
+              l.academicYear === activeYearName || (!l.academicYear && (activeYearName === academicYears[0]?.name))
+            );
             const totalLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
             const totalPaidLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
             const totalConcessionLedgerAmount = studentLedgers.reduce((sum, l) => sum + (l.concessionAmount || 0), 0);
@@ -479,6 +608,11 @@ export const Students: React.FC = () => {
                         {s.isNewAdmission && (
                           <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
                             New
+                          </span>
+                        )}
+                        {s.isActive === false && (
+                          <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            Deleted
                           </span>
                         )}
                       </div>
@@ -545,37 +679,54 @@ export const Students: React.FC = () => {
                           </>
                         )}
                       </button>
-                      {!s.isRTE && (
+                      {s.isActive === false ? (
                         <button
                           onClick={() => {
-                            setSelectedStudentIdForFee(s._id || s.id);
-                            setScreen('collect-fee');
+                            if (window.confirm("Are you sure you want to restore this deleted student?")) {
+                              restoreStudent(s._id || s.id);
+                            }
                           }}
-                          className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
+                          className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5"
+                          title="Restore Student"
                         >
-                          Collect
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          Restore
                         </button>
-                      )}
-                      {currentUser?.role === 'ADMIN' && (
+                      ) : (
                         <>
-                          <button
-                            onClick={() => openEditModal(s)}
-                            className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                            title="Edit Student"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm("Are you sure you want to permanently delete this student, their ledgers, and all their payments? This action cannot be undone.")) {
-                                deleteStudent(s._id || s.id);
-                              }
-                            }}
-                            className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                            title="Delete Student"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {!s.isRTE && (
+                            <button
+                              onClick={() => {
+                                setSelectedStudentIdForFee(s._id || s.id);
+                                setScreen('collect-fee');
+                              }}
+                              className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all"
+                            >
+                              Collect
+                            </button>
+                          )}
+                          {currentUser?.role === 'ADMIN' && (
+                            <>
+                              <button
+                                onClick={() => openEditModal(s)}
+                                className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                                title="Edit Student"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this student? If they have payments, they will be marked as inactive. If no payments exist, they will be permanently deleted.")) {
+                                    deleteStudent(s._id || s.id);
+                                  }
+                                }}
+                                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                                title="Delete Student"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
@@ -1028,13 +1179,12 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSMedium(e.target.value as any)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    <option value="English">English Medium</option>
-                    <option value="Gujarati">Gujarati Medium</option>
+                    {dynamicMediums.map((med) => (
+                      <option key={med} value={med}>{med} Medium</option>
+                    ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Standard</label>
                   <select
@@ -1042,12 +1192,14 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((std) => (
-                      <option key={std} value={std}>Std {std}</option>
+                    {dynamicStandards.map((std) => (
+                      <option key={std} value={std}>{isNaN(Number(std)) ? std : `Std ${std}`}</option>
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Division</label>
                   <select
@@ -1069,9 +1221,30 @@ export const Students: React.FC = () => {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="None">None</option>
-                    {transportFeeStructures.map((t) => (
+                    {activeYearTransportStructures.map((t) => (
                       <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
                     ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
+                  <select
+                    value={newSTransportStartMonth}
+                    disabled={newSTransport === 'None'}
+                    onChange={(e) => setNewSTransportStartMonth(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
+                      .filter(m => {
+                        const all = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+                        return all.indexOf(m) >= all.indexOf(newSAdmissionMonth);
+                      })
+                      .map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
                   </select>
                 </div>
 
@@ -1111,7 +1284,20 @@ export const Students: React.FC = () => {
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
                 />
                 <label htmlFor="newAdmissionCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                  New Admission (charges Admission & Bag/Kit fees)
+                  New Admission (charges Admission fees)
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <input
+                  type="checkbox"
+                  id="newBuyBagKitCheckbox"
+                  checked={newSBuyBagKit}
+                  onChange={(e) => setNewSBuyBagKit(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="newBuyBagKitCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                  Include Bag & Kit Fee (Optional)
                 </label>
               </div>
 
@@ -1162,19 +1348,59 @@ export const Students: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Medium</label>
-                  <select
-                    value={editSMedium}
-                    onChange={(e) => setEditSMedium(e.target.value as 'English' | 'Gujarati')}
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Parent Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editSParentName}
+                    onChange={(e) => setEditSParentName(e.target.value)}
+                    placeholder="Enter parent's full name"
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="English">English</option>
-                    <option value="Gujarati">Gujarati</option>
-                  </select>
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Parent Mobile</label>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={editSParentMobile}
+                    onChange={(e) => setEditSParentMobile(e.target.value.replace(/\D/g, ''))}
+                    placeholder="9876543210"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Secondary Mobile</label>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    value={editSParentSecondaryMobile}
+                    onChange={(e) => setEditSParentSecondaryMobile(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Optional secondary number"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Medium</label>
+                  <select
+                    value={editSMedium}
+                    onChange={(e) => setEditSMedium(e.target.value as any)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    {dynamicMediums.map((med) => (
+                      <option key={med} value={med}>{med} Medium</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Standard (Class)</label>
                   <select
@@ -1182,12 +1408,14 @@ export const Students: React.FC = () => {
                     onChange={(e) => setEditSStandard(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
-                      <option key={cls} value={cls}>Std {cls}</option>
+                    {dynamicStandards.map((cls) => (
+                      <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Division</label>
                   <select
@@ -1200,20 +1428,42 @@ export const Students: React.FC = () => {
                     <option value="C">Division C</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
+                  <select
+                    value={editSTransport}
+                    onChange={(e) => setEditSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="None">None</option>
+                    {activeYearTransportStructures.map((t) => (
+                      <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
-                <select
-                  value={editSTransport}
-                  onChange={(e) => setEditSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                >
-                  <option value="None">None</option>
-                  {transportFeeStructures.map((t) => (
-                    <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Start Month</label>
+                  <select
+                    value={editSTransportStartMonth}
+                    disabled={editSTransport === 'None'}
+                    onChange={(e) => setEditSTransportStartMonth(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
+                      .filter(m => {
+                        const all = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+                        return all.indexOf(m) >= all.indexOf(editSAdmissionMonth);
+                      })
+                      .map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                  </select>
+                </div>
+                <div />
               </div>
 
               <div className="flex items-center gap-3 pt-2">
@@ -1229,7 +1479,20 @@ export const Students: React.FC = () => {
                 </label>
               </div>
 
-              {editSTransport !== originalTransport && (
+              <div className="flex items-center gap-3 pt-1">
+                <input
+                  type="checkbox"
+                  id="editBuyBagKitCheckbox"
+                  checked={editSBuyBagKit}
+                  onChange={(e) => setEditSBuyBagKit(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="editBuyBagKitCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                  Include Bag & Kit Fee (Optional)
+                </label>
+              </div>
+
+              {(editSTransport !== originalTransport || editSTransportStartMonth !== originalTransportStartMonth) && editSTransport !== 'None' && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                   <p className="text-xs text-blue-800 font-semibold">
                     The transport fee will be automatically calculated based on the current active academic year and remaining months.

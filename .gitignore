@@ -4,14 +4,29 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Backend specific
+# Environment variables (NEVER commit these)
+.env
+.env.*
 backend/.env
-   
+backend/.env.*
+admin-frontend/.env
+admin-frontend/.env.*
+
+# Backend specific
 backend/node_modules/
 backend/logs/
+backend/src/logs/
+backend/scripts/logs/
 backend/.cache/
 backend/dist/
 backend/build/
+backend/coverage/
+
+# Test / scratch scripts (not for production)
+backend/test_features.js
+backend/check_db.js
+backend/src/inspect.js
+backend/src/seed.js
 
 # Flutter
 FlutterProject/.dart_tool/

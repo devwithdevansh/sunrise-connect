@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
-import { Calendar, Tag, Layers, Plus, Check, X, Pencil, Trash2 } from 'lucide-react';
+import { Calendar, Tag, Layers, Plus, Check, X, Pencil, Trash2, Info } from 'lucide-react';
 import { FeeStructure } from './FeeStructure'; // Reuse existing component for the Fee Structure tab
 
 // ── Edit Academic Year Modal ─────
@@ -100,7 +100,7 @@ interface EditFCModalProps {
 
 const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
   const [name, setName] = useState(cat.name);
-  const [type, setType] = useState(cat.type);
+  const [type] = useState(cat.type);
   const [description, setDescription] = useState(cat.description || '');
   const [isActive, setIsActive] = useState(cat.isActive !== false);
   const [saving, setSaving] = useState(false);
@@ -146,15 +146,16 @@ const EditFCModal: React.FC<EditFCModalProps> = ({ cat, onClose, onSave }) => {
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">System Type</label>
             <select
-              className="w-full border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 transition-all outline-none"
+              className="w-full border border-slate-200 bg-slate-100 cursor-not-allowed opacity-70 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-500 transition-all outline-none"
               value={type}
-              onChange={e => setType(e.target.value)}
+              disabled={true}
             >
               <option value="EDUCATION">EDUCATION</option>
               <option value="TERM">TERM</option>
               <option value="TRANSPORT">TRANSPORT</option>
               <option value="ADMISSION">ADMISSION</option>
-              <option value="OTHER">OTHER</option>
+              <option value="BAG_KIT">BAG_KIT</option>
+              <option value="OTHER">OTHER (Custom Fee)</option>
             </select>
           </div>
           <div>
@@ -204,9 +205,14 @@ export const Setup: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<'academic-year' | 'fee-categories' | 'fee-structure'>('academic-year');
 
+  const filteredCategories = React.useMemo(() => {
+    return feeCategories;
+  }, [feeCategories]);
+
   // Form states
   const [showAYForm, setShowAYForm] = useState(false);
   const [newAY, setNewAY] = useState({ name: '', startDate: '', endDate: '' });
+  const [ayNameError, setAyNameError] = useState('');
 
   const [showFCForm, setShowFCForm] = useState(false);
   const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '' });
@@ -214,18 +220,32 @@ export const Setup: React.FC = () => {
   // Modal editing states
   const [editingAY, setEditingAY] = useState<any | null>(null);
   const [editingFC, setEditingFC] = useState<any | null>(null);
+  const [showAYGuide, setShowAYGuide] = useState(false);
 
   const handleCreateAY = async () => {
     if (!newAY.name || !newAY.startDate || !newAY.endDate) return;
-    const ok = await createAcademicYear(newAY);
+    
+    // Validate format YYYY-YYYY
+    const ayRegex = /^\d{4}-\d{4}$/;
+    if (!ayRegex.test(newAY.name.trim())) {
+      setAyNameError("Format must be YYYY-YYYY (e.g., '2026-2027')");
+      return;
+    }
+
+    const ok = await createAcademicYear({ ...newAY, name: newAY.name.trim() });
     if (ok) {
       setShowAYForm(false);
       setNewAY({ name: '', startDate: '', endDate: '' });
+      setAyNameError('');
     }
   };
 
   const handleActivateAY = async (id: string) => {
-    await activateAcademicYear(id);
+    const target = academicYears.find(y => y._id === id);
+    const targetName = target ? target.name : 'this academic year';
+    if (window.confirm(`⚠️ WARNING: You are about to switch the active academic year to "${targetName}".\n\nAll future fee generation, ledger calculations, and student management features will target this year.\n\nAre you sure you want to proceed?`)) {
+      await activateAcademicYear(id);
+    }
   };
 
   const handleDeleteAY = async (ay: any) => {
@@ -239,19 +259,29 @@ export const Setup: React.FC = () => {
     }
   };
 
+  const [fcError, setFCError] = useState('');
+
   const handleCreateFC = async () => {
     if (!newFC.name || !newFC.type) return;
-    const ok = await createFeeCategory(newFC);
+    setFCError('');
+    const payload = { ...newFC };
+    const ok = await createFeeCategory(payload);
     if (ok) {
       setShowFCForm(false);
       setNewFC({ name: '', type: 'EDUCATION', description: '' });
+    } else {
+      setFCError('Failed to save. A category with this name may already exist.');
     }
   };
 
   const handleDeleteFC = async (fc: any) => {
+    if (fc.type !== 'OTHER') {
+      alert(`Cannot delete system-required category: ${fc.name}`);
+      return;
+    }
     if (window.confirm(`Are you sure you want to delete fee category "${fc.name}"?\nThis action cannot be undone.`)) {
       const ok = await deleteFeeCategory(fc._id);
-      if (!ok) alert("Failed to delete fee category.");
+      if (!ok) alert("Failed to delete fee category. It might be in use.");
     }
   };
 
@@ -295,7 +325,21 @@ export const Setup: React.FC = () => {
         {activeTab === 'academic-year' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-slate-800">Manage Academic Years</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800">Manage Academic Years</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAYGuide(!showAYGuide)}
+                  className={`p-1.5 rounded-lg border transition-all ${
+                    showAYGuide
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-350'
+                  }`}
+                  title="Show Transition Checklist"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </div>
               <button
                 onClick={() => setShowAYForm(true)}
                 className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm"
@@ -303,6 +347,45 @@ export const Setup: React.FC = () => {
                 <Plus className="w-4 h-4" /> Add Year
               </button>
             </div>
+
+            {showAYGuide && (
+              <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-5 shadow-sm space-y-4 animate-fade-in">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-2">
+                    <span className="text-xl">📅</span>
+                    <div>
+                      <h4 className="font-extrabold text-blue-900 text-sm">Academic Year Transition Checklist</h4>
+                      <p className="text-[11px] text-blue-700/80 font-medium mt-0.5">
+                        Follow these steps exactly when starting a new school year to maintain 100% data and fee integrity.
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAYGuide(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1"><X className="w-4 h-4" /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold">
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 1</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Create New Year</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Add the new year (e.g. 2026-27) here. <strong>Keep it INACTIVE for now.</strong></p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 2</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Define Fee Structure</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Go to the <strong>Fee Structure</strong> tab and set up the annual tuition, admission, and kit fees for the new year.</p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 3</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Promote Cohorts</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Go to the <strong>Promote</strong> page. Select students and promote them to the new year & class. This creates their new ledgers.</p>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1 text-left">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg font-bold">Step 4</span>
+                    <h5 className="font-extrabold text-slate-800 text-[11px] mt-1.5">Set Active Year</h5>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">After promotions are done, click <strong>"Set Active"</strong> on the new year card to switch the main app context.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {showAYForm && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
@@ -312,10 +395,19 @@ export const Setup: React.FC = () => {
                     <label className="block text-xs font-bold text-slate-500 mb-1">Name (e.g. 2026-2027)</label>
                     <input
                       type="text"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      className={`w-full bg-slate-50 border ${ayNameError ? 'border-red-500 focus:border-red-500 ring-1 ring-red-500' : 'border-slate-200 focus:border-blue-500'} rounded-lg px-3 py-2 text-sm focus:outline-none`}
                       value={newAY.name}
-                      onChange={e => setNewAY({ ...newAY, name: e.target.value })}
+                      onChange={e => {
+                        setNewAY({ ...newAY, name: e.target.value });
+                        if (ayNameError) setAyNameError('');
+                      }}
+                      onBlur={() => {
+                        if (newAY.name && !/^\d{4}-\d{4}$/.test(newAY.name.trim())) {
+                          setAyNameError("Format must be YYYY-YYYY (e.g., '2026-2027')");
+                        }
+                      }}
                     />
+                    {ayNameError && <p className="text-red-500 text-[10px] font-bold mt-1">{ayNameError}</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">Start Date</label>
@@ -360,8 +452,8 @@ export const Setup: React.FC = () => {
                       )}
                     </div>
                     <div className="text-xs text-slate-500 space-y-1">
-                      <p><strong className="text-slate-700">Start:</strong> {new Date(ay.startDate).toLocaleDateString()}</p>
-                      <p><strong className="text-slate-700">End:</strong> {new Date(ay.endDate).toLocaleDateString()}</p>
+                      <p><strong className="text-slate-700">Start:</strong> {new Date(ay.startDate).toLocaleDateString('en-GB')}</p>
+                      <p><strong className="text-slate-700">End:</strong> {new Date(ay.endDate).toLocaleDateString('en-GB')}</p>
                     </div>
                   </div>
 
@@ -393,14 +485,21 @@ export const Setup: React.FC = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-bold text-slate-800">Fee Categories</h3>
-              <button onClick={() => setShowFCForm(true)} className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm">
-                <Plus className="w-4 h-4" /> Add Category
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setShowFCForm(true)} className="flex items-center gap-1.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md active:scale-[0.98] text-sm">
+                  <Plus className="w-4 h-4" /> Add Category
+                </button>
+              </div>
             </div>
 
             {showFCForm && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6 animate-fade-in-up">
-                <h4 className="font-bold text-slate-700 mb-4 text-sm">Create New Fee Category</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-slate-700 text-sm">Create New Fee Category</h4>
+                  <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black px-2.5 py-1 rounded-lg border border-indigo-100">
+                    Global Category
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">Name</label>
@@ -415,15 +514,11 @@ export const Setup: React.FC = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">System Type</label>
                     <select
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none cursor-not-allowed opacity-70"
                       value={newFC.type}
-                      onChange={e => setNewFC({ ...newFC, type: e.target.value })}
+                      disabled={true}
                     >
-                      <option value="EDUCATION">EDUCATION</option>
-                      <option value="TERM">TERM</option>
-                      <option value="TRANSPORT">TRANSPORT</option>
-                      <option value="ADMISSION">ADMISSION</option>
-                      <option value="OTHER">OTHER</option>
+                      <option value="OTHER">OTHER (Custom Fee)</option>
                     </select>
                   </div>
                   <div>
@@ -436,8 +531,9 @@ export const Setup: React.FC = () => {
                     />
                   </div>
                 </div>
+                {fcError && <p className="mt-3 text-xs font-bold text-red-500">{fcError}</p>}
                 <div className="mt-4 flex justify-end gap-2">
-                  <button onClick={() => setShowFCForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
+                  <button onClick={() => { setShowFCForm(false); setFCError(''); }} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
                   <button onClick={handleCreateFC} className="px-4 py-2 bg-[#F59E0B] text-slate-900 font-bold rounded-lg text-sm shadow-sm hover:bg-amber-500">Save</button>
                 </div>
               </div>
@@ -455,7 +551,7 @@ export const Setup: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {feeCategories.map(cat => (
+                  {filteredCategories.map(cat => (
                     <tr key={cat._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3.5 px-5 font-bold text-slate-800">{cat.name}</td>
                       <td className="py-3.5 px-5">

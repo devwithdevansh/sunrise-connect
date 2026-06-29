@@ -1,4 +1,18 @@
+/**
+ * PrintReport.tsx
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Screen-preview component for reports (not used for actual printing).
+ * Actual printing is handled by printUtils.ts via an iframe.
+ *
+ * Supports 3 report types:
+ *  • daily-collections  → portrait
+ *  • outstanding-dues   → landscape (more columns)
+ *  • rte-reconcile      → portrait
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
 import React from 'react';
+import logoPath from '../assets/sunrise-logo.png';
 
 interface PrintReportProps {
   report: {
@@ -8,210 +22,352 @@ interface PrintReportProps {
   };
 }
 
+const SCHOOL_NAME    = 'SUNRISE CONVENT SCHOOL';
+const SCHOOL_MEDIUM  = 'English & Gujarati Medium';
+const SCHOOL_ADDRESS = 'Railnagar, Rajkot, Gujarat';
+const SCHOOL_PHONE   = '+91 XXXXX XXXXX';
+const SCHOOL_EMAIL   = 'info@sunriseschool.in';
+
+/* ── shared styles ── */
+const S = {
+  page: {
+    width: '210mm',
+    margin: '0 auto',
+    padding: '14mm 12mm 10mm',
+    backgroundColor: '#ffffff',
+    fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+    fontSize: '10px',
+    color: '#1a1a2e',
+    boxSizing: 'border-box' as const,
+  } as React.CSSProperties,
+
+  pageLandscape: {
+    width: '297mm',
+  } as React.CSSProperties,
+
+  headerRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '8px',
+  } as React.CSSProperties,
+
+  schoolName: {
+    fontSize: '20px',
+    fontWeight: 800,
+    color: '#1b3a6b',
+    letterSpacing: '0.4px',
+    lineHeight: 1.1,
+  } as React.CSSProperties,
+
+  ruleGold: { height: '4px', backgroundColor: '#e8a020', marginBottom: '3px' } as React.CSSProperties,
+  ruleNavy: { height: '2px', backgroundColor: '#1b3a6b', marginBottom: '12px' } as React.CSSProperties,
+
+  titleBar: {
+    backgroundColor: '#1b3a6b',
+    color: '#fff',
+    textAlign: 'center' as const,
+    padding: '8px 0',
+    fontSize: '13px',
+    fontWeight: 700,
+    letterSpacing: '2px',
+    marginBottom: '6px',
+  } as React.CSSProperties,
+
+  generatedAt: {
+    fontSize: '8.5px',
+    color: '#888',
+    textAlign: 'right' as const,
+    marginBottom: '12px',
+  } as React.CSSProperties,
+
+  summaryGrid: {
+    display: 'grid',
+    gap: '10px',
+    marginBottom: '16px',
+    padding: '10px',
+    border: '1px solid #dde3ed',
+    borderRadius: '6px',
+    background: '#f7f9fc',
+  } as React.CSSProperties,
+
+  statLabel: {
+    fontSize: '8.5px',
+    fontWeight: 700,
+    color: '#888',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+  } as React.CSSProperties,
+
+  statVal: {
+    fontSize: '13px',
+    fontWeight: 800,
+    color: '#1a1a2e',
+    marginTop: '3px',
+  } as React.CSSProperties,
+
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse' as const,
+    fontSize: '9.5px',
+  } as React.CSSProperties,
+
+  th: {
+    padding: '7px 8px',
+    backgroundColor: '#1b3a6b',
+    color: '#fff',
+    fontWeight: 700,
+    textAlign: 'left' as const,
+    whiteSpace: 'nowrap' as const,
+  } as React.CSSProperties,
+
+  thRight: {
+    textAlign: 'right' as const,
+  } as React.CSSProperties,
+
+  td: {
+    padding: '6px 8px',
+    borderBottom: '1px solid #e8edf5',
+    color: '#333',
+  } as React.CSSProperties,
+
+  tdRight: {
+    textAlign: 'right' as const,
+    fontWeight: 700,
+  } as React.CSSProperties,
+
+  footer: {
+    marginTop: '24px',
+    borderTop: '1px solid #dde3ed',
+    paddingTop: '12px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    fontSize: '8.5px',
+    color: '#888',
+  } as React.CSSProperties,
+
+  sigLine: {
+    width: '150px',
+    borderTop: '1px solid #aaa',
+    paddingTop: '4px',
+    textAlign: 'center' as const,
+    fontSize: '8.5px',
+    color: '#555',
+  } as React.CSSProperties,
+};
+
 export const PrintReport: React.FC<PrintReportProps> = ({ report }) => {
   const { type, title, data } = report;
-  const todayStr = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+
+  const isLandscape = type === 'outstanding-dues';
+
+  const todayStr = new Date().toLocaleDateString('en-IN', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
   });
 
-  return (
-    <div className="hidden print:block p-8 bg-white text-slate-800 font-sans min-h-screen text-xs w-full">
-      {/* Printable Header */}
-      <div className="border-b-2 border-slate-300 pb-4 mb-6 flex justify-between items-end">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">SUNRISE PUBLIC SCHOOL</h1>
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Sunrise Connect Administration Portal</p>
+  const pageStyle: React.CSSProperties = {
+    ...S.page,
+    ...(isLandscape ? S.pageLandscape : {}),
+  };
+
+  /* ── Branded header ── */
+  const Header = (
+    <>
+      <div style={S.headerRow}>
+        <div style={{ width: '170px', flexShrink: 0 }}>
+          <img
+            src={logoPath}
+            alt="Sunrise School Logo"
+            style={{ width: '100%', objectFit: 'contain' }}
+          />
         </div>
-        <div className="text-right">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-widest">{title}</h2>
-          <p className="text-[9px] text-slate-400 font-semibold mt-1">Generated: {todayStr}</p>
+        <div>
+          <div style={S.schoolName}>{SCHOOL_NAME}</div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#d08c16', marginTop: '3px' }}>{SCHOOL_MEDIUM}</div>
+          <div style={{ fontSize: '9.5px', color: '#555', marginTop: '2px' }}>{SCHOOL_ADDRESS}</div>
+          <div style={{ fontSize: '9.5px', color: '#555', marginTop: '1px' }}>Ph: {SCHOOL_PHONE} &nbsp;|&nbsp; Email: {SCHOOL_EMAIL}</div>
         </div>
       </div>
+      <div style={S.ruleGold} />
+      <div style={S.ruleNavy} />
+      <div style={S.titleBar}>{title.toUpperCase()}</div>
+      <div style={S.generatedAt}>Generated: {todayStr}</div>
+    </>
+  );
 
-      {/* ======================================================== */}
-      {/* 1. DAILY COLLECTIONS PRINT VIEW */}
-      {/* ======================================================== */}
-      {type === 'daily-collections' && (
-        <div className="space-y-6">
-          {/* Summary Panel */}
-          <div className="grid grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Collected</div>
-              <div className="text-lg font-extrabold text-slate-800">₹{data.totalCollected.toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cash Mode</div>
-              <div className="text-sm font-bold text-slate-800">₹{data.cashCollected.toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Online Mode</div>
-              <div className="text-sm font-bold text-slate-800">₹{data.onlineCollected.toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cheque Mode</div>
-              <div className="text-sm font-bold text-slate-800">₹{data.chequeCollected.toLocaleString()}</div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <table className="w-full text-left border-collapse border border-slate-200">
-            <thead>
-              <tr className="bg-slate-100 border-b border-slate-350 text-[10px] uppercase font-bold text-slate-700">
-                <th className="py-2.5 px-3 border-r border-slate-200">S.No</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Student Code</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Student Name</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Class & Medium</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Fee Category</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Method</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Time</th>
-                <th className="py-2.5 px-3 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {data.transactions.map((t: any, idx: number) => (
-                <tr key={t.id} className="text-[10px]">
-                  <td className="py-2 px-3 border-r border-slate-200 font-semibold text-slate-400">{idx + 1}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-mono text-slate-500">{t.studentCode}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-bold text-slate-850">{t.studentName}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-medium text-slate-600">{t.classInfo}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 text-slate-500 font-medium">{t.feeType.replace(/\n/g, ', ')}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-bold uppercase text-slate-700">{t.method}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-semibold text-slate-400">{t.time}</td>
-                  <td className="py-2 px-3 text-right font-bold text-slate-800">₹{t.amount.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* ======================================================== */}
-      {/* 2. OUTSTANDING DUES PRINT VIEW */}
-      {/* ======================================================== */}
-      {type === 'outstanding-dues' && (
-        <div className="space-y-6">
-          {/* Summary Panel */}
-          <div className="grid grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Outstanding Dues</div>
-              <div className="text-lg font-extrabold text-red-650">₹{data.totalOutstandingAmount.toLocaleString()}</div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Students with Dues</div>
-              <div className="text-sm font-bold text-slate-800">{data.studentCount}</div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Avg. Dues/Student</div>
-              <div className="text-sm font-bold text-slate-800">
-                ₹{data.studentCount > 0 ? Math.round(data.totalOutstandingAmount / data.studentCount).toLocaleString() : 0}
-              </div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Dues Aging (1M/2M/3M+)</div>
-              <div className="text-sm font-bold text-slate-850">
-                {data.oneDueCount} / {data.twoDueCount} / {data.threePlusDueCount}
-              </div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <table className="w-full text-left border-collapse border border-slate-200">
-            <thead>
-              <tr className="bg-slate-100 border-b border-slate-350 text-[10px] uppercase font-bold text-slate-700">
-                <th className="py-2.5 px-3 border-r border-slate-200">S.No</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Student Code</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Student Name</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Class Info</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Parent Name</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Parent Mobile</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Overdue Items</th>
-                <th className="py-2.5 px-3 border-r border-slate-200 text-right">Edu Dues</th>
-                <th className="py-2.5 px-3 border-r border-slate-200 text-right">Trans Dues</th>
-                <th className="py-2.5 px-3 text-right">Outstanding Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {data.students.map((s: any, idx: number) => (
-                <tr key={s.id} className="text-[10px]">
-                  <td className="py-2 px-3 border-r border-slate-200 font-semibold text-slate-400">{idx + 1}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-mono text-slate-500">{s.studentCode}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-bold text-slate-850">{s.studentName}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-medium text-slate-650">{s.classInfo}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-medium text-slate-600">{s.parentName}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-semibold text-slate-400">{s.parentMobile}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-bold text-slate-650">{s.overdueCount} Months</td>
-                  <td className="py-2 px-3 border-r border-slate-200 text-right font-extrabold text-orange-500">₹{s.educationDue.toLocaleString()}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 text-right font-extrabold text-amber-500">₹{s.transportDue.toLocaleString()}</td>
-                  <td className="py-2 px-3 text-right font-extrabold text-slate-800">₹{s.totalDue.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* ======================================================== */}
-      {/* 3. RTE RECONCILE PRINT VIEW */}
-      {/* ======================================================== */}
-      {type === 'rte-reconcile' && (
-        <div className="space-y-6">
-          {/* Summary Panel */}
-          <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total RTE Enrolled Students</div>
-              <div className="text-base font-extrabold text-slate-800">{data.studentCount} Students</div>
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Exempted Tuition Fee Reimbursement</div>
-              <div className="text-base font-extrabold text-indigo-700">₹{data.totalExemptedAmount.toLocaleString()}</div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <table className="w-full text-left border-collapse border border-slate-200">
-            <thead>
-              <tr className="bg-slate-100 border-b border-slate-350 text-[10px] uppercase font-bold text-slate-700">
-                <th className="py-2.5 px-3 border-r border-slate-200">S.No</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Student Code</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Student Name</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Class & Section</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Parent Name</th>
-                <th className="py-2.5 px-3 border-r border-slate-200">Parent Mobile</th>
-                <th className="py-2.5 px-3 text-right">Exempted Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {data.students.map((s: any, idx: number) => (
-                <tr key={s.id} className="text-[10px]">
-                  <td className="py-2 px-3 border-r border-slate-200 font-semibold text-slate-400">{idx + 1}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-mono text-slate-500">{s.studentCode}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-bold text-slate-850">{s.studentName}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-medium text-slate-650">{s.classInfo}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-medium text-slate-600">{s.parentName}</td>
-                  <td className="py-2 px-3 border-r border-slate-200 font-semibold text-slate-400">{s.parentMobile}</td>
-                  <td className="py-2 px-3 text-right font-extrabold text-indigo-650">₹{s.exemptedAmount.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Footer / Signatures */}
-      <div className="mt-16 pt-8 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 font-semibold">
-        <div>
-          <p>Sunrise Connect Administration System</p>
-          <p className="text-[8px] text-slate-350">Securely verified via Digital Ledger Access Protocol</p>
-        </div>
-        <div className="w-48 text-center border-t border-slate-300 pt-2 text-slate-600">
-          <p>Authorized Signature</p>
-          <p className="text-[8px] text-slate-400 mt-0.5">Office of the School Principal</p>
-        </div>
+  /* ── Footer ── */
+  const Footer = (
+    <div style={S.footer}>
+      <div>
+        <div style={{ fontWeight: 700, color: '#555', fontSize: '9px' }}>Sunrise Connect Administration System</div>
+        <div style={{ fontSize: '8px', color: '#aaa' }}>Securely verified via Digital Ledger Access Protocol</div>
+      </div>
+      <div style={S.sigLine}>
+        Authorised Signature<br />
+        <span style={{ fontSize: '8px', color: '#aaa' }}>Office of the School Principal</span>
       </div>
     </div>
   );
+
+  /* ================================================================ */
+  /* 1. DAILY COLLECTIONS                                              */
+  /* ================================================================ */
+  if (type === 'daily-collections') {
+    const avgDue = data.studentCount > 0
+      ? Math.round(data.totalCollected / data.studentCount)
+      : 0;
+    void avgDue;
+
+    return (
+      <div style={pageStyle}>
+        {Header}
+        <div style={{ ...S.summaryGrid, gridTemplateColumns: 'repeat(4,1fr)' }}>
+          {[
+            { label: 'Total Collected',  val: `₹${(data.totalCollected || 0).toLocaleString('en-IN')}` },
+            { label: 'Cash',             val: `₹${(data.cashCollected   || 0).toLocaleString('en-IN')}` },
+            { label: 'Online / UPI',     val: `₹${(data.onlineCollected || 0).toLocaleString('en-IN')}` },
+            { label: 'Cheque',           val: `₹${(data.chequeCollected || 0).toLocaleString('en-IN')}` },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={S.statLabel}>{s.label}</div>
+              <div style={S.statVal}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+
+        <table style={S.table}>
+          <thead>
+            <tr>
+              {['S.No', 'Code', 'Student Name', 'Class & Medium', 'Fee Category', 'Method', 'Time', 'Amount'].map((h, i) => (
+                <th key={i} style={{ ...S.th, ...(i === 7 ? S.thRight : {}) }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(data.transactions || []).map((t: any, idx: number) => (
+              <tr key={t.id} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.018)' : 'transparent' }}>
+                <td style={S.td}>{idx + 1}</td>
+                <td style={{ ...S.td, fontFamily: 'monospace', color: '#555' }}>{t.studentCode}</td>
+                <td style={{ ...S.td, fontWeight: 700 }}>{t.studentName}</td>
+                <td style={S.td}>{t.classInfo}</td>
+                <td style={S.td}>{(t.feeType || '').replace(/\n/g, ', ')}</td>
+                <td style={{ ...S.td, fontWeight: 700, textTransform: 'uppercase' }}>{t.method}</td>
+                <td style={{ ...S.td, color: '#666' }}>{t.time}</td>
+                <td style={{ ...S.td, ...S.tdRight, color: '#1b3a6b' }}>₹{(t.amount || 0).toLocaleString('en-IN')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {Footer}
+      </div>
+    );
+  }
+
+  /* ================================================================ */
+  /* 2. OUTSTANDING DUES (landscape)                                   */
+  /* ================================================================ */
+  if (type === 'outstanding-dues') {
+    const avgDue = data.studentCount > 0
+      ? Math.round(data.totalOutstandingAmount / data.studentCount)
+      : 0;
+
+    return (
+      <div style={pageStyle}>
+        {Header}
+        <div style={{ ...S.summaryGrid, gridTemplateColumns: 'repeat(4,1fr)' }}>
+          {[
+            { label: 'Total Outstanding',     val: `₹${(data.totalOutstandingAmount || 0).toLocaleString('en-IN')}`, color: '#dc2626' },
+            { label: 'Students with Dues',    val: `${data.studentCount || 0}`,                                        color: undefined },
+            { label: 'Avg. Dues / Student',   val: `₹${avgDue.toLocaleString('en-IN')}`,                              color: undefined },
+            { label: 'Aging (1M / 2M / 3M+)', val: `${data.oneDueCount || 0} / ${data.twoDueCount || 0} / ${data.threePlusDueCount || 0}`, color: undefined },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={S.statLabel}>{s.label}</div>
+              <div style={{ ...S.statVal, ...(s.color ? { color: s.color } : {}) }}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+
+        <table style={S.table}>
+          <thead>
+            <tr>
+              {['S.No', 'Code', 'Student Name', 'Class', 'Parent Name', 'Mobile', 'Overdue', 'Edu Dues', 'Trans Dues', 'Total Due'].map((h, i) => (
+                <th key={i} style={{ ...S.th, ...(i >= 7 ? S.thRight : {}) }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(data.students || []).map((s: any, idx: number) => (
+              <tr key={s.id} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.018)' : 'transparent' }}>
+                <td style={S.td}>{idx + 1}</td>
+                <td style={{ ...S.td, fontFamily: 'monospace', color: '#555' }}>{s.studentCode}</td>
+                <td style={{ ...S.td, fontWeight: 700 }}>{s.studentName}</td>
+                <td style={S.td}>{s.classInfo}</td>
+                <td style={S.td}>{s.parentName}</td>
+                <td style={{ ...S.td, color: '#666' }}>{s.parentMobile}</td>
+                <td style={{ ...S.td, fontWeight: 700 }}>{s.overdueCount} Months</td>
+                <td style={{ ...S.td, ...S.tdRight, color: '#ea580c' }}>₹{(s.educationDue || 0).toLocaleString('en-IN')}</td>
+                <td style={{ ...S.td, ...S.tdRight, color: '#d97706' }}>₹{(s.transportDue || 0).toLocaleString('en-IN')}</td>
+                <td style={{ ...S.td, ...S.tdRight, color: '#1b3a6b', fontSize: '10px' }}>₹{(s.totalDue || 0).toLocaleString('en-IN')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {Footer}
+      </div>
+    );
+  }
+
+  /* ================================================================ */
+  /* 3. RTE RECONCILE                                                  */
+  /* ================================================================ */
+  if (type === 'rte-reconcile') {
+    return (
+      <div style={pageStyle}>
+        {Header}
+        <div style={{ ...S.summaryGrid, gridTemplateColumns: 'repeat(2,1fr)' }}>
+          {[
+            { label: 'Total RTE Enrolled',              val: `${data.studentCount || 0} Students`,                          color: undefined },
+            { label: 'Total Exempted Tuition Fee',       val: `₹${(data.totalExemptedAmount || 0).toLocaleString('en-IN')}`, color: '#4338ca' },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={S.statLabel}>{s.label}</div>
+              <div style={{ ...S.statVal, ...(s.color ? { color: s.color } : {}) }}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+
+        <table style={S.table}>
+          <thead>
+            <tr>
+              {['S.No', 'Code', 'Student Name', 'Class & Section', 'Parent Name', 'Mobile', 'Exempted Amount'].map((h, i) => (
+                <th key={i} style={{ ...S.th, ...(i === 6 ? S.thRight : {}) }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(data.students || []).map((s: any, idx: number) => (
+              <tr key={s.id} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.018)' : 'transparent' }}>
+                <td style={S.td}>{idx + 1}</td>
+                <td style={{ ...S.td, fontFamily: 'monospace', color: '#555' }}>{s.studentCode}</td>
+                <td style={{ ...S.td, fontWeight: 700 }}>{s.studentName}</td>
+                <td style={S.td}>{s.classInfo}</td>
+                <td style={S.td}>{s.parentName}</td>
+                <td style={{ ...S.td, color: '#666' }}>{s.parentMobile}</td>
+                <td style={{ ...S.td, ...S.tdRight, color: '#4338ca', fontSize: '10px' }}>₹{(s.exemptedAmount || 0).toLocaleString('en-IN')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {Footer}
+      </div>
+    );
+  }
+
+  return null;
 };

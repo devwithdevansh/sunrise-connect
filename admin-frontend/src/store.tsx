@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type {
   Student,
@@ -6,6 +6,8 @@ import type {
   PaymentTransaction
 } from './mockData';
 import { isPeriodOverdue } from './utils';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://linen-weasel-242678.hostingersite.com';
 
 export type ScreenType =
   | 'dashboard'
@@ -43,6 +45,7 @@ export interface FeeCategoryData {
 
 export interface FeeStructureData {
   _id: string;
+  academicYear?: string;
   medium: string;
   standard: string;
   annualFee: number;
@@ -56,6 +59,7 @@ export interface FeeStructureData {
 
 export interface TransportFeeStructureData {
   _id: string;
+  academicYear?: string;
   transportType: string;
   amount: number;
   frequency: string;
@@ -117,26 +121,29 @@ interface AppContextType {
   logout: () => void;
   checkMobile: (primary: string, secondary: string) => Promise<any>;
   deleteStudent: (id: string) => Promise<boolean>;
+  restoreStudent: (id: string) => Promise<boolean>;
   updateStudent: (id: string, updates: Partial<Student> & { transportMonths?: number }) => Promise<{ success: boolean; error?: string }>;
   regenerateLedgers: (id: string) => Promise<boolean>;
   addCustomFee: (id: string, feeName: string, amount: number) => Promise<boolean>;
   importStudents: (students: any[]) => Promise<any>;
+  autoPromoteBatch: (studentIds: string[]) => Promise<any>;
+  fixTransportLedgers: (studentIds: string[], transportStartMonth: string) => Promise<any>;
+  copyFeeStructures: (fromYear: string, toYear: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   selectedStudentIdForFee: string | null;
   setSelectedStudentIdForFee: (id: string | null) => void;
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
   isLoadingDetails: boolean;
+  isScreenLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-let activeRefreshPromise: Promise<{ accessToken: string; refreshToken: string } | null> | null = null;
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<{ name: string; role: 'ADMIN' | 'STAFF' } | null>(() => {
     const saved = localStorage.getItem('currentUser');
     return saved ? JSON.parse(saved) : null;
   });
-  const [currentScreen, setScreen] = useState<ScreenType>(() => {
+  const [currentScreen, setScreenState] = useState<ScreenType>(() => {
     const saved = localStorage.getItem('currentUser');
     return saved ? 'dashboard' : 'login';
   });
@@ -148,13 +155,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(() => {
     return localStorage.getItem('currentUser') !== null;
   });
+  const [isScreenLoading, setIsScreenLoading] = useState<boolean>(false);
 
   // Authenticated fetch wrapper that appends Bearer token and handles auto-refresh on 401
-  const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
     let token = localStorage.getItem('accessToken');
     const headers = {
       ...(options.headers || {}),
@@ -162,40 +172,73 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    let res = await fetch(url, { ...options, headers });
+    let res = await fetch(fullUrl, { ...options, headers });
     if (res.status === 401) {
       const savedRefreshToken = localStorage.getItem('refreshToken');
       const userId = localStorage.getItem('userId');
       if (savedRefreshToken && userId) {
         try {
-          if (!activeRefreshPromise) {
-            activeRefreshPromise = (async () => {
-              try {
-                const refreshRes = await fetch('/api/v1/auth/refresh', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    domain: 'user',
-                    userId,
-                    refreshToken: savedRefreshToken
-                  })
-                });
-                if (refreshRes.ok) {
-                  const refreshData = await refreshRes.json();
-                  const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
-                  localStorage.setItem('accessToken', newAccessToken);
-                  localStorage.setItem('refreshToken', newRefreshToken);
-                  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+          const lockKey = 'auth_refresh_lock';
+          const dataKey = 'auth_refresh_data';
+          const now = Date.now();
+          let tokens: { accessToken: string; refreshToken: string } | null = null;
+
+          const lockVal = localStorage.getItem(lockKey);
+          if (lockVal && (now - parseInt(lockVal, 10) < 10000)) {
+            // Lock is active in another tab, wait for the refreshed token
+            tokens = await new Promise<{ accessToken: string; refreshToken: string } | null>((resolve) => {
+              let attempts = 0;
+              const interval = setInterval(() => {
+                attempts++;
+                const savedData = localStorage.getItem(dataKey);
+                if (savedData) {
+                  clearInterval(interval);
+                  try {
+                    resolve(JSON.parse(savedData));
+                  } catch {
+                    resolve(null);
+                  }
+                  return;
                 }
-              } catch (refreshErr) {
-                console.error('Failed to auto-refresh token inside promise:', refreshErr);
-              } finally {
-                activeRefreshPromise = null;
-              }
-              return null;
-            })();
+                const currentLock = localStorage.getItem(lockKey);
+                if (!currentLock || attempts > 50) { // 5s timeout
+                  clearInterval(interval);
+                  resolve(null);
+                }
+              }, 100);
+            });
           }
-          const tokens = await activeRefreshPromise;
+
+          if (!tokens) {
+            // Acquire lock and refresh token
+            localStorage.setItem(lockKey, Date.now().toString());
+            localStorage.removeItem(dataKey);
+
+            try {
+              const refreshRes = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  domain: 'user',
+                  userId,
+                  refreshToken: savedRefreshToken
+                })
+              });
+              if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                const newTokens = refreshData.data; // { accessToken, refreshToken }
+                localStorage.setItem('accessToken', newTokens.accessToken);
+                localStorage.setItem('refreshToken', newTokens.refreshToken);
+                localStorage.setItem(dataKey, JSON.stringify(newTokens));
+                tokens = newTokens;
+              }
+            } catch (refreshErr) {
+              console.error('Failed to auto-refresh token inside lock:', refreshErr);
+            } finally {
+              localStorage.removeItem(lockKey);
+            }
+          }
+
           if (tokens) {
             headers['Authorization'] = `Bearer ${tokens.accessToken}`;
             res = await fetch(url, { ...options, headers });
@@ -209,227 +252,355 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       throw new Error('Session expired. Please log in again.');
     }
     return res;
-  };
+  }, []);
+
+  const fetchTimeoutRef = useRef<number | null>(null);
+  const activeFetchRef = useRef<Promise<void> | null>(null);
+  const lastSyncCheckTimeRef = useRef<number>(0);
 
   // Fetch data from backend on mount and after mutations
-  const fetchAll = async () => {
-    setIsLoadingDetails(true);
-    try {
-      const [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes] = await Promise.all([
-        authFetch('/api/v1/students?limit=1000'),
-        authFetch('/api/v1/ledgers?limit=1000'),
-        authFetch('/api/v1/payments?limit=1000'),
-        authFetch('/api/v1/fee-structures'),
-        authFetch('/api/v1/audit?limit=100'),
-        authFetch('/api/v1/academic-years'),
-        authFetch('/api/v1/fee-categories')
-      ]);
+  const fetchAll = useCallback(async () => {
+    if (activeFetchRef.current) {
+      return activeFetchRef.current;
+    }
 
-      const responses = [studRes, ledRes, txRes, feeRes, auditRes, ayRes, fcRes];
-      for (const response of responses) {
-        if (!response.ok) {
-          throw new Error(`Failed request: ${response.status} ${response.statusText}`);
+    const promise = (async () => {
+      setIsLoadingDetails(true);
+      try {
+        const initRes = await authFetch('/api/v1/dashboard/init');
+        if (!initRes.ok) {
+          throw new Error(`Failed request: ${initRes.status} ${initRes.statusText}`);
         }
-      }
 
-      const [studResp, ledResp, txResp, feeResp, auditResp, ayResp, fcResp] = await Promise.all([
-        studRes.json(),
-        ledRes.json(),
-        txRes.json(),
-        feeRes.json(),
-        auditRes.json(),
-        ayRes.json(),
-        fcRes.json()
-      ]);
+        const initData = await initRes.json();
+        const data = initData.data || {};
 
-      const rawStudents = studResp.data || [];
-      const rawLedgers = ledResp.data || [];
-      const rawTransactions = txResp.data || [];
+        const rawStudents = data.students || [];
+        const rawLedgers = data.ledgers || [];
+        const rawTransactions = data.transactions || [];
 
-      // Fee structures
-      const feeData = feeResp.data || {};
-      setFeeStructures(feeData.feeStructures || []);
-      setTransportFeeStructures(feeData.transportStructures || []);
+        // Fee structures
+        setFeeStructures(data.feeStructures || []);
+        setTransportFeeStructures(data.transportStructures || []);
 
-      // Audit logs
-      setAuditLogs(auditResp.data?.logs || []);
+        // Audit logs
+        const rawAuditLogs = data.auditLogs || [];
+        setAuditLogs(rawAuditLogs);
+        if (rawAuditLogs.length > 0) {
+          const latestTime = new Date(rawAuditLogs[0].createdAt).getTime();
+          setLastSyncTimestamp(latestTime);
+        }
 
-      // Academic Years and Fee Categories
-      setAcademicYears(ayResp.data || []);
-      setFeeCategories(fcResp.data || []);
+        // Academic Years and Fee Categories
+        setAcademicYears(data.academicYears || []);
+        setFeeCategories(data.feeCategories || []);
 
+        // Map ledgers (inject id)
+        const mappedLedgers = rawLedgers.map((l: any) => ({
+          ...l,
+          id: l._id
+        }));
 
-      // Map ledgers (inject id)
-      const mappedLedgers = rawLedgers.map((l: any) => ({
-        ...l,
-        id: l._id
-      }));
+        // Map students (calculate status and populate parent info from parentId object)
+        const activeAcademicYear = (data.academicYears || []).find((y: any) => y.isActive)?.name || (data.academicYears || [])[0]?.name || '';
 
-      // Map students (calculate status and populate parent info from parentId object)
-      const activeAcademicYear = (ayResp.data || []).find((y: any) => y.isActive)?.name || '';
+        const mappedStudents = rawStudents.map((s: any) => {
+          const overdueLedgers = mappedLedgers.filter((l: any) => {
+            if (l.studentId !== s._id || l.status === 'PAID') return false;
+            if (l.remainingAmount <= 0) return false;
+            return isPeriodOverdue(l.feePeriod, l.academicYear, activeAcademicYear);
+          });
 
-      const mappedStudents = rawStudents.map((s: any) => {
-        const overdueLedgers = mappedLedgers.filter((l: any) => {
-          if (l.studentId !== s._id || l.status === 'PAID') return false;
-          if (l.remainingAmount <= 0) return false;
-          return isPeriodOverdue(l.feePeriod, l.academicYear, activeAcademicYear);
+          const uniquePeriods = new Set(
+            overdueLedgers.map((l: any) => `${l.academicYear || activeAcademicYear}_${l.feePeriod}`)
+          );
+          const dueCount = uniquePeriods.size;
+
+          let status = 'PAID';
+          if (s.isRTE) {
+            status = 'RTE';
+          } else if (dueCount === 1) {
+            status = '1 DUE';
+          } else if (dueCount === 2) {
+            status = '2 DUE';
+          } else if (dueCount >= 3) {
+            status = '3+ DUE';
+          }
+
+          return {
+            ...s,
+            id: s._id,
+            parentName: s.parentId?.parentName || '',
+            parentMobile: s.parentId?.primaryMobileNumber || '',
+            parentSecondaryMobile: s.parentId?.secondaryMobileNumber || '',
+            transportStartMonth: s.transportStartMonth || 'June',
+            status
+          };
         });
 
-        const uniquePeriods = new Set(
-          overdueLedgers.map((l: any) => `${l.academicYear || activeAcademicYear}_${l.feePeriod}`)
-        );
-        const dueCount = uniquePeriods.size;
+        // Map transactions to fit PaymentTransaction interface
+        const mappedLedgersMap = new Map<string, any>(mappedLedgers.map((l: any) => [l._id || l.id, l]));
+        const mappedStudentsMap = new Map<string, any>(mappedStudents.map((s: any) => [s._id || s.id, s]));
 
-        let status = 'PAID';
-        if (s.isRTE) {
-          status = 'RTE';
-        } else if (dueCount === 1) {
-          status = '1 DUE';
-        } else if (dueCount === 2) {
-          status = '2 DUE';
-        } else if (dueCount >= 3) {
-          status = '3+ DUE';
-        }
-
-        return {
-          ...s,
-          id: s._id,
-          parentName: s.parentId?.parentName || '',
-          parentMobile: s.parentId?.primaryMobileNumber || '',
-          status
+        const getFeeTypeFormatted = (ledger: any) => {
+          if (!ledger) return 'General Fee';
+          const type = ledger.feeType;
+          let formatted = type;
+          if (type === 'EDUCATION') formatted = 'Education';
+          else if (type === 'TRANSPORT') formatted = 'Transport';
+          else if (type === 'TERM') formatted = 'Term';
+          else if (type === 'ADMISSION') formatted = 'Admission';
+          else if (type === 'BAG_KIT') formatted = 'Bag & Kit';
+          else formatted = type.charAt(0) + type.slice(1).toLowerCase();
+          return `${formatted} Fee - ${ledger.feePeriod}`;
         };
-      });
 
-
-      // Map transactions to fit PaymentTransaction interface
-      const mappedLedgersMap = new Map<string, any>(mappedLedgers.map((l: any) => [l._id || l.id, l]));
-      const mappedStudentsMap = new Map<string, any>(mappedStudents.map((s: any) => [s._id || s.id, s]));
-
-      const getFeeTypeFormatted = (ledger: any) => {
-        if (!ledger) return 'General Fee';
-        const type = ledger.feeType;
-        let formatted = type;
-        if (type === 'EDUCATION') formatted = 'Education';
-        else if (type === 'TRANSPORT') formatted = 'Transport';
-        else if (type === 'TERM') formatted = 'Term';
-        else if (type === 'ADMISSION') formatted = 'Admission';
-        else if (type === 'BAG_KIT') formatted = 'Bag & Kit';
-        else formatted = type.charAt(0) + type.slice(1).toLowerCase();
-        return `${formatted} Fee - ${ledger.feePeriod}`;
-      };
-
-      const groupedTxns = new Map<string, any[]>();
-      rawTransactions.forEach((tx: any) => {
-        const groupId = tx.details?.transactionId || tx._id;
-        if (!groupedTxns.has(groupId)) {
-          groupedTxns.set(groupId, []);
-        }
-        groupedTxns.get(groupId)!.push(tx);
-      });
-
-      const reversedIds = new Set(
-        rawTransactions
-          .filter((tx: any) => tx.isReversal && tx.details?.reversalOf)
-          .map((tx: any) => String(tx.details.reversalOf))
-      );
-
-      const mappedTransactions: any[] = [];
-      groupedTxns.forEach((txGroup, groupId) => {
-        let totalAmount = 0;
-        let totalConcession = 0;
-        const subItems: { id: string; description: string; amount: number; concessionAmount: number; method: string; status: string }[] = [];
-        const feeTypes: string[] = [];
-        const reversalIds: string[] = [];
-
-        let firstTx = txGroup[0];
-        let student: any = null;
-
-        txGroup.forEach((tx: any) => {
-          totalAmount += tx.amount || 0;
-          totalConcession += tx.concessionAmount || 0;
-          reversalIds.push(tx._id);
-
-          const ledger = mappedLedgersMap.get(tx.ledgerId);
-          if (!student && ledger) {
-            student = mappedStudentsMap.get(ledger.studentId);
+        const groupedTxns = new Map<string, any[]>();
+        rawTransactions.forEach((tx: any) => {
+          const groupId = tx.details?.transactionId || tx._id;
+          if (!groupedTxns.has(groupId)) {
+            groupedTxns.set(groupId, []);
           }
-          const desc = getFeeTypeFormatted(ledger);
-          feeTypes.push(desc);
+          groupedTxns.get(groupId)!.push(tx);
+        });
 
-          const isReversed = tx.isReversal || reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString());
-          const status = isReversed ? 'REVERSED' : (ledger?.status || 'PAID');
+        const reversedIds = new Set(
+          rawTransactions
+            .filter((tx: any) => tx.isReversal && tx.details?.reversalOf)
+            .map((tx: any) => String(tx.details.reversalOf))
+        );
 
-          subItems.push({
-            id: tx._id,
-            description: desc,
-            amount: tx.amount || 0,
-            concessionAmount: tx.concessionAmount || 0,
-            method: tx.method,
-            status: status
+        const mappedTransactions: any[] = [];
+        groupedTxns.forEach((txGroup, groupId) => {
+          let totalAmount = 0;
+          let totalConcession = 0;
+          const subItems: any[] = [];
+          const feeTypes: string[] = [];
+          const reversalIds: string[] = [];
+
+          let firstTx = txGroup[0];
+          let student: any = null;
+
+          txGroup.forEach((tx: any) => {
+            totalAmount += tx.amount || 0;
+            totalConcession += tx.concessionAmount || 0;
+            reversalIds.push(tx._id);
+
+            const ledger = mappedLedgersMap.get(tx.ledgerId);
+            if (!student && ledger) {
+              student = mappedStudentsMap.get(ledger.studentId);
+            }
+            const desc = getFeeTypeFormatted(ledger);
+            feeTypes.push(desc);
+
+            const isReversed = tx.isReversal || reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString());
+            const status = isReversed ? 'REVERSED' : (ledger?.status || 'PAID');
+
+            subItems.push({
+              id: tx._id,
+              description: desc,
+              amount: tx.amount || 0,
+              concessionAmount: tx.concessionAmount || 0,
+              method: tx.method,
+              status: status,
+              academicYear: ledger ? ledger.academicYear : undefined
+            });
+          });
+
+          // Build payment breakdown: one entry per unique method with summed amounts
+          const breakdownMap = new Map<string, number>();
+          txGroup.forEach((tx: any) => {
+            if (tx.method) {
+              breakdownMap.set(tx.method, (breakdownMap.get(tx.method) || 0) + (tx.amount || 0));
+            }
+          });
+          const paymentBreakdown = Array.from(breakdownMap.entries()).map(([method, amount]) => ({ method, amount }));
+          const uniqueMethods = Array.from(breakdownMap.keys());
+          const joinedMethod = uniqueMethods.join(' + ');
+
+          const groupIsReversal = firstTx.isReversal || txGroup.every(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
+          const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
+          const status = groupIsReversal ? 'REVERSED' : groupIsPartiallyReversed ? 'PARTIALLY_REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
+
+          // Extract primary academic year from the first subItem
+          const primaryAcademicYear = subItems.length > 0 ? subItems[0].academicYear : undefined;
+
+          // We want to get the student's name, standard, and medium from the ledger's snapshot!
+          const primaryLedger = mappedLedgersMap.get(firstTx.ledgerId);
+          let studentName = 'Unknown';
+          let studentCode = 'N/A';
+          let classInfo = 'N/A';
+          let isDeleted = false;
+
+          if (student) {
+            studentName = student.studentName;
+            studentCode = student.studentCode || 'N/A';
+            isDeleted = student.isActive === false;
+            // Get standard from snapshot if available, otherwise fallback to current student
+            const std = primaryLedger?.snapshot?.standard || student.standard;
+            const div = primaryLedger?.snapshot?.division || student.division;
+            const med = primaryLedger?.snapshot?.medium || student.medium;
+            classInfo = `${std} - ${div} ${med}`;
+          } else if (primaryLedger && primaryLedger.snapshot) {
+            // Student might have been hard-deleted, but we have the snapshot!
+            studentName = primaryLedger.snapshot.studentName || 'Unknown';
+            studentCode = 'N/A'; 
+            const std = primaryLedger.snapshot.standard || 'N/A';
+            const div = primaryLedger.snapshot.division || 'N/A';
+            const med = primaryLedger.snapshot.medium || 'N/A';
+            classInfo = `${std} - ${div} ${med}`;
+            isDeleted = true;
+          }
+
+          mappedTransactions.push({
+            id: groupId,
+            studentId: student ? student.id : (primaryLedger?.studentId || ''),
+            studentName: studentName,
+            studentCode: studentCode,
+            classInfo: classInfo,
+            feeType: feeTypes.join('\n'),
+            amount: totalAmount,
+            concessionAmount: totalConcession,
+            method: joinedMethod || firstTx.method || 'N/A',
+            time: firstTx.createdAt ? new Date(firstTx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
+            status: status,
+            date: firstTx.createdAt ? firstTx.createdAt.split('T')[0] : '',
+            remark: firstTx.details?.remark || firstTx.details?.reason || '',
+            subItems: subItems,
+            reversalIds: reversalIds.join(','),
+            paymentBreakdown: paymentBreakdown,
+            academicYear: primaryAcademicYear,
+            isDeleted: isDeleted
           });
         });
 
-        // Build payment breakdown: one entry per unique method with summed amounts
-        const breakdownMap = new Map<string, number>();
-        txGroup.forEach((tx: any) => {
-          if (tx.method) {
-            breakdownMap.set(tx.method, (breakdownMap.get(tx.method) || 0) + (tx.amount || 0));
-          }
-        });
-        const paymentBreakdown = Array.from(breakdownMap.entries()).map(([method, amount]) => ({ method, amount }));
-        const uniqueMethods = Array.from(breakdownMap.keys());
-        const joinedMethod = uniqueMethods.join(' + ');
+        setStudents(mappedStudents);
+        setLedgerEntries(mappedLedgers);
+        setTransactions(mappedTransactions);
+      } catch (err) {
+        console.error('Failed to fetch data from backend', err);
+      } finally {
+        setIsLoadingDetails(false);
+        activeFetchRef.current = null;
+      }
+    })();
 
-        const groupIsReversal = firstTx.isReversal || txGroup.every(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
-        const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
-        const status = groupIsReversal ? 'REVERSED' : groupIsPartiallyReversed ? 'PARTIALLY_REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
+    activeFetchRef.current = promise;
+    return promise;
+  }, [authFetch]);
 
-        mappedTransactions.push({
-          id: groupId,
-          studentId: student ? student.id : '',
-          studentName: student ? student.studentName : 'Unknown',
-          studentCode: student ? student.studentCode : 'N/A',
-          classInfo: student ? `${student.standard} - ${student.division} ${student.medium}` : 'N/A',
-          feeType: feeTypes.join('\n'),
-          amount: totalAmount,
-          concessionAmount: totalConcession,
-          method: joinedMethod || firstTx.method || 'N/A',
-          time: firstTx.createdAt ? new Date(firstTx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
-          status: status,
-          date: firstTx.createdAt ? firstTx.createdAt.split('T')[0] : '',
-          remark: firstTx.details?.remark || firstTx.details?.reason || '',
-          subItems: subItems,
-          reversalIds: reversalIds.join(','),
-          paymentBreakdown: paymentBreakdown
-        });
-      });
-
-      setStudents(mappedStudents);
-      setLedgerEntries(mappedLedgers);
-      setTransactions(mappedTransactions);
-    } catch (err) {
-      console.error('Failed to fetch data from backend', err);
-    } finally {
-      setIsLoadingDetails(false);
+  const debouncedFetchAll = useCallback(() => {
+    if (fetchTimeoutRef.current) {
+      window.clearTimeout(fetchTimeoutRef.current);
     }
-  };
+    fetchTimeoutRef.current = window.setTimeout(() => {
+      fetchAll();
+    }, 400); // 400ms debounce to prevent WAF hits on back-to-back mutations
+  }, [fetchAll]);
+
+  const setScreen = useCallback(async (screen: ScreenType) => {
+    setScreenState(screen);
+    if (!currentUser || screen === 'login') return;
+
+    const now = Date.now();
+    if (now - lastSyncCheckTimeRef.current < 15000) {
+      // Throttle sync state checks to at most once per 15 seconds
+      return;
+    }
+    lastSyncCheckTimeRef.current = now;
+
+    try {
+      const res = await authFetch('/api/v1/dashboard/sync-state');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.data?.timestamp && data.data.timestamp > lastSyncTimestamp) {
+        console.log(`[Sync] Screen navigation detected newer data. Showing skeleton...`);
+        setIsScreenLoading(true);
+        await fetchAll();
+        setIsScreenLoading(false);
+      }
+    } catch (err) {
+      console.error('[Sync] Screen check failed:', err);
+    }
+  }, [currentUser, lastSyncTimestamp, authFetch, fetchAll]);
 
   useEffect(() => {
     if (currentUser) {
       fetchAll();
     }
-  }, [currentUser]);
+  }, [currentUser, fetchAll]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let isSubscribed = true;
+
+    const checkSync = async () => {
+      const now = Date.now();
+      if (now - lastSyncCheckTimeRef.current < 15000) {
+        return;
+      }
+      lastSyncCheckTimeRef.current = now;
+
+      try {
+        const res = await authFetch('/api/v1/dashboard/sync-state');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isSubscribed) return;
+
+        if (data.data?.timestamp && data.data.timestamp > lastSyncTimestamp) {
+          console.log(`[Sync] Local state out of sync (local: ${lastSyncTimestamp}, server: ${data.data.timestamp}). Fetching latest data...`);
+          await fetchAll();
+        }
+      } catch (err) {
+        console.error('[Sync] Failed to verify sync state:', err);
+      }
+    };
+
+    // Stagger background polling with jitter (80s to 100s) so multi-tabs don't poll at once
+    const jitter = Math.random() * 20000 - 10000;
+    const interval = setInterval(checkSync, 90000 + jitter);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
+  }, [currentUser, lastSyncTimestamp, authFetch, fetchAll]);
+
+  // Sync logouts across multiple browser tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'currentUser' && !e.newValue) {
+        setCurrentUser(null);
+        setScreenState('login');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('/api/v1/auth/portal/login', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/portal/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
-      const data = await res.json().catch(() => ({}));
+
+      // Handle rate-limit (429) before trying to parse JSON
+      if (res.status === 429) {
+        return { success: false, error: 'Too many login attempts. Please wait a moment and try again.' };
+      }
+
+      // Safely parse JSON — Hostinger WAF may return HTML on errors
+      let data: any = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json().catch(() => ({}));
+      }
+
       if (!res.ok) {
-        return { success: false, error: data?.message || 'Invalid email or password. Try admin@school.com / secret123' };
+        return { success: false, error: data?.message || 'Invalid email or password.' };
       }
       if (!data || !data.data || !data.data.accessToken) {
         return { success: false, error: 'Invalid response from server' };
@@ -486,7 +657,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Fire backend logout in the background
     if (token && refreshToken) {
-      fetch('/api/v1/auth/logout', {
+      fetch(`${API_BASE}/api/v1/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -513,7 +684,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return;
       }
       // Refresh data
-      await fetchAll();
+      debouncedFetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -536,13 +707,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Filter out fees without a valid ledgerId
       const validFees = lineItems.filter(f => f.ledgerId);
 
-      const batchTxnId = crypto.randomUUID ? crypto.randomUUID() : `TXN${Date.now()}${Math.random().toString(36).substring(2, 6)}`;
-
-      for (const fee of validFees) {
-        const ledgerId = fee.ledgerId!;
-        const ledger = ledgerEntries.find(l => l.id === ledgerId || l._id === ledgerId);
-        if (!ledger) continue;
-
+      const paymentsPayload = validFees.map(fee => {
         let methodMapped = fee.paymentMethod;
         if (methodMapped === 'CARD' || methodMapped === 'NET BANKING') {
           methodMapped = 'ONLINE';
@@ -550,44 +715,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           methodMapped = 'CASH';
         }
 
-        const paymentApplied = fee.paymentAmount;
-        const concessionApplied = fee.concessionAmount;
-        const remark = fee.remark;
+        return {
+          ledgerId: fee.ledgerId!,
+          amount: fee.paymentAmount,
+          concessionAmount: fee.concessionAmount,
+          method: methodMapped as 'CASH' | 'CHEQUE' | 'ONLINE' | 'UPI' | 'REVERSAL',
+          remark: fee.remark
+        };
+      }).filter(p => p.amount > 0 || p.concessionAmount > 0);
 
-        if (paymentApplied > 0) {
-          // Case A: Payment (with optional embedded concession)
-          const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-          const payRes = await authFetch('/api/v1/payments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Idempotency-Key': idempotencyKey
-            },
-            body: JSON.stringify({
-              ledgerId,
-              amount: paymentApplied,
-              concessionAmount: concessionApplied,
-              method: methodMapped,
-              details: { remark, transactionId: batchTxnId }
-            })
-          });
-          if (!payRes.ok) {
-            console.error(`Failed to record payment for ledger ${ledgerId}`);
-          }
-        } else if (concessionApplied > 0) {
-          // Case B: Concession only (no payment portion)
-          const concRes = await authFetch(`/api/v1/ledgers/${ledgerId}/concession`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: concessionApplied, reason: remark || 'Concession applied' })
-          });
-          if (!concRes.ok) {
-            console.error(`Failed to apply concession for ledger ${ledgerId}`);
-          }
-        }
+      if (paymentsPayload.length === 0) return;
+
+      const idempotencyKey = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `batch-pay-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      const res = await authFetch('/api/v1/payments/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey
+        },
+        body: JSON.stringify({ payments: paymentsPayload })
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error('Failed to record batch payment:', errBody);
+        alert(errBody.message || 'Failed to record payments. Please try again.');
+      } else {
+        debouncedFetchAll();
       }
-
-      await fetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -601,7 +756,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify({ amount, reason: 'Applied concession manually' })
       });
       if (!res.ok) throw new Error('Failed to apply concession');
-      await fetchAll();
+      debouncedFetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -638,7 +793,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update fee structure');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -652,7 +807,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete fee structure');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -669,7 +824,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update transport fee structure');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -683,7 +838,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete transport fee structure');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -699,7 +854,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to create fee structure');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -715,11 +870,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to create transport fee structure');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
       return false;
+    }
+  };
+
+  const copyFeeStructures = async (fromYear: string, toYear: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+    try {
+      const res = await authFetch('/api/v1/fee-structures/copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromYear, toYear })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Copy failed');
+      debouncedFetchAll();
+      return { success: true, message: data.message };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, error: err.message };
     }
   };
 
@@ -731,7 +903,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to create academic year');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -747,7 +919,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify({ isActive: true })
       });
       if (!res.ok) throw new Error('Failed to activate academic year');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -762,10 +934,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) return false;
-      await fetchAll();
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error('[createFeeCategory] error:', errBody?.message || res.status);
+        return false;
+      }
+      debouncedFetchAll();
       return true;
     } catch (err) {
+      console.error('[createFeeCategory] network error:', err);
       return false;
     }
   };
@@ -778,7 +955,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update academic year');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -792,7 +969,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         method: 'DELETE'
       });
       if (!res.ok) throw new Error('Failed to delete academic year');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -808,7 +985,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update fee category');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -822,7 +999,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         method: 'DELETE'
       });
       if (!res.ok) throw new Error('Failed to delete fee category');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -855,7 +1032,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to delete student');
         return false;
       }
-      await fetchAll();
+      debouncedFetchAll();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const restoreStudent = async (id: string) => {
+    try {
+      const res = await authFetch(`/api/v1/students/${id}/restore`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        console.error('Failed to restore student');
+        return false;
+      }
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -875,7 +1069,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to update student:', data);
         return { success: false, error: data.message || 'Failed to update student' };
       }
-      await fetchAll();
+      debouncedFetchAll();
       return { success: true };
     } catch (err: any) {
       console.error(err);
@@ -890,7 +1084,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         headers: { 'Content-Type': 'application/json' }
       });
       if (!res.ok) throw new Error('Failed to regenerate ledgers');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -906,7 +1100,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify({ feeName, amount })
       });
       if (!res.ok) throw new Error('Failed to add custom fee');
-      await fetchAll();
+      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -925,7 +1119,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (!res.ok) {
         throw new Error(data.message || 'Import failed');
       }
-      await fetchAll();
+      debouncedFetchAll();
+      return data.data;
+    } catch (err: any) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const autoPromoteBatch = async (studentIds: string[]) => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/v1/students/auto-promote-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds })
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || 'Auto-promotion failed');
+      }
+      const data = await res.json();
+      debouncedFetchAll();
+      return data.data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const fixTransportLedgers = async (studentIds: string[], transportStartMonth: string) => {
+    try {
+      const res = await authFetch('/api/v1/students/fix-transport', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds, transportStartMonth })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Fix failed');
+      debouncedFetchAll();
       return data.data;
     } catch (err: any) {
       console.error(err);
@@ -969,13 +1200,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logout,
         checkMobile,
         deleteStudent,
+        restoreStudent,
         updateStudent,
         regenerateLedgers,
         addCustomFee,
         importStudents,
+        autoPromoteBatch,
+        fixTransportLedgers,
+        copyFeeStructures,
         selectedStudentIdForFee,
         setSelectedStudentIdForFee,
-        isLoadingDetails
+        isLoadingDetails,
+        isScreenLoading
       }}
     >
       {children}

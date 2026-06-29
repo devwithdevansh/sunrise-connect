@@ -100,10 +100,6 @@ const DashboardSkeleton: React.FC = () => {
 export const Dashboard: React.FC = () => {
   const { students, ledgerEntries, transactions, setScreen, isLoadingDetails } = useApp();
 
-  if (isLoadingDetails && students.length === 0) {
-    return <DashboardSkeleton />;
-  }
-
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
   const todayString = useMemo(() => {
     return new Date().toISOString().split('T')[0];
@@ -338,6 +334,10 @@ export const Dashboard: React.FC = () => {
   }, [filteredTransactions, currentPage]);
 
   const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
+
+  if (isLoadingDetails && students.length === 0) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="flex-1 p-6 space-y-6">

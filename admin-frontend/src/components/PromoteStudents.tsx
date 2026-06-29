@@ -1,20 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../store';
-import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check } from 'lucide-react';
+import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check, Info, X } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
-  const { students, setScreen, academicYears } = useApp();
+  const { students, setScreen, academicYears, authFetch, feeStructures } = useApp();
   const [sourceMedium, setSourceMedium] = useState('English');
   const [sourceClass, setSourceClass] = useState('5');
   const [sourceDiv, setSourceDiv] = useState('A');
   const [targetClass, setTargetClass] = useState('6');
   const [targetDiv, setTargetDiv] = useState('A');
   const [targetYear, setTargetYear] = useState('2026-27');
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPromoInfo, setShowPromoInfo] = useState(false);
+
+  const activeYearName = React.useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
+
+  // Derive source medium options dynamically from active year fee structures
+  const sourceMediumOptions = React.useMemo(() => {
+    const configuredMeds = feeStructures
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)))
+      .map(f => f.medium);
+    const medSet = new Set(configuredMeds);
+    if (medSet.size === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return Array.from(medSet);
+  }, [feeStructures, activeYearName, academicYears]);
+
+  // Derive source class options dynamically from active year fee structures
+  const sourceClassOptions = React.useMemo(() => {
+    const configuredStds = feeStructures
+      .filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)))
+      .map(f => f.standard);
+    const stdSet = new Set(configuredStds);
+    if (stdSet.size === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    return Array.from(stdSet).sort((a, b) => {
+      const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
+      const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
+      return orderA - orderB;
+    });
+  }, [feeStructures, activeYearName, academicYears]);
+
+  // Derive target class options dynamically from target year fee structures
+  const targetClassOptions = React.useMemo(() => {
+    const configuredStds = feeStructures
+      .filter(f => f.academicYear === targetYear)
+      .map(f => f.standard);
+    const stdSet = new Set(configuredStds);
+    if (stdSet.size === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    return Array.from(stdSet).sort((a, b) => {
+      const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
+      const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
+      return orderA - orderB;
+    });
+  }, [feeStructures, targetYear]);
 
   useEffect(() => {
     if (academicYears && academicYears.length > 0) {
@@ -28,22 +77,55 @@ export const PromoteStudents: React.FC = () => {
   }, [academicYears]);
 
   useEffect(() => {
+    if (sourceMediumOptions.length > 0 && !sourceMediumOptions.includes(sourceMedium)) {
+      setSourceMedium(sourceMediumOptions[0]);
+    }
+  }, [sourceMediumOptions, sourceMedium]);
+
+  useEffect(() => {
+    if (sourceClassOptions.length > 0 && !sourceClassOptions.includes(sourceClass)) {
+      setSourceClass(sourceClassOptions[0]);
+    }
+  }, [sourceClassOptions, sourceClass]);
+
+  useEffect(() => {
+    if (targetClassOptions.length > 0 && !targetClassOptions.includes(targetClass)) {
+      setTargetClass(targetClassOptions[0]);
+    }
+  }, [targetClassOptions, targetClass]);
+
+  useEffect(() => {
     if (sourceClass) {
-      const next = parseInt(sourceClass) + 1;
-      setTargetClass(next <= 12 ? next.toString() : sourceClass);
+      const nextNum = parseInt(sourceClass, 10);
+      let nextClass = sourceClass;
+      if (!isNaN(nextNum)) {
+        nextClass = (nextNum + 1).toString();
+      } else if (sourceClass.toLowerCase() === 'nursery') {
+        nextClass = 'LKG';
+      } else if (sourceClass.toLowerCase() === 'lkg') {
+        nextClass = 'UKG';
+      } else if (sourceClass.toLowerCase() === 'ukg') {
+        nextClass = '1';
+      }
+
+      if (targetClassOptions.includes(nextClass)) {
+        setTargetClass(nextClass);
+      } else if (targetClassOptions.length > 0) {
+        setTargetClass(targetClassOptions.includes(nextClass) ? nextClass : targetClassOptions[0]);
+      }
       setTargetDiv(sourceDiv);
     }
-  }, [sourceClass, sourceDiv]);
+  }, [sourceClass, sourceDiv, targetClassOptions]);
 
   // Reset selected list when source configurations change
   useEffect(() => {
     setSelectedStudentIds([]);
   }, [sourceMedium, sourceClass, sourceDiv]);
 
-  const eligibleStudents = students.filter(s => 
+  const eligibleStudents = students.filter(s =>
     s.isActive !== false &&
     s.medium === sourceMedium &&
-    String(s.standard).trim() === String(sourceClass).trim() && 
+    String(s.standard).trim() === String(sourceClass).trim() &&
     String(s.division).trim() === String(sourceDiv).trim() &&
     (searchQuery === '' || s.studentName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -70,12 +152,10 @@ export const PromoteStudents: React.FC = () => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      const res = await fetch('/api/v1/students/promote', {
+      const res = await authFetch('/api/v1/students/promote', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           studentIds: selectedStudentIds,
@@ -108,7 +188,7 @@ export const PromoteStudents: React.FC = () => {
         {/* Background decorative elements */}
         <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full -mr-20 -mt-20 pointer-events-none"></div>
         <div className="absolute left-1/3 bottom-0 w-32 h-32 bg-indigo-400/10 rounded-full -mb-10 pointer-events-none"></div>
-        
+
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 bg-indigo-500/30 px-3 py-1 rounded-full text-[10px] font-extrabold text-indigo-100 uppercase tracking-wider backdrop-blur-sm">
@@ -119,8 +199,58 @@ export const PromoteStudents: React.FC = () => {
               Advance groups of students to their next standard, customize destination divisions, and assign academic years efficiently.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowPromoInfo(!showPromoInfo)}
+            className={`flex items-center justify-center gap-2 font-extrabold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md active:scale-[0.99] shrink-0 border ${
+              showPromoInfo
+                ? 'bg-white text-indigo-800 border-white hover:bg-indigo-50'
+                : 'bg-indigo-500/30 text-indigo-100 border-indigo-500/50 hover:bg-indigo-500/50 hover:text-white'
+            }`}
+          >
+            <Info className="h-4 w-4" />
+            {showPromoInfo ? 'Hide Promotion Guide' : 'How Promotion Works'}
+          </button>
         </div>
       </div>
+
+      {showPromoInfo && (
+        <div className="bg-indigo-50/60 border border-indigo-150 rounded-2xl p-5 shadow-sm space-y-3.5 animate-fade-in mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex gap-2">
+              <span className="text-xl">🎓</span>
+              <div>
+                <h4 className="font-extrabold text-indigo-900 text-sm">Understanding the Promotion Process</h4>
+                <p className="text-[11px] text-indigo-700/80 font-medium mt-0.5">
+                  Promotions are isolated by academic years. Read these key rules to ensure the process goes smoothly.
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setShowPromoInfo(false)} className="text-indigo-400 hover:text-indigo-600 transition-colors p-1"><X className="w-4 h-4" /></button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
+              <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">1. Pre-requisite</h5>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Before promoting, you <strong>MUST</strong> set up the target year's <strong>Fee Structure</strong> first in Setup. The system needs this to calculate their new monthly fee amounts.
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
+              <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">2. Ledger Generation</h5>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Promoting creates the student's monthly ledgers for the <strong>target academic year</strong> using the fee structure defined for their <strong>promoted standard</strong>.
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-1.5">
+              <h5 className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider text-indigo-600">3. Ledger Isolation</h5>
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Fees from previous years remain unchanged at their original rates. The new year's ledgers are fully isolated from the previous year.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {success && (
         <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 font-bold border border-emerald-200 shadow-sm animate-fade-in">
@@ -151,8 +281,9 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setSourceMedium(e.target.value)}
                   className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-350 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  <option value="English">English</option>
-                  <option value="Gujarati">Gujarati</option>
+                  {sourceMediumOptions.map((med) => (
+                    <option key={med} value={med}>{med}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               </div>
@@ -167,7 +298,9 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setSourceClass(e.target.value)}
                   className="appearance-none w-full bg-slate-50 border border-slate-200 hover:border-slate-355 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Std {i+1}</option>)}
+                  {sourceClassOptions.map((cls) => (
+                    <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               </div>
@@ -225,7 +358,9 @@ export const PromoteStudents: React.FC = () => {
                   onChange={e => setTargetClass(e.target.value)}
                   className="appearance-none w-full bg-indigo-50/40 border border-indigo-100 hover:border-indigo-200 rounded-xl py-2.5 pl-3 pr-8 text-xs font-bold text-indigo-900 focus:outline-none transition-all shadow-sm cursor-pointer"
                 >
-                  {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>Std {i+1}</option>)}
+                  {targetClassOptions.map((cls) => (
+                    <option key={cls} value={cls}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
               </div>
@@ -261,7 +396,9 @@ export const PromoteStudents: React.FC = () => {
                     ))
                   ) : (
                     <>
-                      <option value="2025-26">2025-26</option>
+                      {academicYears.map(ay => (
+                        <option key={ay._id} value={ay.name}>{ay.name}</option>
+                      ))}
                       <option value="2026-27">2026-27</option>
                     </>
                   )}
@@ -367,13 +504,12 @@ export const PromoteStudents: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-mono text-[11px] text-slate-500">{student.studentCode}</td>
                       <td className="py-3 px-4">
-                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase border ${
-                          student.status === 'PAID'
+                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase border ${student.status === 'PAID'
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                             : student.status === 'RTE'
                               ? 'bg-purple-50 text-purple-600 border-purple-100'
                               : 'bg-amber-50 text-amber-550 border-amber-100'
-                        }`}>
+                          }`}>
                           {student.status || 'ACTIVE'}
                         </span>
                       </td>
@@ -415,7 +551,7 @@ export const PromoteStudents: React.FC = () => {
             >
               Cancel
             </button>
-            
+
             <button
               type="button"
               onClick={handlePromote}

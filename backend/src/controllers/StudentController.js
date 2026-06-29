@@ -39,8 +39,17 @@ class StudentController {
 
   /** DELETE /api/v1/students/:id */
   static deleteStudent = catchAsync(async (req, res) => {
-    await StudentService.deleteStudent(req.params.id, req.user.id);
-    sendResponse(res, 200, null, 'Student successfully deleted');
+    const result = await StudentService.deleteStudent(req.params.id, req.user.id);
+    const message = result.softDeleted 
+      ? 'Student has payment history and was marked as inactive (soft deleted)' 
+      : 'Student and all records successfully deleted';
+    sendResponse(res, 200, null, message);
+  });
+
+  /** POST /api/v1/students/:id/restore */
+  static restoreStudent = catchAsync(async (req, res) => {
+    const student = await StudentService.restoreStudent(req.params.id, req.user.id);
+    sendResponse(res, 200, student, 'Student successfully restored');
   });
 
   /** POST /api/v1/students/:id/regenerate-ledgers */
@@ -75,6 +84,34 @@ class StudentController {
     }
     const result = await StudentService.importStudents(students);
     sendResponse(res, 200, result);
+  });
+
+  /** PATCH /api/v1/students/fix-transport
+   * Body: { studentIds: string[], transportStartMonth: string }
+   * Deletes wrong transport ledgers and regenerates from correct start month.
+   */
+  static fixTransportLedgers = catchAsync(async (req, res) => {
+    const { studentIds, transportStartMonth } = req.body;
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      throw new AppError('studentIds array is required', 400);
+    }
+    if (!transportStartMonth) {
+      throw new AppError('transportStartMonth is required', 400);
+    }
+    const result = await StudentService.fixTransportLedgers(studentIds, transportStartMonth);
+    sendResponse(res, 200, result, `Fixed ${result.fixedCount} student(s)`);
+  });
+  /** POST /api/v1/students/auto-promote-batch
+   * Body: { studentIds: string[] }
+   * Auto promotes students to their next standard.
+   */
+  static autoPromoteBatch = catchAsync(async (req, res) => {
+    const { studentIds } = req.body;
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      throw new AppError('studentIds array is required', 400);
+    }
+    const result = await StudentService.autoPromoteBatch(studentIds, req.user?.id);
+    sendResponse(res, 200, result, `Successfully auto-promoted ${result.promotedCount} student(s)`);
   });
 }
 

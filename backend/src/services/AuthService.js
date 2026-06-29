@@ -32,6 +32,20 @@ class AuthService {
     const payload = { id: user._id.toString(), role: user.role };
     const accessToken = jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
 
+    // Clean expired refresh tokens first
+    await cleanExpiredRefreshTokens(userRepository, user._id);
+
+    // Cap active refresh tokens to 10 to prevent performance degradation
+    const entity = await userRepository.findByIdWithTokens(user._id);
+    if (entity && entity.refreshTokens && entity.refreshTokens.length >= 10) {
+      const sortedTokens = [...entity.refreshTokens].sort((a, b) => b.expiresAt - a.expiresAt);
+      const keptTokens = sortedTokens.slice(0, 9);
+      await userRepository.updateOne(
+        { _id: user._id },
+        { $set: { refreshTokens: keptTokens } }
+      );
+    }
+
     const refreshPlain = crypto.randomBytes(32).toString('hex');
     const refreshHash = await bcrypt.hash(refreshPlain, 10);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -105,7 +119,19 @@ class AuthService {
     const payload = { id: parent._id.toString(), role: 'parent' };
     const accessToken = jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
 
+    // Clean expired tokens
     await cleanExpiredRefreshTokens(parentRepository, parent._id);
+
+    // Cap active refresh tokens to 10
+    const entity = await parentRepository.findByIdWithTokens(parent._id);
+    if (entity && entity.refreshTokens && entity.refreshTokens.length >= 10) {
+      const sortedTokens = [...entity.refreshTokens].sort((a, b) => b.expiresAt - a.expiresAt);
+      const keptTokens = sortedTokens.slice(0, 9);
+      await parentRepository.updateOne(
+        { _id: parent._id },
+        { $set: { refreshTokens: keptTokens } }
+      );
+    }
 
     const refreshPlain = crypto.randomBytes(32).toString('hex');
     const refreshHash = await bcrypt.hash(refreshPlain, 10);
@@ -138,9 +164,16 @@ class AuthService {
     const entity = await Repo.findByIdWithTokens(userId);
     if (!entity) throw new AppError('Entity not found', 404);
 
-    const tokenEntry = (entity.refreshTokens || []).find(t =>
-      bcrypt.compareSync(refreshToken, t.tokenHash)
+    // Filter out expired refresh tokens first to reduce CPU-heavy bcrypt comparisons
+    const activeTokens = (entity.refreshTokens || []).filter(t => t.expiresAt > new Date());
+
+    // Async bcrypt compare – avoids blocking the event loop
+    const compareResults = await Promise.all(
+      activeTokens.map(t =>
+        bcrypt.compare(refreshToken, t.tokenHash).then(ok => (ok ? t : null))
+      )
     );
+    const tokenEntry = compareResults.find(Boolean);
     if (!tokenEntry) throw new AppError('Refresh token invalid', 401);
     if (new Date() > tokenEntry.expiresAt) throw new AppError('Refresh token expired', 401);
 
@@ -153,8 +186,20 @@ class AuthService {
     try {
       const modelName = domain === 'parent' ? 'Parent' : 'User';
       const user = await mongoose.model(modelName).findById(userId).select('+refreshTokens').session(session);
-      user.refreshTokens = user.refreshTokens.filter(t => t.tokenHash !== tokenEntry.tokenHash);
-      user.refreshTokens.push({ tokenHash: newHash, expiresAt: newExpiresAt });
+      
+      // Filter out expired tokens and the current rotated token
+      let filteredTokens = (user.refreshTokens || []).filter(
+        t => t.expiresAt > new Date() && t.tokenHash !== tokenEntry.tokenHash
+      );
+
+      // Keep only the most recent 10 active tokens to prevent CPU-intensive compare runs
+      if (filteredTokens.length >= 10) {
+        filteredTokens.sort((a, b) => b.expiresAt - a.expiresAt);
+        filteredTokens = filteredTokens.slice(0, 9);
+      }
+
+      filteredTokens.push({ tokenHash: newHash, expiresAt: newExpiresAt });
+      user.refreshTokens = filteredTokens;
       await user.save({ session });
 
       const payload = { id: userId, role: entity.role || (domain === 'parent' ? 'parent' : 'user') };
@@ -178,9 +223,17 @@ class AuthService {
     const Repo = domain === 'parent' ? parentRepository : userRepository;
     const entity = await Repo.findByIdWithTokens(userId);
     if (!entity) return;
-    const tokenEntry = (entity.refreshTokens || []).find(t =>
-      bcrypt.compareSync(refreshToken, t.tokenHash)
+
+    // Filter out expired tokens first to reduce CPU load
+    const activeTokens = (entity.refreshTokens || []).filter(t => t.expiresAt > new Date());
+
+    // Async bcrypt compare – avoids blocking the event loop
+    const compareResults = await Promise.all(
+      activeTokens.map(t =>
+        bcrypt.compare(refreshToken, t.tokenHash).then(ok => (ok ? t : null))
+      )
     );
+    const tokenEntry = compareResults.find(Boolean);
     if (!tokenEntry) return;
     await Repo.updateOne(
       { _id: userId },

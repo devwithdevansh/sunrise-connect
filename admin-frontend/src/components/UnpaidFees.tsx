@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, ledgerEntries, transactions, feeStructures, setScreen } = useApp();
+  const { students, ledgerEntries, transactions, feeStructures, academicYears, setScreen } = useApp();
+  
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
@@ -26,7 +28,8 @@ export const UnpaidFees: React.FC = () => {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   // Class filters dropdown state
-  const [classFilter, setClassFilter] = useState('All Classes');
+  const [stdFilter, setStdFilter] = useState('All Standards');
+  const [divFilter, setDivFilter] = useState('All Divisions');
   const [mediumFilter, setMediumFilter] = useState('All Mediums');
   const [zoneFilter, setZoneFilter] = useState('All Zones');
 
@@ -45,7 +48,7 @@ export const UnpaidFees: React.FC = () => {
   // Reset pagination page on filter/search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [dueFilter, classFilter, mediumFilter, zoneFilter, searchQuery]);
+  }, [dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
 
   // Dynamic counts based on actual students
   const counts = useMemo(() => {
@@ -118,7 +121,8 @@ export const UnpaidFees: React.FC = () => {
       if (dueFilter === '3_DUE' && s.status !== '3+ DUE') return false;
 
       // Filter by dropdown selectors
-      if (classFilter !== 'All Classes' && `${s.standard} - ${s.division}` !== classFilter) return false;
+      if (stdFilter !== 'All Standards' && s.standard !== stdFilter.replace('Class ', '')) return false;
+      if (divFilter !== 'All Divisions' && s.division !== divFilter.replace('Division ', '')) return false;
       if (mediumFilter !== 'All Mediums' && s.medium !== mediumFilter.split(' ')[0]) return false;
       if (zoneFilter !== 'All Zones') {
         const zoneType = zoneFilter.split(' ')[0];
@@ -138,7 +142,7 @@ export const UnpaidFees: React.FC = () => {
 
       return true;
     });
-  }, [students, dueFilter, classFilter, mediumFilter, zoneFilter, searchQuery]);
+  }, [students, dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
 
   const getOutstandingAmount = (studentId: string) => {
     return studentDuesMap.get(studentId) || 0;
@@ -200,19 +204,23 @@ export const UnpaidFees: React.FC = () => {
       }
     });
     
-    const academicYears = Array.from(yearsSet).sort();
-    if (academicYears.length === 0) {
-      academicYears.push('2025-26'); // safe fallback
+    const exportYears = Array.from(yearsSet).sort();
+    if (exportYears.length === 0) {
+      if (activeYearName) exportYears.push(activeYearName);
     }
 
     // 2. Build the title row (matching standard/medium filter + current date + monthly rate)
     let classPart = 'ALL CLASSES';
-    if (classFilter !== 'All Classes') {
-      const stdNum = classFilter.replace('Class ', '').replace('Class', '').trim();
+    if (stdFilter !== 'All Standards') {
+      const stdNum = stdFilter.replace('Class ', '').trim();
       classPart = `${stdNum}TH`.toUpperCase();
       const numMatch = stdNum.match(/^\d+/);
       if (numMatch) {
-        classPart = `${numMatch[0]}TH ${stdNum.replace(/^\d+\s*-\s*/, '')}`.toUpperCase();
+        classPart = `${numMatch[0]}TH`.toUpperCase();
+      }
+      if (divFilter !== 'All Divisions') {
+        const divPart = divFilter.replace('Division ', '').trim();
+        classPart += ` DIV ${divPart}`;
       }
     }
     
@@ -225,10 +233,11 @@ export const UnpaidFees: React.FC = () => {
 
     // Lookup monthly education fee if a single class and medium is filtered
     let feePart = '';
-    if (classFilter !== 'All Classes' && mediumFilter !== 'All Mediums') {
-      const stdNum = classFilter.replace('Class ', '').split(' ')[0];
+    if (stdFilter !== 'All Standards' && mediumFilter !== 'All Mediums') {
+      const stdNum = stdFilter.replace('Class ', '').trim();
       const medName = mediumFilter.replace(' Medium', '');
-      const fs = feeStructures.find(f => f.standard === stdNum && f.medium === medName);
+      const isDefaultYear = activeYearName === academicYears[0]?.name;
+      const fs = feeStructures.find(f => f.standard === stdNum && f.medium === medName && (f.academicYear === activeYearName || (!f.academicYear && isDefaultYear)));
       if (fs) {
         const annualFee = fs.annualFee || 0;
         const totalParts = (fs.educationPartCount || 12) + (fs.termPartCount || 2);
@@ -243,7 +252,7 @@ export const UnpaidFees: React.FC = () => {
 
     // 3. Header Rows Setup
     const headers = ['NAME', 'PARENTS NUMBER', 'MEDIUM'];
-    academicYears.forEach(year => {
+    exportYears.forEach(year => {
       headers.push(`YEAR ${year}`);
       headers.push(year);
     });
@@ -303,14 +312,14 @@ export const UnpaidFees: React.FC = () => {
     // 4. Fill Student Row Data
     let grandTotal = 0;
     const yearTotals = new Map<string, number>();
-    academicYears.forEach(y => yearTotals.set(y, 0));
+    exportYears.forEach(y => yearTotals.set(y, 0));
 
     unpaidStudents.forEach(s => {
       const sId = getSid(s);
       const rowData: any[] = [s.studentName.toUpperCase(), s.parentMobile || '', s.medium.toUpperCase()];
       
       let studentTotal = 0;
-      academicYears.forEach(year => {
+      exportYears.forEach(year => {
         const periodStr = getUnpaidPeriodString(sId!, year);
         const amount = getUnpaidAmountForYear(sId!, year);
         
@@ -328,7 +337,7 @@ export const UnpaidFees: React.FC = () => {
 
     // 5. Fill Grand Total Sum Row
     const totalRow: any[] = ['GRAND TOTAL', '', ''];
-    academicYears.forEach(year => {
+    exportYears.forEach(year => {
       totalRow.push('');
       totalRow.push(yearTotals.get(year) || 0);
     });
@@ -450,19 +459,33 @@ export const UnpaidFees: React.FC = () => {
         <div className="flex items-center gap-3 self-end xl:self-auto">
           {/* Dropdown Filters */}
           <div className="flex items-center gap-2">
-            {/* Class */}
+            {/* Standard Selector */}
             <div className="relative">
               <select
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
+                value={stdFilter}
+                onChange={(e) => setStdFilter(e.target.value)}
                 className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
               >
-                <option value="All Classes">All Classes</option>
-                <option value="5 - B">Class 5-B</option>
-                <option value="7 - A">Class 7-A</option>
-                <option value="8 - A">Class 8-A</option>
-                <option value="3 - C">Class 3-C</option>
-                <option value="10 - B">Class 10-B</option>
+                <option value="All Standards">All Standards</option>
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
+                  <option key={cls} value={`Class ${cls}`}>Std {cls}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Division Selector */}
+            <div className="relative">
+              <select
+                value={divFilter}
+                onChange={(e) => setDivFilter(e.target.value)}
+                className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
+              >
+                <option value="All Divisions">All Divisions</option>
+                <option value="Division A">Division A</option>
+                <option value="Division B">Division B</option>
+                <option value="Division C">Division C</option>
+                <option value="Division D">Division D</option>
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             </div>

@@ -52,8 +52,92 @@ class PaymentService {
     }
   }
 
+  /** Create a batch of payments atomically inside a single Mongoose transaction */
+  static async createBatchPayments({ payments, performedBy = null }) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const createdPayments = [];
+      const batchTxnId = `BATCH_TXN_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+      for (const payData of payments) {
+        const { ledgerId, amount, concessionAmount = 0, method, remark } = payData;
+
+        // Find the ledger
+        const ledger = await ledgerRepository.findById(ledgerId, null, { session });
+        if (!ledger) throw new AppError(`Ledger not found for ID: ${ledgerId}`, 404);
+
+        if (amount > 0) {
+          // Process payment + concession
+          const newPaid = ledger.paidAmount + amount;
+          const newConcession = ledger.concessionAmount + concessionAmount;
+          const remaining = ledger.totalAmount - newPaid - newConcession;
+          if (remaining < 0) throw new AppError(`Over-payment not allowed for ledger ${ledgerId}`, 400);
+
+          const status = remaining === 0 ? 'PAID' : 'PARTIAL';
+
+          // Insert payment record
+          const payment = await paymentRepository.create({
+            ledgerId,
+            amount,
+            concessionAmount,
+            method,
+            details: { remark, transactionId: batchTxnId }
+          }, { session });
+
+          // Atomic OCC ledger update
+          const updateResult = await ledgerRepository.updateOne(
+            { _id: ledgerId, __v: ledger.__v },
+            { $set: { paidAmount: newPaid, concessionAmount: newConcession, remainingAmount: remaining, status }, $inc: { __v: 1 } },
+            { session }
+          );
+          if (updateResult.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
+
+          await AuditService.log(
+            { performedBy, targetLedgerId: ledgerId, action: 'PAYMENT_CREATED', details: { paymentId: payment._id, amount, concessionAmount, method } },
+            session
+          );
+
+          createdPayments.push(payment);
+        } else if (concessionAmount > 0) {
+          // Process concession-only
+          const newConcession = ledger.concessionAmount + concessionAmount;
+          const remaining = ledger.totalAmount - ledger.paidAmount - newConcession;
+          if (remaining < 0) throw new AppError(`Concession exceeds remaining amount for ledger ${ledgerId}`, 400);
+
+          const status = remaining === 0 ? 'PAID' : ledger.paidAmount > 0 ? 'PARTIAL' : 'PENDING';
+
+          // Atomic OCC ledger update
+          const updateResult = await ledgerRepository.updateOne(
+            { _id: ledgerId, __v: ledger.__v },
+            { $set: { concessionAmount: newConcession, remainingAmount: remaining, status }, $inc: { __v: 1 } },
+            { session }
+          );
+          if (updateResult.modifiedCount !== 1) throw new AppError('Concurrency conflict', 409);
+
+          await AuditService.log(
+            { performedBy, targetLedgerId: ledgerId, action: 'LEDGER_CONCESSION_APPLIED', details: { amount: concessionAmount, reason: remark || 'Concession applied' } },
+            session
+          );
+        }
+      }
+
+      await session.commitTransaction();
+      return createdPayments;
+    } catch (e) {
+      await session.abortTransaction();
+      logger.error('PaymentService.createBatchPayments error', e);
+      throw e;
+    } finally {
+      session.endSession();
+    }
+  }
+
   /** Reverse a payment – creates a reversal record and decrements ledger paidAmount */
   static async reversePayment({ paymentId, reason, performedBy = null }) {
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      throw new AppError('A valid reversal reason is required', 400);
+    }
     const session = await mongoose.startSession();
     session.startTransaction();
     try {

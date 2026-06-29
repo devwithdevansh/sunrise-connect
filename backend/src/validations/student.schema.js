@@ -15,7 +15,9 @@ export const createStudentSchema = {
     transportType: z.enum(['Railnagar', 'Outside Railnagar', 'None']).optional(),
     isRTE: z.boolean().optional(),
     isNewAdmission: z.boolean().optional(),
+    buyBagKit: z.boolean().optional(),
     admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
+    transportStartMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
   }),
 };
 
@@ -29,8 +31,13 @@ export const updateStudentSchema = {
     transportMonths: z.coerce.number().int().min(0).max(12).optional(),
     isRTE: z.boolean().optional(),
     isNewAdmission: z.boolean().optional(),
+    buyBagKit: z.boolean().optional(),
     admissionMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
+    transportStartMonth: z.enum(['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']).optional(),
     isActive: z.boolean().optional(),
+    parentName: z.string().optional(),
+    parentMobile: z.string().optional(),
+    parentSecondaryMobile: z.string().nullable().optional(),
   }),
   params: z.object({ id: z.string().min(1) }),
 };

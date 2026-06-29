@@ -1,11 +1,11 @@
 // src/app.js
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import env from './config/env.js';
 import logger from './config/logger.js';
-import { globalErrorHandler } from './middlewares/error.middleware.js';
 import AppError from './utils/AppError.js';
-import { apiRateLimit } from './middlewares/rateLimit.middleware.js';
+import { globalErrorHandler } from './middlewares/error.middleware.js';
 
 // Route imports
 import authRoutes      from './routes/auth.routes.js';
@@ -23,11 +23,29 @@ import userRoutes         from './routes/user.routes.js';
 
 const app = express();
 
+app.set('trust proxy', true);
+
 // ─── Global Middleware ────────────────────────────────────────────────────────
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(apiRateLimit);
+// Security headers (XSS, clickjacking, content-type sniffing, etc.)
+app.use(helmet());
+
+// Restrict CORS to the deployed frontend only.
+// Set ALLOWED_ORIGINS in your hosting env vars (comma-separated for multiple).
+const allowedOrigins = env.ALLOWED_ORIGINS
+  ? env.ALLOWED_ORIGINS.split(',')
+  : ['https://sunrise-connect.vercel.app'];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-to-server calls (no origin) and whitelisted origins
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: true,
+}));
+
+// Limit body size to prevent memory-exhaustion attacks
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 
 // ─── Request Logger ───────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
