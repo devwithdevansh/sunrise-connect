@@ -61,6 +61,18 @@ class StudentService {
 
       let studentCode = data.studentCode;
       if (!studentCode) {
+        // Prevent duplicate imports: if student with exact name, std, div, and parent exists, reject
+        const existingStudent = await mongoose.model('Student').findOne({
+          studentName: data.studentName,
+          standard: data.standard,
+          division: data.division,
+          parentId: parentId
+        }, null, { session });
+        
+        if (existingStudent) {
+          throw new AppError(`Student ${data.studentName} (${data.standard} ${data.division}) already exists with this parent number.`, 400);
+        }
+
         const count = await mongoose.model('Student').countDocuments({}, { session });
         const rand = Math.floor(10 + Math.random() * 90);
         studentCode = `STU${String(count + 1).padStart(3, '0')}-${rand}`;
@@ -92,7 +104,8 @@ class StudentService {
 
       // Fetch Active Academic Year
       const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
-      const activeYear = activeYearDoc ? activeYearDoc.name : '2025-26';
+      if (!activeYearDoc) throw new AppError('No active academic year found. Please configure one in Setup.', 400);
+      const activeYear = activeYearDoc.name;
 
       // Normalize keys in pendingFees to match database academic year names if start years match
       if (data.pendingFees && typeof data.pendingFees === 'object') {
@@ -122,30 +135,6 @@ class StudentService {
       const earliestYear = sortedYears[0];
 
       // Fee structure calculation is performed inside the sortedYears loop to support year-specific rates.
-
-      // --- Fetch transport amount from TransportFeeStructure ---
-      let transportAmount = 0;
-      if (student.transportType && student.transportType !== 'None') {
-        const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
-          { transportType: student.transportType, academicYear: activeYear, isActive: true },
-          null,
-          { session }
-        );
-        if (transportStruct) {
-          transportAmount = transportStruct.amount;
-        } else {
-          // Fallback: try without year filter (legacy / migration gap)
-          const tfsFallback = await mongoose.model('TransportFeeStructure').findOne(
-            { transportType: student.transportType, isActive: true },
-            null,
-            { session }
-          );
-          if (!tfsFallback) {
-            throw new AppError(`Active transport fee structure not found for ${student.transportType} in year ${activeYear}`, 404);
-          }
-          transportAmount = tfsFallback.amount;
-        }
-      }
 
       const isRTE = student.isRTE || false;
       const ledgersToCreate = [];
@@ -261,6 +250,21 @@ class StudentService {
         const admissionAmount = feeStruct?.admissionFee ?? 0;
         const bagKitAmount = feeStruct?.bagKitFee ?? 0;
 
+        // --- Fetch transport amount for this specific academic year ---
+        let transportAmount = 0;
+        if (student.transportType && student.transportType !== 'None') {
+          const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
+            { transportType: student.transportType, academicYear, isActive: true },
+            null,
+            { session }
+          );
+          if (transportStruct) {
+            transportAmount = transportStruct.amount;
+          } else {
+            throw new AppError(`Transport fee structure not found for '${student.transportType}' in year ${academicYear}. Please create it first.`, 404);
+          }
+        }
+
         const statusStr = data.pendingFees ? data.pendingFees[academicYear] : undefined;
         const pendingStartIndex = getPendingStartIndex(statusStr);
 
@@ -357,18 +361,34 @@ class StudentService {
           const tStartIndex = transportStartMonthIndex >= 0 ? transportStartMonthIndex : 0;
           const transportMonthsToCreate = months.slice(tStartIndex);
 
+          // transportAllPaid: transport type set but no pending month — all months are already fully paid
+          const allTransportPaid = data.transportAllPaid === true;
+
           for (const m of transportMonthsToCreate) {
-            const { paidAmount, concessionAmount, remainingAmount, status } = getLedgerStatusAndAmounts('TRANSPORT', m.name, transportAmount, isRTE);
+            let tPaid, tConcession, tRemaining, tStatus;
+            if (allTransportPaid) {
+              // All transport months are already paid — record them as PAID for accurate historical ledger
+              tPaid = transportAmount;
+              tConcession = 0;
+              tRemaining = 0;
+              tStatus = 'PAID';
+            } else {
+              const result = getLedgerStatusAndAmounts('TRANSPORT', m.name, transportAmount, isRTE);
+              tPaid = result.paidAmount;
+              tConcession = result.concessionAmount;
+              tRemaining = result.remainingAmount;
+              tStatus = result.status;
+            }
             ledgersToCreate.push({
               studentId: student._id,
               feePeriod: m.name,
               feeType: 'TRANSPORT',
               totalAmount: transportAmount,
-              paidAmount,
-              concessionAmount,
-              remainingAmount,
+              paidAmount: tPaid,
+              concessionAmount: tConcession,
+              remainingAmount: tRemaining,
               dueDate: new Date(m.dueDate),
-              status,
+              status: tStatus,
               feeCategoryId: trCat._id,
               academicYear,
               source: 'MANUAL',
@@ -510,8 +530,9 @@ class StudentService {
       if (!student) throw new AppError('Student not found', 404);
 
       // Fetch Active Academic Year
-      const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
-      const currentAcademicYearName = activeYear ? activeYear.name : '2025-26';
+      const activeYear = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
+      if (!activeYear) throw new AppError('No active academic year found.', 400);
+      const currentAcademicYearName = activeYear.name;
 
       const oldTransport = student.transportType;
       const transportMonths = updates.transportMonths;
@@ -846,10 +867,14 @@ class StudentService {
 
   /** List students with optional filtering */
   static async listStudents(filter = {}, pagination = { limit: 20, skip: 0 }) {
-    return studentRepository.find(filter, null, pagination);
+    const { includeInactive, ...actualFilter } = filter;
+    if (includeInactive !== 'true' && includeInactive !== true) {
+      actualFilter.isActive = true;
+    }
+    return studentRepository.find(actualFilter, null, pagination);
   }
 
-  /** Hard Delete a student and cascade delete ledgers and payments */
+  /** Delete a student: Soft delete if payments exist, Hard delete if no payments */
   static async deleteStudent(studentId, performedBy) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -861,25 +886,45 @@ class StudentService {
       const ledgers = await mongoose.model('StudentFeeLedger').find({ studentId }).session(session);
       const ledgerIds = ledgers.map(l => l._id);
 
-      // Delete all payments associated with these ledgers
+      // Check if any payments exist for this student's ledgers
+      let hasPayments = false;
       if (ledgerIds.length > 0) {
-        await mongoose.model('Payment').deleteMany({ ledgerId: { $in: ledgerIds } }, { session });
+        const paymentCount = await mongoose.model('Payment').countDocuments({ ledgerId: { $in: ledgerIds } }).session(session);
+        if (paymentCount > 0) {
+          hasPayments = true;
+        }
       }
 
-      // Delete all ledgers
-      await mongoose.model('StudentFeeLedger').deleteMany({ studentId }, { session });
+      if (hasPayments) {
+        // SOFT DELETE
+        await studentRepository.updateOne({ _id: studentId }, { $set: { isActive: false } }, { session });
+        
+        // Cancel all pending/partial ledgers so they don't show up in unpaid fees
+        if (ledgerIds.length > 0) {
+          await mongoose.model('StudentFeeLedger').updateMany(
+            { _id: { $in: ledgerIds }, status: { $in: ['PENDING', 'PARTIAL'] } },
+            { $set: { status: 'CANCELLED' } },
+            { session }
+          );
+        }
 
-      // Delete student
-      await studentRepository.deleteOne({ _id: studentId }, { session });
+        await AuditService.log(
+          { performedBy, targetStudentId: studentId, action: 'STUDENT_SOFT_DELETED', details: { studentCode: student.studentCode, studentName: student.studentName, reason: 'Has payment history' } },
+          session
+        );
+      } else {
+        // HARD DELETE
+        await mongoose.model('StudentFeeLedger').deleteMany({ studentId }, { session });
+        await studentRepository.deleteOne({ _id: studentId }, { session });
 
-      // Audit log
-      await AuditService.log(
-        { performedBy, targetStudentId: studentId, action: 'STUDENT_DELETED', details: { studentCode: student.studentCode, studentName: student.studentName } },
-        session
-      );
+        await AuditService.log(
+          { performedBy, targetStudentId: studentId, action: 'STUDENT_DELETED', details: { studentCode: student.studentCode, studentName: student.studentName } },
+          session
+        );
+      }
 
       await session.commitTransaction();
-      return true;
+      return { softDeleted: hasPayments };
     } catch (e) {
       await session.abortTransaction();
       logger.error('StudentService.deleteStudent error', e);
@@ -889,8 +934,38 @@ class StudentService {
     }
   }
 
+  /** Restore a soft-deleted student */
+  static async restoreStudent(studentId, performedBy) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const student = await studentRepository.findById(studentId);
+      if (!student) throw new AppError('Student not found', 404);
+      if (student.isActive) throw new AppError('Student is already active', 400);
+
+      await studentRepository.updateOne({ _id: studentId }, { $set: { isActive: true } }, { session });
+
+      // Note: We don't automatically un-cancel ledgers because we don't know which ones should be active. 
+      // The admin can manually regenerate or update ledgers if needed.
+
+      await AuditService.log(
+        { performedBy, targetStudentId: studentId, action: 'STUDENT_RESTORED', details: { studentCode: student.studentCode, studentName: student.studentName } },
+        session
+      );
+
+      await session.commitTransaction();
+      return studentRepository.findById(studentId);
+    } catch (e) {
+      await session.abortTransaction();
+      logger.error('StudentService.restoreStudent error', e);
+      throw e;
+    } finally {
+      session.endSession();
+    }
+  }
+
   /** Promote students to a new standard */
-  static async promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, performedBy) {
+  static async promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, performedBy, targetMedium = null) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -905,6 +980,10 @@ class StudentService {
       const updatedStudentIds = [];
       for (const student of students) {
         const updates = { standard: targetStandard, division: targetDivision, isNewAdmission: false };
+        if (targetMedium) {
+          updates.medium = targetMedium;
+          student.medium = targetMedium; // For ledger generation snapshot
+        }
         if (student.transportType && student.transportType !== 'None') {
           updates.transportStartMonth = 'June';
         }
@@ -986,8 +1065,9 @@ class StudentService {
       const ledgerWithSnapshot = existingLedgers.find(l => l.snapshot && l.snapshot.standard);
 
       if (ledgerWithSnapshot) {
-        const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
-        const activeYearName = activeYearDoc ? activeYearDoc.name : '2025-26';
+        const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
+        if (!activeYearDoc) throw new AppError('No active academic year found.', 400);
+        const activeYearName = activeYearDoc.name;
 
         if (academicYearStr === activeYearName && !newerYearExists) {
           standardToUse = student.standard;
@@ -1045,16 +1125,9 @@ class StudentService {
             { session }
           );
           if (!tfs) {
-            // Fallback: try without year filter (legacy data)
-            const tfsFallback = await mongoose.model('TransportFeeStructure').findOne(
-              { transportType: student.transportType, isActive: true },
-              null,
-              { session }
-            );
-            transportAmount = tfsFallback?.amount ?? 0;
-          } else {
-            transportAmount = tfs.amount;
+            throw new AppError(`Transport fee structure not found for '${student.transportType}' in year ${academicYearStr}. Please create it first.`, 404);
           }
+          transportAmount = tfs.amount;
         }
       }
 
@@ -1340,8 +1413,9 @@ class StudentService {
 
   /** Regenerate missing fee ledgers for a student (backfill for legacy data) */
   static async regenerateMissingLedgers(studentId) {
-    const activeAcademicYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true });
-    const activeAcademicYearStr = activeAcademicYearDoc ? activeAcademicYearDoc.name : '2025-26';
+    const activeAcademicYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null);
+    if (!activeAcademicYearDoc) throw new AppError('No active academic year found.', 400);
+    const activeAcademicYearStr = activeAcademicYearDoc.name;
     return await this._generateLedgersForAcademicYear(studentId, activeAcademicYearStr);
   }
 
@@ -1365,8 +1439,9 @@ class StudentService {
         }], { session }).then(res => res[0]);
       }
 
-      const activeAcademicYear = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
-      const academicYearStr = activeAcademicYear ? activeAcademicYear.name : '2025-26';
+      const activeAcademicYear = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
+      if (!activeAcademicYear) throw new AppError('No active academic year found.', 400);
+      const academicYearStr = activeAcademicYear.name;
 
       const ledger = {
         studentId: student._id,
@@ -1447,7 +1522,9 @@ class StudentService {
 
         if (data.transportType) {
           data.transportType = String(data.transportType).trim();
-          if (!['Railnagar', 'Outside Railnagar', 'None'].includes(data.transportType)) {
+          if (!data.transportType || data.transportType.toLowerCase() === 'none') {
+            data.transportType = 'None';
+          } else if (!['Railnagar', 'Outside Railnagar'].includes(data.transportType)) {
             throw new Error(`Transport Type must be 'Railnagar', 'Outside Railnagar', or 'None'`);
           }
         } else {
@@ -1465,7 +1542,8 @@ class StudentService {
         };
 
         data.isRTE = parseBool(data.isRTE);
-        data.isNewAdmission = parseBool(data.isNewAdmission);
+        // This import is ALWAYS for existing students (migrations), never new admissions
+        data.isNewAdmission = false;
 
         const cleanMobileNumber = (val) => {
           if (val === undefined || val === null) return '';
@@ -1499,7 +1577,13 @@ class StudentService {
         }
 
         const rawStartMonth = data.transportStartMonth || data["Transport Start Month"] || data["transportStartMonth"] || data["transport_start_month"];
-        if (rawStartMonth) {
+        // transportAllPaid: transport type is set but no pending month = all transport months are already paid
+        const transportAllPaid = data.transportAllPaid === true;
+        if (transportAllPaid) {
+          // Flag on data so createStudent can see it; set transportStartMonth to June so student record is clean
+          data.transportAllPaid = true;
+          data.transportStartMonth = 'June'; // All paid from June = full year paid
+        } else if (rawStartMonth) {
           const cleanStart = String(rawStartMonth).toLowerCase().trim();
           const monthPrefixes = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may'];
           const fullMonthNames = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
@@ -1573,7 +1657,8 @@ class StudentService {
       }
 
       const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }, null, { session });
-      const activeYear = activeYearDoc ? activeYearDoc.name : '2025-26';
+      if (!activeYearDoc) throw new AppError('No active academic year found.', 400);
+      const activeYear = activeYearDoc.name;
 
       const getMonthsForAcademicYear = (yearStr) => {
         const match = yearStr.match(/^(\d{4})/);
@@ -1687,6 +1772,124 @@ class StudentService {
       throw error;
     } finally {
       session.endSession();
+    }
+  }
+
+  /**
+   * Automatically promotes a batch of students (by ID) to their next logical standard.
+   * Each student keeps the same division. New fee ledgers are generated for the active academic year.
+   * 
+   * Does NOT use a wrapping session to avoid nested transaction conflicts — each call to
+   * promoteStudents manages its own session internally.
+   */
+  static async autoPromoteBatch(studentIds, performedBy = null) {
+    try {
+      // Fetch active academic year
+      const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true });
+      if (!activeYearDoc) {
+        throw new AppError('No active academic year found. Please set one in Setup before promoting.', 400);
+      }
+      const activeYear = activeYearDoc.name;
+
+      // Fetch all fee structures for the active year to validate before promoting
+      const feeStructures = await mongoose.model('FeeStructure').find({ academicYear: activeYear });
+      const feeStructureSet = new Set(
+        feeStructures.map(fs => `${fs.medium}__${fs.standard}`)
+      );
+
+      // Map of how standards advance
+      const preSchoolMap = { 'nursery': 'LKG', 'lkg': 'UKG', 'ukg': '1' };
+      const getNextStandard = (currentStd) => {
+        const stdLower = String(currentStd).toLowerCase().trim();
+        if (preSchoolMap[stdLower]) return preSchoolMap[stdLower];
+        const num = parseInt(stdLower, 10);
+        if (!isNaN(num) && num < 12) return (num + 1).toString();
+        return null; // Std 12 or invalid — skip
+      };
+
+      // Fetch all students in the given batch
+      const students = await mongoose.model('Student').find({ _id: { $in: studentIds } });
+
+      // Group by nextStandard + division + medium
+      const promotionGroups = {};
+      const skipped = [];
+
+      for (const student of students) {
+        const nextStd = getNextStandard(student.standard);
+
+        // Skip Std 12 graduates
+        if (!nextStd) {
+          skipped.push({
+            id: student._id,
+            name: student.studentName,
+            reason: `Std ${student.standard} is the final standard — cannot be promoted further`
+          });
+          continue;
+        }
+
+        // Skip if no fee structure exists for this medium + next standard in active year
+        let targetMedium = student.medium;
+        const feeKey = `${targetMedium}__${nextStd}`;
+        if (feeStructureSet.size > 0 && !feeStructureSet.has(feeKey)) {
+          // Try fallback medium
+          const fallbackMedium = targetMedium.toLowerCase() === 'english' ? 'Gujarati' : 'English';
+          const fallbackFeeKey = `${fallbackMedium}__${nextStd}`;
+          if (feeStructureSet.has(fallbackFeeKey)) {
+            targetMedium = fallbackMedium;
+          } else {
+            skipped.push({
+              id: student._id,
+              name: student.studentName,
+              reason: `No fee structure found for Std ${nextStd} in ${activeYear}. Please add the fee structure first, then re-promote.`
+            });
+            continue;
+          }
+        }
+
+        // Group key includes medium so Eng/Guj students don't mix
+        const key = `${targetMedium}__${nextStd}__${student.division}`;
+        if (!promotionGroups[key]) {
+          promotionGroups[key] = {
+            targetStandard: nextStd,
+            targetDivision: student.division,
+            targetMedium: targetMedium,
+            studentIds: []
+          };
+        }
+        promotionGroups[key].studentIds.push(student._id.toString());
+      }
+
+      let promotedCount = 0;
+      const groupErrors = [];
+
+      // Call promoteStudents for each group — each manages its own DB session
+      for (const key of Object.keys(promotionGroups)) {
+        const group = promotionGroups[key];
+        try {
+          await StudentService.promoteStudents(
+            group.studentIds,
+            group.targetStandard,
+            group.targetDivision,
+            activeYear,
+            performedBy,
+            group.targetMedium
+          );
+          promotedCount += group.studentIds.length;
+        } catch (err) {
+          logger.error(`autoPromoteBatch: group ${key} failed: ${err.message}`);
+          groupErrors.push({ group: key, error: err.message });
+        }
+      }
+
+      return {
+        promotedCount,
+        skippedCount: skipped.length,
+        skipped,
+        groupErrors
+      };
+    } catch (error) {
+      logger.error('StudentService.autoPromoteBatch error', error);
+      throw error;
     }
   }
 }
