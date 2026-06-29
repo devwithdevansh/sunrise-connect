@@ -48,6 +48,14 @@ export const Students: React.FC = () => {
     return list;
   }, [activeYearFeeStructures]);
 
+  const activeYearTransportStructures = useMemo(() => {
+    const byYear = transportFeeStructures.filter(t => t.academicYear === activeYearName);
+    if (byYear.length > 0) return byYear;
+    // Legacy fallback — show unscoped records for the first/default year only
+    const isDefaultYear = activeYearName === academicYears[0]?.name || activeYearName === '2025-26';
+    return isDefaultYear ? transportFeeStructures.filter(t => !t.academicYear) : [];
+  }, [transportFeeStructures, activeYearName, academicYears]);
+
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
   // Debounced search query state (throttles filter processing)
@@ -1171,7 +1179,7 @@ export const Students: React.FC = () => {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="None">None</option>
-                    {transportFeeStructures.map((t) => (
+                    {activeYearTransportStructures.map((t) => (
                       <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
                     ))}
                   </select>
@@ -1387,7 +1395,7 @@ export const Students: React.FC = () => {
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="None">None</option>
-                    {transportFeeStructures.map((t) => (
+                    {activeYearTransportStructures.map((t) => (
                       <option key={t._id} value={t.transportType}>{t.transportType} (+₹{t.amount})</option>
                     ))}
                   </select>
