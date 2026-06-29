@@ -132,9 +132,12 @@ export const ImportExcel: React.FC = () => {
 
     if (editContext === 'preview') {
       // In preview, just update local state
+      // Recompute transportAllPaid: if transport type is set but no pending month → all paid
+      const recomputedAllPaid = !!(editForm.transportType && editForm.transportType !== 'None' && !editForm.transportStartMonth);
       const updated = [...previewData];
       updated[editingIndex] = {
         ...editForm,
+        transportAllPaid: recomputedAllPaid,
         parentMobile: cleanMobile,
         parentSecondaryMobile: editForm.parentSecondaryMobile ? cleanMobileNumber(editForm.parentSecondaryMobile) : ''
       };
@@ -970,17 +973,18 @@ export const ImportExcel: React.FC = () => {
                 </select>
               </div>
 
-              {/* Transport Start Month */}
+              {/* Transport Pending Month */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Transport Start Month</label>
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Transport Fees Pending From Month</label>
                 <select
                   value={editForm.transportStartMonth || ''}
                   onChange={(e) => setEditForm({ ...editForm, transportStartMonth: e.target.value || undefined })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                  disabled={!editForm.transportType || editForm.transportType === 'None'}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-40"
                 >
-                  <option value="">Default (June / Admission Month)</option>
+                  <option value="">Blank = All transport fees already paid</option>
                   {['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'].map(m => (
-                    <option key={m} value={m}>{m}</option>
+                    <option key={m} value={m}>{m} onwards is pending</option>
                   ))}
                 </select>
               </div>
