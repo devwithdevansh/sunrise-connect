@@ -492,7 +492,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
               fontSize: '7.5px', color: '#334155',
               marginTop: '7px',
               border: '1px solid rgba(226,232,240,0.3)',
-              // borderLeft: `3px solid ${gold}`,
+              //borderLeft: `3px solid ${gold}`,
             }}>
               <strong>Amount in Words:</strong>&nbsp;<em>{amountInWords}</em>
             </div>
