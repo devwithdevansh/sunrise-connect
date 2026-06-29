@@ -212,6 +212,7 @@ export const Setup: React.FC = () => {
   // Form states
   const [showAYForm, setShowAYForm] = useState(false);
   const [newAY, setNewAY] = useState({ name: '', startDate: '', endDate: '' });
+  const [ayNameError, setAyNameError] = useState('');
 
   const [showFCForm, setShowFCForm] = useState(false);
   const [newFC, setNewFC] = useState({ name: '', type: 'EDUCATION', description: '' });
@@ -227,7 +228,7 @@ export const Setup: React.FC = () => {
     // Validate format YYYY-YYYY
     const ayRegex = /^\d{4}-\d{4}$/;
     if (!ayRegex.test(newAY.name.trim())) {
-      alert("Academic Year Name must be in 'YYYY-YYYY' format (e.g., '2026-2027').");
+      setAyNameError("Format must be YYYY-YYYY (e.g., '2026-2027')");
       return;
     }
 
@@ -235,6 +236,7 @@ export const Setup: React.FC = () => {
     if (ok) {
       setShowAYForm(false);
       setNewAY({ name: '', startDate: '', endDate: '' });
+      setAyNameError('');
     }
   };
 
@@ -393,10 +395,19 @@ export const Setup: React.FC = () => {
                     <label className="block text-xs font-bold text-slate-500 mb-1">Name (e.g. 2026-2027)</label>
                     <input
                       type="text"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                      className={`w-full bg-slate-50 border ${ayNameError ? 'border-red-500 focus:border-red-500 ring-1 ring-red-500' : 'border-slate-200 focus:border-blue-500'} rounded-lg px-3 py-2 text-sm focus:outline-none`}
                       value={newAY.name}
-                      onChange={e => setNewAY({ ...newAY, name: e.target.value })}
+                      onChange={e => {
+                        setNewAY({ ...newAY, name: e.target.value });
+                        if (ayNameError) setAyNameError('');
+                      }}
+                      onBlur={() => {
+                        if (newAY.name && !/^\d{4}-\d{4}$/.test(newAY.name.trim())) {
+                          setAyNameError("Format must be YYYY-YYYY (e.g., '2026-2027')");
+                        }
+                      }}
                     />
+                    {ayNameError && <p className="text-red-500 text-[10px] font-bold mt-1">{ayNameError}</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1">Start Date</label>
