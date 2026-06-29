@@ -199,40 +199,51 @@ export const ImportExcel: React.FC = () => {
     { name: 'Parent Mobile', dbName: 'parentMobile', required: true, example: '9876543210', desc: '10-digit Indian mobile number' },
     { name: 'Parent Secondary Mobile', dbName: 'parentSecondaryMobile', required: false, example: '9876543211', desc: 'Optional backup contact' },
     { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: '"Railnagar", "Outside Railnagar", or "None"' },
-    { name: 'Transport Start Month', dbName: 'transportStartMonth', required: false, example: 'November', desc: 'Starting month of transport (e.g. "June", "November"). Defaults to admission month or "June".' },
+    { name: 'Transport fees pending from month', dbName: 'transportStartMonth', required: false, example: 'November', desc: 'Month from which transport fees are pending (e.g. "June", "November"). Leave blank if fully paid or no transport.' },
     { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Right to Education quota ("Yes", "No", true, false)' },
-    { name: 'Is New Admission', dbName: 'isNewAdmission', required: false, example: 'Yes', desc: 'Applies admission charges ("Yes", "No", true, false)' },
+    { name: 'Is New Admission', dbName: 'isNewAdmission', required: false, example: 'No', desc: 'Applies admission charges ("Yes", "No"). Defaults to "No".' },
     { name: 'Year YYYY-YY (e.g. Year 2025-26)', dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Set payment status: "paid", "gov paid", or a range like "oct to may", "term-2 to may"' },
   ];
 
   const downloadTemplate = () => {
     const sampleData = [
       {
-        "Student Name": "Rahul Amit Sharma",
+        "Student Name": "Dhruv Solanki",
         "Medium": "English",
-        "Standard": "5",
-        "Division": "A",
-        "Parent Name": "Amit Sharma",
-        "Parent Mobile": "9876543210",
-        "Parent Secondary Mobile": "9876543211",
+        "Standard": "Nursery",
+        "Division": "B",
+        "Parent Name": "Bhavesh Solanki",
+        "Parent Mobile": "9009637290",
+        "Parent Secondary Mobile": "9191421620",
         "Transport Type": "Railnagar",
-        "Transport Start Month": "November",
+        "Transport fees pending from month": "June",
         "Is RTE": "No",
-        "Is New Admission": "Yes",
-        "Year 2025-26": "oct to may"
+        "Year 2025-26": "may to may"
       },
       {
-        "Student Name": "Ketan Patel",
-        "Medium": "Gujarati",
-        "Standard": "6",
+        "Student Name": "Parth Trivedi",
+        "Medium": "English",
+        "Standard": "Nursery",
+        "Division": "A",
+        "Parent Name": "Rajesh Trivedi",
+        "Parent Mobile": "9809300592",
+        "Parent Secondary Mobile": "9904481848",
+        "Transport Type": "Outside Railnagar",
+        "Transport fees pending from month": "July",
+        "Is RTE": "No",
+        "Year 2025-26": "nov to may"
+      },
+      {
+        "Student Name": "Aditya Makwana",
+        "Medium": "English",
+        "Standard": "LKG",
         "Division": "B",
-        "Parent Name": "Manish Patel",
-        "Parent Mobile": "9988776655",
+        "Parent Name": "Rajesh Makwana",
+        "Parent Mobile": "9533666586",
         "Parent Secondary Mobile": "",
-        "Transport Type": "None",
-        "Transport Start Month": "",
+        "Transport Type": "Railnagar",
+        "Transport fees pending from month": "August",
         "Is RTE": "Yes",
-        "Is New Admission": "No",
         "Year 2025-26": "gov paid"
       }
     ];
@@ -278,7 +289,8 @@ export const ImportExcel: React.FC = () => {
         const mapped: ExcelRow[] = rawJson.map((row: any) => {
           // Normalize boolean inputs from strings
           const parseRTE = row["Is RTE"] !== undefined ? row["Is RTE"] : row["isRTE"];
-          const parseNew = row["Is New Admission"] !== undefined ? row["Is New Admission"] : row["isNewAdmission"];
+          const rawNewAdm = row["Is New Admission"] !== undefined ? row["Is New Admission"] : row["isNewAdmission"];
+          const parseNew = rawNewAdm !== undefined ? rawNewAdm : 'No';
 
           // Parse any dynamic academic year columns (e.g. Year 2025-26)
           const pendingFees: Record<string, string> = {};
@@ -304,7 +316,7 @@ export const ImportExcel: React.FC = () => {
           const pMobile = cleanMobileNumber(getExcelValue("Parent Mobile") || row["parentMobile"]);
           const pSecMobile = cleanMobileNumber(getExcelValue("Parent Secondary Mobile") || row["parentSecondaryMobile"]);
           const tType = getExcelValue("Transport Type") || row["transportType"] || "None";
-          const startMonthVal = getExcelValue("Transport Start Month") || row["transportStartMonth"] || "";
+          const startMonthVal = getExcelValue("Transport fees pending from month") || getExcelValue("Transport Start Month") || row["transportStartMonth"] || "";
 
           let transportStartMonth: string | undefined = undefined;
           if (startMonthVal) {
