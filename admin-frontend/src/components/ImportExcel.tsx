@@ -335,7 +335,7 @@ export const ImportExcel: React.FC = () => {
         }
 
         // Validate Headers (using first row's keys)
-        const headers = Object.keys(rawJson[0]);
+        const headers = Object.keys(rawJson[0] as object);
         
         // 1. Strict YYYY-YYYY validation for any 'Year' columns
         const invalidYearCol = headers.find(key => {
