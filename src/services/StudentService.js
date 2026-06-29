@@ -918,7 +918,7 @@ class StudentService {
   }
 
   /** Promote students to a new standard */
-  static async promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, performedBy) {
+  static async promoteStudents(studentIds, targetStandard, targetDivision, targetAcademicYear, performedBy, targetMedium = null) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -933,6 +933,10 @@ class StudentService {
       const updatedStudentIds = [];
       for (const student of students) {
         const updates = { standard: targetStandard, division: targetDivision, isNewAdmission: false };
+        if (targetMedium) {
+          updates.medium = targetMedium;
+          student.medium = targetMedium; // For ledger generation snapshot
+        }
         if (student.transportType && student.transportType !== 'None') {
           updates.transportStartMonth = 'June';
         }
@@ -1780,22 +1784,31 @@ class StudentService {
         }
 
         // Skip if no fee structure exists for this medium + next standard in active year
-        const feeKey = `${student.medium}__${nextStd}`;
+        let targetMedium = student.medium;
+        const feeKey = `${targetMedium}__${nextStd}`;
         if (feeStructureSet.size > 0 && !feeStructureSet.has(feeKey)) {
-          skipped.push({
-            id: student._id,
-            name: student.studentName,
-            reason: `No fee structure found for ${student.medium} Std ${nextStd} in ${activeYear}. Please add the fee structure first, then re-promote.`
-          });
-          continue;
+          // Try fallback medium
+          const fallbackMedium = targetMedium.toLowerCase() === 'english' ? 'Gujarati' : 'English';
+          const fallbackFeeKey = `${fallbackMedium}__${nextStd}`;
+          if (feeStructureSet.has(fallbackFeeKey)) {
+            targetMedium = fallbackMedium;
+          } else {
+            skipped.push({
+              id: student._id,
+              name: student.studentName,
+              reason: `No fee structure found for Std ${nextStd} in ${activeYear}. Please add the fee structure first, then re-promote.`
+            });
+            continue;
+          }
         }
 
         // Group key includes medium so Eng/Guj students don't mix
-        const key = `${student.medium}__${nextStd}__${student.division}`;
+        const key = `${targetMedium}__${nextStd}__${student.division}`;
         if (!promotionGroups[key]) {
           promotionGroups[key] = {
             targetStandard: nextStd,
             targetDivision: student.division,
+            targetMedium: targetMedium,
             studentIds: []
           };
         }
@@ -1814,7 +1827,8 @@ class StudentService {
             group.targetStandard,
             group.targetDivision,
             activeYear,
-            performedBy
+            performedBy,
+            group.targetMedium
           );
           promotedCount += group.studentIds.length;
         } catch (err) {
