@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, ledgerEntries, transactions, feeStructures, setScreen } = useApp();
+  const { students, ledgerEntries, transactions, feeStructures, academicYears, setScreen } = useApp();
+  
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '2025-26', [academicYears]);
   
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
@@ -234,7 +236,8 @@ export const UnpaidFees: React.FC = () => {
     if (stdFilter !== 'All Standards' && mediumFilter !== 'All Mediums') {
       const stdNum = stdFilter.replace('Class ', '').trim();
       const medName = mediumFilter.replace(' Medium', '');
-      const fs = feeStructures.find(f => f.standard === stdNum && f.medium === medName);
+      const isDefaultYear = activeYearName === academicYears[0]?.name || activeYearName === '2025-26';
+      const fs = feeStructures.find(f => f.standard === stdNum && f.medium === medName && (f.academicYear === activeYearName || (!f.academicYear && isDefaultYear)));
       if (fs) {
         const annualFee = fs.annualFee || 0;
         const totalParts = (fs.educationPartCount || 12) + (fs.termPartCount || 2);

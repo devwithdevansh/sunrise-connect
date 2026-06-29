@@ -86,8 +86,9 @@ export const CollectFee: React.FC = () => {
   const studentFeeConfig = useMemo(() => {
     if (!selectedStudent) return { education: 0, term: 0, transport: 0, admission: 0, bagKit: 0 };
 
+    const isDefaultYear = selectedYear === academicYears[0]?.name || selectedYear === '2025-26';
     const fs = feeStructures.find(
-      (f) => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard
+      (f) => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard && (f.academicYear === selectedYear || (!f.academicYear && isDefaultYear))
     );
 
     const annualFee = fs?.annualFee ?? 0;
@@ -100,7 +101,9 @@ export const CollectFee: React.FC = () => {
     const admission = fs?.admissionFee ?? 0;
     const bagKit = fs?.bagKitFee ?? 0;
 
-    const tfs = transportFeeStructures.find((t) => t.transportType === selectedStudent.transportType);
+    const tfs = transportFeeStructures.find(
+      (t) => t.transportType === selectedStudent.transportType && (t.academicYear === selectedYear || (!t.academicYear && isDefaultYear))
+    );
     const transport = tfs?.amount ?? 0;
 
     return { education, term, transport, admission, bagKit };
@@ -391,8 +394,9 @@ export const CollectFee: React.FC = () => {
   useEffect(() => {
     if (!selectedStudent || isRegenerating) return;
 
-    const fs = feeStructures.find(f => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard);
-    const ts = transportFeeStructures.find(t => t.transportType === selectedStudent.transportType);
+    const isDefaultYear = selectedYear === academicYears[0]?.name || selectedYear === '2025-26';
+    const fs = feeStructures.find(f => f.medium === selectedStudent.medium && f.standard === selectedStudent.standard && (f.academicYear === selectedYear || (!f.academicYear && isDefaultYear)));
+    const ts = transportFeeStructures.find(t => t.transportType === selectedStudent.transportType && (t.academicYear === selectedYear || (!t.academicYear && isDefaultYear)));
     const currentSignature = `${selectedStudent._id || selectedStudent.id}-${JSON.stringify(fs || {})}-${JSON.stringify(ts || {})}`;
 
     if (autoSyncSignature === currentSignature) return;
