@@ -485,13 +485,14 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
 
             {/* ── Amount in Words ── */}
             <div style={{
+              borderLeft: `3px solid ${gold}`,
               backgroundColor: 'rgba(255,251,240,0.85)',
               padding: '5px 9px',
               borderRadius: '0 4px 4px 0',
               fontSize: '7.5px', color: '#334155',
               marginTop: '7px',
               border: '1px solid rgba(226,232,240,0.3)',
-              borderLeft: `3px solid ${gold}`,
+              // borderLeft: `3px solid ${gold}`,
             }}>
               <strong>Amount in Words:</strong>&nbsp;<em>{amountInWords}</em>
             </div>
@@ -499,13 +500,14 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
             {/* ── Remark (optional) ── */}
             {transaction.remark && (
               <div style={{
+                borderLeft: '3px solid #94a3b8',
                 backgroundColor: 'rgba(248,250,253,0.85)',
                 padding: '5px 9px',
                 borderRadius: '0 4px 4px 0',
                 fontSize: '7.5px', color: '#475569', fontStyle: 'italic',
                 marginTop: '5px',
                 border: '1px solid rgba(226,232,240,0.3)',
-                borderLeft: '3px solid #94a3b8',
+                //borderLeft: '3px solid #94a3b8',
               }}>
                 <strong>Remark:</strong>&nbsp;<em>{transaction.remark}</em>
               </div>
