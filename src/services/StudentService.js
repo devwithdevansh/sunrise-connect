@@ -136,30 +136,6 @@ class StudentService {
 
       // Fee structure calculation is performed inside the sortedYears loop to support year-specific rates.
 
-      // --- Fetch transport amount from TransportFeeStructure ---
-      let transportAmount = 0;
-      if (student.transportType && student.transportType !== 'None') {
-        const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
-          { transportType: student.transportType, academicYear: activeYear, isActive: true },
-          null,
-          { session }
-        );
-        if (transportStruct) {
-          transportAmount = transportStruct.amount;
-        } else {
-          // Fallback: try without year filter (legacy / migration gap)
-          const tfsFallback = await mongoose.model('TransportFeeStructure').findOne(
-            { transportType: student.transportType, isActive: true },
-            null,
-            { session }
-          );
-          if (!tfsFallback) {
-            throw new AppError(`Active transport fee structure not found for ${student.transportType} in year ${activeYear}`, 404);
-          }
-          transportAmount = tfsFallback.amount;
-        }
-      }
-
       const isRTE = student.isRTE || false;
       const ledgersToCreate = [];
 
@@ -273,6 +249,21 @@ class StudentService {
           : eduAmount;
         const admissionAmount = feeStruct?.admissionFee ?? 0;
         const bagKitAmount = feeStruct?.bagKitFee ?? 0;
+
+        // --- Fetch transport amount for this specific academic year ---
+        let transportAmount = 0;
+        if (student.transportType && student.transportType !== 'None') {
+          const transportStruct = await mongoose.model('TransportFeeStructure').findOne(
+            { transportType: student.transportType, academicYear, isActive: true },
+            null,
+            { session }
+          );
+          if (transportStruct) {
+            transportAmount = transportStruct.amount;
+          } else {
+            throw new AppError(`Transport fee structure not found for '${student.transportType}' in year ${academicYear}. Please create it first.`, 404);
+          }
+        }
 
         const statusStr = data.pendingFees ? data.pendingFees[academicYear] : undefined;
         const pendingStartIndex = getPendingStartIndex(statusStr);
@@ -1080,16 +1071,9 @@ class StudentService {
             { session }
           );
           if (!tfs) {
-            // Fallback: try without year filter (legacy data)
-            const tfsFallback = await mongoose.model('TransportFeeStructure').findOne(
-              { transportType: student.transportType, isActive: true },
-              null,
-              { session }
-            );
-            transportAmount = tfsFallback?.amount ?? 0;
-          } else {
-            transportAmount = tfs.amount;
+            throw new AppError(`Transport fee structure not found for '${student.transportType}' in year ${academicYearStr}. Please create it first.`, 404);
           }
+          transportAmount = tfs.amount;
         }
       }
 
