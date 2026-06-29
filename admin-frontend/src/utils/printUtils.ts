@@ -379,14 +379,14 @@ export function generateReceiptHTML(
   <title>Payment Receipt — ${transaction.studentName}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A4 portrait; margin: 0; }
+    @page { size: A5 landscape; margin: 0; }
 
     body {
       padding: 0;
       margin: 0;
       width: 210mm;
-      min-height: 297mm;
-      height: 297mm;
+      min-height: 148mm;
+      height: 148mm;
       position: relative;
       background: #fff;
       display: flex;
@@ -400,19 +400,19 @@ export function generateReceiptHTML(
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
-      padding: 16px 14mm 80px;
+      padding: 10px 10mm 45px;
       background: transparent;
     }
 
     /* ── Two-column info grid ── */
     .info-grid {
       display: grid; grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 8px;
+      margin-bottom: 4px;
       page-break-inside: avoid;
     }
     .info-col {
-      padding: 10px 14px;
+      padding: 6px 10px;
       border: 1px solid rgba(226, 232, 240, 0.8);
       border-radius: 6px;
     }
@@ -429,14 +429,14 @@ export function generateReceiptHTML(
       border-bottom: 2px solid #e8a020;
       padding-bottom: 4px; margin-bottom: 6px;
     }
-    .info-row { display: flex; gap: 8px; margin-bottom: 5px; align-items: baseline; }
+    .info-row { display: flex; gap: 8px; margin-bottom: 3px; align-items: baseline; }
     .info-label { font-family: 'Outfit', sans-serif; font-size: 8px; font-weight: 700; color: #64748b; width: 72px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.8px; }
-    .info-value { font-size: 9.5px; font-weight: 600; color: #1e293b; flex: 1; }
+    .info-value { font-size: 8px; font-weight: 600; color: #1e293b; flex: 1; }
 
     /* ── Section header ── */
     .section-hd {
       display: flex; align-items: center; gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       page-break-after: avoid;
     }
     .section-hd-bar { width: 4px; height: 14px; background: #e8a020; border-radius: 2px; flex-shrink: 0; }
@@ -445,9 +445,9 @@ export function generateReceiptHTML(
     /* ── Fee table ── */
     .fee-table { width: 100%; margin-bottom: 0; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 6px; overflow: hidden; }
     .fee-table thead tr { background: linear-gradient(135deg, #1b3a6b 0%, #2a5298 100%); }
-    .fee-table thead th { font-family: 'Outfit', sans-serif; padding: 9px 12px; color: #fff; font-size: 9px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; }
+    .fee-table thead th { font-family: 'Outfit', sans-serif; padding: 5px 8px; color: #fff; font-size: 9px; font-weight: 700; text-align: left; letter-spacing: 0.8px; text-transform: uppercase; }
     .fee-table thead th:last-child { text-align: right; }
-    .fee-table tbody td { padding: 7px 12px; }
+    .fee-table tbody td { padding: 5px 8px; }
     .fee-table tbody tr { border-bottom: 1px solid #e8edf8; }
     .fee-table tbody tr:last-child { border-bottom: none; }
     .fee-table tfoot tr { background: linear-gradient(to bottom, #e8a020, #d97706); }
@@ -476,7 +476,7 @@ export function generateReceiptHTML(
       background: rgba(248, 250, 253, 0.85); /* Semi-transparent */
       padding: 9px 16px;
       border-radius: 0 6px 6px 0;
-      font-size: 9.5px; color: #475569; font-style: italic;
+      font-size: 8px; color: #475569; font-style: italic;
       border-top: 1px solid rgba(226, 232, 240, 0.3);
       border-bottom: 1px solid rgba(226, 232, 240, 0.3);
       border-right: 1px solid rgba(226, 232, 240, 0.3);
@@ -512,7 +512,7 @@ export function generateReceiptHTML(
   ${
     watermarkBase64
       ? `
-  <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+  <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 148mm; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
     <img src="${watermarkBase64}" style="width: 460px; height: 460px; opacity: 0.08; transform: rotate(-12deg); object-fit: contain;" />
   </div>
   `
@@ -524,7 +524,7 @@ export function generateReceiptHTML(
     <!-- Right Gold Block (Shorter, tucked behind) -->
     <div style="position: absolute; top: 0; right: 0; width: 48%; height: 96px; background: #e8a020; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 28px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <div style="font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: #fff; line-height: 1; text-shadow: 1px 1px 3px rgba(0,0,0,0.18);">RECEIPT</div>
-      <div style="font-size: 9.5px; color: #1b3a6b; font-weight: 700; margin-top: 8px; text-align: right; background: rgba(255,255,255,0.92); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
+      <div style="font-size: 8px; color: #1b3a6b; font-weight: 700; margin-top: 8px; text-align: right; background: rgba(255,255,255,0.92); padding: 3px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
         NO: <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 900; color: #1b3a6b; letter-spacing: 0.5px;">${receiptNo}</span>
       </div>
     </div>
@@ -537,7 +537,7 @@ export function generateReceiptHTML(
       <div style="display: flex; flex-direction: column; gap: 5px;">
         <div style="font-size: 20px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; color: #fff;">SUNRISE SCHOOL RAJKOT</div>
         <div style="font-size: 11px; font-weight: 700; color: #fcd34d; letter-spacing: 0.4px;">English &amp; Gujarati Medium</div>
-        <div style="font-size: 9.5px; color: #e2e8f0; line-height: 1.5;">
+        <div style="font-size: 8px; color: #e2e8f0; line-height: 1.5;">
           ${SCH.address}<br/>
           Ph: ${SCH.phone} &nbsp;·&nbsp; ${SCH.email}
         </div>
@@ -615,15 +615,15 @@ export function generateReceiptHTML(
   </div>
 
   <!-- ════ FOOTER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
-  <div class="footer-container" style="position: absolute; bottom: 0; left: 0; height: 60px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
+  <div class="footer-container" style="position: absolute; bottom: 0; left: 0; height: 40px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 10;">
     <!-- Left Gold Block (Shorter, tucked behind) -->
-    <div style="position: absolute; bottom: 0; left: 0; width: 45%; height: 45px; background: #e8a020; z-index: 1; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+    <div style="position: absolute; bottom: 0; left: 0; width: 45%; height: 30px; background: #e8a020; z-index: 1; display: flex; align-items: center; padding-left: 20px; color: #1b3a6b; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
       <span style="font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">THANK YOU</span>
     </div>
 
     <!-- Right Navy Block (Full height, overlapping, with top-left curve) -->
-    <div style="position: absolute; bottom: 0; right: 0; width: 70%; height: 60px; background: #1b3a6b; z-index: 2; border-top-left-radius: 35px; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 9.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="display: flex; gap: 18px; font-weight: 600; align-items: center; letter-spacing: 0.5px;">
+    <div style="position: absolute; bottom: 0; right: 0; width: 70%; height: 40px; background: #1b3a6b; z-index: 2; border-top-left-radius: 35px; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="display: flex; gap: 12px; font-weight: 600; align-items: center; letter-spacing: 0.5px;">
         <span>📞 ${SCH.phone}</span>
         <span style="opacity: 0.4;">|</span>
         <span>✉️ ${SCH.email}</span>
