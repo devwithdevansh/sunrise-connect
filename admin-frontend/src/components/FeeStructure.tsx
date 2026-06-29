@@ -518,21 +518,12 @@ export const FeeStructure: React.FC = () => {
     return isDefaultYear ? transportFeeStructures.filter(t => !t.academicYear) : [];
   }, [transportFeeStructures, activeYearName, academicYears]);
 
-  const handleCopyFromPrevYear = async () => {
-    const sortedYears = [...academicYears].sort((a, b) => {
-      const getY = (n: string) => parseInt(n.match(/^(\d{4})/)?.[1] || '0', 10);
-      return getY(a.name) - getY(b.name);
-    });
-    const currentIdx = sortedYears.findIndex(y => y.name === activeYearName);
-    if (currentIdx <= 0) {
-      alert('No previous academic year found to copy from.');
-      return;
-    }
-    const prevYear = sortedYears[currentIdx - 1].name;
-    if (!window.confirm(`Copy all fee rates from ${prevYear} to ${activeYearName}?\n\nExisting rates in ${activeYearName} will NOT be overwritten.`)) return;
+  const handleCopyFromYear = async (sourceYear: string) => {
+    if (!sourceYear) return;
+    if (!window.confirm(`Copy all fee rates from ${sourceYear} to ${activeYearName}?\n\nExisting rates in ${activeYearName} will NOT be overwritten.`)) return;
     setIsCopying(true);
     setCopyMsg(null);
-    const result = await copyFeeStructures(prevYear, activeYearName);
+    const result = await copyFeeStructures(sourceYear, activeYearName);
     setIsCopying(false);
     if (result.success) {
       setCopyMsg(result.message || 'Copied successfully!');
@@ -639,15 +630,31 @@ export const FeeStructure: React.FC = () => {
           >
             <Plus className="h-4 w-4" /> Add Standard
           </button>
-          <button
-            onClick={handleCopyFromPrevYear}
-            disabled={isCopying || academicYears.length < 2}
-            title="Copy all fee rates from the previous academic year"
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isCopying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-            {isCopying ? 'Copying...' : 'Copy from Prev Year'}
-          </button>
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1 py-1 shadow-sm">
+            <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider pl-2 pr-1 hidden lg:inline">Copy From:</span>
+            <div className="relative">
+              <select
+                value=""
+                onChange={(e) => handleCopyFromYear(e.target.value)}
+                disabled={isCopying || academicYears.length < 2}
+                className="appearance-none bg-transparent text-slate-700 font-bold text-sm py-1.5 pl-2 pr-8 focus:outline-none cursor-pointer disabled:opacity-50 transition-all hover:text-blue-600"
+              >
+                <option value="" disabled>{isCopying ? 'Copying...' : 'Select Year'}</option>
+                {academicYears
+                  .filter((y) => y.name !== activeYearName)
+                  .map((y) => (
+                    <option key={`copy-${y._id}`} value={y.name}>
+                      {y.name}
+                    </option>
+                  ))}
+              </select>
+              {isCopying ? (
+                <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin pointer-events-none" />
+              ) : (
+                <Copy className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none stroke-[2.5]" />
+              )}
+            </div>
+          </div>
           {/* Academic Year Selector */}
           <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1">
             <label htmlFor="year-select" className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
