@@ -141,6 +141,12 @@ export const Students: React.FC = () => {
   }, [dynamicMediums, newSMedium]);
 
   useEffect(() => {
+    if ((newSStandard === '11' || newSStandard === '12') && newSMedium === 'English') {
+      setNewSMedium('Gujarati');
+    }
+  }, [newSStandard, newSMedium]);
+
+  useEffect(() => {
     const allMonths = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
     const admIdx = allMonths.indexOf(newSAdmissionMonth);
     const trIdx = allMonths.indexOf(newSTransportStartMonth);
@@ -169,6 +175,12 @@ export const Students: React.FC = () => {
       setEditSMedium(dynamicMediums[0] as any);
     }
   }, [dynamicMediums, editSMedium]);
+
+  useEffect(() => {
+    if ((editSStandard === '11' || editSStandard === '12') && editSMedium === 'English') {
+      setEditSMedium('Gujarati');
+    }
+  }, [editSStandard, editSMedium]);
 
   // Helper to get parent ID string
   const getParentIdStr = (student: any) => {
@@ -1179,7 +1191,9 @@ export const Students: React.FC = () => {
                     onChange={(e) => setNewSMedium(e.target.value as any)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {dynamicMediums.map((med) => (
+                    {dynamicMediums
+                      .filter(med => !(med === 'English' && (newSStandard === '11' || newSStandard === '12')))
+                      .map((med) => (
                       <option key={med} value={med}>{med} Medium</option>
                     ))}
                   </select>
@@ -1395,7 +1409,9 @@ export const Students: React.FC = () => {
                     onChange={(e) => setEditSMedium(e.target.value as any)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    {dynamicMediums.map((med) => (
+                    {dynamicMediums
+                      .filter(med => !(med === 'English' && (editSStandard === '11' || editSStandard === '12')))
+                      .map((med) => (
                       <option key={med} value={med}>{med} Medium</option>
                     ))}
                   </select>
