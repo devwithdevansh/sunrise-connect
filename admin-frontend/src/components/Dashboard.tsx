@@ -98,7 +98,7 @@ const DashboardSkeleton: React.FC = () => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { students, ledgerEntries, transactions, setScreen, isLoadingDetails } = useApp();
+  const { students, activeStudents, ledgerEntries, transactions, setScreen, isLoadingDetails } = useApp();
 
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
   const todayString = useMemo(() => {
@@ -270,15 +270,15 @@ export const Dashboard: React.FC = () => {
   }, [selectedDateTransactions]);
 
   // Overall student & ledger statistics
-  const totalStudents = students.length;
-  const englishStudents = students.filter(s => s.medium.toLowerCase() === 'english').length;
-  const gujaratiStudents = students.filter(s => s.medium.toLowerCase() === 'gujarati').length;
+  const totalStudents = activeStudents.length;
+  const englishStudents = activeStudents.filter(s => s.medium.toLowerCase() === 'english').length;
+  const gujaratiStudents = activeStudents.filter(s => s.medium.toLowerCase() === 'gujarati').length;
 
-  const transportStudents = students.filter(s => s.transportType && s.transportType !== 'None').length;
-  const railnagarStudents = students.filter(s => s.transportType === 'Railnagar').length;
-  const outsideStudents = students.filter(s => s.transportType === 'Outside Railnagar').length;
+  const transportStudents = activeStudents.filter(s => s.transportType && s.transportType !== 'None').length;
+  const railnagarStudents = activeStudents.filter(s => s.transportType === 'Railnagar').length;
+  const outsideStudents = activeStudents.filter(s => s.transportType === 'Outside Railnagar').length;
 
-  const rteStudents = students.filter(s => s.isRTE).length;
+  const rteStudents = activeStudents.filter(s => s.isRTE).length;
 
   // Outstanding / Unpaid Calculation from ledger entries
   const unpaidLedgers = ledgerEntries.filter(l => isLedgerPending(l));

@@ -33,13 +33,13 @@ interface MenuGroup {
 }
 
 export const Sidebar: React.FC = () => {
-  const { currentScreen, setScreen, currentUser, logout, students } = useApp();
+  const { currentScreen, setScreen, currentUser, logout, activeStudents } = useApp();
 
   if (currentScreen === 'login') return null;
 
   const unpaidCount = React.useMemo(() => {
-    return students.filter(s => s.status !== 'PAID' && s.status !== 'RTE').length;
-  }, [students]);
+    return activeStudents.filter(s => s.status !== 'PAID' && s.status !== 'RTE').length;
+  }, [activeStudents]);
 
   const menuGroups: MenuGroup[] = [
     {

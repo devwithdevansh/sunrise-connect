@@ -14,7 +14,7 @@ import type { LineItemConfig } from './CollectFee/PaymentSummaryTable';
 
 export const CollectFee: React.FC = () => {
   const {
-    students,
+    activeStudents,
     ledgerEntries,
     transactions,
     recordPayment,
@@ -60,25 +60,25 @@ export const CollectFee: React.FC = () => {
 
   // Handle student pre-selection if redirected from Students page
   useEffect(() => {
-    if (selectedStudentIdForFee && students.length > 0) {
-      const found = students.find(s => s._id === selectedStudentIdForFee || s.id === selectedStudentIdForFee);
+    if (selectedStudentIdForFee && activeStudents.length > 0) {
+      const found = activeStudents.find(s => s._id === selectedStudentIdForFee || s.id === selectedStudentIdForFee);
       if (found) {
         setSelectedStudent(found);
         setSelectedYear(activeYearName);
         setSelectedStudentIdForFee(null);
       }
-    } else if (students.length > 0 && !selectedStudent) {
-      setSelectedStudent(students[0]);
+    } else if (activeStudents.length > 0 && !selectedStudent) {
+      setSelectedStudent(activeStudents[0]);
     }
-  }, [students, selectedStudent, selectedStudentIdForFee, setSelectedStudentIdForFee]);
+  }, [activeStudents, selectedStudent, selectedStudentIdForFee, setSelectedStudentIdForFee]);
 
-  // Sync selected student when students list is refreshed
+  // Sync selected student when activeStudents list is refreshed
   useEffect(() => {
-    if (selectedStudent && students.length > 0) {
-      const updated = students.find(s => s._id === selectedStudent._id || s.id === selectedStudent.id);
+    if (selectedStudent && activeStudents.length > 0) {
+      const updated = activeStudents.find(s => s._id === selectedStudent._id || s.id === selectedStudent.id);
       if (updated) setSelectedStudent(updated);
     }
-  }, [students]);
+  }, [activeStudents]);
 
   // -------------------------------------------------------------------
   // Dynamic fee amounts derived from DB-backed feeStructures
@@ -318,10 +318,11 @@ export const CollectFee: React.FC = () => {
   // -------------------------------------------------------------------
   // Search filter
   // -------------------------------------------------------------------
-  const filteredStudents = students.filter(
+  const filteredStudents = activeStudents.filter(
     (s) =>
-      s.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.studentCode ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+      searchQuery === '' ||
+      s.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.studentCode && s.studentCode.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const getStudentDueAmount = (studentId: string) =>

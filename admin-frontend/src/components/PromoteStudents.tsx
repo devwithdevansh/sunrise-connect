@@ -3,7 +3,7 @@ import { useApp } from '../store';
 import { Users, ArrowRight, CheckCircle, Search, ChevronDown, GraduationCap, ShieldAlert, Check, Info, X } from 'lucide-react';
 
 export const PromoteStudents: React.FC = () => {
-  const { students, setScreen, academicYears, authFetch, feeStructures } = useApp();
+  const { activeStudents, setScreen, academicYears, authFetch, feeStructures } = useApp();
   const [sourceMedium, setSourceMedium] = useState('English');
   const [sourceClass, setSourceClass] = useState('5');
   const [sourceDiv, setSourceDiv] = useState('A');
@@ -122,8 +122,7 @@ export const PromoteStudents: React.FC = () => {
     setSelectedStudentIds([]);
   }, [sourceMedium, sourceClass, sourceDiv]);
 
-  const eligibleStudents = students.filter(s =>
-    s.isActive !== false &&
+  const eligibleStudents = activeStudents.filter(s =>
     s.medium === sourceMedium &&
     String(s.standard).trim() === String(sourceClass).trim() &&
     String(s.division).trim() === String(sourceDiv).trim() &&

@@ -9,7 +9,7 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { students, ledgerEntries, transactions } = useApp();
+  const { students, activeStudents, ledgerEntries, transactions } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
@@ -30,7 +30,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
 
   // Available filters from data
   const classes = useMemo(() => {
-    const stds = new Set(students.map(s => s.standard));
+    const stds = new Set(activeStudents.map(s => s.standard));
     const getStdOrder = (std: string) => {
       const normalized = (std || '').toString().trim();
       const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
@@ -40,7 +40,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       return isNaN(num) ? 999 : num;
     };
     return ['All Classes', ...Array.from(stds).sort((a, b) => getStdOrder(a) - getStdOrder(b)).map(std => `Class ${std}`)];
-  }, [students]);
+  }, [activeStudents]);
 
   const mediums = ['All Mediums', 'English Medium', 'Gujarati Medium'];
 
@@ -122,7 +122,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
     });
 
     // 2. Map back to students with filters
-    const list = students
+    const list = activeStudents
       .filter(s => {
         // Active status
         if (!s.isActive) return false;
@@ -199,12 +199,24 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       twoDueCount,
       threePlusDueCount
     };
-  }, [students, ledgerEntries, outstandingClassFilter, outstandingMediumFilter, outstandingSearchQuery]);
+  }, [activeStudents, ledgerEntries, outstandingClassFilter, outstandingMediumFilter, outstandingSearchQuery]);
 
   // ==========================================
   // 3. RTE RECONCILE REPORT CALCULATION
   // ==========================================
   const rteReportData = useMemo(() => {
+    let rteList = activeStudents.filter(s => s.isRTE);
+
+    if (rteClassFilter !== 'All Classes') {
+        const std = rteClassFilter.replace('Class ', '');
+        rteList = rteList.filter(s => s.standard === std);
+    }
+    
+    if (rteSearchQuery) {
+        const q = rteSearchQuery.toLowerCase();
+        rteList = rteList.filter(s => s.studentName.toLowerCase().includes(q) || s.studentCode.toLowerCase().includes(q));
+    }
+
     // 1. Calculate total concession (exempted fees) for RTE students
     const studentExemptionsMap = new Map<string, number>();
 
@@ -215,29 +227,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       }
     });
 
-    const list = students
-      .filter(s => {
-        if (!s.isRTE) return false;
-
-        // Class Filter
-        if (rteClassFilter !== 'All Classes') {
-          const std = rteClassFilter.replace('Class ', '');
-          if (s.standard !== std) return false;
-        }
-
-        // Search Filter
-        if (rteSearchQuery) {
-          const q = rteSearchQuery.toLowerCase();
-          return (
-            s.studentName.toLowerCase().includes(q) ||
-            s.studentCode.toLowerCase().includes(q) ||
-            s.parentMobile.includes(q)
-          );
-        }
-
-        return true;
-      })
-      .map(s => {
+    const list = rteList.map(s => {
         const exemptedAmount = studentExemptionsMap.get(s.id) || 0;
         return {
           id: s.id,
@@ -258,7 +248,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       totalExemptedAmount,
       studentCount: list.length
     };
-  }, [students, ledgerEntries, rteClassFilter, rteSearchQuery]);
+  }, [activeStudents, ledgerEntries, rteClassFilter, rteSearchQuery]);
 
   // ==========================================
   // EXCEL EXPORTS USING XLSX LIBRARY
