@@ -634,40 +634,13 @@ class StudentService {
         }
       }
 
-      if (updates.isActive === false) {
-        const today = new Date();
-        const ledgers = await mongoose.model('StudentFeeLedger').find({
-          studentId,
-          status: { $in: ['PENDING', 'PARTIAL'] },
-          dueDate: { $gt: today }
-        }).session(session);
-
-        for (const ledger of ledgers) {
-          if (ledger.status === 'PENDING') {
-            ledger.status = 'CANCELLED';
-            ledger.remainingAmount = 0;
-          } else if (ledger.status === 'PARTIAL') {
-            ledger.concessionAmount += ledger.remainingAmount;
-            ledger.remainingAmount = 0;
-            ledger.status = 'PAID';
-          }
-          await ledger.save({ session });
-        }
+      if (updates.isActive === false && student.isActive !== false) {
+        await this._deactivateStudent(studentId, session);
       }
 
       const reactivated = updates.isActive === true && student.isActive === false;
       if (reactivated) {
-        const cancelledLedgers = await mongoose.model('StudentFeeLedger').find({
-          studentId,
-          academicYear: currentAcademicYearName,
-          status: 'CANCELLED'
-        }).session(session);
-
-        for (const ledger of cancelledLedgers) {
-          ledger.status = 'PENDING';
-          ledger.remainingAmount = ledger.totalAmount - (ledger.paidAmount || 0) - (ledger.concessionAmount || 0);
-          await ledger.save({ session });
-        }
+        await this._reactivateStudent(studentId, currentAcademicYearName, session);
       }
 
       const standardChanged = updates.standard !== undefined && updates.standard !== student.standard;
@@ -898,15 +871,7 @@ class StudentService {
       if (hasPayments) {
         // SOFT DELETE
         await studentRepository.updateOne({ _id: studentId }, { $set: { isActive: false } }, { session });
-        
-        // Cancel all pending/partial ledgers so they don't show up in unpaid fees
-        if (ledgerIds.length > 0) {
-          await mongoose.model('StudentFeeLedger').updateMany(
-            { _id: { $in: ledgerIds }, status: { $in: ['PENDING', 'PARTIAL'] } },
-            { $set: { status: 'CANCELLED' } },
-            { session }
-          );
-        }
+        await this._deactivateStudent(studentId, session);
 
         await AuditService.log(
           { performedBy, targetStudentId: studentId, action: 'STUDENT_SOFT_DELETED', details: { studentCode: student.studentCode, studentName: student.studentName, reason: 'Has payment history' } },
@@ -945,8 +910,10 @@ class StudentService {
 
       await studentRepository.updateOne({ _id: studentId }, { $set: { isActive: true } }, { session });
 
-      // Note: We don't automatically un-cancel ledgers because we don't know which ones should be active. 
-      // The admin can manually regenerate or update ledgers if needed.
+      const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
+      if (!activeYearDoc) throw new AppError('No active academic year found.', 400);
+
+      await this._reactivateStudent(studentId, activeYearDoc.name, session);
 
       await AuditService.log(
         { performedBy, targetStudentId: studentId, action: 'STUDENT_RESTORED', details: { studentCode: student.studentCode, studentName: student.studentName } },
@@ -1012,6 +979,41 @@ class StudentService {
     } finally {
       session.endSession();
     }
+  }
+
+  static async _deactivateStudent(studentId, session) {
+    const ledgers = await mongoose.model('StudentFeeLedger').find({
+      studentId,
+      status: { $in: ['PENDING', 'PARTIAL'] }
+    }).session(session);
+
+    for (const ledger of ledgers) {
+      ledger.status = 'CANCELLED';
+      ledger.remainingAmount = 0;
+      await ledger.save({ session });
+    }
+  }
+
+  static async _reactivateStudent(studentId, activeAcademicYear, session) {
+    const cancelledLedgers = await mongoose.model('StudentFeeLedger').find({
+      studentId,
+      academicYear: activeAcademicYear,
+      status: 'CANCELLED'
+    }).session(session);
+
+    for (const ledger of cancelledLedgers) {
+      ledger.remainingAmount = ledger.totalAmount - (ledger.paidAmount || 0) - (ledger.concessionAmount || 0);
+      if (ledger.remainingAmount === 0) {
+        ledger.status = 'PAID';
+      } else if ((ledger.paidAmount || 0) > 0) {
+        ledger.status = 'PARTIAL';
+      } else {
+        ledger.status = 'PENDING';
+      }
+      await ledger.save({ session });
+    }
+
+    await this._generateLedgersForAcademicYear(studentId, activeAcademicYear, session, { forceCreate: false });
   }
 
   static async _generateLedgersForAcademicYear(studentId, targetAcademicYearStr, parentSession = null, options = {}) {
