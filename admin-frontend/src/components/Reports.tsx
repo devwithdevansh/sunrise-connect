@@ -9,7 +9,7 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { students, activeStudents, ledgerEntries, transactions } = useApp();
+  const { activeStudents, ledgerEntries, transactions } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
