@@ -43,9 +43,9 @@ class DashboardController {
       academicYears,
       feeCategories
     ] = await Promise.all([
-      studentRepository.find({}, null, { limit: 1000 }),
-      ledgerRepository.find({}, null, { limit: 1000 }),
-      paymentRepository.find({}, null, { limit: 1000, sort: { createdAt: -1 } }),
+      studentRepository.find({}, null, { limit: 50000 }),
+      ledgerRepository.find({}, null, { limit: 50000 }),
+      paymentRepository.find({}, null, { limit: 10000, sort: { createdAt: -1 } }),
       FeeStructure.find({ isActive: true }).lean(),
       TransportFeeStructure.find({ isActive: true }).lean(),
       AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
