@@ -90,8 +90,8 @@ export const CollectFee: React.FC = () => {
       const sId = selectedStudent._id || selectedStudent.id;
       try {
         const [ledgersRes, txRes] = await Promise.all([
-          authFetch(`/api/v1/ledgers/student/${sId}`),
-          authFetch(`/api/v1/payments/student/${sId}`)
+          authFetch(`/api/v1/ledgers?studentId=${sId}&limit=100`),
+          authFetch(`/api/v1/payments?studentId=${sId}&limit=100`)
         ]);
         const ledgersData = await ledgersRes.json();
         setLedgerEntries(ledgersData.data || []);
