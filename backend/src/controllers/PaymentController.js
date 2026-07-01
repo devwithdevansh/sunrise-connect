@@ -45,6 +45,15 @@ class PaymentController {
   /** GET /api/v1/payments */
   static listPayments = catchAsync(async (req, res) => {
     const { limit = 20, skip = 0, ...filter } = req.query;
+    if (filter.studentId) {
+      const ledgers = await ledgerRepository.find({ studentId: filter.studentId });
+      if (ledgers.length === 0) {
+        return sendResponse(res, 200, []);
+      }
+      filter.ledgerIds = ledgers.map(l => l._id.toString()).join(',');
+      delete filter.studentId;
+    }
+    
     if (req.user?.role === 'parent') {
       const students = await studentRepository.find({ parentId: req.user.id });
       const studentIds = students.map(s => s._id);
