@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
+import { isLedgerPending, isPeriodOverdue } from './utils';
+
 import type {
   Student,
   LedgerEntry,
@@ -264,7 +266,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const promise = (async () => {
       setIsLoadingDetails(true);
       try {
-        const initRes = await authFetch('/api/v1/dashboard/init');
+        const [initRes, unpaidRes] = await Promise.all([
+          authFetch('/api/v1/dashboard/init'),
+          authFetch('/api/v1/reports/unpaid')
+        ]);
+        
         if (!initRes.ok) {
           throw new Error(`Failed request: ${initRes.status} ${initRes.statusText}`);
         }
@@ -272,18 +278,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const initData = await initRes.json();
         const data = initData.data || {};
 
+        const unpaidDataRaw = unpaidRes.ok ? await unpaidRes.json() : { data: [] };
+        const unpaidData = unpaidDataRaw.data || [];
+
         const rawStudents = data.students || [];
-        const mappedStudents = rawStudents.map((s: any) => ({
-          ...s,
-          id: s._id,
-          parentName: s.parentId?.parentName || '',
-          parentMobile: s.parentId?.primaryMobileNumber || '',
-          parentSecondaryMobile: s.parentId?.secondaryMobileNumber || '',
-          transportStartMonth: s.transportStartMonth || 'June',
-          status: s.isRTE ? 'RTE' : 'PAID',
-          ledgers: [],
-          transactions: []
-        }));
+        const mappedStudents = rawStudents.map((s: any) => {
+          let status = 'PAID';
+          if (s.isRTE) {
+            status = 'RTE';
+          } else {
+            const unpaid = unpaidData.find((u: any) => u._id === s._id || u._id === s.id);
+            if (unpaid && unpaid.pendingLedgers) {
+              const activeYear = data.academicYears?.find((y: any) => y.isActive)?.name || data.academicYears?.[0]?.name || '';
+              const overdue = unpaid.pendingLedgers.filter((l: any) => 
+                isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYear)
+              );
+              
+              const uniquePeriods = new Set(overdue.map((l: any) => `${l.academicYear || activeYear}_${l.feePeriod}`));
+              const dueCount = uniquePeriods.size;
+              
+              if (dueCount === 1) status = '1 DUE';
+              else if (dueCount === 2) status = '2 DUE';
+              else if (dueCount >= 3) status = '3+ DUE';
+            }
+          }
+
+          return {
+            ...s,
+            id: s._id,
+            parentName: s.parentId?.parentName || '',
+            parentMobile: s.parentId?.primaryMobileNumber || '',
+            parentSecondaryMobile: s.parentId?.secondaryMobileNumber || '',
+            transportStartMonth: s.transportStartMonth || 'June',
+            status,
+            ledgers: [],
+            transactions: []
+          };
+        });
         setStudents(mappedStudents);
 
         setFeeStructures(data.feeStructures || []);
