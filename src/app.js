@@ -20,6 +20,7 @@ import feeStructureRoutes from './routes/fee-structure.routes.js';
 import feeCategoryRoutes from './routes/fee-category.routes.js';
 import academicYearRoutes from './routes/academic-year.routes.js';
 import userRoutes         from './routes/user.routes.js';
+import reportRoutes       from './routes/report.routes.js';
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use(`${V1}/fee-structures`, feeStructureRoutes);
 app.use(`${V1}/fee-categories`, feeCategoryRoutes);
 app.use(`${V1}/academic-years`, academicYearRoutes);
 app.use(`${V1}/users`,          userRoutes);
+app.use(`${V1}/reports`,        reportRoutes);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.all('/{*splat}', (req, _res, next) => {

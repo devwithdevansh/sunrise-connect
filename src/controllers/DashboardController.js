@@ -35,17 +35,13 @@ class DashboardController {
   static initDashboard = catchAsync(async (req, res) => {
     const [
       students,
-      ledgers,
-      transactions,
       feeStructures,
       transportStructures,
       auditLogs,
       academicYears,
       feeCategories
     ] = await Promise.all([
-      studentRepository.find({}, null, { limit: 1000 }),
-      ledgerRepository.find({}, null, { limit: 1000 }),
-      paymentRepository.find({}, null, { limit: 1000, sort: { createdAt: -1 } }),
+      studentRepository.find({}, null, { limit: 50000 }),
       FeeStructure.find({ isActive: true }).lean(),
       TransportFeeStructure.find({ isActive: true }).lean(),
       AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
@@ -55,14 +51,21 @@ class DashboardController {
 
     sendResponse(res, 200, {
       students,
-      ledgers,
-      transactions,
+      ledgers: [],
+      transactions: [],
       feeStructures,
       transportStructures,
       auditLogs,
       academicYears,
       feeCategories
     });
+  });
+
+  /** GET /api/v1/dashboard/metrics */
+  static getMetrics = catchAsync(async (req, res) => {
+    const { date } = req.query; // YYYY-MM-DD
+    const metrics = await DashboardService.getDailyMetrics(date);
+    sendResponse(res, 200, metrics);
   });
 
   /** GET /api/v1/dashboard/sync-state */
