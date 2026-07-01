@@ -6,6 +6,8 @@ import parentRepository from '../repositories/parentRepository.js';
 import studentRepository from '../repositories/studentRepository.js';
 import ledgerRepository from '../repositories/ledgerRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
+import Payment from '../models/Payment.js';
+import StudentFeeLedger from '../models/StudentFeeLedger.js';
 
 class DashboardService {
   /** Aggregated view for a specific parent */

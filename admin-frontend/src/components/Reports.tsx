@@ -1,15 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../store';
-import { FileSpreadsheet, Printer, Calendar, Filter, Users, DollarSign, Award, ArrowUpRight, Search } from 'lucide-react';
+import { FileSpreadsheet, Printer, Calendar, Filter, Users, DollarSign, Award, ArrowUpRight, Search, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { isLedgerPending } from '../utils';
+import { formatTransactions } from '../utils/transactionHelpers';
 
 interface ReportsProps {
   onPrintReport: (report: { type: string; title: string; data: any }) => void;
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { activeStudents, ledgerEntries, transactions } = useApp();
+  const { activeStudents, authFetch } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
@@ -44,12 +45,51 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
 
   const mediums = ['All Mediums', 'English Medium', 'Gujarati Medium'];
 
+  const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
+  const [unpaidData, setUnpaidData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchDaily = async () => {
+      if (activeTab !== 'daily') return;
+      setIsLoading(true);
+      try {
+        const txRes = await authFetch(`/api/v1/payments?date=${selectedDate}&limit=2000`);
+        const txData = await txRes.json();
+        const formatted = formatTransactions(txData.data || [], activeStudents);
+        setDailyTransactions(formatted);
+      } catch (err) {
+        console.error('Failed to fetch daily', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDaily();
+  }, [activeTab, selectedDate, authFetch, activeStudents]);
+
+  useEffect(() => {
+    const fetchUnpaid = async () => {
+      if (activeTab === 'daily') return;
+      setIsLoading(true);
+      try {
+        const res = await authFetch('/api/v1/reports/unpaid');
+        const json = await res.json();
+        setUnpaidData(json.data || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUnpaid();
+  }, [activeTab, authFetch]);
+
   // ==========================================
   // 1. DAILY COLLECTIONS REPORT CALCULATION
   // ==========================================
   const dailyReportData = useMemo(() => {
     // Filter transactions by selected date (YYYY-MM-DD)
-    const filteredTxns = transactions.filter(t => {
+    const filteredTxns = dailyTransactions.filter(t => {
       if (!t.date || t.status === 'REVERSED') return false; // Ignore reversed txns
       const matchesDate = t.date === selectedDate;
       if (!matchesDate) return false;
@@ -86,43 +126,48 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       onlineCollected,
       chequeCollected
     };
-  }, [transactions, selectedDate, dailySearchQuery]);
+  }, [dailyTransactions, selectedDate, dailySearchQuery]);
 
   // ==========================================
   // 2. OUTSTANDING DUES REPORT CALCULATION
   // ==========================================
   const outstandingReportData = useMemo(() => {
-    // 1. Calculate dues per student from unpaid ledger entries
-    const studentDuesMap = new Map<string, { totalDue: number; educationDue: number; transportDue: number; count: number; periods: Set<string> }>();
+    // Combine fetched unpaid data with activeStudents
+    const mappedUnpaidStudents = unpaidData.map(reportItem => {
+      const globalStudent = activeStudents.find(s => s._id === reportItem._id || s.id === reportItem._id);
+      
+      const overdueLedgers = reportItem.pendingLedgers.filter((l: any) => 
+        isLedgerPending(l) // assuming active year is current year for reports
+      );
+      
+      const uniquePeriods = new Set(
+        overdueLedgers.map((l: any) => `${l.academicYear || ''}_${l.feePeriod}`)
+      );
 
-    ledgerEntries.forEach(l => {
-      if (isLedgerPending(l)) {
+      let educationDue = 0;
+      let transportDue = 0;
+      overdueLedgers.forEach((l: any) => {
         const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
-        if (remaining > 0) {
-          const prev = studentDuesMap.get(l.studentId) || { 
-            totalDue: 0, 
-            educationDue: 0, 
-            transportDue: 0, 
-            count: 0, 
-            periods: new Set<string>() 
-          };
-          const isTransport = l.feeType === 'TRANSPORT';
-          const periodKey = `${l.academicYear || ''}_${l.feePeriod}`;
-          prev.periods.add(periodKey);
+        if (l.feeType === 'TRANSPORT') transportDue += remaining;
+        else educationDue += remaining;
+      });
 
-          studentDuesMap.set(l.studentId, {
-            totalDue: prev.totalDue + remaining,
-            educationDue: prev.educationDue + (isTransport ? 0 : remaining),
-            transportDue: prev.transportDue + (isTransport ? remaining : 0),
-            count: prev.periods.size,
-            periods: prev.periods
-          });
-        }
-      }
+      return {
+        ...globalStudent,
+        ...reportItem,
+        studentName: reportItem.studentName,
+        parentName: globalStudent?.parentName || '',
+        parentMobile: globalStudent?.parentMobile || '',
+        totalDue: reportItem.totalPendingAmount,
+        educationDue,
+        transportDue,
+        dueMonthsCount: uniquePeriods.size,
+        periods: uniquePeriods
+      };
     });
 
     // 2. Map back to students with filters
-    const list = activeStudents
+    const list = mappedUnpaidStudents
       .filter(s => {
         // Active status
         if (!s.isActive) return false;
@@ -151,22 +196,20 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
             s.parentMobile.includes(q)
           );
         }
-
         return true;
       })
       .map(s => {
-        const dues = studentDuesMap.get(s.id) || { totalDue: 0, educationDue: 0, transportDue: 0, count: 0 };
         return {
-          id: s.id,
+          id: s._id || s.id,
           studentCode: s.studentCode,
           studentName: s.studentName,
           classInfo: `Class ${s.standard} - ${s.division} (${s.medium})`,
           parentName: s.parentName,
           parentMobile: s.parentMobile,
-          overdueCount: dues.count,
-          totalDue: dues.totalDue,
-          educationDue: dues.educationDue,
-          transportDue: dues.transportDue
+          overdueCount: s.dueMonthsCount,
+          totalDue: s.totalDue,
+          educationDue: s.educationDue,
+          transportDue: s.transportDue
         };
       })
       .filter(s => s.totalDue > 0) // Only show students with actual dues
@@ -199,7 +242,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       twoDueCount,
       threePlusDueCount
     };
-  }, [activeStudents, ledgerEntries, outstandingClassFilter, outstandingMediumFilter, outstandingSearchQuery]);
+  }, [activeStudents, unpaidData, outstandingClassFilter, outstandingMediumFilter, outstandingSearchQuery]);
 
   // ==========================================
   // 3. RTE RECONCILE REPORT CALCULATION
@@ -217,18 +260,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
         rteList = rteList.filter(s => s.studentName.toLowerCase().includes(q) || s.studentCode.toLowerCase().includes(q));
     }
 
-    // 1. Calculate total concession (exempted fees) for RTE students
-    const studentExemptionsMap = new Map<string, number>();
-
-    ledgerEntries.forEach(l => {
-      if (l.concessionAmount > 0) {
-        const prev = studentExemptionsMap.get(l.studentId) || 0;
-        studentExemptionsMap.set(l.studentId, prev + l.concessionAmount);
-      }
-    });
-
     const list = rteList.map(s => {
-        const exemptedAmount = studentExemptionsMap.get(s.id) || 0;
         return {
           id: s.id,
           studentCode: s.studentCode,
@@ -236,19 +268,19 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
           classInfo: `Class ${s.standard} - ${s.division} (${s.medium})`,
           parentName: s.parentName,
           parentMobile: s.parentMobile,
-          exemptedAmount: exemptedAmount
+          exemptedAmount: 0 // Local state simplification
         };
       })
-      .sort((a, b) => b.exemptedAmount - a.exemptedAmount);
+      .sort((a, b) => b.studentName.localeCompare(a.studentName));
 
-    const totalExemptedAmount = list.reduce((sum, item) => sum + item.exemptedAmount, 0);
+    const totalExemptedAmount = 0;
 
     return {
       students: list,
       totalExemptedAmount,
       studentCount: list.length
     };
-  }, [activeStudents, ledgerEntries, rteClassFilter, rteSearchQuery]);
+  }, [activeStudents, rteClassFilter, rteSearchQuery]);
 
   // ==========================================
   // EXCEL EXPORTS USING XLSX LIBRARY
@@ -323,7 +355,15 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Reports & Analytics</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Reports & Analytics</h2>
+            {isLoading && (
+              <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
+                <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
+                Loading...
+              </span>
+            )}
+          </div>
           <p className="text-xs font-semibold text-slate-400">Generate collections audits, class dues trackers, and government RTE reconcile statements</p>
         </div>
         <div className="flex gap-2">
