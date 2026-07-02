@@ -56,10 +56,10 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 px-2 py-1 rounded border border-red-100 text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95"
             title="Clear search"
           >
-            <X className="h-4 w-4" />
+            Clear <X className="h-3 w-3" strokeWidth={3} />
           </button>
         )}
       </div>
