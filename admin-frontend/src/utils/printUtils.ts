@@ -169,7 +169,7 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
   const groups: { [key: string]: { items: SubItem[]; months: string[] } } = {};
 
   for (const item of items) {
-    const match = item.description.match(
+    const match = item.description?.match(
       /^(.+?)\s*-\s*(January|February|March|April|May|June|July|August|September|October|November|December)$/i,
     );
     if (match) {
@@ -182,7 +182,7 @@ export function groupSubItems(items: SubItem[]): SubItem[] {
       groups[rawPrefix].items.push(item);
       groups[rawPrefix].months.push(rawMonth);
     } else {
-      const desc = item.description.trim();
+      const desc = (item.description || "General Fee").trim();
       if (!groups[desc]) {
         groups[desc] = { items: [], months: [] };
       }
@@ -288,7 +288,7 @@ export function generateReceiptHTML(
 
   const period = (() => {
     if (transaction.studentCode) {
-      const match = transaction.studentCode.match(/\/(\d{4})-(\d{2})\//);
+      const match = transaction.studentCode?.match(/\/(\d{4})-(\d{2})\//);
       if (match) {
         const startYear = match[1];
         const endYear = startYear.slice(0, 2) + match[2];

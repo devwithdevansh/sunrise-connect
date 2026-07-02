@@ -65,6 +65,7 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
         method: tx.method,
         status,
         feeType: desc,
+        description: desc,
         academicYear: ledger ? ledger.academicYear : undefined
       });
     });
