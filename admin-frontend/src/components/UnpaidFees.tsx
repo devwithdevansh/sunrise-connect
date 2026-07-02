@@ -332,7 +332,7 @@ export const UnpaidFees: React.FC = () => {
     exportYears.forEach(y => yearTotals.set(y, 0));
 
     unpaidStudents.forEach(s => {
-      const rowData: any[] = [s.studentName.toUpperCase(), s.parentMobile || '', s.medium.toUpperCase()];
+      const rowData: any[] = [(s.studentName || '').toUpperCase(), s.parentMobile || '', (s.medium || '').toUpperCase()];
       
       let studentTotal = 0;
       exportYears.forEach(year => {
