@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type { Student } from '../../mockData';
 
 export interface StudentDueInfo {
@@ -42,7 +42,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
       <h3 className="text-base font-bold text-slate-800 mb-4">1. Find Student</h3>
 
-      <div className="relative mb-5">
+      <div className="relative mb-5 group">
         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
           <Search className="h-4 w-4" />
         </span>
@@ -51,8 +51,17 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
           placeholder="Type student name or code..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:border-blue-500 shadow-sm"
+          className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-10 text-sm focus:outline-none focus:border-blue-500 shadow-sm transition-all"
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+            title="Clear search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="flex-grow overflow-y-auto space-y-3 pr-1">
