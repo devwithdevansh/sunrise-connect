@@ -7,15 +7,38 @@ import {
   ChevronUp,
   RotateCcw,
   Printer,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
+import { formatTransactions } from '../utils/transactionHelpers';
 
 interface ReceiptsProps {
   onPrint: (tx: PaymentTransaction) => void;
 }
 
 export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
-  const { transactions, reversePayment, feeStructures, academicYears } = useApp();
+  const { reversePayment, feeStructures, academicYears, authFetch, students } = useApp();
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTxs = async () => {
+      try {
+        setIsLoading(true);
+        const res = await authFetch('/api/v1/payments?limit=2000');
+        const json = await res.json();
+        const formatted = formatTransactions(json.data || [], students);
+        setTransactions(formatted);
+      } catch (err) {
+        console.error('Failed to fetch receipts', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (students.length > 0) {
+      fetchTxs();
+    }
+  }, [authFetch, students]);
 
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
@@ -149,6 +172,14 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
           </p>
         </div>
       </header>
+
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-sm font-semibold">Loading receipts...</p>
+        </div>
+      ) : (
+        <>
 
       {/* Control panel (Search & Filters) */}
       <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
@@ -501,6 +532,8 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };
