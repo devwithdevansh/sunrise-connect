@@ -15,7 +15,7 @@ const CATEGORY_GROUPS = [
     headerBg: 'bg-amber-50',
     headerBorder: 'border-amber-200',
     headerText: 'text-amber-700',
-    match: (ft: string) => !ft.startsWith('Education Fee') && !ft.startsWith('Term Fee') && !ft.startsWith('Transport Fee'),
+    match: (ft: string) => !ft?.startsWith('Education Fee') && !ft?.startsWith('Term Fee') && !ft?.startsWith('Transport Fee'),
   },
   {
     key: 'eduTerm',
@@ -24,7 +24,7 @@ const CATEGORY_GROUPS = [
     headerBg: 'bg-blue-50',
     headerBorder: 'border-blue-200',
     headerText: 'text-blue-700',
-    match: (ft: string) => ft.startsWith('Education Fee') || ft.startsWith('Term Fee'),
+    match: (ft: string) => ft?.startsWith('Education Fee') || ft?.startsWith('Term Fee'),
   },
   {
     key: 'transport',
@@ -33,7 +33,7 @@ const CATEGORY_GROUPS = [
     headerBg: 'bg-emerald-50',
     headerBorder: 'border-emerald-200',
     headerText: 'text-emerald-700',
-    match: (ft: string) => ft.startsWith('Transport Fee'),
+    match: (ft: string) => ft?.startsWith('Transport Fee'),
   },
 ] as const;
 
