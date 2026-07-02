@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import type { Student } from '../../mockData';
 
@@ -24,6 +24,20 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   onSelectStudent,
   getStudentDueLabel,
 }) => {
+  const PAGE_SIZE = 50;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredStudents.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredStudents, currentPage]);
+
+  const totalPages = Math.ceil(filteredStudents.length / PAGE_SIZE);
+
   return (
     <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
       <h3 className="text-base font-bold text-slate-800 mb-4">1. Find Student</h3>
@@ -45,7 +59,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
         {filteredStudents.length === 0 ? (
           <div className="text-center text-xs text-slate-400 py-10">No students found</div>
         ) : (
-          filteredStudents.map((student) => {
+          paginatedStudents.map((student) => {
             const isSelected = selectedStudent?._id === student._id;
             const dueInfo = getStudentDueLabel(student);
             return (
@@ -84,6 +98,28 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
           })
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            className="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg disabled:opacity-50 hover:bg-slate-50 transition-colors font-medium"
+          >
+            Prev
+          </button>
+          <span className="text-xs font-semibold text-slate-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            className="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg disabled:opacity-50 hover:bg-slate-50 transition-colors font-medium"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </section>
   );
 };
