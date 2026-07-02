@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, feeStructures, academicYears, setScreen, authFetch } = useApp();
+  const { students, feeStructures, academicYears, setScreen, authFetch, setSelectedStudentIdForFee } = useApp();
   
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
@@ -387,7 +387,10 @@ export const UnpaidFees: React.FC = () => {
     XLSX.writeFile(wb, fileName);
   };
 
-  const handleCollectClick = () => {
+  const handleCollectClick = (studentId?: string) => {
+    if (studentId) {
+      setSelectedStudentIdForFee(studentId);
+    }
     // Set screen to collect-fee
     setScreen('collect-fee');
   };
@@ -425,7 +428,7 @@ export const UnpaidFees: React.FC = () => {
             />
           </div>
           <button
-            onClick={() => setScreen('collect-fee')}
+            onClick={() => handleCollectClick()}
             className="flex items-center gap-1.5 bg-[#F59E0B] hover:bg-amber-600 text-slate-900 font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-[0.98] text-sm shrink-0"
           >
             Collect Fee
@@ -648,7 +651,7 @@ export const UnpaidFees: React.FC = () => {
                       </td>
                       <td className="py-4 px-4 text-center">
                         <button
-                          onClick={() => handleCollectClick()}
+                          onClick={() => handleCollectClick(sId!)}
                           className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold px-4 py-1.5 rounded-xl text-xs shadow-sm active:scale-95 transition-all"
                         >
                           Collect

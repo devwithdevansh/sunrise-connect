@@ -67,6 +67,7 @@ export const CollectFee: React.FC = () => {
       const found = activeStudents.find(s => s._id === selectedStudentIdForFee || s.id === selectedStudentIdForFee);
       if (found) {
         setSelectedStudent(found);
+        setSearchQuery(found.studentCode || found.studentName);
         setSelectedYear(activeYearName);
         setSelectedStudentIdForFee(null);
       }
