@@ -11,12 +11,11 @@ import { StudentSidebar } from './CollectFee/StudentSidebar';
 import { FeeGrid } from './CollectFee/FeeGrid';
 import { PaymentSummaryTable } from './CollectFee/PaymentSummaryTable';
 import type { LineItemConfig } from './CollectFee/PaymentSummaryTable';
+import { formatTransactions } from '../utils/transactionHelpers';
 
 export const CollectFee: React.FC = () => {
   const {
     activeStudents,
-    ledgerEntries,
-    transactions,
     recordPayment,
     feeStructures,
     transportFeeStructures,
@@ -25,7 +24,8 @@ export const CollectFee: React.FC = () => {
     addCustomFee,
     selectedStudentIdForFee,
     setSelectedStudentIdForFee,
-    reversePayment
+    reversePayment,
+    authFetch
   } = useApp();
 
   // Academic year helpers
@@ -53,6 +53,9 @@ export const CollectFee: React.FC = () => {
   const [customFeeAmount, setCustomFeeAmount] = useState('');
   const [isSubmittingCustomFee, setIsSubmittingCustomFee] = useState(false);
 
+  const [ledgerEntries, setLedgerEntries] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+
   // Sync selectedYear when academicYears loads
   useEffect(() => {
     if (activeYearName && !selectedYear) setSelectedYear(activeYearName);
@@ -79,6 +82,29 @@ export const CollectFee: React.FC = () => {
       if (updated) setSelectedStudent(updated);
     }
   }, [activeStudents]);
+
+  // Fetch ledgers and transactions when selectedStudent changes
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      if (!selectedStudent) return;
+      const sId = selectedStudent._id || selectedStudent.id;
+      try {
+        const [ledgersRes, txRes] = await Promise.all([
+          authFetch(`/api/v1/ledgers?studentId=${sId}&limit=100`),
+          authFetch(`/api/v1/payments?studentId=${sId}&limit=100`)
+        ]);
+        const ledgersData = await ledgersRes.json();
+        setLedgerEntries(ledgersData.data || []);
+        
+        const txData = await txRes.json();
+        const formatted = formatTransactions(txData.data || [], [selectedStudent]);
+        setTransactions(formatted);
+      } catch (err) {
+        console.error('Failed to fetch student ledgers', err);
+      }
+    };
+    fetchStudentData();
+  }, [selectedStudent, authFetch]);
 
   // -------------------------------------------------------------------
   // Dynamic fee amounts derived from DB-backed feeStructures
@@ -722,7 +748,7 @@ export const CollectFee: React.FC = () => {
                 .filter(tx => tx.studentId === studentId)
                 .flatMap((tx): TxItem[] => {
                   if (tx.subItems && tx.subItems.length > 0) {
-                    return tx.subItems.map(sub => ({
+                    return tx.subItems.map((sub: any) => ({
                       id: sub.id || tx.id,
                       feeType: sub.description,
                       amount: sub.amount,

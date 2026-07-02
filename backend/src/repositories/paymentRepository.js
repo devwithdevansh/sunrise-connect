@@ -52,8 +52,13 @@ const paymentRepository = {
       const mongoose = await import('mongoose');
       matchStage.ledgerId = new mongoose.default.Types.ObjectId(filter.ledgerId);
     }
-    if (filter.isReversal !== undefined) {
+      if (filter.isReversal !== undefined) {
       matchStage.isReversal = filter.isReversal;
+    }
+    if (filter.date) {
+      const startOfDay = new Date(`${filter.date}T00:00:00.000Z`);
+      const endOfDay = new Date(`${filter.date}T23:59:59.999Z`);
+      matchStage.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
 
     return Payment.aggregate([

@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
+import { isLedgerPending, isPeriodOverdue } from './utils';
+
 import type {
   Student,
   LedgerEntry,
   PaymentTransaction
 } from './mockData';
-import { isPeriodOverdue } from './utils';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://linen-weasel-242678.hostingersite.com';
 
@@ -164,7 +165,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
   const [isScreenLoading, setIsScreenLoading] = useState<boolean>(false);
 
-  // Authenticated fetch wrapper that appends Bearer token and handles auto-refresh on 401
   const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
     const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
     let token = localStorage.getItem('accessToken');
@@ -187,7 +187,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
           const lockVal = localStorage.getItem(lockKey);
           if (lockVal && (now - parseInt(lockVal, 10) < 10000)) {
-            // Lock is active in another tab, wait for the refreshed token
             tokens = await new Promise<{ accessToken: string; refreshToken: string } | null>((resolve) => {
               let attempts = 0;
               const interval = setInterval(() => {
@@ -203,7 +202,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                   return;
                 }
                 const currentLock = localStorage.getItem(lockKey);
-                if (!currentLock || attempts > 50) { // 5s timeout
+                if (!currentLock || attempts > 50) {
                   clearInterval(interval);
                   resolve(null);
                 }
@@ -212,7 +211,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
 
           if (!tokens) {
-            // Acquire lock and refresh token
             localStorage.setItem(lockKey, Date.now().toString());
             localStorage.removeItem(dataKey);
 
@@ -228,7 +226,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               });
               if (refreshRes.ok) {
                 const refreshData = await refreshRes.json();
-                const newTokens = refreshData.data; // { accessToken, refreshToken }
+                const newTokens = refreshData.data;
                 localStorage.setItem('accessToken', newTokens.accessToken);
                 localStorage.setItem('refreshToken', newTokens.refreshToken);
                 localStorage.setItem(dataKey, JSON.stringify(newTokens));
@@ -260,7 +258,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const activeFetchRef = useRef<Promise<void> | null>(null);
   const lastSyncCheckTimeRef = useRef<number>(0);
 
-  // Fetch data from backend on mount and after mutations
   const fetchAll = useCallback(async () => {
     if (activeFetchRef.current) {
       return activeFetchRef.current;
@@ -269,7 +266,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const promise = (async () => {
       setIsLoadingDetails(true);
       try {
-        const initRes = await authFetch('/api/v1/dashboard/init');
+        const [initRes, unpaidRes] = await Promise.all([
+          authFetch('/api/v1/dashboard/init'),
+          authFetch('/api/v1/reports/unpaid')
+        ]);
+        
         if (!initRes.ok) {
           throw new Error(`Failed request: ${initRes.status} ${initRes.statusText}`);
         }
@@ -277,56 +278,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const initData = await initRes.json();
         const data = initData.data || {};
 
+        const unpaidDataRaw = unpaidRes.ok ? await unpaidRes.json() : { data: [] };
+        const unpaidData = unpaidDataRaw.data || [];
+
         const rawStudents = data.students || [];
-        const rawLedgers = data.ledgers || [];
-        const rawTransactions = data.transactions || [];
-
-        // Fee structures
-        setFeeStructures(data.feeStructures || []);
-        setTransportFeeStructures(data.transportStructures || []);
-
-        // Audit logs
-        const rawAuditLogs = data.auditLogs || [];
-        setAuditLogs(rawAuditLogs);
-        if (rawAuditLogs.length > 0) {
-          const latestTime = new Date(rawAuditLogs[0].createdAt).getTime();
-          setLastSyncTimestamp(latestTime);
-        }
-
-        // Academic Years and Fee Categories
-        setAcademicYears(data.academicYears || []);
-        setFeeCategories(data.feeCategories || []);
-
-        // Map ledgers (inject id)
-        const mappedLedgers = rawLedgers.map((l: any) => ({
-          ...l,
-          id: l._id
-        }));
-
-        // Map students (calculate status and populate parent info from parentId object)
-        const activeAcademicYear = (data.academicYears || []).find((y: any) => y.isActive)?.name || (data.academicYears || [])[0]?.name || '';
-
         const mappedStudents = rawStudents.map((s: any) => {
-          const overdueLedgers = mappedLedgers.filter((l: any) => {
-            if (l.studentId !== s._id || l.status === 'PAID') return false;
-            if (l.remainingAmount <= 0) return false;
-            return isPeriodOverdue(l.feePeriod, l.academicYear, activeAcademicYear);
-          });
-
-          const uniquePeriods = new Set(
-            overdueLedgers.map((l: any) => `${l.academicYear || activeAcademicYear}_${l.feePeriod}`)
-          );
-          const dueCount = uniquePeriods.size;
-
           let status = 'PAID';
           if (s.isRTE) {
             status = 'RTE';
-          } else if (dueCount === 1) {
-            status = '1 DUE';
-          } else if (dueCount === 2) {
-            status = '2 DUE';
-          } else if (dueCount >= 3) {
-            status = '3+ DUE';
+          } else {
+            const unpaid = unpaidData.find((u: any) => u._id === s._id || u._id === s.id);
+            if (unpaid && unpaid.pendingLedgers) {
+              const activeYear = data.academicYears?.find((y: any) => y.isActive)?.name || data.academicYears?.[0]?.name || '';
+              const overdue = unpaid.pendingLedgers.filter((l: any) => 
+                isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYear)
+              );
+              
+              const uniquePeriods = new Set(overdue.map((l: any) => `${l.academicYear || activeYear}_${l.feePeriod}`));
+              const dueCount = uniquePeriods.size;
+              
+              if (dueCount === 1) status = '1 DUE';
+              else if (dueCount === 2) status = '2 DUE';
+              else if (dueCount >= 3) status = '3+ DUE';
+            }
           }
 
           return {
@@ -336,149 +310,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             parentMobile: s.parentId?.primaryMobileNumber || '',
             parentSecondaryMobile: s.parentId?.secondaryMobileNumber || '',
             transportStartMonth: s.transportStartMonth || 'June',
-            status
+            status,
+            ledgers: [],
+            transactions: []
           };
         });
-
-        // Map transactions to fit PaymentTransaction interface
-        const mappedLedgersMap = new Map<string, any>(mappedLedgers.map((l: any) => [l._id || l.id, l]));
-        const mappedStudentsMap = new Map<string, any>(mappedStudents.map((s: any) => [s._id || s.id, s]));
-
-        const getFeeTypeFormatted = (ledger: any) => {
-          if (!ledger) return 'General Fee';
-          const type = ledger.feeType;
-          let formatted = type;
-          if (type === 'EDUCATION') formatted = 'Education';
-          else if (type === 'TRANSPORT') formatted = 'Transport';
-          else if (type === 'TERM') formatted = 'Term';
-          else if (type === 'ADMISSION') formatted = 'Admission';
-          else if (type === 'BAG_KIT') formatted = 'Bag & Kit';
-          else formatted = type.charAt(0) + type.slice(1).toLowerCase();
-          return `${formatted} Fee - ${ledger.feePeriod}`;
-        };
-
-        const groupedTxns = new Map<string, any[]>();
-        rawTransactions.forEach((tx: any) => {
-          const groupId = tx.details?.transactionId || tx._id;
-          if (!groupedTxns.has(groupId)) {
-            groupedTxns.set(groupId, []);
-          }
-          groupedTxns.get(groupId)!.push(tx);
-        });
-
-        const reversedIds = new Set(
-          rawTransactions
-            .filter((tx: any) => tx.isReversal && tx.details?.reversalOf)
-            .map((tx: any) => String(tx.details.reversalOf))
-        );
-
-        const mappedTransactions: any[] = [];
-        groupedTxns.forEach((txGroup, groupId) => {
-          let totalAmount = 0;
-          let totalConcession = 0;
-          const subItems: any[] = [];
-          const feeTypes: string[] = [];
-          const reversalIds: string[] = [];
-
-          let firstTx = txGroup[0];
-          let student: any = null;
-
-          txGroup.forEach((tx: any) => {
-            totalAmount += tx.amount || 0;
-            totalConcession += tx.concessionAmount || 0;
-            reversalIds.push(tx._id);
-
-            const ledger = mappedLedgersMap.get(tx.ledgerId);
-            if (!student && ledger) {
-              student = mappedStudentsMap.get(ledger.studentId);
-            }
-            const desc = getFeeTypeFormatted(ledger);
-            feeTypes.push(desc);
-
-            const isReversed = tx.isReversal || reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString());
-            const status = isReversed ? 'REVERSED' : (ledger?.status || 'PAID');
-
-            subItems.push({
-              id: tx._id,
-              description: desc,
-              amount: tx.amount || 0,
-              concessionAmount: tx.concessionAmount || 0,
-              method: tx.method,
-              status: status,
-              academicYear: ledger ? ledger.academicYear : undefined
-            });
-          });
-
-          // Build payment breakdown: one entry per unique method with summed amounts
-          const breakdownMap = new Map<string, number>();
-          txGroup.forEach((tx: any) => {
-            if (tx.method) {
-              breakdownMap.set(tx.method, (breakdownMap.get(tx.method) || 0) + (tx.amount || 0));
-            }
-          });
-          const paymentBreakdown = Array.from(breakdownMap.entries()).map(([method, amount]) => ({ method, amount }));
-          const uniqueMethods = Array.from(breakdownMap.keys());
-          const joinedMethod = uniqueMethods.join(' + ');
-
-          const groupIsReversal = firstTx.isReversal || txGroup.every(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
-          const groupIsPartiallyReversed = !groupIsReversal && txGroup.some(tx => reversedIds.has(tx._id?.toString()) || reversedIds.has(tx.id?.toString()));
-          const status = groupIsReversal ? 'REVERSED' : groupIsPartiallyReversed ? 'PARTIALLY_REVERSED' : (mappedLedgersMap.get(firstTx.ledgerId)?.status || 'PAID');
-
-          // Extract primary academic year from the first subItem
-          const primaryAcademicYear = subItems.length > 0 ? subItems[0].academicYear : undefined;
-
-          // We want to get the student's name, standard, and medium from the ledger's snapshot!
-          const primaryLedger = mappedLedgersMap.get(firstTx.ledgerId);
-          let studentName = 'Unknown';
-          let studentCode = 'N/A';
-          let classInfo = 'N/A';
-          let isDeleted = false;
-
-          if (student) {
-            studentName = student.studentName;
-            studentCode = student.studentCode || 'N/A';
-            isDeleted = student.isActive === false;
-            // Get standard from snapshot if available, otherwise fallback to current student
-            const std = primaryLedger?.snapshot?.standard || student.standard;
-            const div = primaryLedger?.snapshot?.division || student.division;
-            const med = primaryLedger?.snapshot?.medium || student.medium;
-            classInfo = `${std} - ${div} ${med}`;
-          } else if (primaryLedger && primaryLedger.snapshot) {
-            // Student might have been hard-deleted, but we have the snapshot!
-            studentName = primaryLedger.snapshot.studentName || 'Unknown';
-            studentCode = 'N/A'; 
-            const std = primaryLedger.snapshot.standard || 'N/A';
-            const div = primaryLedger.snapshot.division || 'N/A';
-            const med = primaryLedger.snapshot.medium || 'N/A';
-            classInfo = `${std} - ${div} ${med}`;
-            isDeleted = true;
-          }
-
-          mappedTransactions.push({
-            id: groupId,
-            studentId: student ? student.id : (primaryLedger?.studentId || ''),
-            studentName: studentName,
-            studentCode: studentCode,
-            classInfo: classInfo,
-            feeType: feeTypes.join('\n'),
-            amount: totalAmount,
-            concessionAmount: totalConcession,
-            method: joinedMethod || firstTx.method || 'N/A',
-            time: firstTx.createdAt ? new Date(firstTx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
-            status: status,
-            date: firstTx.createdAt ? firstTx.createdAt.split('T')[0] : '',
-            remark: firstTx.details?.remark || firstTx.details?.reason || '',
-            subItems: subItems,
-            reversalIds: reversalIds.join(','),
-            paymentBreakdown: paymentBreakdown,
-            academicYear: primaryAcademicYear,
-            isDeleted: isDeleted
-          });
-        });
-
         setStudents(mappedStudents);
-        setLedgerEntries(mappedLedgers);
-        setTransactions(mappedTransactions);
+
+        setFeeStructures(data.feeStructures || []);
+        setTransportFeeStructures(data.transportStructures || []);
+
+        const rawAuditLogs = data.auditLogs || [];
+        setAuditLogs(rawAuditLogs);
+        if (rawAuditLogs.length > 0) {
+          const latestTime = new Date(rawAuditLogs[0].createdAt).getTime();
+          setLastSyncTimestamp(latestTime);
+        }
+
+        setAcademicYears(data.academicYears || []);
+        setFeeCategories(data.feeCategories || []);
+
+        setLedgerEntries([]);
+        setTransactions([]);
       } catch (err) {
         console.error('Failed to fetch data from backend', err);
       } finally {
@@ -497,7 +350,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     fetchTimeoutRef.current = window.setTimeout(() => {
       fetchAll();
-    }, 400); // 400ms debounce to prevent WAF hits on back-to-back mutations
+    }, 400);
   }, [fetchAll]);
 
   const setScreen = useCallback(async (screen: ScreenType) => {
@@ -506,7 +359,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const now = Date.now();
     if (now - lastSyncCheckTimeRef.current < 15000) {
-      // Throttle sync state checks to at most once per 15 seconds
       return;
     }
     lastSyncCheckTimeRef.current = now;
@@ -516,7 +368,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (!res.ok) return;
       const data = await res.json();
       if (data.data?.timestamp && data.data.timestamp > lastSyncTimestamp) {
-        console.log(`[Sync] Screen navigation detected newer data. Showing skeleton...`);
         setIsScreenLoading(true);
         await fetchAll();
         setIsScreenLoading(false);
@@ -551,7 +402,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (!isSubscribed) return;
 
         if (data.data?.timestamp && data.data.timestamp > lastSyncTimestamp) {
-          console.log(`[Sync] Local state out of sync (local: ${lastSyncTimestamp}, server: ${data.data.timestamp}). Fetching latest data...`);
           await fetchAll();
         }
       } catch (err) {
@@ -559,7 +409,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     };
 
-    // Stagger background polling with jitter (80s to 100s) so multi-tabs don't poll at once
     const jitter = Math.random() * 20000 - 10000;
     const interval = setInterval(checkSync, 90000 + jitter);
 
@@ -569,7 +418,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
   }, [currentUser, lastSyncTimestamp, authFetch, fetchAll]);
 
-  // Sync logouts across multiple browser tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'currentUser' && !e.newValue) {
@@ -589,12 +437,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify({ email, password: pass })
       });
 
-      // Handle rate-limit (429) before trying to parse JSON
       if (res.status === 429) {
         return { success: false, error: 'Too many login attempts. Please wait a moment and try again.' };
       }
 
-      // Safely parse JSON — Hostinger WAF may return HTML on errors
       let data: any = {};
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
@@ -609,7 +455,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       const { accessToken, refreshToken, user: userInfo } = data.data;
 
-      // Decode JWT to get user ID
       let userId = '';
       let role = '';
       try {
@@ -626,7 +471,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return { success: false, error: 'Invalid token format returned by server' };
       }
 
-      // Use the real name and role from the server response
       const name = userInfo?.name || email.split('@')[0];
       const actualRole = userInfo?.role || role;
 
@@ -649,7 +493,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
 
-    // Clear local state instantly for snappy UX
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userId');
@@ -657,7 +500,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCurrentUser(null);
     setScreen('login');
 
-    // Fire backend logout in the background
     if (token && refreshToken) {
       fetch(`${API_BASE}/api/v1/auth/logout`, {
         method: 'POST',
@@ -674,11 +516,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addStudent = async (newS: Omit<Student, 'id' | 'status'>) => {
     try {
-      const payload = newS;
       const res = await authFetch('/api/v1/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(newS)
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));

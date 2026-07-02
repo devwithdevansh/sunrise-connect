@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
-import { isLedgerPending } from '../utils';
+import { isLedgerPending, isPeriodOverdue } from '../utils';
 import * as XLSX from 'xlsx';
 
 import {
@@ -9,11 +9,12 @@ import {
   FileSpreadsheet,
   MessageSquare,
   CheckSquare,
-  Square
+  Square,
+  Loader2
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, ledgerEntries, transactions, feeStructures, academicYears, setScreen } = useApp();
+  const { students, feeStructures, academicYears, setScreen, authFetch } = useApp();
   
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
@@ -50,68 +51,79 @@ export const UnpaidFees: React.FC = () => {
     setCurrentPage(1);
   }, [dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
 
-  // Dynamic counts based on actual students
+  const [unpaidData, setUnpaidData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  useEffect(() => {
+    const fetchUnpaid = async () => {
+      setIsLoading(true);
+      try {
+        const res = await authFetch('/api/v1/reports/unpaid');
+        const json = await res.json();
+        setUnpaidData(json.data || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (students.length > 0) {
+      fetchUnpaid();
+    }
+  }, [authFetch, students]);
+
+  // Combine fetched unpaid data with global students for UI filters
+  const mappedUnpaidStudents = useMemo(() => {
+    return unpaidData.map(reportItem => {
+      const globalStudent = students.find(s => s._id === reportItem._id || s.id === reportItem._id);
+      
+      const overdueLedgers = reportItem.pendingLedgers.filter((l: any) => 
+        isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName)
+      );
+      
+      const uniquePeriods = new Set(
+        overdueLedgers.map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
+      );
+      const dueCount = uniquePeriods.size;
+      
+      let status = 'PAID';
+      if (globalStudent?.isRTE) status = 'RTE';
+      else if (dueCount === 1) status = '1 DUE';
+      else if (dueCount === 2) status = '2 DUE';
+      else if (dueCount >= 3) status = '3+ DUE';
+
+      let lastPaidMonth = 'Never';
+      if (reportItem.lastPaidDate) {
+        lastPaidMonth = new Date(reportItem.lastPaidDate).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      }
+
+      return {
+        ...globalStudent,
+        ...reportItem,
+        id: reportItem._id,
+        studentName: reportItem.studentName,
+        parentName: globalStudent?.parentName || '',
+        parentMobile: globalStudent?.parentMobile || '',
+        status,
+        outstanding: reportItem.totalPendingAmount,
+        lastPaidMonth
+      };
+    });
+  }, [unpaidData, students, activeYearName]);
+
+  // Dynamic counts based on mapped students
   const counts = useMemo(() => {
-    const unpaid = students.filter((s) => s.status !== 'PAID' && s.status !== 'RTE');
+    const unpaid = mappedUnpaidStudents.filter((s) => s.status !== 'PAID' && s.status !== 'RTE');
     return {
       all: unpaid.length,
       oneMonth: unpaid.filter(s => s.status === '1 DUE').length,
       twoMonths: unpaid.filter(s => s.status === '2 DUE').length,
       threeMonths: unpaid.filter(s => s.status === '3+ DUE').length,
     };
-  }, [students]);
-
-  // Pre-compute maps to optimize O(N * M) nested loops to O(N + M) complexity
-  const { studentDuesMap, studentLastPaidMap } = useMemo(() => {
-    const duesMap = new Map<string, number>();
-    const lastPaidMap = new Map<string, string>();
-    
-    // 1. Pre-calculate outstanding amounts
-    ledgerEntries.forEach((l) => {
-      if (isLedgerPending(l)) {
-        const remaining = l.remainingAmount || 0;
-        if (remaining > 0) {
-          duesMap.set(l.studentId, (duesMap.get(l.studentId) || 0) + remaining);
-        }
-      }
-    });
-
-    // 2. Pre-calculate last paid months (group by student, find latest)
-    const studentTxsGroup = new Map<string, typeof transactions>();
-    transactions.forEach((t) => {
-      if (t.status !== 'REVERSED' && t.studentId) {
-        if (!studentTxsGroup.has(t.studentId)) {
-          studentTxsGroup.set(t.studentId, []);
-        }
-        studentTxsGroup.get(t.studentId)!.push(t);
-      }
-    });
-
-    studentTxsGroup.forEach((txs, studentId) => {
-      if (txs.length === 0) {
-        lastPaidMap.set(studentId, 'Never');
-        return;
-      }
-      const latestTx = txs.reduce((latest, tx) => {
-        const txTime = new Date(tx.date || new Date().toISOString()).getTime();
-        const latestTime = new Date(latest.date || new Date().toISOString()).getTime();
-        return txTime > latestTime ? tx : latest;
-      }, txs[0]);
-
-      if (latestTx.date) {
-        const formatted = new Date(latestTx.date).toLocaleString('en-US', { month: 'long', year: 'numeric' });
-        lastPaidMap.set(studentId, formatted);
-      } else {
-        lastPaidMap.set(studentId, 'Recent');
-      }
-    });
-
-    return { studentDuesMap: duesMap, studentLastPaidMap: lastPaidMap };
-  }, [ledgerEntries, transactions]);
-
+  }, [mappedUnpaidStudents]);
   // Map students to overdue profiles matching the wireframe rows
   const unpaidStudents = useMemo(() => {
-    return students.filter((s) => {
+    return mappedUnpaidStudents.filter((s) => {
       // Exclude paid and RTE students
       if (s.status === 'PAID' || s.status === 'RTE') return false;
 
@@ -142,17 +154,19 @@ export const UnpaidFees: React.FC = () => {
 
       return true;
     });
-  }, [students, dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
+  }, [mappedUnpaidStudents, dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
 
   const getOutstandingAmount = (studentId: string) => {
-    return studentDuesMap.get(studentId) || 0;
+    const s = mappedUnpaidStudents.find((ms) => ms.id === studentId);
+    return s?.outstanding || 0;
   };
 
-  // Helper: get a stable student ID (works for both DB-loaded and mock students)
-  const getSid = (s: (typeof students)[0]) => s._id || s.id;
+  // Helper: get a stable student ID
+  const getSid = (s: any) => s.id || s._id;
 
   const getLastPaidMonth = (studentId: string) => {
-    return studentLastPaidMap.get(studentId) || 'Never';
+    const s = mappedUnpaidStudents.find((ms) => ms.id === studentId);
+    return s?.lastPaidMonth || 'Never';
   };
 
   // Slice list for pagination
@@ -191,16 +205,18 @@ export const UnpaidFees: React.FC = () => {
   const handleExportExcel = () => {
     if (unpaidStudents.length === 0) return;
 
-    // 1. Identify all academic years with unpaid fees for the filtered students
-    const sIds = new Set(unpaidStudents.map(s => getSid(s)));
     const yearsSet = new Set<string>();
     
-    ledgerEntries.forEach(l => {
-      if (sIds.has(l.studentId) && isLedgerPending(l)) {
-        const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
-        if (remaining > 0 && l.academicYear) {
-          yearsSet.add(l.academicYear);
-        }
+    unpaidStudents.forEach(s => {
+      if (s.pendingLedgers) {
+        s.pendingLedgers.forEach((l: any) => {
+          if (isLedgerPending(l)) {
+            const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
+            if (remaining > 0 && l.academicYear) {
+              yearsSet.add(l.academicYear);
+            }
+          }
+        });
       }
     });
     
@@ -276,9 +292,9 @@ export const UnpaidFees: React.FC = () => {
       return p.substring(0, 3).toUpperCase();
     };
 
-    const getUnpaidPeriodString = (studentId: string, year: string) => {
-      const studentLedgers = ledgerEntries.filter(l => 
-        l.studentId === studentId && 
+    const getUnpaidPeriodString = (student: any, year: string) => {
+      if (!student.pendingLedgers) return '';
+      const studentLedgers = student.pendingLedgers.filter((l: any) => 
         l.academicYear === year && 
         isLedgerPending(l) &&
         ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0) > 0)
@@ -286,12 +302,12 @@ export const UnpaidFees: React.FC = () => {
 
       if (studentLedgers.length === 0) return '';
       
-      const standardLedgers = studentLedgers.filter(l => periodSeq.includes(l.feePeriod));
+      const standardLedgers = studentLedgers.filter((l: any) => periodSeq.includes(l.feePeriod));
       if (standardLedgers.length === 0) {
         return studentLedgers[0].feePeriod;
       }
 
-      const indices = standardLedgers.map(l => getPeriodIdx(l.feePeriod)).filter(idx => idx !== -1);
+      const indices = standardLedgers.map((l: any) => getPeriodIdx(l.feePeriod)).filter((idx: number) => idx !== -1);
       if (indices.length === 0) return '';
 
       const minIdx = Math.min(...indices);
@@ -303,10 +319,11 @@ export const UnpaidFees: React.FC = () => {
       return `${getPeriodLabel(periodSeq[minIdx])} TO ${getPeriodLabel(periodSeq[maxIdx])}`;
     };
 
-    const getUnpaidAmountForYear = (studentId: string, year: string) => {
-      return ledgerEntries
-        .filter(l => l.studentId === studentId && l.academicYear === year && isLedgerPending(l))
-        .reduce((sum, l) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
+    const getUnpaidAmountForYear = (student: any, year: string) => {
+      if (!student.pendingLedgers) return 0;
+      return student.pendingLedgers
+        .filter((l: any) => l.academicYear === year && isLedgerPending(l))
+        .reduce((sum: number, l: any) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
     };
 
     // 4. Fill Student Row Data
@@ -315,13 +332,12 @@ export const UnpaidFees: React.FC = () => {
     exportYears.forEach(y => yearTotals.set(y, 0));
 
     unpaidStudents.forEach(s => {
-      const sId = getSid(s);
       const rowData: any[] = [s.studentName.toUpperCase(), s.parentMobile || '', s.medium.toUpperCase()];
       
       let studentTotal = 0;
       exportYears.forEach(year => {
-        const periodStr = getUnpaidPeriodString(sId!, year);
-        const amount = getUnpaidAmountForYear(sId!, year);
+        const periodStr = getUnpaidPeriodString(s, year);
+        const amount = getUnpaidAmountForYear(s, year);
         
         rowData.push(periodStr);
         rowData.push(amount > 0 ? amount : '');
@@ -381,9 +397,17 @@ export const UnpaidFees: React.FC = () => {
       {/* Top Header Bar */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Unpaid Fees</h2>
-          <p className="text-xs font-semibold text-slate-400">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Unpaid Fees</h2>
+            {isLoading && (
+              <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
+                <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
+                Loading...
+              </span>
+            )}
+          </div>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Track and manage outstanding student dues
           </p>
         </div>
         

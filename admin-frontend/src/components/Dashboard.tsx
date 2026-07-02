@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
-import { isLedgerPending } from '../utils';
 import {
   Search,
   Plus,
@@ -18,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { formatTransactions } from '../utils/transactionHelpers';
 
 const DashboardSkeleton: React.FC = () => {
   return (
@@ -98,7 +98,7 @@ const DashboardSkeleton: React.FC = () => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { students, activeStudents, ledgerEntries, transactions, setScreen, isLoadingDetails } = useApp();
+  const { students, activeStudents, setScreen, isLoadingDetails, authFetch } = useApp();
 
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
   const todayString = useMemo(() => {
@@ -110,6 +110,35 @@ export const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
+
+  const [metrics, setMetrics] = useState({ totalAmount: 0, cashAmount: 0, bankAmount: 0, totalConcessions: 0, unpaidCount: 0 });
+  const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
+  const [isLoadingDate, setIsLoadingDate] = useState(false);
+
+  useEffect(() => {
+    const fetchDateData = async () => {
+      setIsLoadingDate(true);
+      try {
+        const [metricsRes, txRes] = await Promise.all([
+          authFetch(`/api/v1/dashboard/metrics?date=${selectedDate}`),
+          authFetch(`/api/v1/payments?date=${selectedDate}&limit=2000`)
+        ]);
+        const mData = await metricsRes.json();
+        setMetrics(mData.data || { totalAmount: 0, cashAmount: 0, bankAmount: 0, totalConcessions: 0, unpaidCount: 0 });
+        
+        const txData = await txRes.json();
+        const formatted = formatTransactions(txData.data || [], students);
+        setDailyTransactions(formatted);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err);
+      } finally {
+        setIsLoadingDate(false);
+      }
+    };
+    if (selectedDate && students.length > 0) {
+      fetchDateData();
+    }
+  }, [selectedDate, authFetch, students]);
 
   // Debounce search input by 200ms
   useEffect(() => {
@@ -174,14 +203,10 @@ export const Dashboard: React.FC = () => {
   }, [selectedDate]);
 
   // Filter transactions for selected date
-  const selectedDateTransactions = useMemo(() => {
-    return transactions.filter(t => t.date === selectedDate && t.status !== 'REVERSED');
-  }, [transactions, selectedDate]);
+  const selectedDateTransactions = dailyTransactions;
 
   // Collection totals for selected date
-  const totalCollection = useMemo(() => {
-    return selectedDateTransactions.reduce((sum, t) => sum + t.amount, 0);
-  }, [selectedDateTransactions]);
+  const totalCollection = metrics.totalAmount;
 
   const englishCol = useMemo(() => {
     return selectedDateTransactions
@@ -196,9 +221,7 @@ export const Dashboard: React.FC = () => {
   }, [selectedDateTransactions]);
 
   // Concession for selected date
-  const todayConcession = useMemo(() => {
-    return selectedDateTransactions.reduce((sum, t) => sum + (t.concessionAmount || 0), 0);
-  }, [selectedDateTransactions]);
+  const todayConcession = metrics.totalConcessions;
 
   // Payment mode stats for selected date (Dynamic)
   const paymentModesData = useMemo(() => {
@@ -214,13 +237,13 @@ export const Dashboard: React.FC = () => {
 
     selectedDateTransactions.forEach((t) => {
       if (t.paymentBreakdown && t.paymentBreakdown.length > 0) {
-        t.paymentBreakdown.forEach((b) => {
+        t.paymentBreakdown.forEach((b: any) => {
           const norm = normalizeMethod(b.method);
           totals.set(norm, (totals.get(norm) || 0) + b.amount);
         });
       } else if (t.method) {
         // Split by '+' in case it's a joined string but without breakdown
-        const methods = t.method.split('+').map(m => m.trim());
+        const methods = t.method.split('+').map((m: string) => m.trim());
         if (methods.length === 1) {
           const norm = normalizeMethod(methods[0]);
           totals.set(norm, (totals.get(norm) || 0) + t.amount);
@@ -281,8 +304,7 @@ export const Dashboard: React.FC = () => {
   const rteStudents = activeStudents.filter(s => s.isRTE).length;
 
   // Outstanding / Unpaid Calculation from ledger entries
-  const unpaidLedgers = ledgerEntries.filter(l => isLedgerPending(l));
-  const totalOutstanding = unpaidLedgers.reduce((sum, l) => sum + l.remainingAmount, 0);
+  const unpaidCount = metrics.unpaidCount;
 
   const stats = [
     {
@@ -294,8 +316,8 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: 'UNPAID LEDGERS',
-      value: unpaidLedgers.length.toLocaleString('en-IN'),
-      subtitle: `₹${totalOutstanding.toLocaleString('en-IN')} outstanding`,
+      value: unpaidCount.toLocaleString('en-IN'),
+      subtitle: `Action required`,
       icon: AlertTriangle,
       color: 'border-t-4 border-t-red-500'
     },
@@ -317,7 +339,7 @@ export const Dashboard: React.FC = () => {
 
   // Filter daily transactions by search query
   const filteredTransactions = useMemo(() => {
-    const daily = transactions.filter(t => t.date === selectedDate);
+    const daily = dailyTransactions;
     if (!searchQuery) return daily;
     const q = searchQuery.toLowerCase();
     return daily.filter(
@@ -325,7 +347,7 @@ export const Dashboard: React.FC = () => {
         tx.studentName.toLowerCase().includes(q) ||
         tx.studentCode.toLowerCase().includes(q)
     );
-  }, [transactions, selectedDate, searchQuery]);
+  }, [dailyTransactions, searchQuery]);
 
   // Paginate transactions
   const paginatedTransactions = useMemo(() => {
@@ -348,7 +370,7 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
               {selectedDate === todayString ? "Today's Dashboard" : "Daily Collection Dashboard"}
             </h2>
-            {isLoadingDetails && (
+            {(isLoadingDetails || isLoadingDate) && (
               <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
                 <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
                 Syncing...
