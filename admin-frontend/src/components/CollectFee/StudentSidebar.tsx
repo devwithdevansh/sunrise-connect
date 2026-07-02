@@ -24,7 +24,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   onSelectStudent,
   getStudentDueLabel,
 }) => {
-  const PAGE_SIZE = 50;
+  const PAGE_SIZE = 15;
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
