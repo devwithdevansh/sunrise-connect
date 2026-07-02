@@ -191,7 +191,7 @@ export const PaymentHistoryPanel: React.FC<{
                                 {dateStr}
                               </td>
                               <td className={`py-2 pr-3 font-semibold ${isReversed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                                {tx.feeType.split(' - ')[1] || tx.feeType}
+                                {tx.feeType ? (tx.feeType.split(' - ')[1] || tx.feeType) : 'General Fee'}
                                 {tx.remark && <span className="text-slate-400 italic font-normal ml-1">({tx.remark})</span>}
                               </td>
                               <td className={`py-2 px-2 text-right font-bold ${isReversed ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
