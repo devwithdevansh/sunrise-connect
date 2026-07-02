@@ -520,7 +520,8 @@ export const CollectFee: React.FC = () => {
           setFeeCategory('EDUCATION');
           setSelectedYear(activeYearName);
         }}
-        getStudentDueLabel={getStudentDueLabel}
+        authFetch={authFetch}
+        activeYearName={activeYearName}
       />
 
       {/* ── RIGHT: Payment Details ───────────────────────────── */}
