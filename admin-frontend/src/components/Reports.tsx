@@ -10,7 +10,7 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { activeStudents, authFetch } = useApp();
+  const { activeStudents, authFetch, academicYears, feeStructures } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
@@ -29,21 +29,42 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   const [rteClassFilter, setRteClassFilter] = useState('All Classes');
   const [rteSearchQuery, setRteSearchQuery] = useState('');
 
+  const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
+  const activeYearFeeStructures = useMemo(() => {
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)));
+  }, [feeStructures, activeYearName, academicYears]);
+
+  const dynamicStandards = useMemo(() => {
+    const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
+    const list = Array.from(stdSet);
+    if (list.length === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    return list.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [activeYearFeeStructures]);
+
+  const dynamicMediums = useMemo(() => {
+    const medSet = new Set(activeYearFeeStructures.map(f => f.medium));
+    const list = Array.from(medSet);
+    if (list.length === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return list;
+  }, [activeYearFeeStructures]);
+
   // Available filters from data
   const classes = useMemo(() => {
-    const stds = new Set(activeStudents.map(s => s.standard));
-    const getStdOrder = (std: string) => {
-      const normalized = (std || '').toString().trim();
-      const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
-      const lower = normalized.toLowerCase();
-      if (preSchoolMap[lower] !== undefined) return preSchoolMap[lower];
-      const num = parseInt(normalized, 10);
-      return isNaN(num) ? 999 : num;
-    };
-    return ['All Classes', ...Array.from(stds).sort((a, b) => getStdOrder(a) - getStdOrder(b)).map(std => `Class ${std}`)];
-  }, [activeStudents]);
+    return ['All Classes', ...dynamicStandards.map(std => isNaN(Number(std)) ? std : `Class ${std}`)];
+  }, [dynamicStandards]);
 
-  const mediums = ['All Mediums', 'English Medium', 'Gujarati Medium'];
+  const mediums = useMemo(() => {
+    return ['All Mediums', ...dynamicMediums.map(med => `${med} Medium`)];
+  }, [dynamicMediums]);
 
   const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
   const [unpaidData, setUnpaidData] = useState<any[]>([]);

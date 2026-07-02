@@ -18,6 +18,32 @@ export const UnpaidFees: React.FC = () => {
   
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
+  const activeYearFeeStructures = useMemo(() => {
+    return feeStructures.filter(f => f.academicYear === activeYearName || (!f.academicYear && (activeYearName === academicYears[0]?.name)));
+  }, [feeStructures, activeYearName, academicYears]);
+
+  const dynamicStandards = useMemo(() => {
+    const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
+    const list = Array.from(stdSet);
+    if (list.length === 0) {
+      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    }
+    return list.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [activeYearFeeStructures]);
+
+  const dynamicMediums = useMemo(() => {
+    const medSet = new Set(activeYearFeeStructures.map(f => f.medium));
+    const list = Array.from(medSet);
+    if (list.length === 0) {
+      return ['English', 'Gujarati'];
+    }
+    return list;
+  }, [activeYearFeeStructures]);
   // Local input search state (instant typing response)
   const [searchVal, setSearchVal] = useState('');
   // Debounced search query state (throttles filter processing)
@@ -494,8 +520,8 @@ export const UnpaidFees: React.FC = () => {
                 className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
               >
                 <option value="All Standards">All Standards</option>
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((cls) => (
-                  <option key={cls} value={`Class ${cls}`}>Std {cls}</option>
+                {dynamicStandards.map((cls) => (
+                  <option key={cls} value={`Class ${cls}`}>{isNaN(Number(cls)) ? cls : `Std ${cls}`}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
@@ -525,8 +551,9 @@ export const UnpaidFees: React.FC = () => {
                 className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
               >
                 <option value="All Mediums">All Mediums</option>
-                <option value="English Medium">English</option>
-                <option value="Gujarati Medium">Gujarati</option>
+                {dynamicMediums.map((med) => (
+                  <option key={med} value={`${med} Medium`}>{med}</option>
+                ))}
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             </div>
