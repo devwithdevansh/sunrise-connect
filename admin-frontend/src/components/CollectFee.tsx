@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import type { Student, PaymentTransaction } from '../mockData';
-import { isPeriodOverdue, isLedgerPending } from '../utils';
+import { isPeriodOverdue } from '../utils';
 import { Plus, Check, X, Loader2 } from 'lucide-react';
 
 import { buildEduTermConfig, STANDARD_MONTH_PERIODS } from './CollectFee/utils';
@@ -55,23 +55,6 @@ export const CollectFee: React.FC = () => {
 
   const [ledgerEntries, setLedgerEntries] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [unpaidData, setUnpaidData] = useState<any[]>([]);
-
-  // Fetch all unpaid reports for accurate sidebar statuses
-  useEffect(() => {
-    const fetchUnpaid = async () => {
-      try {
-        const res = await authFetch('/api/v1/reports/unpaid');
-        const json = await res.json();
-        setUnpaidData(json.data || []);
-      } catch (err) {
-        console.error('Failed to fetch unpaid data for sidebar', err);
-      }
-    };
-    if (activeStudents.length > 0) {
-      fetchUnpaid();
-    }
-  }, [authFetch, activeStudents.length]);
 
   // Sync selectedYear when academicYears loads
   useEffect(() => {
@@ -369,37 +352,6 @@ export const CollectFee: React.FC = () => {
       (s.studentCode && s.studentCode.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const getStudentDueLabel = (student: Student) => {
-    const sId = student._id || student.id;
-    const reportItem = unpaidData.find(item => item._id === sId);
-
-    if (!reportItem || !reportItem.pendingLedgers) {
-      return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
-    }
-
-    const overdueLedgers = reportItem.pendingLedgers.filter((l: any) => 
-      isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName)
-    );
-    
-    if (overdueLedgers.length === 0) {
-      return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
-    }
-
-    const uniquePeriods = new Set(
-      overdueLedgers.map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
-    );
-    const dueCount = uniquePeriods.size;
-    const amount = overdueLedgers.reduce((sum: number, l: any) => sum + ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
-
-    let status = '1 DUE';
-    if (dueCount === 2) status = '2 DUE';
-    else if (dueCount >= 3) status = '3+ DUE';
-
-    if (amount === 0) return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
-    if (status === '2 DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (2 MONTHS)`, color: 'text-amber-600 bg-amber-50' };
-    if (status === '3+ DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (3+ MONTHS)`, color: 'text-red-600 bg-red-50' };
-    return { text: `₹${amount.toLocaleString('en-IN')} DUE`, color: 'text-blue-600 bg-blue-50 font-bold' };
-  };
 
   // -------------------------------------------------------------------
   // Submit
