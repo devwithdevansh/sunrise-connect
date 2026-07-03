@@ -55,10 +55,16 @@ class FeeModel {
         'academicYear': academicYear,
       };
 
-  bool get isPaid      => status == FeeStatus.paid;
+  bool get isPaid      => status == FeeStatus.paid || status == 'WAIVED';
   bool get isPending   => status == FeeStatus.pending;
   bool get isPartial   => status == FeeStatus.partial;
-  bool get isOverdue   => status == FeeStatus.overdue;
+  bool get isOverdue {
+    if (isPaid || status == 'CANCELLED') return false;
+    if (dueDate.isEmpty) return false;
+    final parsed = DateTime.tryParse(dueDate);
+    if (parsed == null) return false;
+    return parsed.isBefore(DateTime.now());
+  }
 
   /// Effective paid includes concession (relevant for RTE students)
   double get effectivePaid => paidAmount + concessionAmount;

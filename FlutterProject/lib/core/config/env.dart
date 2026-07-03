@@ -20,8 +20,7 @@ class Env {
       return _baseUrl;
     }
     // Fallback/Default local URL if .env is not loaded or is empty
-    final host = _resolveHost();
-    return 'http://$host:3000$_apiPath';
+    return 'https://linen-weasel-242678.hostingersite.com$_apiPath';
   }
 
   /// Initialize environment variables from the `.env` file.

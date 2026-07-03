@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../../../core/utils/pdf_download_helper.dart';
 import '../../../../data/models/receipt_model.dart';
 import '../../../../data/repositories/receipt_repository.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
+import 'receipt_pdf_generator.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RECEIPT GROUP  — receipts with the same receipt number (or same txn minute)
@@ -241,111 +242,20 @@ class ReceiptDetailsController extends GetxController {
 
   Future<void> downloadReceiptPdf(ReceiptGroup group) async {
     try {
-      final pdf = pw.Document();
-
-      final totalLedgerAmt = group.activeItems.fold<double>(0.0, (s, item) => s + (item.totalAmount > 0 ? item.totalAmount : item.amount + item.concessionAmount));
-      final totalConcession = group.activeItems.fold<double>(0.0, (s, item) => s + item.concessionAmount);
-      final totalPaid = group.totalAmount;
-
-      String formatPdfDateTime(DateTime dt) {
-        const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        final h   = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-        final min = dt.minute.toString().padLeft(2, '0');
-        final ap  = dt.hour >= 12 ? 'PM' : 'AM';
-        return '${dt.day} ${m[dt.month - 1]} ${dt.year}  -  $h:$min $ap';
-      }
-
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) {
-            return pw.Padding(
-              padding: const pw.EdgeInsets.all(24),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text('SUNRISE CONVENT SCHOOL',
-                      style: const pw.TextStyle(
-                          fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                  pw.Text('Railnagar, Rajkot, Gujarat',
-                      style: const pw.TextStyle(fontSize: 12)),
-                  pw.SizedBox(height: 8),
-                  pw.Divider(),
-                  pw.SizedBox(height: 12),
-                  pw.Text(
-                      group.monthRangeSummary.isNotEmpty
-                          ? 'RECEIPT FOR ${group.monthRangeSummary.toUpperCase()} PAID'
-                          : 'RECEIPT DETAILS',
-                      style: const pw.TextStyle(
-                          fontSize: 15, fontWeight: pw.FontWeight.bold)),
-                  pw.SizedBox(height: 12),
-                  pw.Text('Receipt No: ${group.receiptNumber.isNotEmpty ? group.receiptNumber : '—'}'),
-                  pw.Text('Student Name: ${group.studentName}'),
-                  if (group.monthRangeSummary.isNotEmpty)
-                    pw.Text('Period: ${group.monthRangeSummary}'),
-                  pw.Text('Payment Date: ${formatPdfDateTime(group.paidAt)}'),
-                  pw.Text('Payment Mode: ${group.paymentMode.toUpperCase()}'),
-                  pw.SizedBox(height: 12),
-                  pw.Divider(),
-                  pw.SizedBox(height: 12),
-                  pw.Text('Items:',
-                      style: const pw.TextStyle(
-                          fontSize: 14, fontWeight: pw.FontWeight.bold)),
-                  pw.SizedBox(height: 6),
-                  ...group.activeItems.map((item) {
-                    return pw.Padding(
-                      padding: const pw.EdgeInsets.only(bottom: 4),
-                      child: pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                              '${item.termName.isNotEmpty ? item.termName : item.categoryLabel} (${item.categoryLabel})'),
-                          pw.Text('Rs. ${item.amount.toInt()}'),
-                        ],
-                      ),
-                    );
-                  }),
-                  pw.SizedBox(height: 12),
-                  pw.Divider(),
-                  if (totalConcession > 0) ...[
-                    pw.SizedBox(height: 8),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('Original Due:'),
-                        pw.Text('Rs. ${totalLedgerAmt.toInt()}'),
-                      ],
-                    ),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('Concession Deducted:'),
-                        pw.Text('-Rs. ${totalConcession.toInt()}'),
-                      ],
-                    ),
-                    pw.SizedBox(height: 8),
-                    pw.Divider(),
-                  ],
-                  pw.SizedBox(height: 12),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text('Total Paid:',
-                          style: const pw.TextStyle(
-                              fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Rs. ${totalPaid.toInt()}',
-                          style: const pw.TextStyle(
-                              fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+      Get.snackbar(
+        'Generating Receipt',
+        'Please wait while we generate the PDF...',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFE8FAF5),
+        colorText: const Color(0xFF0FB893),
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+        duration: const Duration(seconds: 2),
       );
 
+      final pdf = await ReceiptPdfGenerator.generatePdf(group);
       final pdfBytes = await pdf.save();
+
       final safeRcptNum = group.receiptNumber.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
       final fileName = "receipt_${safeRcptNum.isNotEmpty ? safeRcptNum : group.paidAt.millisecondsSinceEpoch}.pdf";
       await saveAndOpenPdf(pdfBytes, fileName);

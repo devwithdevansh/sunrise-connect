@@ -12,6 +12,7 @@ class ReceiptModel {
   final double totalAmount;
   final bool isReversed;
   final String? reversalOf;
+  final String academicYear;
 
   const ReceiptModel({
     required this.id,
@@ -27,6 +28,7 @@ class ReceiptModel {
     this.totalAmount = 0.0,
     this.isReversed = false,
     this.reversalOf,
+    this.academicYear = '',
   });
 
   factory ReceiptModel.fromJson(Map<String, dynamic> json) => ReceiptModel(
@@ -46,6 +48,7 @@ class ReceiptModel {
         totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
         isReversed: json['isReversed'] as bool? ?? false,
         reversalOf: json['reversalOf'] as String?,
+        academicYear: json['academicYear'] as String? ?? '',
       );
 
   /// Whether this is a TRANSPORT receipt
@@ -81,5 +84,6 @@ class ReceiptModel {
         'totalAmount': totalAmount,
         'isReversed': isReversed,
         'reversalOf': reversalOf,
+        'academicYear': academicYear,
       };
 }

@@ -37,7 +37,7 @@ class StudentModel {
     return StudentModel(
       id: (json['id'] ?? json['_id'] ?? '').toString(),
       name: json['name'] as String? ?? json['studentName'] as String? ?? '',
-      phone: (json['phone'] ?? json['primaryMobileNumber'] ?? '').toString(),
+      phone: (json['parentId'] is Map ? (json['parentId'] as Map)['primaryMobileNumber'] : null)?.toString() ?? (json['phone'] ?? json['primaryMobileNumber'] ?? '').toString(),
       standard: (json['standard'] ?? '').toString(),
       division: json['division'] as String? ?? '',
       medium: json['medium'] as String? ?? 'English',
