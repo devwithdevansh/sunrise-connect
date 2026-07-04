@@ -4,14 +4,13 @@ import '../models/payment_model.dart';
 import '../models/receipt_model.dart';
 
 class ReceiptRepository {
-  /// Fetch all payments for the given ledger IDs, with ledger context (feePeriod, feeType, studentName)
-  Future<List<PaymentModel>> getPaymentsForLedgers(List<String> ledgerIds) async {
-    if (ledgerIds.isEmpty) return [];
+  /// Fetch all payments for the given student, with ledger context (feePeriod, feeType, studentName)
+  Future<List<PaymentModel>> getPaymentsForStudent(String studentId) async {
+    if (studentId.isEmpty) return [];
     final allPayments = <PaymentModel>[];
     try {
-      final idsParam = ledgerIds.join(',');
       final response = await ApiClient.get(
-        '/payments?ledgerIds=$idsParam&limit=500',
+        '/payments?studentId=$studentId&limit=500',
         useStaffToken: false,
       );
       if (response.statusCode == 200) {
@@ -22,15 +21,15 @@ class ReceiptRepository {
         );
       }
     } catch (e) {
-      print('Error in getPaymentsForLedgers: $e');
+      print('Error in getPaymentsForStudent: $e');
     }
     return allPayments;
   }
 
   /// Map payments to receipt models, carrying through termName and feeType
-  Future<List<ReceiptModel>> getReceiptsForLedgers(
-      List<String> ledgerIds, String fallbackStudentName) async {
-    final payments = await getPaymentsForLedgers(ledgerIds);
+  Future<List<ReceiptModel>> getReceiptsForStudent(
+      String studentId, String fallbackStudentName) async {
+    final payments = await getPaymentsForStudent(studentId);
     // Only non-reversal payments generate receipts
     return payments
         .where((p) => !p.isReversal && p.amount > 0)

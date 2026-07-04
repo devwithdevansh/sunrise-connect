@@ -148,8 +148,7 @@ class PaymentHistoryController extends GetxController {
 
     isLoading.value = true;
     try {
-      final ledgerIds = dashCtrl.fees.map((f) => f.id).toList();
-      final list      = await _receiptRepo.getPaymentsForLedgers(ledgerIds);
+      final list      = await _receiptRepo.getPaymentsForStudent(sId);
       payments.assignAll(list);
       paymentGroups.assignAll(_groupPayments(list));
 

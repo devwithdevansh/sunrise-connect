@@ -267,6 +267,8 @@ class DashboardController extends GetxController {
         await prefs.remove('fees_cache_$sId');
         await prefs.remove('payments_cache_$sId');
         await prefs.remove('payments_time_$sId');
+        await prefs.remove('receipts_cache_$sId');
+        await prefs.remove('receipts_time_$sId');
       }
       if (pId.isNotEmpty) {
         // Reset student cache timestamp so next loadDashboardData hits network

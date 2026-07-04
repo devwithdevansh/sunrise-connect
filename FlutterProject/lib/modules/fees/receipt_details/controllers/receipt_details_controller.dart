@@ -226,8 +226,7 @@ class ReceiptDetailsController extends GetxController {
     isLoading.value = true;
     try {
       final studentName = dashCtrl.student.value?.name ?? 'Student';
-      final ledgerIds   = dashCtrl.fees.map((f) => f.id).toList();
-      final list        = await _receiptRepo.getReceiptsForLedgers(ledgerIds, studentName);
+      final list        = await _receiptRepo.getReceiptsForStudent(sId, studentName);
       receipts.assignAll(list);
       receiptGroups.assignAll(_groupReceipts(list));
 
