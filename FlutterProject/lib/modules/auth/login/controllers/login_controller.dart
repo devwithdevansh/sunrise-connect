@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/network/api_client.dart';
@@ -26,7 +27,8 @@ class LoginController extends GetxController {
         final parentId = jwtData['id'] as String? ?? '';
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(StorageKeys.accessToken, accessToken);
+        const secureStorage = FlutterSecureStorage();
+        await secureStorage.write(key: StorageKeys.accessToken, value: accessToken);
         await prefs.setString(StorageKeys.parentId, parentId);
         await prefs.setString(StorageKeys.phone, phone);
         await prefs.setBool(StorageKeys.isLoggedIn, true);

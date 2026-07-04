@@ -11,7 +11,6 @@ class ReceiptRepository {
     try {
       final response = await ApiClient.get(
         '/payments?studentId=$studentId&limit=500',
-        useStaffToken: false,
       );
       if (response.statusCode == 200) {
         final body = json.decode(response.body);

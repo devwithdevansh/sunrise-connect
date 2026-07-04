@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -13,7 +14,8 @@ class ProfileView extends StatelessWidget {
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(StorageKeys.accessToken);
+    const secureStorage = FlutterSecureStorage();
+    await secureStorage.delete(key: StorageKeys.accessToken);
     await prefs.remove(StorageKeys.parentId);
     await prefs.remove(StorageKeys.studentId);
     await prefs.remove(StorageKeys.phone);

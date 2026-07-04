@@ -5,7 +5,7 @@ import '../models/student_model.dart';
 class StudentRepository {
   Future<List<StudentModel>> getStudentsForParent(String parentId) async {
     try {
-      final response = await ApiClient.get('/students?parentId=$parentId', useStaffToken: false);
+      final response = await ApiClient.get('/students?parentId=$parentId');
       if (response.statusCode == 200) {
         final body = json.decode(response.body);
         final list = body['data'] as List;
