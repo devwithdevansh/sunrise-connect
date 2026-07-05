@@ -79,6 +79,7 @@ const paymentRepository = {
         $project: {
           _id: 1,
           ledgerId: 1,
+          ledger: 1,
           amount: 1,
           method: 1,
           details: 1,
