@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../../../../data/models/receipt_model.dart';
 import 'receipt_details_controller.dart';
 
@@ -234,25 +233,34 @@ class ReceiptPdfGenerator {
                               color: primaryColor,
                               borderRadius: const pw.BorderRadius.only(bottomRight: pw.Radius.circular(40)),
                             ),
-                            child: pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            child: pw.Row(
+                              crossAxisAlignment: pw.CrossAxisAlignment.center,
                               children: [
                                 if (logoImage != null)
                                   pw.Container(
-                                    height: 45,
-                                    margin: const pw.EdgeInsets.only(bottom: 8),
-                                    alignment: pw.Alignment.centerLeft,
+                                    width: 60,
+                                    height: 60,
+                                    margin: const pw.EdgeInsets.only(right: 15),
+                                    padding: const pw.EdgeInsets.all(3),
+                                    decoration: const pw.BoxDecoration(
+                                      color: PdfColors.white,
+                                      shape: pw.BoxShape.circle,
+                                    ),
                                     child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                                  )
-                                else ...[
-                                  pw.Text('SUNRISE SCHOOL RAJKOT', style: pw.TextStyle(color: PdfColors.white, fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                                  pw.SizedBox(height: 3),
-                                  pw.Text('English & Gujarati Medium', style: pw.TextStyle(color: PdfColor.fromHex('#fcd34d'), fontSize: 10, fontWeight: pw.FontWeight.bold)),
-                                  pw.SizedBox(height: 5),
-                                ],
-                                pw.Text('Railnagar, Rajkot, Gujarat - 360 001', style: pw.TextStyle(color: PdfColor.fromHex('#e2e8f0'), fontSize: 8)),
-                                pw.SizedBox(height: 2),
-                                pw.Text('Ph: +91 97236 55151  |  info@sunriseschoolrajkot.com', style: pw.TextStyle(color: PdfColor.fromHex('#e2e8f0'), fontSize: 8)),
+                                  ),
+                                pw.Column(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                                  children: [
+                                    pw.Text('SUNRISE SCHOOL RAJKOT', style: pw.TextStyle(color: PdfColors.white, fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                                    pw.SizedBox(height: 3),
+                                    pw.Text('English & Gujarati Medium', style: pw.TextStyle(color: PdfColor.fromHex('#fcd34d'), fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                                    pw.SizedBox(height: 5),
+                                    pw.Text('Railnagar, Rajkot, Gujarat - 360 001', style: pw.TextStyle(color: PdfColor.fromHex('#e2e8f0'), fontSize: 7)),
+                                    pw.SizedBox(height: 2),
+                                    pw.Text('Ph: +91 97236 55151  |  info@sunriseschoolrajkot.com', style: pw.TextStyle(color: PdfColor.fromHex('#e2e8f0'), fontSize: 7)),
+                                  ]
+                                )
                               ]
                             )
                           ),

@@ -38,7 +38,12 @@ class AppColors {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primary, primaryMid],
+    colors: [
+      Color(0xFF0F1D2E), // very dark ink
+      Color(0xFF1A3A5C), // primary
+      Color(0xFF2557A7), // primaryMid
+    ],
+    stops: [0.0, 0.4, 1.0],
   );
 
   static const LinearGradient sunGradient = LinearGradient(

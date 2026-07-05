@@ -56,23 +56,31 @@ class ProfileView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: AppColors.primaryMid.withOpacity(.3),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: Colors.white.withOpacity(.2),
-                      child: Text(
-                        s.initials,
-                        style: AppTextStyles.displayMedium.copyWith(color: Colors.white, fontSize: 28),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 36,
+                        backgroundColor: Colors.white.withOpacity(.2),
+                        child: Text(
+                          s.initials,
+                          style: AppTextStyles.displayMedium.copyWith(color: Colors.white, fontSize: 28),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -101,7 +109,7 @@ class ProfileView extends StatelessWidget {
                     const Divider(height: 24, color: AppColors.border),
                     _buildInfoRow('Medium', s.medium),
                     const Divider(height: 24, color: AppColors.border),
-                    _buildInfoRow('Transport Route', s.transportType ?? 'None'),
+                    _buildInfoRow('Transport Route', s.transportType.isEmpty ? 'None' : s.transportType),
                   ],
                 ),
               ),
@@ -118,7 +126,7 @@ class ProfileView extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildInfoRow('School Name', 'Sunrise Convent School'),
+                    _buildInfoRow('School Name', 'Sunrise School'),
                     const Divider(height: 24, color: AppColors.border),
                     _buildInfoRow('Branch', 'Railnagar Branch'),
                     const Divider(height: 24, color: AppColors.border),

@@ -1,7 +1,7 @@
 /**
  * printUtils.ts
  * ─────────────────────────────────────────────────────────────────────────────
- * Premium print engine for Sunrise Convent School.
+ * Premium print engine for Sunrise School.
  *
  * KEY FIX: Images are fetched and converted to base64 data URIs so they are
  * embedded directly in the HTML string — no network requests from the iframe,
@@ -92,8 +92,8 @@ function toIndianWords(amount: number): string {
       n < 100
         ? below100(n)
         : ones[Math.floor(n / 100)] +
-          " Hundred" +
-          (n % 100 ? " " + below100(n % 100) : "");
+        " Hundred" +
+        (n % 100 ? " " + below100(n % 100) : "");
 
     let result = "";
     let n = num;
@@ -303,15 +303,15 @@ export function generateReceiptHTML(
 
   const dateStr = transaction.date
     ? new Date(transaction.date).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
     : new Date().toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
 
   const timeStr =
     transaction.time ||
@@ -509,15 +509,14 @@ export function generateReceiptHTML(
 </head>
 <body>
   <!-- WATERMARK CONTAINER (Rendered at z-index: 1, under content at z-index: 2) -->
-  ${
-    watermarkBase64
+  ${watermarkBase64
       ? `
   <div style="position: absolute; top: 0; left: 0; width: 210mm; height: 148mm; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
     <img src="${watermarkBase64}" style="width: 460px; height: 460px; opacity: 0.08; transform: rotate(-12deg); object-fit: contain;" />
   </div>
   `
       : ""
-  }
+    }
 
   <!-- ════ HEADER WITH WAVE/CURVED BLOCK OVERLAPS ════ -->
   <div class="header-container" style="position: relative; height: 130px; width: 100%; overflow: hidden; background: #fff; page-break-inside: avoid; z-index: 3;">
@@ -595,13 +594,12 @@ export function generateReceiptHTML(
         <strong>Amount in Words:</strong>&nbsp;<em>${words}</em>
       </div>
 
-      ${
-        transaction.remark
-          ? `
+      ${transaction.remark
+      ? `
       <div class="remark-box"><strong>Remark:</strong> ${transaction.remark}</div>
       `
-          : ""
-      }
+      : ""
+    }
 
       <!-- ════ SIGNATURE ════ -->
       <div class="sig-section" style="justify-content: flex-end;">

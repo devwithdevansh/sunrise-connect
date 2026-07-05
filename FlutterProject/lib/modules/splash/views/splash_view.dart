@@ -23,21 +23,18 @@ class SplashView extends GetView<SplashController> {
                   width: 88,
                   height: 88,
                   decoration: BoxDecoration(
-                    color: AppColors.sun,
+                    color: AppColors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.sun.withOpacity(.35),
+                        color: AppColors.primaryMid.withOpacity(.35),
                         blurRadius: 32,
                         offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.wb_sunny_rounded,
-                    color: Colors.white,
-                    size: 46,
-                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Image.asset('assets/images/sunrise-logo.png', fit: BoxFit.contain),
                 )
                     .animate()
                     .scale(duration: 600.ms, curve: Curves.elasticOut)

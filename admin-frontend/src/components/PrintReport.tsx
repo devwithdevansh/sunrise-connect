@@ -22,11 +22,11 @@ interface PrintReportProps {
   };
 }
 
-const SCHOOL_NAME    = 'SUNRISE CONVENT SCHOOL';
-const SCHOOL_MEDIUM  = 'English & Gujarati Medium';
+const SCHOOL_NAME = 'SUNRISE SCHOOL';
+const SCHOOL_MEDIUM = 'English & Gujarati Medium';
 const SCHOOL_ADDRESS = 'Railnagar, Rajkot, Gujarat';
-const SCHOOL_PHONE   = '+91 XXXXX XXXXX';
-const SCHOOL_EMAIL   = 'info@sunriseschool.in';
+const SCHOOL_PHONE = '+91 XXXXX XXXXX';
+const SCHOOL_EMAIL = 'info@sunriseschool.in';
 
 /* ── shared styles ── */
 const S = {
@@ -225,10 +225,10 @@ export const PrintReport: React.FC<PrintReportProps> = ({ report }) => {
         {Header}
         <div style={{ ...S.summaryGrid, gridTemplateColumns: 'repeat(4,1fr)' }}>
           {[
-            { label: 'Total Collected',  val: `₹${(data.totalCollected || 0).toLocaleString('en-IN')}` },
-            { label: 'Cash',             val: `₹${(data.cashCollected   || 0).toLocaleString('en-IN')}` },
-            { label: 'Online / UPI',     val: `₹${(data.onlineCollected || 0).toLocaleString('en-IN')}` },
-            { label: 'Cheque',           val: `₹${(data.chequeCollected || 0).toLocaleString('en-IN')}` },
+            { label: 'Total Collected', val: `₹${(data.totalCollected || 0).toLocaleString('en-IN')}` },
+            { label: 'Cash', val: `₹${(data.cashCollected || 0).toLocaleString('en-IN')}` },
+            { label: 'Online / UPI', val: `₹${(data.onlineCollected || 0).toLocaleString('en-IN')}` },
+            { label: 'Cheque', val: `₹${(data.chequeCollected || 0).toLocaleString('en-IN')}` },
           ].map((s, i) => (
             <div key={i}>
               <div style={S.statLabel}>{s.label}</div>
@@ -279,9 +279,9 @@ export const PrintReport: React.FC<PrintReportProps> = ({ report }) => {
         {Header}
         <div style={{ ...S.summaryGrid, gridTemplateColumns: 'repeat(4,1fr)' }}>
           {[
-            { label: 'Total Outstanding',     val: `₹${(data.totalOutstandingAmount || 0).toLocaleString('en-IN')}`, color: '#dc2626' },
-            { label: 'Students with Dues',    val: `${data.studentCount || 0}`,                                        color: undefined },
-            { label: 'Avg. Dues / Student',   val: `₹${avgDue.toLocaleString('en-IN')}`,                              color: undefined },
+            { label: 'Total Outstanding', val: `₹${(data.totalOutstandingAmount || 0).toLocaleString('en-IN')}`, color: '#dc2626' },
+            { label: 'Students with Dues', val: `${data.studentCount || 0}`, color: undefined },
+            { label: 'Avg. Dues / Student', val: `₹${avgDue.toLocaleString('en-IN')}`, color: undefined },
             { label: 'Aging (1M / 2M / 3M+)', val: `${data.oneDueCount || 0} / ${data.twoDueCount || 0} / ${data.threePlusDueCount || 0}`, color: undefined },
           ].map((s, i) => (
             <div key={i}>
@@ -331,8 +331,8 @@ export const PrintReport: React.FC<PrintReportProps> = ({ report }) => {
         {Header}
         <div style={{ ...S.summaryGrid, gridTemplateColumns: 'repeat(2,1fr)' }}>
           {[
-            { label: 'Total RTE Enrolled',              val: `${data.studentCount || 0} Students`,                          color: undefined },
-            { label: 'Total Exempted Tuition Fee',       val: `₹${(data.totalExemptedAmount || 0).toLocaleString('en-IN')}`, color: '#4338ca' },
+            { label: 'Total RTE Enrolled', val: `${data.studentCount || 0} Students`, color: undefined },
+            { label: 'Total Exempted Tuition Fee', val: `₹${(data.totalExemptedAmount || 0).toLocaleString('en-IN')}`, color: '#4338ca' },
           ].map((s, i) => (
             <div key={i}>
               <div style={S.statLabel}>{s.label}</div>

@@ -50,20 +50,21 @@ class _LoginViewState extends State<LoginView> {
                 children: [
                   // Logo
                   Container(
-                    width: 64,
-                    height: 64,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(18),
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryMid.withOpacity(.25),
+                          color: AppColors.primaryMid.withOpacity(.15),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 34),
+                    padding: const EdgeInsets.all(12),
+                    child: Image.asset('assets/images/sunrise-logo.png', fit: BoxFit.contain),
                   ),
                   const SizedBox(height: 32),
                   Text('Parent Portal', style: AppTextStyles.displayMedium),

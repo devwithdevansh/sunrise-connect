@@ -249,12 +249,19 @@ class DashboardView extends GetView<DashboardController> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.white.withOpacity(0.15),
-          width: 1.5,
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,6 +362,8 @@ class DashboardView extends GetView<DashboardController> {
                 color: Colors.white.withOpacity(0.6),
                 fontSize: 11,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
             Text(
@@ -570,10 +579,14 @@ class DashboardView extends GetView<DashboardController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: AppTextStyles.labelLarge.copyWith(
-                      fontSize: 14,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      label,
+                      style: AppTextStyles.labelLarge.copyWith(
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -702,8 +715,12 @@ class _FeeRowCard extends StatelessWidget {
         ? AppColors.amber
         : isOverdue
             ? AppColors.red
-            : AppColors.red;
-    final statusBg = fee.isPartial ? AppColors.amberPale : AppColors.redPale;
+            : AppColors.primaryMid;
+    final statusBg = fee.isPartial
+        ? AppColors.amberPale
+        : isOverdue
+            ? AppColors.redPale
+            : AppColors.primaryLight;
     final statusLabel = fee.isPartial
         ? 'Partial'
         : isOverdue
@@ -733,7 +750,7 @@ class _FeeRowCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(fee.termName, style: AppTextStyles.labelLarge),
+                  Text(fee.termName, style: AppTextStyles.labelLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
                   Text('Due: ${fee.dueDate.split('T').first}', style: AppTextStyles.bodySmall),
                 ],
               ),
@@ -832,7 +849,7 @@ class _NotifCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(notif.title, style: AppTextStyles.labelLarge),
+                Text(notif.title, style: AppTextStyles.labelLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
                 Text(notif.message, style: AppTextStyles.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],

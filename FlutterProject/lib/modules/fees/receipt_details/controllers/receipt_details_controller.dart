@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
-import 'package:pdf/pdf.dart';
-import 'package:printing/printing.dart';
 import '../../../../core/utils/pdf_download_helper.dart';
 import '../../../../data/models/receipt_model.dart';
 import '../../../../data/repositories/receipt_repository.dart';

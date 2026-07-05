@@ -10,9 +10,9 @@ class OnboardingView extends GetView<OnboardingController> {
 
   static const _pages = [
     _OnboardPage(
-      icon: Icons.wb_sunny_rounded,
+      imageAsset: 'assets/images/sunrise-logo.png',
       iconColor: AppColors.sun,
-      iconBg: AppColors.sunPale,
+      iconBg: AppColors.white,
       title: 'Track Fees\nEasily',
       subtitle: 'Stay on top of every fee deadline and never miss a payment for your child.',
     ),
@@ -95,18 +95,20 @@ class OnboardingView extends GetView<OnboardingController> {
 }
 
 class _OnboardPage extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final Color iconColor;
   final Color iconBg;
   final String title;
   final String subtitle;
+  final String? imageAsset;
 
   const _OnboardPage({
-    required this.icon,
+    this.icon,
     required this.iconColor,
     required this.iconBg,
     required this.title,
     required this.subtitle,
+    this.imageAsset,
   });
 
   @override
@@ -120,7 +122,10 @@ class _OnboardPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, size: 60, color: iconColor),
+            padding: imageAsset != null ? const EdgeInsets.all(16) : null,
+            child: imageAsset != null
+                ? Image.asset(imageAsset!, fit: BoxFit.contain)
+                : Icon(icon, size: 60, color: iconColor),
           ),
           const SizedBox(height: 48),
           Text(title, style: AppTextStyles.displayMedium, textAlign: TextAlign.center),

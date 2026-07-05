@@ -153,7 +153,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                 const SizedBox(height: 12),
 
                 // ── School info ───────────────────────────────────────────
-                const Text('SUNRISE CONVENT SCHOOL',
+                const Text('SUNRISE SCHOOL',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1B3A7A), letterSpacing: 0.5),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 3),
