@@ -61,7 +61,7 @@ const paymentRepository = {
       matchStage.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
 
-    return Payment.aggregate([
+    const results = await Payment.aggregate([
       { $match: matchStage },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
@@ -75,25 +75,6 @@ const paymentRepository = {
         },
       },
       { $unwind: { path: '$ledger', preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: 'payments',
-          let: { paymentId: '$_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: [
-                    { $toString: '$details.reversalOf' },
-                    { $toString: '$$paymentId' }
-                  ]
-                }
-              }
-            }
-          ],
-          as: 'reversals'
-        }
-      },
       {
         $project: {
           _id: 1,
@@ -111,22 +92,26 @@ const paymentRepository = {
           academicYear: '$ledger.academicYear',
           concessionAmount: '$ledger.concessionAmount',
           totalAmount: '$ledger.totalAmount',
-          isReversed: {
-            $cond: {
-              if: {
-                $or: [
-                  { $eq: ['$isReversal', true] },
-                  { $gt: [{ $size: '$reversals' }, 0] }
-                ]
-              },
-              then: true,
-              else: false
-            }
-          },
           reversalOf: '$details.reversalOf'
         },
       },
     ]);
+
+    if (results.length > 0) {
+      const paymentIds = results.map(r => r._id.toString());
+      const reversals = await Payment.find(
+        { 'details.reversalOf': { $in: paymentIds } },
+        { 'details.reversalOf': 1 }
+      ).lean();
+
+      const reversedIds = new Set(reversals.map(r => r.details.reversalOf.toString()));
+
+      for (const r of results) {
+        r.isReversed = Boolean(r.isReversal || reversedIds.has(r._id.toString()));
+      }
+    }
+
+    return results;
   },
 };
 
