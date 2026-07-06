@@ -70,7 +70,7 @@ export const Sidebar: React.FC = () => {
       title: 'NOTIFY',
       items: [
         { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, disabled: true },
-        { id: 'notifications', label: 'Notifications', icon: Bell, disabled: true },
+        { id: 'notifications', label: 'Notifications', icon: Bell },
       ]
     },
     {

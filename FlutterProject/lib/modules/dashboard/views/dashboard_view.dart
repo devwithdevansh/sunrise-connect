@@ -66,7 +66,7 @@ class DashboardView extends GetView<DashboardController> {
 
   Widget _buildHeader(BuildContext context) {
     final s = controller.student.value;
-    final unread = controller.notifications.where((n) => !n.isRead).length;
+    final unread = controller.unreadNotificationCount.value;
 
     return Container(
       width: double.infinity,

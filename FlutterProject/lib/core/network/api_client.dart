@@ -72,4 +72,21 @@ class ApiClient {
       body: json.encode(body),
     );
   }
+
+  /// Perform a DELETE request with a JSON body.
+  static Future<http.Response> delete(String path, Map<String, dynamic> body) async {
+    final token = await getParentToken();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final request = http.Request('DELETE', Uri.parse('$baseUrl$path'));
+    request.headers.addAll(headers);
+    request.body = json.encode(body);
+    final streamedResponse = await request.send();
+    return await http.Response.fromStream(streamedResponse);
+  }
 }

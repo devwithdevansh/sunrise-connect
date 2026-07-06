@@ -15,11 +15,11 @@ import { StaffManagement } from './components/StaffManagement';
 import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
 import {
-  MessageSquare,
-  Bell
+  MessageSquare
 } from 'lucide-react';
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
+import { Notifications } from './components/Notifications';
 import { generateReceiptHTML, generateReportHTML, printHTML, fetchAsBase64 } from './utils/printUtils';
 import logoPath from './assets/sunrise-logo.png';
 import watermarkPath from './assets/sunrise-round-logo.png';
@@ -72,17 +72,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
       );
 
     case 'notifications':
-      return (
-        <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
-          <div className="bg-blue-100 text-blue-600 p-4 rounded-2xl border border-blue-200">
-            <Bell className="h-8 w-8 animate-bounce" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800">System Notifications</h3>
-          <p className="text-sm text-slate-500 max-w-sm">
-            Check logs and alerts for automated fee invoices, unpaid ledgers generated monthly, and staff collection shift logs.
-          </p>
-        </div>
-      );
+      return <Notifications />;
 
     case 'parent-app':
       return (

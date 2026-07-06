@@ -21,6 +21,7 @@ class DashboardController extends GetxController {
   final student = Rxn<StudentModel>();
   final fees = <FeeModel>[].obs;
   final notifications = <NotificationModel>[].obs;
+  final unreadNotificationCount = 0.obs;
 
   final totalFees = 0.0.obs;
   final totalPaid = 0.0.obs;
@@ -87,10 +88,9 @@ class DashboardController extends GetxController {
 
             fees.assignAll(cachedFees);
             _calculateAggregates(filteredFees);
-            
-            final notifs = await _notificationRepo.getNotifications(filteredFees);
-            notifications.assignAll(notifs);
-          }
+
+          // Load real notifications from backend API
+          _loadNotifications();
         }
         
         if (isCacheFresh) {
@@ -136,8 +136,7 @@ class DashboardController extends GetxController {
 
         _calculateAggregates(filteredFees);
 
-        final notifs = await _notificationRepo.getNotifications(filteredFees);
-        notifications.assignAll(notifs);
+        _loadNotifications();
       }
     } catch (e) {
       print('Error loading dashboard data: $e');
@@ -196,6 +195,22 @@ class DashboardController extends GetxController {
     totalFees.value = total;
     totalPaid.value = paid;
     totalPending.value = pending;
+  }
+
+  /// Fetch real notifications from the backend and update the badge count.
+  Future<void> _loadNotifications() async {
+    try {
+      final notifs = await _notificationRepo.getNotifications();
+      notifications.assignAll(notifs);
+      unreadNotificationCount.value = notifs.where((n) => !n.isRead).length;
+    } catch (e) {
+      print('Error loading notifications: $e');
+    }
+  }
+
+  /// Refresh notifications only (called when tapping notification bell).
+  Future<void> refreshNotifications() async {
+    await _loadNotifications();
   }
 
   Future<void> refreshData() async {
