@@ -131,11 +131,16 @@ class NotificationService {
     // ── 4. Send via Firebase (fire-and-forget update of status) ───────────────
     const { successCount, failureCount } = await NotificationService._sendViaFcm(allTokens, { title, body, notificationId: notification._id.toString() });
 
-    const deliveryStatus = failureCount === 0
-      ? 'SENT'
-      : successCount === 0
-        ? 'FAILED'
-        : 'PARTIAL_FAIL';
+    let deliveryStatus = 'PENDING';
+    if (allTokens.length === 0) {
+      deliveryStatus = 'NO_TOKENS';
+    } else {
+      deliveryStatus = failureCount === 0
+        ? 'SENT'
+        : successCount === 0
+          ? 'FAILED'
+          : 'PARTIAL_FAIL';
+    }
 
     await Notification.updateOne(
       { _id: notification._id },
