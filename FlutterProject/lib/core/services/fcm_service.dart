@@ -82,14 +82,14 @@ class FcmService {
     }
 
     // 9. Register token with backend & listen for refreshes
-    await _registerToken();
+    await registerToken();
     _messaging.onTokenRefresh.listen((newToken) async {
       await _sendTokenToBackend(newToken);
     });
   }
 
   /// Get current FCM token and register it with the backend.
-  static Future<void> _registerToken() async {
+  static Future<void> registerToken() async {
     try {
       final token = await _messaging.getToken();
       if (token != null) {

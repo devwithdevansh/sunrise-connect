@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class LoginController extends GetxController {
   final isLoading = false.obs;
@@ -33,6 +34,9 @@ class LoginController extends GetxController {
         await prefs.setString(StorageKeys.phone, phone);
         await prefs.setBool(StorageKeys.isLoggedIn, true);
         await prefs.setBool(StorageKeys.isOnboarded, true);
+
+        // Register FCM token now that we are logged in
+        await FcmService.registerToken();
 
         Get.offAllNamed(AppRoutes.dashboard);
       } else {
