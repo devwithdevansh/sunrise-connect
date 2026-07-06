@@ -16,27 +16,33 @@ const SERVICE_ACCOUNT_PATH = join(__dirname, '../../config/firebase-service-acco
 
 let _adminInstance = null;
 
-/**
- * Returns the Firebase Admin instance (singleton).
- * Returns null if not configured.
- */
 export function getFirebaseAdmin() {
   if (_adminInstance) return _adminInstance;
-
-  if (!existsSync(SERVICE_ACCOUNT_PATH)) {
-    logger.warn(
-      'Firebase service account not found at backend/config/firebase-service-account.json. ' +
-      'Push notifications are disabled. Download the key from Firebase Console → Project Settings → Service accounts.'
-    );
-    return null;
-  }
 
   try {
     const require = createRequire(import.meta.url);
     const admin = require('firebase-admin');
 
     if (!admin.apps.length) {
-      const serviceAccount = require(SERVICE_ACCOUNT_PATH);
+      let serviceAccount;
+      
+      // 1. Try to load from Environment Variable (Best for Hostinger/Vercel)
+      if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      } 
+      // 2. Fallback to local JSON file
+      else if (existsSync(SERVICE_ACCOUNT_PATH)) {
+        serviceAccount = require(SERVICE_ACCOUNT_PATH);
+      } 
+      // 3. No credentials found
+      else {
+        logger.warn(
+          'Firebase service account not found! Push notifications are disabled. ' +
+          'Set FIREBASE_SERVICE_ACCOUNT env var or add config/firebase-service-account.json'
+        );
+        return null;
+      }
+
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
