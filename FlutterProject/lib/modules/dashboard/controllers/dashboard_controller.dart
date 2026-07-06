@@ -88,6 +88,7 @@ class DashboardController extends GetxController {
 
             fees.assignAll(cachedFees);
             _calculateAggregates(filteredFees);
+          }
 
           // Load real notifications from backend API
           _loadNotifications();
@@ -169,7 +170,7 @@ class DashboardController extends GetxController {
 
       _calculateAggregates(filteredFees);
       
-      final notifs = await _notificationRepo.getNotifications(filteredFees);
+      final notifs = await _notificationRepo.getNotifications();
       notifications.assignAll(notifs);
       
       if (Get.isRegistered<PaymentHistoryController>()) {
