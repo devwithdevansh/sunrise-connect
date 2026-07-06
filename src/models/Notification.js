@@ -94,8 +94,5 @@ notificationSchema.index({ createdAt: -1 });
 // Index: parent inbox — find notifications targeting a specific parent
 notificationSchema.index({ targetParentIds: 1, createdAt: -1 });
 
-// Index: unread count — find notifications a parent hasn't read
-notificationSchema.index({ targetParentIds: 1, 'readBy.parentId': 1 });
-
 const Notification = mongoose.model('Notification', notificationSchema);
 export default Notification;
