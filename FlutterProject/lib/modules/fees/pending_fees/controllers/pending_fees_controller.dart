@@ -135,6 +135,7 @@ class PendingFeesController extends GetxController
     TermGroup.term1: true,
     TermGroup.term2: true,
   }.obs;
+  var showConfetti = false.obs;
 
   final RxSet<String> expandedMonths = <String>{}.obs;
 
@@ -478,6 +479,10 @@ class PendingFeesController extends GetxController
 
       if (allSuccess) {
         SoundService.instance.play(AppSound.success);
+        showConfetti.value = true;
+        Future.delayed(const Duration(seconds: 4), () {
+          showConfetti.value = false;
+        });
         
         final updated = fees.map((f) => selectedIds.contains(f.id)
             ? FeeItem(

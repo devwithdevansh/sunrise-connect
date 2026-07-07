@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 import '../controllers/pending_fees_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,14 +81,30 @@ class PendingFeesView extends StatelessWidget {
     final c = Get.find<PendingFeesController>();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
-      child: Scaffold(
-        backgroundColor: _C.pageBg,
-        body: Obx(() {
-          if (c.isLoading.value && !c.hasLoadedOnce.value) return const _Shimmer();
-          if (c.hasLoadedOnce.value && c.pendingFees.isEmpty) return const _EmptyState();
-          return Stack(children: [_Body(c: c), _PayBar(c: c)]);
+      child: Stack(children: [
+        Scaffold(
+          backgroundColor: _C.pageBg,
+          body: Obx(() {
+            if (c.isLoading.value && !c.hasLoadedOnce.value) return const _Shimmer();
+            if (c.hasLoadedOnce.value && c.pendingFees.isEmpty) return const _EmptyState();
+            return Stack(children: [_Body(c: c), _PayBar(c: c)]);
+          }),
+        ),
+        Obx(() {
+          if (c.showConfetti.value) {
+            return Positioned.fill(
+              child: IgnorePointer(
+                child: Lottie.network(
+                  'https://assets9.lottiefiles.com/packages/lf20_u4yrau.json',
+                  repeat: false,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
         }),
-      ),
+      ]),
     );
   }
 }
