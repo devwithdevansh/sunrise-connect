@@ -9,6 +9,9 @@ class SoundService {
 
   bool _soundEnabled = true;
   static const _soundPrefKey = 'sound_enabled';
+  
+  // Keep references to prevent premature garbage collection
+  final Set<AudioPlayer> _activePlayers = {};
 
   final Map<AppSound, String> _files = {
     AppSound.click: 'sounds/click.ogg',
@@ -25,15 +28,28 @@ class SoundService {
   }
 
   Future<void> play(AppSound sound) async {
-    if (!_soundEnabled) return;
+    print('DEBUG: SoundService.play requested for: ${sound.name}');
+    if (!_soundEnabled) {
+      print('DEBUG: Sound is disabled in preferences.');
+      return;
+    }
     try {
       final player = AudioPlayer();
-      await player.play(AssetSource(_files[sound]!));
+      _activePlayers.add(player);
+      
+      final source = AssetSource(_files[sound]!);
+      print('DEBUG: Attempting to play source: ${source.path}');
+      
+      await player.play(source);
+      print('DEBUG: Successfully sent play command to platform');
+      
       player.onPlayerComplete.listen((_) {
+        print('DEBUG: Playback completed for: ${sound.name}');
         player.dispose();
+        _activePlayers.remove(player);
       });
     } catch (e) {
-      print('Sound play error: $e');
+      print('DEBUG: Sound play error: $e');
     }
   }
 
