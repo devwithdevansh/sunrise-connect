@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/storage_keys.dart';
+import '../../../../data/models/fee_model.dart';
 import '../../../../data/repositories/fee_repository.dart';
+import '../../../../services/sound_service.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -475,6 +477,8 @@ class PendingFeesController extends GetxController
       }
 
       if (allSuccess) {
+        SoundService.instance.play(AppSound.success);
+        
         final updated = fees.map((f) => selectedIds.contains(f.id)
             ? FeeItem(
                 id: f.id,
@@ -509,12 +513,14 @@ class PendingFeesController extends GetxController
           Get.find<DashboardController>().refreshData();
         }
       } else {
+        SoundService.instance.play(AppSound.error);
         Get.snackbar('Payment Failed',
             'Unable to process one or more fees. Please try again.',
             snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
       debugPrint('Error in paySelected: $e');
+      SoundService.instance.play(AppSound.error);
       Get.snackbar('Payment Error',
           'An error occurred. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
