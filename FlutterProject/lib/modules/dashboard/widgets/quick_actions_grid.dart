@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -107,7 +108,10 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedTapButton(
-      onTap: () => Get.toNamed(route),
+      onTap: () {
+        SoundService.instance.play(AppSound.click);
+        Get.toNamed(route);
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

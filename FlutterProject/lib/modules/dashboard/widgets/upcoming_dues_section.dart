@@ -5,6 +5,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../../data/models/fee_model.dart';
+import '../../../../services/sound_service.dart';
 import '../controllers/dashboard_controller.dart';
 import 'section_header.dart';
 
@@ -129,7 +130,10 @@ class _FeeRowCard extends StatelessWidget {
             : 'Pending';
 
     return AnimatedTapButton(
-      onTap: () => _showPaymentDialog(context),
+      onTap: () {
+        SoundService.instance.play(AppSound.click);
+        _showPaymentDialog(context);
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
@@ -237,7 +241,10 @@ class _FeeRowCard extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () {
+              SoundService.instance.play(AppSound.click);
+              Get.back();
+            },
             child: Text(
               'Cancel',
               style: AppTextStyles.labelLarge.copyWith(color: AppColors.ink),
@@ -245,6 +252,7 @@ class _FeeRowCard extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              SoundService.instance.play(AppSound.click);
               Get.back();
               controller.payFee(fee);
             },

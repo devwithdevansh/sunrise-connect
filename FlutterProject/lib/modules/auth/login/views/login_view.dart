@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -103,6 +104,7 @@ class _LoginViewState extends State<LoginView> {
                         label: 'Login',
                         loading: _controller.isLoading.value,
                         onTap: () {
+                          SoundService.instance.play(AppSound.click);
                           if (_formKey.currentState!.validate()) {
                             _controller.login(
                               phone: _phoneController.text.trim(),

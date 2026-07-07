@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../services/sound_service.dart';
 import '../controllers/pending_fees_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -257,7 +258,7 @@ class _OverdueBanner extends StatelessWidget {
       final overdue = c.overdueFees;
       if (overdue.isEmpty) return const SizedBox.shrink();
       return GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); c.selectAllOverdue(); },
+        onTap: () { HapticFeedback.selectionClick(); SoundService.instance.play(AppSound.click); c.selectAllOverdue(); },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
@@ -355,7 +356,7 @@ class _QChip extends StatelessWidget {
           : (active ? _C.navy  : _C.borderMid);
 
       return GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); onTap(); },
+        onTap: () { HapticFeedback.selectionClick(); SoundService.instance.play(AppSound.click); onTap(); },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
@@ -483,7 +484,7 @@ class _TermHeader extends StatelessWidget {
             ])),
             if (unpaidN > 0)
               GestureDetector(
-                onTap: () { HapticFeedback.selectionClick(); c.selectAllInTerm(term); },
+                onTap: () { HapticFeedback.selectionClick(); SoundService.instance.play(AppSound.click); c.selectAllInTerm(term); },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -560,7 +561,7 @@ class _TermFeeRow extends StatelessWidget {
     return Obx(() {
       final selected = c.selectedIds.contains(fee.id);
       return GestureDetector(
-        onTap: isPaid || isRTE ? null : () { HapticFeedback.selectionClick(); c.toggleFee(fee); },
+        onTap: isPaid || isRTE ? null : () { HapticFeedback.selectionClick(); SoundService.instance.play(AppSound.click); c.toggleFee(fee); },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           color: selected ? _C.navy.withOpacity(0.05) : Colors.transparent,
@@ -635,7 +636,7 @@ class _MonthGroupRow extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            HapticFeedback.selectionClick();
+            HapticFeedback.selectionClick(); SoundService.instance.play(AppSound.click);
             if (!isFullyPaid) c.toggleMonthGroup(group);
           },
           child: AnimatedContainer(
@@ -786,7 +787,7 @@ class _SubFeeRow extends StatelessWidget {
     return Obx(() {
       final selected = c.selectedIds.contains(fee.id);
       return GestureDetector(
-        onTap: isPaid || isRTE ? null : () { HapticFeedback.selectionClick(); c.toggleFee(fee); },
+        onTap: isPaid || isRTE ? null : () { HapticFeedback.selectionClick(); SoundService.instance.play(AppSound.click); c.toggleFee(fee); },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -903,7 +904,7 @@ class _PayBar extends StatelessWidget {
                 final count = c.selectedIds.length;
                 final total = c.selectedTotal;
                 return GestureDetector(
-                  onTap: () { HapticFeedback.mediumImpact(); _showPaySheet(context, c); },
+                  onTap: () { HapticFeedback.mediumImpact(); SoundService.instance.play(AppSound.click); _showPaySheet(context, c); },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     decoration: BoxDecoration(
@@ -1078,6 +1079,7 @@ class _PaySheet extends StatelessWidget {
               Expanded(flex: 2,
                 child: GestureDetector(
                   onTap: () async {
+                    SoundService.instance.play(AppSound.click);
                     Get.back();
                     HapticFeedback.mediumImpact();
                     await c.paySelected();
