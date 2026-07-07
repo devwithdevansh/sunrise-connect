@@ -82,9 +82,9 @@ class FeeItem {
     return FeeStatus.upcoming;
   }
 
-  bool get isEducation => feeType == 'EDUCATION';
-  bool get isTransport => feeType == 'TRANSPORT';
-  bool get isTerm => feeType == 'TERM';
+  bool get isEducation => feeType.toUpperCase() == 'EDUCATION';
+  bool get isTransport => feeType.toUpperCase() == 'TRANSPORT';
+  bool get isTerm => feeType.toUpperCase() == 'TERM';
 
   bool get isRTEConcession => concessionAmount > 0 && (isEducation || isTerm);
 
@@ -192,7 +192,9 @@ class PendingFeesController extends GetxController
     for (final monthName in termMonths) {
       List<FeeItem> monthFees = [];
       for (final entry in groupedByMonth.entries) {
-        if (entry.key.toLowerCase() == monthName.toLowerCase()) {
+        final key = entry.key.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+        final target = monthName.toLowerCase();
+        if (key == target || key.startsWith(target) || target.startsWith(key)) {
           monthFees = entry.value;
           break;
         }
@@ -272,6 +274,9 @@ class PendingFeesController extends GetxController
         final filteredData = data.where((f) {
           return !f.isAdmission && !f.isBagKit;
         }).toList();
+        
+        print('DEBUG - API returned ${data.length} fees for student $studentId');
+        print('DEBUG - Filtered data has ${filteredData.length} fees');
 
         final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,

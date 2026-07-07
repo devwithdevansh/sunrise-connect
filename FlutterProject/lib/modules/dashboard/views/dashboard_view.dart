@@ -5,6 +5,10 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../data/models/fee_model.dart';
 import '../../../../data/models/notification_model.dart';
+import '../../../../core/widgets/animated_button.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lottie/lottie.dart';
 import '../controllers/dashboard_controller.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -19,7 +23,7 @@ class DashboardView extends GetView<DashboardController> {
         color: AppColors.primaryMid,
         child: Obx(() {
           if (controller.isLoading.value && controller.student.value == null) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryMid));
+            return _buildDashboardShimmer();
           }
 
           if (controller.student.value == null) {
@@ -27,7 +31,12 @@ class DashboardView extends GetView<DashboardController> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.school_rounded, size: 64, color: AppColors.border),
+                  Lottie.network(
+                    'https://lottie.host/88029c73-45ef-4573-ad1f-bb7ad92671d4/p4C3O22934.json',
+                    width: 200,
+                    height: 200,
+                    repeat: false,
+                  ),
                   const SizedBox(height: 16),
                   Text('No student records found.', style: AppTextStyles.h3),
                   const SizedBox(height: 8),
@@ -47,19 +56,115 @@ class DashboardView extends GetView<DashboardController> {
                 padding: const EdgeInsets.only(bottom: 24),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildStudentDetailsPills(),
+                    _buildStudentDetailsPills().animate().fade(duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                     const SizedBox(height: 24),
-                    _buildQuickActionsGrid(),
+                    _buildQuickActionsGrid().animate().fade(delay: 100.ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                     const SizedBox(height: 24),
-                    _buildFeesList(),
+                    _buildFeesList().animate().fade(delay: 200.ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                     const SizedBox(height: 24),
-                    _buildNotifications(),
+                    _buildNotifications().animate().fade(delay: 300.ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   ]),
                 ),
               ),
             ],
           );
         }),
+      ),
+    );
+  }
+
+  Widget _buildDashboardShimmer() {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Shimmer
+          Container(
+            height: 280,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    ShimmerLoader(width: 150, height: 28, borderRadius: 6),
+                    ShimmerLoader(width: 36, height: 36, borderRadius: 18),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const ShimmerLoader(width: 200, height: 16, borderRadius: 4),
+                const SizedBox(height: 40),
+                const ShimmerLoader(width: 80, height: 14, borderRadius: 4),
+                const SizedBox(height: 10),
+                Row(
+                  children: const [
+                    ShimmerLoader(width: 100, height: 38, borderRadius: 20),
+                    SizedBox(width: 10),
+                    ShimmerLoader(width: 100, height: 38, borderRadius: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Details shimmer
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: const [
+                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
+                SizedBox(width: 8),
+                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Quick actions shimmer
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShimmerLoader(width: 140, height: 24, borderRadius: 6),
+                const SizedBox(height: 12),
+                Row(
+                  children: const [
+                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
+                    SizedBox(width: 12),
+                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: const [
+                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
+                    SizedBox(width: 12),
+                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                ShimmerLoader(width: 140, height: 24, borderRadius: 6),
+                SizedBox(height: 12),
+                ShimmerCard(),
+                ShimmerCard(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -195,7 +300,7 @@ class DashboardView extends GetView<DashboardController> {
           final student = controller.students[index];
           final isSelected = controller.student.value?.id == student.id;
 
-          return GestureDetector(
+          return AnimatedTapButton(
             onTap: () => controller.switchStudent(student),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -273,7 +378,7 @@ class DashboardView extends GetView<DashboardController> {
                 'Fee Summary',
                 style: AppTextStyles.h3.copyWith(color: Colors.white, fontSize: 16),
               ),
-              GestureDetector(
+              AnimatedTapButton(
                 onTap: () => Get.toNamed(AppRoutes.feeSummary),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -547,7 +652,7 @@ class DashboardView extends GetView<DashboardController> {
     required Color color,
     required String route,
   }) {
-    return GestureDetector(
+    return AnimatedTapButton(
       onTap: () => Get.toNamed(route),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -727,7 +832,7 @@ class _FeeRowCard extends StatelessWidget {
             ? 'Overdue'
             : 'Pending';
 
-    return GestureDetector(
+    return AnimatedTapButton(
       onTap: () => _showPaymentDialog(context),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

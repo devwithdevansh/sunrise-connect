@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/fee_model.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class FeeSummaryView extends StatelessWidget {
   const FeeSummaryView({super.key});
@@ -194,7 +195,7 @@ class FeeSummaryView extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildOtherFeesCard(otherFees),
               ],
-            ],
+            ].animate(interval: 50.ms).fade(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad),
           ),
         );
       }),
