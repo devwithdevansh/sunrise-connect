@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -101,17 +100,11 @@ class DashboardHeader extends StatelessWidget {
                           _HeaderIconButton(
                             icon: Icons.notifications_outlined,
                             badgeCount: unread,
-                            onTap: () {
-                              SoundService.instance.play(AppSound.click);
-                              Get.toNamed(AppRoutes.notifications);
-                            },
+                            onTap: () => Get.toNamed(AppRoutes.notifications),
                           ),
                           const SizedBox(width: 10),
                           AnimatedTapButton(
-                            onTap: () {
-                              SoundService.instance.play(AppSound.click);
-                              Get.toNamed(AppRoutes.profile);
-                            },
+                            onTap: () => Get.toNamed(AppRoutes.profile),
                             child: Container(
                               width: 42,
                               height: 42,
@@ -243,10 +236,7 @@ class _ChildrenPills extends StatelessWidget {
           final isSelected = controller.student.value?.id == student.id;
 
           return AnimatedTapButton(
-            onTap: () {
-              SoundService.instance.play(AppSound.toggle);
-              controller.switchStudent(student);
-            },
+            onTap: () => controller.switchStudent(student),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOutCubic,
