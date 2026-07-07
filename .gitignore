@@ -49,3 +49,7 @@ admin-frontend/dist/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Firebase Configs
+FlutterProject/android/app/google-services.json
+backend/config/
