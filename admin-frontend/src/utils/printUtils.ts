@@ -379,18 +379,26 @@ export function generateReceiptHTML(
   <title>Payment Receipt — ${transaction.studentName}</title>
   <style>
     ${BASE_CSS}
-    @page { size: A5 landscape; margin: 0; }
+    @page { size: A4 portrait; margin: 0; }
 
     body {
       padding: 0;
       margin: 0;
       width: 210mm;
-      min-height: 148mm;
+      height: 297mm;
+      background: #fff;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .receipt-container {
+      width: 210mm;
       height: 148mm;
       position: relative;
-      background: #fff;
       display: flex;
       flex-direction: column;
+      margin-top: 5mm;
+      overflow: hidden;
     }
 
     .content-wrapper {
@@ -508,6 +516,7 @@ export function generateReceiptHTML(
   </style>
 </head>
 <body>
+  <div class="receipt-container">
   <!-- WATERMARK CONTAINER (Rendered at z-index: 1, under content at z-index: 2) -->
   ${watermarkBase64
       ? `
@@ -629,6 +638,7 @@ export function generateReceiptHTML(
         <span>🌐 www.sunriseschool.in</span>
       </div>
     </div>
+  </div>
   </div>
 </body>
 </html>`;

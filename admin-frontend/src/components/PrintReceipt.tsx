@@ -56,7 +56,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ transaction }) => {
     }}>
       <div style={{
         width: '210mm',
-        height: '148mm',
+        height: '297mm',
         background: '#fff',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         borderRadius: '8px',
