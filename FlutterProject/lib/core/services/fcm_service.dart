@@ -27,11 +27,12 @@ class FcmService {
 
   // Android notification channel
   static const _androidChannel = AndroidNotificationChannel(
-    'sunrise_connect_channel',
-    'Sunrise Connect',
+    'sunrise_connect_channel_v2', // Incremented ID to force Android to register the custom sound
+    'Sunrise Connect Updates',
     description: 'School fee alerts and updates from Sunrise Connect',
     importance: Importance.high,
     playSound: true,
+    sound: RawResourceAndroidNotificationSound('bell_notification'),
   );
 
   /// Call once from main.dart before runApp().
@@ -147,6 +148,7 @@ class FcmService {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
+          sound: const RawResourceAndroidNotificationSound('bell_notification'),
         ),
       ),
       payload: json.encode(message.data),
