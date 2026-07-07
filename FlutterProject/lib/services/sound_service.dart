@@ -38,8 +38,11 @@ class SoundService {
     if (!_soundEnabled) return;
     final player = _players[sound];
     if (player == null) return;
-    await player.stop();
-    await player.resume();
+    
+    if (player.state == PlayerState.playing) {
+      await player.stop();
+    }
+    await player.play(AssetSource(_files[sound]!));
   }
 
   Future<void> setSoundEnabled(bool value) async {
