@@ -7,9 +7,7 @@ class SoundService {
   SoundService._internal();
   static final SoundService instance = SoundService._internal();
 
-  final Map<AppSound, AudioPlayer> _players = {};
   bool _soundEnabled = true;
-
   static const _soundPrefKey = 'sound_enabled';
 
   final Map<AppSound, String> _files = {
@@ -24,25 +22,19 @@ class SoundService {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _soundEnabled = prefs.getBool(_soundPrefKey) ?? true;
-
-    for (final sound in AppSound.values) {
-      final player = AudioPlayer(playerId: sound.name);
-      await player.setPlayerMode(PlayerMode.lowLatency); // uses SoundPool on Android — near-zero lag
-      await player.setSourceAsset(_files[sound]!);
-      await player.setReleaseMode(ReleaseMode.stop);
-      _players[sound] = player;
-    }
   }
 
   Future<void> play(AppSound sound) async {
     if (!_soundEnabled) return;
-    final player = _players[sound];
-    if (player == null) return;
-    
-    if (player.state == PlayerState.playing) {
-      await player.stop();
+    try {
+      final player = AudioPlayer();
+      await player.play(AssetSource(_files[sound]!));
+      player.onPlayerComplete.listen((_) {
+        player.dispose();
+      });
+    } catch (e) {
+      print('Sound play error: $e');
     }
-    await player.play(AssetSource(_files[sound]!));
   }
 
   Future<void> setSoundEnabled(bool value) async {
@@ -53,9 +45,5 @@ class SoundService {
 
   bool get soundEnabled => _soundEnabled;
 
-  Future<void> dispose() async {
-    for (final player in _players.values) {
-      await player.dispose();
-    }
-  }
+  Future<void> dispose() async {}
 }
