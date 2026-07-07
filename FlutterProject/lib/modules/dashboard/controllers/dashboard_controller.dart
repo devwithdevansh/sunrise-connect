@@ -10,6 +10,7 @@ import '../../../../data/repositories/student_repository.dart';
 import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../fees/payment_history/controllers/payment_history_controller.dart';
+import '../../../services/sound_service.dart';
 
 class DashboardController extends GetxController {
   final StudentRepository _studentRepo = StudentRepository();
@@ -269,6 +270,7 @@ class DashboardController extends GetxController {
       _calculateAggregates(updatedFees);
       // ───────────────────────────────────────────────────────────────────
 
+      SoundService.instance.play(AppSound.success);
       Get.snackbar(
         'Payment Successful',
         'Your payment of ₹${fee.remainingAmount.toInt()} for ${fee.termName} has been processed.',
@@ -299,6 +301,7 @@ class DashboardController extends GetxController {
         Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
       }
     } else {
+      SoundService.instance.play(AppSound.error);
       Get.snackbar(
         'Payment Failed',
         'Unable to process payment. Please try again.',

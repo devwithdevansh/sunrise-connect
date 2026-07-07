@@ -8,11 +8,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/constants/storage_keys.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
+import '../../../services/sound_service.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 
   Future<void> _logout() async {
+    SoundService.instance.play(AppSound.pop);
     final prefs = await SharedPreferences.getInstance();
     const secureStorage = FlutterSecureStorage();
     await secureStorage.delete(key: StorageKeys.accessToken);
@@ -132,6 +134,33 @@ class ProfileView extends StatelessWidget {
                     const Divider(height: 24, color: AppColors.border),
                     _buildInfoRow('Academic Year', '2026-27'),
                   ],
+                ),
+              ),
+              Text('App Settings', style: AppTextStyles.h2),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: StatefulBuilder(
+                    builder: (context, setState) {
+                      return SwitchListTile(
+                        title: Text('App Sounds', style: AppTextStyles.bodyMedium),
+                        value: SoundService.instance.soundEnabled,
+                        activeColor: AppColors.primaryMid,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        onChanged: (val) async {
+                          SoundService.instance.play(AppSound.toggle);
+                          await SoundService.instance.setSoundEnabled(val);
+                          setState(() {});
+                        },
+                      );
+                    }
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
