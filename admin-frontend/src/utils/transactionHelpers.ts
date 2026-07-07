@@ -61,7 +61,7 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
         date: tx.createdAt ? new Date(tx.createdAt).toISOString().split('T')[0] : '',
         ledgerId: tx.ledgerId,
         studentId: ledger?.studentId,
-        studentName: student?.name || 'Unknown Student',
+        studentName: student?.studentName || 'Unknown Student',
         method: tx.method,
         status,
         feeType: desc,
@@ -93,7 +93,7 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
     let isDeleted = false;
 
     if (student) {
-      studentName = student.name;
+      studentName = student.studentName || 'Unknown';
       studentCode = student.studentCode || 'N/A';
       isDeleted = student.isActive === false;
       const std = primaryLedger?.snapshot?.standard || student.standard;
