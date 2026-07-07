@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+<<<<<<< HEAD
 import '../../../../core/theme/app_colors.dart';
 import '../../fees/payment_history/views/payment_history_view.dart';
 import '../../../services/sound_service.dart';
@@ -9,10 +10,31 @@ import '../../../../data/models/fee_model.dart';
 import '../../../../data/models/notification_model.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
+=======
+>>>>>>> 3f130de (feat: integrate new splash UI)
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../controllers/dashboard_controller.dart';
+import '../widgets/dashboard_header.dart';
+import '../widgets/dashboard_shimmer.dart';
+import '../widgets/student_detail_chips.dart';
+import '../widgets/quick_actions_grid.dart';
+import '../widgets/upcoming_dues_section.dart';
+import '../widgets/notifications_section.dart';
 
+/// Main dashboard screen.
+///
+/// Structure:
+///   1. Gradient header (greeting, bell, avatar, children pills, fee glass card)
+///   2. Student detail chips
+///   3. Quick actions grid
+///   4. Upcoming dues
+///   5. Latest notifications
+///
+/// Every section is a dedicated widget for maintainability, and each one
+/// animates in with a staggered fade + slide for a polished first paint.
 class DashboardView extends GetView<DashboardController> {
   const DashboardView({super.key});
 
@@ -25,46 +47,46 @@ class DashboardView extends GetView<DashboardController> {
         color: AppColors.primaryMid,
         child: Obx(() {
           if (controller.isLoading.value && controller.student.value == null) {
-            return _buildDashboardShimmer();
+            return const DashboardShimmer();
           }
 
           if (controller.student.value == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Lottie.network(
-                    'https://lottie.host/88029c73-45ef-4573-ad1f-bb7ad92671d4/p4C3O22934.json',
-                    width: 200,
-                    height: 200,
-                    repeat: false,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('No student records found.', style: AppTextStyles.h3),
-                  const SizedBox(height: 8),
-                  Text('Please contact the school administrator.', style: AppTextStyles.bodyMedium),
-                ],
-              ),
-            );
+            return _buildEmptyState();
           }
 
           return CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             slivers: [
               SliverToBoxAdapter(
-                child: _buildHeader(context),
+                child: DashboardHeader(controller: controller)
+                    .animate()
+                    .fade(duration: 350.ms),
               ),
               SliverPadding(
-                padding: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.only(top: 20, bottom: 32),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildStudentDetailsPills().animate().fade(duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
-                    const SizedBox(height: 24),
-                    _buildQuickActionsGrid().animate().fade(delay: 100.ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
-                    const SizedBox(height: 24),
-                    _buildFeesList().animate().fade(delay: 200.ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
-                    const SizedBox(height: 24),
-                    _buildNotifications().animate().fade(delay: 300.ms, duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
+                    StudentDetailChips(controller: controller)
+                        .animate()
+                        .fade(duration: 400.ms)
+                        .slideY(begin: 0.2, curve: Curves.easeOutQuad),
+                    const SizedBox(height: 26),
+                    QuickActionsGrid(controller: controller)
+                        .animate()
+                        .fade(delay: 100.ms, duration: 400.ms)
+                        .slideY(begin: 0.2, curve: Curves.easeOutQuad),
+                    const SizedBox(height: 26),
+                    UpcomingDuesSection(controller: controller)
+                        .animate()
+                        .fade(delay: 200.ms, duration: 400.ms)
+                        .slideY(begin: 0.2, curve: Curves.easeOutQuad),
+                    const SizedBox(height: 26),
+                    NotificationsSection(controller: controller)
+                        .animate()
+                        .fade(delay: 300.ms, duration: 400.ms)
+                        .slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   ]),
                 ),
               ),
@@ -75,364 +97,22 @@ class DashboardView extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildDashboardShimmer() {
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
+  Widget _buildEmptyState() {
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Header Shimmer
-          Container(
-            height: 280,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
-            ),
-            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    ShimmerLoader(width: 150, height: 28, borderRadius: 6),
-                    ShimmerLoader(width: 36, height: 36, borderRadius: 18),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const ShimmerLoader(width: 200, height: 16, borderRadius: 4),
-                const SizedBox(height: 40),
-                const ShimmerLoader(width: 80, height: 14, borderRadius: 4),
-                const SizedBox(height: 10),
-                Row(
-                  children: const [
-                    ShimmerLoader(width: 100, height: 38, borderRadius: 20),
-                    SizedBox(width: 10),
-                    ShimmerLoader(width: 100, height: 38, borderRadius: 20),
-                  ],
-                ),
-              ],
-            ),
+          Lottie.network(
+            'https://lottie.host/88029c73-45ef-4573-ad1f-bb7ad92671d4/p4C3O22934.json',
+            width: 200,
+            height: 200,
+            repeat: false,
           ),
-          const SizedBox(height: 24),
-          // Details shimmer
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: const [
-                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
-                SizedBox(width: 8),
-                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Quick actions shimmer
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const ShimmerLoader(width: 140, height: 24, borderRadius: 6),
-                const SizedBox(height: 12),
-                Row(
-                  children: const [
-                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
-                    SizedBox(width: 12),
-                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: const [
-                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
-                    SizedBox(width: 12),
-                    Expanded(child: ShimmerLoader(width: double.infinity, height: 76, borderRadius: 20)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                ShimmerLoader(width: 140, height: 24, borderRadius: 6),
-                SizedBox(height: 12),
-                ShimmerCard(),
-                ShimmerCard(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final s = controller.student.value;
-    final unread = controller.unreadNotificationCount.value;
-
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome bar + Notification icon + Profile avatar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s?.name ?? 'Sunrise Student',
-                          style: AppTextStyles.h1.copyWith(
-                            color: Colors.white,
-                            fontSize: 22,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Welcome back to Sunrise Connect',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                            onPressed: () => Get.toNamed(AppRoutes.notifications),
-                          ),
-                          if (unread > 0)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '$unread',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => Get.toNamed(AppRoutes.profile),
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          child: Text(
-                            s?.initials ?? '?',
-                            style: AppTextStyles.labelLarge.copyWith(
-                              color: Colors.white,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // Child switching pills label
-              Text(
-                'CHILDREN',
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: Colors.white.withOpacity(0.55),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Horizontal scrollable list of children switching pills
-              _buildChildrenPills(),
-              const SizedBox(height: 24),
-              // Translucent Fee Summary Card
-              _buildTranslucentFeeSummaryCard(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChildrenPills() {
-    return SizedBox(
-      height: 38,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: controller.students.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final student = controller.students[index];
-          final isSelected = controller.student.value?.id == student.id;
-
-          return AnimatedTapButton(
-            onTap: () => controller.switchStudent(student),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected ? Colors.white : Colors.white.withOpacity(0.25),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 10,
-                    backgroundColor: isSelected
-                        ? AppColors.primaryMid.withOpacity(0.15)
-                        : Colors.white.withOpacity(0.2),
-                    child: Text(
-                      student.initials,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? AppColors.primaryMid : Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    student.name,
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: isSelected ? AppColors.primaryMid : Colors.white,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTranslucentFeeSummaryCard() {
-    final total = controller.totalFees.value;
-    final paid = controller.totalPaid.value;
-    final pending = controller.totalPending.value;
-    final progress = total > 0 ? paid / total : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Fee Summary',
-                style: AppTextStyles.h3.copyWith(color: Colors.white, fontSize: 16),
-              ),
-              AnimatedTapButton(
-                onTap: () => Get.toNamed(AppRoutes.feeSummary),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'View Details',
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: Colors.white,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              _buildTranslucentSummaryTile(
-                label: 'Total Fees',
-                amount: total,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 12),
-              _buildTranslucentSummaryTile(
-                label: 'Paid',
-                amount: paid,
-                color: const Color(0xFF4ADE80),
-              ),
-              const SizedBox(width: 12),
-              _buildTranslucentSummaryTile(
-                label: 'Pending',
-                amount: pending,
-                color: const Color(0xFFFCA5A5),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.white.withOpacity(0.15),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4ADE80)),
-              minHeight: 8,
-            ),
-          ),
+          const SizedBox(height: 16),
+          Text('No student records found.', style: AppTextStyles.h3),
           const SizedBox(height: 8),
           Text(
+<<<<<<< HEAD
             '${(progress * 100).toStringAsFixed(0)}% paid of total fees',
             style: AppTextStyles.bodySmall.copyWith(
               color: Colors.white.withOpacity(0.7),
@@ -919,53 +599,13 @@ class _FeeRowCard extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Pay Full Amount', style: TextStyle(color: Colors.white)),
+=======
+            'Please contact the school administrator.',
+            style: AppTextStyles.bodyMedium,
+>>>>>>> 3f130de (feat: integrate new splash UI)
           ),
         ],
       ),
     );
   }
 }
-
-class _NotifCard extends StatelessWidget {
-  final NotificationModel notif;
-  const _NotifCard({required this.notif});
-
-  @override
-  Widget build(BuildContext context) {
-    final isSuccess = notif.type == 'SUCCESS';
-    final cardBg = isSuccess ? AppColors.tealPale : AppColors.primaryLight;
-    final iconColor = isSuccess ? AppColors.teal : AppColors.primaryMid;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            isSuccess ? Icons.check_circle_rounded : Icons.notifications_active_rounded,
-            color: iconColor,
-            size: 20,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(notif.title, style: AppTextStyles.labelLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(notif.body, style: AppTextStyles.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
