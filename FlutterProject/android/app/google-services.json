@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "1030048539425",
-    "project_id": "sunrise-connect",
-    "storage_bucket": "sunrise-connect.firebasestorage.app"
+    "project_number": "21263382992",
+    "project_id": "footballapp-da814",
+    "storage_bucket": "footballapp-da814.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1030048539425:android:c3111fb5a48a9c17f35460",
+        "mobilesdk_app_id": "1:21263382992:android:f81fe085f78549c18de1d5",
         "android_client_info": {
-          "package_name": "com.example.sunrise_connect"
+          "package_name": "com.example.firabase_practice"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCmFWEFH-h6PqY1-50aFYkkSVnR2gjOUww"
+          "current_key": "AIzaSyAd84QQz-vWTAzqfJzQck2KIIpMPVOp5v4"
         }
       ],
       "services": {
