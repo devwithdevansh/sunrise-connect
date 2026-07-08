@@ -3,6 +3,7 @@ import WhatsappMessage from '../models/WhatsappMessage.js';
 import Parent from '../models/Parent.js';
 import Student from '../models/Student.js';
 import logger from '../config/logger.js';
+import env from '../config/env.js';
 
 class WhatsappService {
   /**
@@ -62,26 +63,85 @@ class WhatsappService {
       deliveryStatus: 'PENDING',
     });
 
-    // 3. (Mock) Dispatch to WhatsApp provider
-    // In a real implementation, you would loop through targetParentIds, fetch their phone numbers,
-    // and call Twilio / Meta API. We simulate a successful delivery here.
-    
-    setTimeout(async () => {
+    // 3. Dispatch to WhatsApp provider
+    setImmediate(async () => {
       try {
-        // Simulate some failures randomly or just say all succeed
-        const successCount = targetParentIds.length;
-        const failureCount = 0;
+        let successCount = 0;
+        let failureCount = 0;
+
+        const parentDocs = await Parent.find({ _id: { $in: targetParentIds } }).select('primaryMobileNumber');
+        
+        for (const parent of parentDocs) {
+          if (!parent.primaryMobileNumber) continue;
+          
+          let phone = parent.primaryMobileNumber;
+          // Ensure it has country code, assuming India +91 if length is 10
+          if (phone.length === 10) {
+            phone = '91' + phone;
+          }
+
+          // Use the template name provided, fallback to the test template from Meta screenshot
+          const actualTemplateName = templateName === 'custom_message' ? 'hello_world' : templateName;
+
+          const payload = {
+            messaging_product: 'whatsapp',
+            to: phone,
+            type: 'template',
+            template: {
+              name: actualTemplateName,
+              language: { code: 'en_US' }
+            }
+          };
+
+          // Only attach components if it's not the default hello_world which takes no params usually, 
+          // but for safety in testing, if there is a body, try to attach it as a parameter if it's a custom template.
+          // For the meta test, usually `hello_world` takes no components.
+          if (actualTemplateName !== 'hello_world' && body) {
+            payload.template.components = [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: body }
+                ]
+              }
+            ];
+          }
+
+          try {
+            const url = `https://graph.facebook.com/v25.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${env.WHATSAPP_API_TOKEN}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+              const errJson = await response.json();
+              logger.error(`WhatsApp send failed to ${phone}: ${JSON.stringify(errJson)}`);
+              failureCount++;
+            } else {
+              successCount++;
+            }
+          } catch (fetchErr) {
+            logger.error(`WhatsApp network error to ${phone}: ${fetchErr}`);
+            failureCount++;
+          }
+        }
 
         await WhatsappMessage.findByIdAndUpdate(msgRecord._id, {
           successCount,
           failureCount,
           deliveryStatus: failureCount > 0 ? (successCount > 0 ? 'PARTIAL_FAIL' : 'FAILED') : 'SENT',
         });
-        logger.info(`WhatsApp message ${msgRecord._id} sent. Success: ${successCount}`);
+        logger.info(`WhatsApp message ${msgRecord._id} processed. Success: ${successCount}, Fail: ${failureCount}`);
       } catch (e) {
-        logger.error(`Error simulating WhatsApp send: ${e}`);
+        logger.error(`Error processing WhatsApp send: ${e}`);
+        await WhatsappMessage.findByIdAndUpdate(msgRecord._id, { deliveryStatus: 'FAILED' });
       }
-    }, 2000);
+    });
 
     return msgRecord;
   }
