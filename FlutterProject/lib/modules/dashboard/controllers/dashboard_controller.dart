@@ -55,7 +55,7 @@ class DashboardController extends GetxController {
     final cachedStudentTime = prefs.getInt(studentTimeKey) ?? 0;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     
-    final isCacheFresh = (nowMs - cachedStudentTime) < 5 * 60 * 1000;
+    bool hasCache = false;
 
     if (!forceRefresh && cachedStudentsStr != null && cachedStudentsStr.isNotEmpty) {
       try {
@@ -90,21 +90,17 @@ class DashboardController extends GetxController {
             fees.assignAll(cachedFees);
             _calculateAggregates(filteredFees);
           }
-
-          // Load real notifications from backend API
-          _loadNotifications();
         }
         
-        if (isCacheFresh) {
-          isLoading.value = false;
-          return;
-        }
+        hasCache = true;
       } catch (e) {
         print('Error loading from cache: $e');
       }
     }
 
-    isLoading.value = true;
+    if (!hasCache || forceRefresh) {
+      isLoading.value = true;
+    }
     try {
       final studentsList = await _studentRepo.getStudentsForParent(parentId);
       students.assignAll(studentsList);

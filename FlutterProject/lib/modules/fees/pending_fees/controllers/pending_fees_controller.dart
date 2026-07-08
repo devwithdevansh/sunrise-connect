@@ -25,8 +25,8 @@ extension TermGroupX on TermGroup {
 
   IconData get icon {
     switch (this) {
-      case TermGroup.term1: return Icons.wb_sunny_rounded;
-      case TermGroup.term2: return Icons.ac_unit_rounded;
+      case TermGroup.term1: return Icons.assignment_rounded;
+      case TermGroup.term2: return Icons.assignment_rounded;
     }
   }
 }
@@ -249,7 +249,15 @@ class PendingFeesController extends GetxController
     payBarFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: payBarController, curve: Curves.easeOut));
     ever(selectedIds, (_) => _syncPayBar());
-    _loadFees();
+    
+    if (Get.isRegistered<DashboardController>()) {
+      ever(Get.find<DashboardController>().fees, (_) {
+        _syncWithDashboard();
+      });
+      _syncWithDashboard();
+    } else {
+      _loadFees();
+    }
   }
 
   @override
@@ -265,6 +273,28 @@ class PendingFeesController extends GetxController
   }
 
   // ── Data loading ──────────────────────────────────────────────────────────
+  void _syncWithDashboard() {
+    isLoading.value = true;
+    final allFees = Get.find<DashboardController>().fees;
+    final filteredData = allFees.where((f) => !f.isAdmission && !f.isBagKit).toList();
+    
+    final mapped = filteredData.map((f) => FeeItem(
+      id:       f.id,
+      termName: f.termName,
+      feeType:  f.feeType,
+      amount:   f.amount,
+      paidAmount: f.paidAmount,
+      concessionAmount: f.concessionAmount,
+      remainingAmount: f.remainingAmount,
+      dueDate:  DateTime.tryParse(f.dueDate) ?? DateTime.now(),
+      status:   f.status,
+    )).toList();
+    
+    fees.assignAll(mapped);
+    isLoading.value = false;
+    hasLoadedOnce.value = true;
+  }
+
   Future<void> _loadFees() async {
     isLoading.value = true;
     try {
@@ -277,9 +307,6 @@ class PendingFeesController extends GetxController
         final filteredData = data.where((f) {
           return !f.isAdmission && !f.isBagKit;
         }).toList();
-        
-        print('DEBUG - API returned ${data.length} fees for student $studentId');
-        print('DEBUG - Filtered data has ${filteredData.length} fees');
 
         final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,

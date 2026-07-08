@@ -16,7 +16,6 @@ class DashboardShimmer extends StatelessWidget {
         children: [
           // Header shimmer
           Container(
-            height: 320,
             decoration: const BoxDecoration(
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.only(

@@ -190,7 +190,14 @@ class ProfileView extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTextStyles.bodyMedium),
-        Text(value, style: AppTextStyles.labelLarge),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            style: AppTextStyles.labelLarge,
+            textAlign: TextAlign.right,
+          ),
+        ),
       ],
     );
   }

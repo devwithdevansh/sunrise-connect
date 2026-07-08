@@ -48,10 +48,10 @@ class _OtpViewState extends State<OtpView> {
     _controller.errorMsg.value = '';
   }
 
-  void _showPasswordCreationDialog(BuildContext context, String parentId) {
+  void _showPasswordCreationDialog(BuildContext context, String parentId) async {
     final dialogPasswordController = TextEditingController();
 
-    Get.dialog(
+    final newPassword = await Get.dialog<String>(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Create Password'),
@@ -74,27 +74,30 @@ class _OtpViewState extends State<OtpView> {
         actions: [
           TextButton(
             onPressed: () {
-              dialogPasswordController.dispose();
               Get.back();
             },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () async {
-              final newPassword = dialogPasswordController.text;
-              if (newPassword.length < 8) {
+            onPressed: () {
+              final password = dialogPasswordController.text;
+              if (password.length < 8) {
                 Get.snackbar('Error', 'Password must be at least 8 characters long');
                 return;
               }
-              dialogPasswordController.dispose();
-              Get.back(); // Close dialog
-              await _controller.setPassword(parentId, newPassword);
+              Get.back(result: password); // Close dialog and return password
             },
             child: const Text('Save Password'),
           ),
         ],
       ),
     );
+
+    dialogPasswordController.dispose();
+
+    if (newPassword != null && newPassword.isNotEmpty) {
+      await _controller.setPassword(parentId, newPassword);
+    }
   }
 
   @override
