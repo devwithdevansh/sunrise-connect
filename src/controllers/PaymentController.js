@@ -1,5 +1,6 @@
 // src/controllers/PaymentController.js
 import PaymentService from '../services/PaymentService.js';
+import RazorpayService from '../services/RazorpayService.js';
 import catchAsync from '../utils/catchAsync.js';
 import sendResponse from '../utils/response.js';
 import AppError from '../utils/AppError.js';
@@ -92,6 +93,64 @@ class PaymentController {
   static reversePayment = catchAsync(async (req, res) => {
     const reversal = await PaymentService.reversePayment({ paymentId: req.params.id, ...req.body, performedBy: req.user?.id ?? null });
     sendResponse(res, 200, reversal);
+  });
+
+  /** POST /api/v1/payments/razorpay/order */
+  static createRazorpayOrder = catchAsync(async (req, res) => {
+    const { amount } = req.body;
+    const order = await RazorpayService.createOrder({ 
+      amount, 
+      receipt: `receipt_${Date.now()}` 
+    });
+    sendResponse(res, 201, order);
+  });
+
+  /** POST /api/v1/payments/razorpay/verify */
+  static verifyRazorpayPayment = catchAsync(async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, payments } = req.body;
+
+    const isValid = RazorpayService.verifySignature({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature,
+    });
+
+    if (!isValid) {
+      throw new AppError('Invalid payment signature', 400);
+    }
+
+    if (req.user?.role === 'parent') {
+      const ledgerIds = payments.map(p => p.ledgerId);
+      const ledgers = await ledgerRepository.find({ _id: { $in: ledgerIds } });
+      const studentIds = ledgers.map(l => l.studentId);
+      const studentCount = await studentRepository.countDocuments({
+        _id: { $in: studentIds },
+        parentId: req.user.id
+      });
+      const uniqueStudentIds = [...new Set(studentIds.map(id => id.toString()))];
+      if (studentCount !== uniqueStudentIds.length) {
+        throw new AppError('You do not have permission to pay for one or more selected ledgers', 403);
+      }
+    }
+
+    // Embed razorpay details in each payment
+    const enrichedPayments = payments.map(p => ({
+      ...p,
+      method: 'ONLINE',
+      details: {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        ...(p.details || {})
+      }
+    }));
+
+    const results = await PaymentService.createBatchPayments({
+      payments: enrichedPayments,
+      performedBy: req.user?.id ?? null
+    });
+    
+    sendResponse(res, 201, results);
   });
 }
 
