@@ -127,7 +127,7 @@ export const UnpaidFees: React.FC = () => {
         ...globalStudent,
         ...reportItem,
         id: reportItem._id,
-        studentName: reportItem.studentName,
+        studentName: globalStudent?.studentName || reportItem?.studentName || 'UNKNOWN',
         parentName: globalStudent?.parentName || '',
         parentMobile: globalStudent?.parentMobile || '',
         status,
