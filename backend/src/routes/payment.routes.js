@@ -10,6 +10,8 @@ import {
   reversePaymentSchema,
   listPaymentsSchema,
   batchPaymentSchema,
+  createRazorpayOrderSchema,
+  verifyRazorpayPaymentSchema,
 } from '../validations/payment.schema.js';
 // src/routes/payment.routes.js
 
@@ -20,6 +22,8 @@ router.use(authenticate);
 
 // Idempotency enforced on payment creation to prevent duplicate charges
 router.post('/batch', authorize('ADMIN', 'STAFF', 'parent'), idempotency, validate(batchPaymentSchema), PaymentController.createBatchPayments);
+router.post('/razorpay/order', authorize('ADMIN', 'STAFF', 'parent'), validate(createRazorpayOrderSchema), PaymentController.createRazorpayOrder);
+router.post('/razorpay/verify', authorize('ADMIN', 'STAFF', 'parent'), idempotency, validate(verifyRazorpayPaymentSchema), PaymentController.verifyRazorpayPayment);
 router.post('/', authorize('ADMIN', 'STAFF', 'parent'), idempotency, validate(createPaymentSchema), PaymentController.createPayment);
 router.get('/', authorize('ADMIN', 'STAFF', 'parent'), validate(listPaymentsSchema), PaymentController.listPayments);
 router.get('/:id', authorize('ADMIN', 'STAFF'), PaymentController.getPayment);
