@@ -236,7 +236,7 @@ export const UnpaidFees: React.FC = () => {
     unpaidStudents.forEach(s => {
       if (s.pendingLedgers) {
         s.pendingLedgers.forEach((l: any) => {
-          if (isLedgerPending(l)) {
+          if (isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName)) {
             const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
             if (remaining > 0 && l.academicYear) {
               yearsSet.add(l.academicYear);
@@ -323,6 +323,7 @@ export const UnpaidFees: React.FC = () => {
       const studentLedgers = student.pendingLedgers.filter((l: any) => 
         l.academicYear === year && 
         isLedgerPending(l) &&
+        isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName) &&
         ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0) > 0)
       );
 
@@ -348,7 +349,7 @@ export const UnpaidFees: React.FC = () => {
     const getUnpaidAmountForYear = (student: any, year: string) => {
       if (!student.pendingLedgers) return 0;
       return student.pendingLedgers
-        .filter((l: any) => l.academicYear === year && isLedgerPending(l))
+        .filter((l: any) => l.academicYear === year && isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName))
         .reduce((sum: number, l: any) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
     };
 
