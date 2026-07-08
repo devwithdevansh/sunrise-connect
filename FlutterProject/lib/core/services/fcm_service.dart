@@ -45,12 +45,7 @@ class FcmService {
     // 2. Register background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 3. Request permission (Android 13+ / iOS)
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // 3. (Removed automatic permission request)
 
     // 4. Create Android notification channel
     await _localNotifications
@@ -87,6 +82,16 @@ class FcmService {
     _messaging.onTokenRefresh.listen((newToken) async {
       await _sendTokenToBackend(newToken);
     });
+  }
+
+  /// Request permissions manually (usually after showing a custom dialogue)
+  static Future<void> requestPermissions() async {
+    await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    await registerToken();
   }
 
   /// Get current FCM token and register it with the backend.

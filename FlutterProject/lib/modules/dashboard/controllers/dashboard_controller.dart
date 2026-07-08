@@ -11,6 +11,8 @@ import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../fees/payment_history/controllers/payment_history_controller.dart';
 import '../../../services/sound_service.dart';
+import '../../../../core/widgets/permission_dialog.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class DashboardController extends GetxController {
   final StudentRepository _studentRepo = StudentRepository();
@@ -34,6 +36,33 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
     _checkAuthAndLoad();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasAsked = prefs.getBool('has_asked_fcm_permission') ?? false;
+    if (!hasAsked) {
+      Get.dialog(
+         PermissionDialog(
+           onAllow: () async {
+             Get.back();
+             await prefs.setBool('has_asked_fcm_permission', true);
+             await FcmService.requestPermissions();
+           },
+           onDeny: () async {
+             Get.back();
+             await prefs.setBool('has_asked_fcm_permission', true);
+           }
+         ),
+         barrierDismissible: false,
+      );
+    }
   }
 
   Future<void> _checkAuthAndLoad() async {
