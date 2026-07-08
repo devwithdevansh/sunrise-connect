@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../store';
 import {
   MessageSquare, Send, Users, BookOpen, User,
-  CheckCircle, AlertTriangle, Clock, RefreshCw, X
+  CheckCircle, AlertTriangle, Clock, RefreshCw
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

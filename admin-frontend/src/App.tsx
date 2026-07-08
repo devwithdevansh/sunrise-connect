@@ -14,9 +14,7 @@ import { PromoteStudents } from './components/PromoteStudents';
 import { StaffManagement } from './components/StaffManagement';
 import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
-import {
-  MessageSquare
-} from 'lucide-react';
+
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
 import { Notifications } from './components/Notifications';
