@@ -523,6 +523,7 @@ class PendingFeesController extends GetxController
         'order_id': orderId,
         'prefill': {
           'contact': pNumber,
+          'email': 'test@example.com',
         },
         'theme': {
           'color': '#3399cc'
