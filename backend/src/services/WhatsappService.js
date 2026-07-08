@@ -80,31 +80,43 @@ class WhatsappService {
             phone = '91' + phone;
           }
 
-          // Use the template name provided, fallback to the test template from Meta screenshot
-          const actualTemplateName = templateName === 'custom_message' ? 'hello_world' : templateName;
+          let payload;
 
-          const payload = {
-            messaging_product: 'whatsapp',
-            to: phone,
-            type: 'template',
-            template: {
-              name: actualTemplateName,
-              language: { code: 'en_US' }
-            }
-          };
-
-          // Only attach components if it's not the default hello_world which takes no params usually, 
-          // but for safety in testing, if there is a body, try to attach it as a parameter if it's a custom template.
-          // For the meta test, usually `hello_world` takes no components.
-          if (actualTemplateName !== 'hello_world' && body) {
-            payload.template.components = [
-              {
-                type: 'body',
-                parameters: [
-                  { type: 'text', text: body }
-                ]
+          if (templateName === 'custom_message') {
+            // Send a free-form text message
+            // Note: This requires the recipient to have messaged the business within the last 24 hours.
+            payload = {
+              messaging_product: 'whatsapp',
+              recipient_type: 'individual',
+              to: phone,
+              type: 'text',
+              text: { 
+                preview_url: false,
+                body: body || 'Empty message'
               }
-            ];
+            };
+          } else {
+            // Send a template message
+            payload = {
+              messaging_product: 'whatsapp',
+              to: phone,
+              type: 'template',
+              template: {
+                name: templateName,
+                language: { code: 'en_US' }
+              }
+            };
+
+            if (body) {
+              payload.template.components = [
+                {
+                  type: 'body',
+                  parameters: [
+                    { type: 'text', text: body }
+                  ]
+                }
+              ];
+            }
           }
 
           try {
