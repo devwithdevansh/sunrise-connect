@@ -231,25 +231,39 @@ export const UnpaidFees: React.FC = () => {
   const handleExportExcel = () => {
     if (unpaidStudents.length === 0) return;
 
-    const yearsSet = new Set<string>();
+    const uniquePeriods = new Set<string>();
     
     unpaidStudents.forEach(s => {
       if (s.pendingLedgers) {
         s.pendingLedgers.forEach((l: any) => {
           if (isLedgerPending(l)) {
             const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
-            if (remaining > 0 && l.academicYear) {
-              yearsSet.add(l.academicYear);
+            if (remaining > 0) {
+              uniquePeriods.add(`${l.academicYear || activeYearName}__${l.feePeriod}`);
             }
           }
         });
       }
     });
     
-    const exportYears = Array.from(yearsSet).sort();
-    if (exportYears.length === 0) {
-      if (activeYearName) exportYears.push(activeYearName);
-    }
+    // Standard sequence list for unpaid month sorting
+    const periodSeq = [
+      'Term 1', 'June', 'July', 'August', 'September', 'October', 'November', 
+      'Term 2', 'December', 'January', 'February', 'March', 'April', 'May'
+    ];
+    
+    const sortedPeriods = Array.from(uniquePeriods).sort((a, b) => {
+      const [yearA, periodA] = a.split('__');
+      const [yearB, periodB] = b.split('__');
+      if (yearA !== yearB) return yearA.localeCompare(yearB);
+      return periodSeq.indexOf(periodA) - periodSeq.indexOf(periodB);
+    });
+
+    const getPeriodLabel = (p: string) => {
+      if (p === 'Term 1') return 'TERM-1';
+      if (p === 'Term 2') return 'TERM-2';
+      return p.substring(0, 3).toUpperCase();
+    };
 
     // 2. Build the title row (matching standard/medium filter + current date + monthly rate)
     let classPart = 'ALL CLASSES';
@@ -294,9 +308,10 @@ export const UnpaidFees: React.FC = () => {
 
     // 3. Header Rows Setup
     const headers = ['NAME', 'PARENTS NUMBER', 'MEDIUM'];
-    exportYears.forEach(year => {
-      headers.push(`YEAR ${year}`);
-      headers.push(year);
+    sortedPeriods.forEach(p => {
+      const [year, period] = p.split('__');
+      const label = year === activeYearName ? getPeriodLabel(period) : `${year} ${getPeriodLabel(period)}`;
+      headers.push(label);
     });
     headers.push('TOTAL');
 
@@ -305,71 +320,24 @@ export const UnpaidFees: React.FC = () => {
     rows.push([]); // blank spacing row
     rows.push(headers);
 
-    // Standard sequence list for unpaid month sorting
-    const periodSeq = [
-      'Term 1', 'June', 'July', 'August', 'September', 'October', 'November', 
-      'Term 2', 'December', 'January', 'February', 'March', 'April', 'May'
-    ];
-    const getPeriodIdx = (p: string) => periodSeq.indexOf(p);
-    
-    const getPeriodLabel = (p: string) => {
-      if (p === 'Term 1') return 'TERM-1';
-      if (p === 'Term 2') return 'TERM-2';
-      return p.substring(0, 3).toUpperCase();
-    };
-
-    const getUnpaidPeriodString = (student: any, year: string) => {
-      if (!student.pendingLedgers) return '';
-      const studentLedgers = student.pendingLedgers.filter((l: any) => 
-        l.academicYear === year && 
-        isLedgerPending(l) &&
-        ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0) > 0)
-      );
-
-      if (studentLedgers.length === 0) return '';
-      
-      const standardLedgers = studentLedgers.filter((l: any) => periodSeq.includes(l.feePeriod));
-      if (standardLedgers.length === 0) {
-        return studentLedgers[0].feePeriod;
-      }
-
-      const indices = standardLedgers.map((l: any) => getPeriodIdx(l.feePeriod)).filter((idx: number) => idx !== -1);
-      if (indices.length === 0) return '';
-
-      const minIdx = Math.min(...indices);
-      const maxIdx = Math.max(...indices);
-
-      if (minIdx === maxIdx) {
-        return getPeriodLabel(periodSeq[minIdx]);
-      }
-      return `${getPeriodLabel(periodSeq[minIdx])} TO ${getPeriodLabel(periodSeq[maxIdx])}`;
-    };
-
-    const getUnpaidAmountForYear = (student: any, year: string) => {
-      if (!student.pendingLedgers) return 0;
-      return student.pendingLedgers
-        .filter((l: any) => l.academicYear === year && isLedgerPending(l))
-        .reduce((sum: number, l: any) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
-    };
-
     // 4. Fill Student Row Data
     let grandTotal = 0;
-    const yearTotals = new Map<string, number>();
-    exportYears.forEach(y => yearTotals.set(y, 0));
+    const periodTotals = new Map<string, number>();
+    sortedPeriods.forEach(p => periodTotals.set(p, 0));
 
     unpaidStudents.forEach(s => {
       const rowData: any[] = [(s.studentName || '').toUpperCase(), s.parentMobile || '', (s.medium || '').toUpperCase()];
       
       let studentTotal = 0;
-      exportYears.forEach(year => {
-        const periodStr = getUnpaidPeriodString(s, year);
-        const amount = getUnpaidAmountForYear(s, year);
+      sortedPeriods.forEach(p => {
+        const [year, period] = p.split('__');
+        const amount = s.pendingLedgers
+          ?.filter((l: any) => l.academicYear === year && l.feePeriod === period && isLedgerPending(l))
+          .reduce((sum: number, l: any) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0) || 0;
         
-        rowData.push(periodStr);
         rowData.push(amount > 0 ? amount : '');
-        
         studentTotal += amount;
-        yearTotals.set(year, (yearTotals.get(year) || 0) + amount);
+        periodTotals.set(p, (periodTotals.get(p) || 0) + amount);
       });
       
       rowData.push(studentTotal);
@@ -379,9 +347,8 @@ export const UnpaidFees: React.FC = () => {
 
     // 5. Fill Grand Total Sum Row
     const totalRow: any[] = ['GRAND TOTAL', '', ''];
-    exportYears.forEach(year => {
-      totalRow.push('');
-      totalRow.push(yearTotals.get(year) || 0);
+    sortedPeriods.forEach(p => {
+      totalRow.push(periodTotals.get(p) || 0);
     });
     totalRow.push(grandTotal);
     rows.push(totalRow);
@@ -403,9 +370,8 @@ export const UnpaidFees: React.FC = () => {
       { wch: 18 }, // Parents Number
       { wch: 12 }, // Medium
     ];
-    for (let i = 0; i < academicYears.length; i++) {
-      ws['!cols'].push({ wch: 15 }); // Year Period label
-      ws['!cols'].push({ wch: 12 }); // Year Amount value
+    for (let i = 0; i < sortedPeriods.length; i++) {
+      ws['!cols'].push({ wch: 12 }); // Period Amount value
     }
     ws['!cols'].push({ wch: 15 }); // Total
 
