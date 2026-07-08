@@ -20,6 +20,7 @@ import {
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
 import { Notifications } from './components/Notifications';
+import { Whatsapp } from './components/Whatsapp';
 import { generateReceiptHTML, generateReportHTML, printHTML, fetchAsBase64 } from './utils/printUtils';
 import logoPath from './assets/sunrise-logo.png';
 import watermarkPath from './assets/sunrise-round-logo.png';
@@ -49,27 +50,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
     // Fallback views with high-fidelity polish
     case 'whatsapp':
-      return (
-        <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
-          <div className="bg-emerald-100 text-emerald-600 p-4 rounded-2xl border border-emerald-200">
-            <MessageSquare className="h-8 w-8" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800">WhatsApp Messaging Engine</h3>
-          <p className="text-sm text-slate-500 max-w-sm">
-            Automated alerts, receipts distribution, and due reminders are successfully queued. Integration active with WhatsApp Business API API Gateway.
-          </p>
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs font-semibold text-slate-500 max-w-md w-full">
-            <div className="flex justify-between border-b border-slate-200/50 pb-2 mb-2">
-              <span>API Connection Status:</span>
-              <span className="text-emerald-600 font-bold">ACTIVE</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Messages Sent Today:</span>
-              <strong className="text-slate-800">142 Messages</strong>
-            </div>
-          </div>
-        </div>
-      );
+      return <Whatsapp />;
 
     case 'notifications':
       return <Notifications />;
