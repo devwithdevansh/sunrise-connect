@@ -32,24 +32,8 @@ app.set('trust proxy', true);
 // Security headers (XSS, clickjacking, content-type sniffing, etc.)
 app.use(helmet());
 
-const allowedOrigins = env.ALLOWED_ORIGINS
-  ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim().replace(/\/$/, ''))
-  : ['https://sunrise-connect.vercel.app'];
-  
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow server-to-server calls (no origin) and whitelisted origins
-    if (!origin) return callback(null, true);
-    
-    // For now, allow all origins to prevent production blocking issues,
-    // but log if it's an unrecognized origin.
-    const isAllowed = allowedOrigins.some(allowed => origin.startsWith(allowed));
-    if (!isAllowed) {
-      logger.warn(`Unrecognized CORS origin allowed: ${origin}`);
-    }
-    
-    callback(null, true);
-  },
+  origin: true,
   credentials: true,
 }));
 
