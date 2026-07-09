@@ -108,12 +108,11 @@ export const Whatsapp: React.FC = () => {
 
   // ── Send message ───────────────────────────────────────────────────────────
   const handleSend = async () => {
-    const noBodyNeeded = ['jaspers_market_plain_text_v1', 'hello_world'].includes(templateName);
-    if (!noBodyNeeded && !body.trim()) return;
+    if (!body.trim()) return;
     setIsSending(true);
     setSendResult(null);
     try {
-      const payload: any = { templateName, body: noBodyNeeded ? '' : body.trim(), targetType };
+      const payload: any = { templateName, body: body.trim(), targetType };
       if (targetType === 'CLASS') {
         payload.targetFilter = { standard: selectedClass.standard, medium: selectedClass.medium };
       } else if (targetType === 'PARENT') {
@@ -204,15 +203,10 @@ export const Whatsapp: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-600 mb-1">WhatsApp Template <span className="text-red-500">*</span></label>
                 <select
                   value={templateName}
-                  onChange={e => {
-                    setTemplateName(e.target.value);
-                    if (['jaspers_market_plain_text_v1', 'hello_world'].includes(e.target.value)) setBody('');
-                  }}
+                  onChange={e => setTemplateName(e.target.value)}
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
                 >
                   <option value="custom_message">Custom Message (Requires 24h window)</option>
-                  <option value="jaspers_market_plain_text_v1">Meta Test Template (jaspers_market)</option>
-                  <option value="hello_world">Meta Test Template (hello_world)</option>
                   <option value="fee_reminder">Fee Reminder Template</option>
                   <option value="payment_receipt">Payment Receipt Template</option>
                 </select>
@@ -224,13 +218,12 @@ export const Whatsapp: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Message Body <span className="text-red-500">*</span></label>
                 <textarea
                   id="notif-body"
-                  placeholder={['jaspers_market_plain_text_v1', 'hello_world'].includes(templateName) ? 'This template has fixed text.' : 'Write your WhatsApp message here...'}
+                  placeholder="Write your WhatsApp message here..."
                   value={body}
-                  disabled={['jaspers_market_plain_text_v1', 'hello_world'].includes(templateName)}
                   onChange={e => setBody(e.target.value)}
                   maxLength={1000}
                   rows={5}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none disabled:opacity-50 disabled:bg-slate-100"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none"
                 />
                 <p className="text-[10px] text-slate-400 mt-1 text-right">{body.length}/1000</p>
               </div>
