@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../controllers/otp_controller.dart';
 
 class OtpView extends StatefulWidget {
@@ -46,58 +47,6 @@ class _OtpViewState extends State<OtpView> {
       _focusNodes[index - 1].requestFocus();
     }
     _controller.errorMsg.value = '';
-  }
-
-  void _showPasswordCreationDialog(BuildContext context, String parentId) async {
-    final dialogPasswordController = TextEditingController();
-
-    final newPassword = await Get.dialog<String>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Create Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Enter a password for your account (minimum 8 characters):'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: dialogPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-            },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final password = dialogPasswordController.text;
-              if (password.length < 8) {
-                Get.snackbar('Error', 'Password must be at least 8 characters long');
-                return;
-              }
-              Get.back(result: password); // Close dialog and return password
-            },
-            child: const Text('Save Password'),
-          ),
-        ],
-      ),
-    );
-
-    dialogPasswordController.dispose();
-
-    if (newPassword != null && newPassword.isNotEmpty) {
-      await _controller.setPassword(parentId, newPassword);
-    }
   }
 
   @override
@@ -183,7 +132,7 @@ class _OtpViewState extends State<OtpView> {
                       final otp = _otpControllers.map((c) => c.text).join();
                       final parentId = await _controller.verifyCodeAndSetup(otp);
                       if (parentId != null && context.mounted) {
-                        _showPasswordCreationDialog(context, parentId);
+                        Get.toNamed(AppRoutes.createPassword, arguments: parentId);
                       }
                     },
                   ),

@@ -108,11 +108,11 @@ export const Whatsapp: React.FC = () => {
 
   // ── Send message ───────────────────────────────────────────────────────────
   const handleSend = async () => {
-    if (!body.trim()) return;
+    if (templateName !== 'fee_reminder' && !body.trim()) return;
     setIsSending(true);
     setSendResult(null);
     try {
-      const payload: any = { templateName, body: body.trim(), targetType };
+      const payload: any = { templateName, body: templateName === 'fee_reminder' ? 'Fee Reminder' : body.trim(), targetType };
       if (targetType === 'CLASS') {
         payload.targetFilter = { standard: selectedClass.standard, medium: selectedClass.medium };
       } else if (targetType === 'PARENT') {
@@ -147,7 +147,7 @@ export const Whatsapp: React.FC = () => {
     : targetType === 'CLASS' ? (selectedClass.standard ? `Std ${selectedClass.standard} ${selectedClass.medium}` : 'Pick a class')
     : 'Specific Parent';
 
-  const canSend = body.trim().length > 0 &&
+  const canSend = (templateName === 'fee_reminder' || body.trim().length > 0) &&
     (targetType !== 'CLASS' || (selectedClass.standard && selectedClass.medium)) &&
     (targetType !== 'PARENT' || parentSearch.trim().length > 0);
 
@@ -207,23 +207,30 @@ export const Whatsapp: React.FC = () => {
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
                 >
                   <option value="custom_message">Custom Message (Requires 24h window)</option>
-                  <option value="fee_reminder">Fee Reminder Template</option>
+                  <option value="fee_reminder">Fee Reminder (Auto-calculates due amounts)</option>
                   <option value="payment_receipt">Payment Receipt Template</option>
                 </select>
-                <p className="text-[10px] text-slate-400 mt-1">Pre-approved templates bypass the 24-hour rule.</p>
+                {templateName === 'fee_reminder' ? (
+                  <p className="text-[10px] text-amber-600 mt-1">
+                    <strong>Note:</strong> Fee Reminders automatically fetch the parent's name, student name, standard, and total pending fees. <strong>Parents with ₹0 due will be skipped automatically.</strong>
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-slate-400 mt-1">Pre-approved templates bypass the 24-hour rule.</p>
+                )}
               </div>
 
               {/* Body */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Message Body <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Message Body {templateName === 'custom_message' && <span className="text-red-500">*</span>}</label>
                 <textarea
                   id="notif-body"
-                  placeholder="Write your WhatsApp message here..."
-                  value={body}
+                  placeholder={templateName === 'fee_reminder' ? 'Body text is ignored. The server will dynamically generate the fee reminder using Meta templates.' : 'Write your WhatsApp message here...'}
+                  value={templateName === 'fee_reminder' ? '' : body}
                   onChange={e => setBody(e.target.value)}
+                  disabled={templateName === 'fee_reminder'}
                   maxLength={1000}
                   rows={5}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none disabled:opacity-50 disabled:bg-slate-100"
                 />
                 <p className="text-[10px] text-slate-400 mt-1 text-right">{body.length}/1000</p>
               </div>
@@ -306,7 +313,20 @@ export const Whatsapp: React.FC = () => {
                 </div>
               </div>
               <div className="flex-1 p-4 overflow-y-auto bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-cover">
-                {body ? (
+                {templateName === 'fee_reminder' ? (
+                  <div className="bg-white rounded-lg rounded-tl-none p-2 mb-4 shadow-sm inline-block max-w-[85%] relative">
+                    <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                      Dear John Doe,{"\n\n"}
+                      This is a gentle reminder from Sunrise School. A fee amount of ₹12000 is currently due for Jane Doe (Std 10).{"\n\n"}
+                      Please make the payment at your earliest convenience via the Sunrise Connect App.{"\n\n"}
+                      Thank you,{"\n"}Sunrise School Administration
+                    </p>
+                    <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center gap-1">
+                      <span>Now</span>
+                      <CheckCircle className="h-3 w-3 text-slate-300" />
+                    </div>
+                  </div>
+                ) : body ? (
                   <div className="bg-white rounded-lg rounded-tl-none p-2 mb-4 shadow-sm inline-block max-w-[85%] relative">
                     <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">{body}</p>
                     <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center gap-1">
