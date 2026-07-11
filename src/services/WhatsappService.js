@@ -127,7 +127,7 @@ class WhatsappService {
               type: 'template',
               template: {
                 name: templateName,
-                language: { code: 'en_US' },
+                language: { code: 'en' },
                 components: [
                   {
                     type: 'body',
