@@ -2,6 +2,7 @@
 import WhatsappMessage from '../models/WhatsappMessage.js';
 import Parent from '../models/Parent.js';
 import Student from '../models/Student.js';
+import StudentFeeLedger from '../models/StudentFeeLedger.js';
 import logger from '../config/logger.js';
 import env from '../config/env.js';
 
@@ -95,8 +96,53 @@ class WhatsappService {
                 body: body || 'Empty message'
               }
             };
+          } else if (templateName === 'fee_reminder') {
+            // 1. Fetch active students for this parent
+            const students = await Student.find({ parentId: parent._id, isActive: true });
+            let feeDue = 0;
+            const studentNames = [];
+            const standards = [];
+            
+            for (const st of students) {
+              studentNames.push(st.studentName);
+              if (!standards.includes(st.standard)) standards.push(st.standard);
+              
+              // 2. Fetch pending ledgers
+              const ledgers = await StudentFeeLedger.find({ 
+                studentId: st._id, 
+                status: { $in: ['PENDING', 'PARTIAL'] } 
+              });
+              feeDue += ledgers.reduce((acc, l) => acc + (l.remainingAmount || 0), 0);
+            }
+
+            // If no fee due, skip sending reminder to this parent
+            if (feeDue <= 0) {
+              logger.info(`Skipping fee_reminder for parent ${parent._id} as feeDue is ${feeDue}`);
+              continue;
+            }
+
+            payload = {
+              messaging_product: 'whatsapp',
+              to: phone,
+              type: 'template',
+              template: {
+                name: templateName,
+                language: { code: 'en_US' },
+                components: [
+                  {
+                    type: 'body',
+                    parameters: [
+                      { type: 'text', text: parent.parentName || 'Parent' },
+                      { type: 'text', text: feeDue.toString() },
+                      { type: 'text', text: studentNames.join(', ') },
+                      { type: 'text', text: standards.join(', ') }
+                    ]
+                  }
+                ]
+              }
+            };
           } else {
-            // Send a template message
+            // Generic template message
             payload = {
               messaging_product: 'whatsapp',
               to: phone,
