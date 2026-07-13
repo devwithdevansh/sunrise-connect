@@ -69,7 +69,7 @@ export const Sidebar: React.FC = () => {
     {
       title: 'NOTIFY',
       items: [
-        { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
+        ...(currentUser?.role === 'ADMIN' ? [{ id: 'whatsapp' as ScreenType, label: 'WhatsApp', icon: MessageSquare }] : []),
         { id: 'notifications', label: 'Notifications', icon: Bell },
       ]
     },
