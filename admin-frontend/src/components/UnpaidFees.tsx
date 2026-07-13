@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, unpaidData, feeStructures, academicYears, setScreen, authFetch, setSelectedStudentIdForFee } = useApp();
+  const { students, unpaidData, feeStructures, academicYears, setScreen, setSelectedStudentIdForFee } = useApp();
   
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
@@ -407,12 +407,6 @@ export const UnpaidFees: React.FC = () => {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Unpaid Fees</h2>
-            {isLoading && (
-              <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
-                <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
-                Loading...
-              </span>
-            )}
           </div>
           <p className="text-xs font-medium text-slate-500 mt-1">
             Track and manage outstanding student dues

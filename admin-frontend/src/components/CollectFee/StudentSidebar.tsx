@@ -15,7 +15,6 @@ interface StudentSidebarProps {
   setSearchQuery: (q: string) => void;
   selectedStudent: Student | null;
   onSelectStudent: (student: Student) => void;
-  authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   activeYearName: string;
 }
 
@@ -25,7 +24,6 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   setSearchQuery,
   selectedStudent,
   onSelectStudent,
-  authFetch,
   activeYearName,
 }) => {
   const { unpaidData } = useApp();

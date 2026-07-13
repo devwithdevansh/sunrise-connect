@@ -472,7 +472,6 @@ export const CollectFee: React.FC = () => {
           setFeeCategory('EDUCATION');
           setSelectedYear(activeYearName);
         }}
-        authFetch={authFetch}
         activeYearName={activeYearName}
       />
 
