@@ -82,7 +82,16 @@ class ReportService {
         division: { $first: '$student.division' },
         rollNumber: { $first: '$student.rollNumber' },
         totalPendingAmount: { $sum: '$remainingAmount' },
-        pendingLedgers: { $push: '$$ROOT' },
+        pendingLedgers: {
+          $push: {
+            _id: '$_id',
+            status: '$status',
+            feePeriod: '$feePeriod',
+            academicYear: '$academicYear',
+            remainingAmount: '$remainingAmount',
+            totalAmount: '$totalAmount'
+          }
+        },
         lastPaidDate: { $max: '$lastPaidDate' }
       }
     });
