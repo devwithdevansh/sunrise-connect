@@ -90,6 +90,7 @@ interface AppContextType {
   academicYears: AcademicYearData[];
   feeCategories: FeeCategoryData[];
   auditLogs: AuditLog[];
+  users: any[];
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
   recordPayment: (
@@ -137,6 +138,7 @@ interface AppContextType {
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
   isLoadingDetails: boolean;
   isScreenLoading: boolean;
+  refreshData: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -160,6 +162,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(() => {
@@ -332,9 +335,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         setAcademicYears(data.academicYears || []);
         setFeeCategories(data.feeCategories || []);
+        setUsers(data.users || []);
 
         setLedgerEntries([]);
-        setTransactions([]);
+        setTransactions(data.transactions || []);
       } catch (err) {
         console.error('Failed to fetch data from backend', err);
       } finally {
@@ -1025,6 +1029,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         academicYears,
         feeCategories,
         auditLogs,
+        users,
         authFetch,
         addStudent,
         recordPayment,
@@ -1059,7 +1064,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         selectedStudentIdForFee,
         setSelectedStudentIdForFee,
         isLoadingDetails,
-        isScreenLoading
+        isScreenLoading,
+        refreshData: debouncedFetchAll
       }}
     >
       {children}

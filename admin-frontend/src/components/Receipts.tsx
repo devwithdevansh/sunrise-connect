@@ -17,39 +17,17 @@ interface ReceiptsProps {
 }
 
 export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
-  const { reversePayment, feeStructures, academicYears, authFetch, students } = useApp();
+  const { reversePayment, feeStructures, academicYears, students, transactions: globalTransactions, isLoadingDetails } = useApp();
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
-  const [rawTransactions, setRawTransactions] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const hasStudents = students.length > 0;
-
-  useEffect(() => {
-    const fetchTxs = async () => {
-      try {
-        setIsLoading(true);
-        const res = await authFetch('/api/v1/payments?limit=2000');
-        const json = await res.json();
-        setRawTransactions(json.data || []);
-      } catch (err) {
-        console.error('Failed to fetch receipts', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (hasStudents) {
-      fetchTxs();
-    }
-  }, [authFetch, hasStudents]);
 
   // Format transactions whenever raw data or students change
   useEffect(() => {
-    if (rawTransactions.length > 0 && students.length > 0) {
-      setTransactions(formatTransactions(rawTransactions, students));
+    if (globalTransactions.length > 0 && students.length > 0) {
+      setTransactions(formatTransactions(globalTransactions, students));
     } else {
       setTransactions([]);
     }
-  }, [rawTransactions, students]);
+  }, [globalTransactions, students]);
 
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
@@ -184,7 +162,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
         </div>
       </header>
 
-      {isLoading ? (
+        {isLoadingDetails ? (
         <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           <p className="text-sm font-semibold">Loading receipts...</p>

@@ -98,7 +98,7 @@ const DashboardSkeleton: React.FC = () => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { students, activeStudents, setScreen, isLoadingDetails, authFetch } = useApp();
+  const { students, activeStudents, setScreen, isLoadingDetails, transactions: globalTransactions, unpaidData } = useApp();
 
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
   const todayString = useMemo(() => {
@@ -111,36 +111,39 @@ export const Dashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  const [metrics, setMetrics] = useState({ totalAmount: 0, cashAmount: 0, bankAmount: 0, totalConcessions: 0, unpaidCount: 0 });
-  const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
-  const [rawTxData, setRawTxData] = useState<any[]>([]);
-  const [isLoadingDate, setIsLoadingDate] = useState(false);
+  const rawTxData = useMemo(() => {
+    return globalTransactions.filter((tx: any) => {
+      const txDate = new Date(tx.createdAt).toISOString().split('T')[0];
+      return txDate === selectedDate;
+    });
+  }, [globalTransactions, selectedDate]);
 
-  const hasStudents = students.length > 0;
+  const metrics = useMemo(() => {
+    let totalAmount = 0;
+    let cashAmount = 0;
+    let bankAmount = 0;
+    let totalConcessions = 0;
 
-  useEffect(() => {
-    const fetchDateData = async () => {
-      setIsLoadingDate(true);
-      try {
-        const [metricsRes, txRes] = await Promise.all([
-          authFetch(`/api/v1/dashboard/metrics?date=${selectedDate}`),
-          authFetch(`/api/v1/payments?date=${selectedDate}&limit=2000`)
-        ]);
-        const mData = await metricsRes.json();
-        setMetrics(mData.data || { totalAmount: 0, cashAmount: 0, bankAmount: 0, totalConcessions: 0, unpaidCount: 0 });
-        
-        const txData = await txRes.json();
-        setRawTxData(txData.data || []);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data', err);
-      } finally {
-        setIsLoadingDate(false);
+    rawTxData.forEach((tx: any) => {
+      if (!tx.isReversal) {
+        const amount = tx.paymentAmount || 0;
+        totalAmount += amount;
+        totalConcessions += tx.concessionAmount || 0;
+        if (tx.paymentMethod === 'CASH') {
+          cashAmount += amount;
+        } else {
+          bankAmount += amount;
+        }
       }
-    };
-    if (selectedDate && hasStudents) {
-      fetchDateData();
-    }
-  }, [selectedDate, authFetch, hasStudents]);
+    });
+
+    // Unpaid count: number of students in unpaidData with a non-empty pendingLedgers array
+    const unpaidCount = unpaidData.filter((u: any) => u.pendingLedgers && u.pendingLedgers.length > 0).length;
+
+    return { totalAmount, cashAmount, bankAmount, totalConcessions, unpaidCount };
+  }, [rawTxData, unpaidData]);
+
+  const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
 
   // Format transactions whenever raw data or students change
   useEffect(() => {
@@ -381,7 +384,7 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
               {selectedDate === todayString ? "Today's Dashboard" : "Daily Collection Dashboard"}
             </h2>
-            {(isLoadingDetails || isLoadingDate) && (
+            {isLoadingDetails && (
               <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
                 <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
                 Syncing...
