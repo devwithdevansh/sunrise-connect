@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { useApp } from '../../store';
 import type { Student } from '../../mockData';

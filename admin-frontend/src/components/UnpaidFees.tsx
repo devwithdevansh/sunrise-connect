@@ -9,8 +9,7 @@ import {
   FileSpreadsheet,
   MessageSquare,
   CheckSquare,
-  Square,
-  Loader2
+  Square
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
