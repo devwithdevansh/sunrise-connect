@@ -113,7 +113,10 @@ export const Dashboard: React.FC = () => {
 
   const [metrics, setMetrics] = useState({ totalAmount: 0, cashAmount: 0, bankAmount: 0, totalConcessions: 0, unpaidCount: 0 });
   const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
+  const [rawTxData, setRawTxData] = useState<any[]>([]);
   const [isLoadingDate, setIsLoadingDate] = useState(false);
+
+  const hasStudents = students.length > 0;
 
   useEffect(() => {
     const fetchDateData = async () => {
@@ -127,18 +130,26 @@ export const Dashboard: React.FC = () => {
         setMetrics(mData.data || { totalAmount: 0, cashAmount: 0, bankAmount: 0, totalConcessions: 0, unpaidCount: 0 });
         
         const txData = await txRes.json();
-        const formatted = formatTransactions(txData.data || [], students);
-        setDailyTransactions(formatted);
+        setRawTxData(txData.data || []);
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
       } finally {
         setIsLoadingDate(false);
       }
     };
-    if (selectedDate && students.length > 0) {
+    if (selectedDate && hasStudents) {
       fetchDateData();
     }
-  }, [selectedDate, authFetch, students]);
+  }, [selectedDate, authFetch, hasStudents]);
+
+  // Format transactions whenever raw data or students change
+  useEffect(() => {
+    if (rawTxData.length > 0 && students.length > 0) {
+      setDailyTransactions(formatTransactions(rawTxData, students));
+    } else {
+      setDailyTransactions([]);
+    }
+  }, [rawTxData, students]);
 
   // Debounce search input by 200ms
   useEffect(() => {

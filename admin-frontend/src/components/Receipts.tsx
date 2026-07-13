@@ -19,7 +19,10 @@ interface ReceiptsProps {
 export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const { reversePayment, feeStructures, academicYears, authFetch, students } = useApp();
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [rawTransactions, setRawTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const hasStudents = students.length > 0;
 
   useEffect(() => {
     const fetchTxs = async () => {
@@ -27,18 +30,26 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
         setIsLoading(true);
         const res = await authFetch('/api/v1/payments?limit=2000');
         const json = await res.json();
-        const formatted = formatTransactions(json.data || [], students);
-        setTransactions(formatted);
+        setRawTransactions(json.data || []);
       } catch (err) {
         console.error('Failed to fetch receipts', err);
       } finally {
         setIsLoading(false);
       }
     };
-    if (students.length > 0) {
+    if (hasStudents) {
       fetchTxs();
     }
-  }, [authFetch, students]);
+  }, [authFetch, hasStudents]);
+
+  // Format transactions whenever raw data or students change
+  useEffect(() => {
+    if (rawTransactions.length > 0 && students.length > 0) {
+      setTransactions(formatTransactions(rawTransactions, students));
+    } else {
+      setTransactions([]);
+    }
+  }, [rawTransactions, students]);
 
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
