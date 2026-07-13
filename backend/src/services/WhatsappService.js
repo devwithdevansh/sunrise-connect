@@ -96,30 +96,51 @@ class WhatsappService {
                 body: body || 'Empty message'
               }
             };
-          } else if (templateName === 'fee_reminder') {
+          } else if (templateName.startsWith('fee_reminder')) {
             // 1. Fetch active students for this parent
             const students = await Student.find({ parentId: parent._id, isActive: true });
             let feeDue = 0;
-            const studentNames = [];
-            const standards = [];
+            const dueDates = [];
+            
+            // Get end of current month
+            const now = new Date();
+            const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
             
             for (const st of students) {
-              studentNames.push(st.studentName);
-              if (!standards.includes(st.standard)) standards.push(st.standard);
-              
-              // 2. Fetch pending ledgers
+              // 2. Fetch pending ledgers up to the current month
               const ledgers = await StudentFeeLedger.find({ 
                 studentId: st._id, 
-                status: { $in: ['PENDING', 'PARTIAL'] } 
+                status: { $in: ['PENDING', 'PARTIAL'] },
+                dueDate: { $lte: endOfCurrentMonth }
               });
-              feeDue += ledgers.reduce((acc, l) => acc + (l.remainingAmount || 0), 0);
+              
+              for (const l of ledgers) {
+                feeDue += (l.remainingAmount || 0);
+                if (l.dueDate) dueDates.push(l.dueDate);
+              }
             }
 
             // If no fee due, skip sending reminder to this parent
             if (feeDue <= 0) {
-              logger.info(`Skipping fee_reminder for parent ${parent._id} as feeDue is ${feeDue}`);
+              logger.info(`Skipping ${templateName} for parent ${parent._id} as feeDue is ${feeDue}`);
               continue;
             }
+
+            let startMonthStr = '-';
+            let endMonthStr = '-';
+            
+            if (dueDates.length > 0) {
+              dueDates.sort((a, b) => a - b);
+              const minDate = dueDates[0];
+              const maxDate = dueDates[dueDates.length - 1];
+              
+              const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long' });
+              startMonthStr = monthFormatter.format(minDate);
+              endMonthStr = monthFormatter.format(maxDate);
+            }
+
+            // Determine language code based on template name
+            const languageCode = templateName.endsWith('_gu') ? 'gu' : 'en';
 
             payload = {
               messaging_product: 'whatsapp',
@@ -127,15 +148,14 @@ class WhatsappService {
               type: 'template',
               template: {
                 name: templateName,
-                language: { code: 'en' },
+                language: { code: languageCode },
                 components: [
                   {
                     type: 'body',
                     parameters: [
-                      { type: 'text', text: parent.parentName || 'Parent' },
-                      { type: 'text', text: feeDue.toString() },
-                      { type: 'text', text: studentNames.join(', ') },
-                      { type: 'text', text: standards.join(', ') }
+                      { type: 'text', text: startMonthStr },
+                      { type: 'text', text: endMonthStr },
+                      { type: 'text', text: feeDue.toString() }
                     ]
                   }
                 ]
