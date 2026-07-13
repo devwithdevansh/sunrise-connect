@@ -125,15 +125,18 @@ export const Dashboard: React.FC = () => {
     let totalConcessions = 0;
 
     rawTxData.forEach((tx: any) => {
+      const amount = tx.amount || 0;
+      totalAmount += amount;
+      
+      // Concessions are only counted for the original payment to avoid double counting or negative concessions
       if (!tx.isReversal) {
-        const amount = tx.paymentAmount || 0;
-        totalAmount += amount;
         totalConcessions += tx.concessionAmount || 0;
-        if (tx.paymentMethod === 'CASH') {
-          cashAmount += amount;
-        } else {
-          bankAmount += amount;
-        }
+      }
+
+      if (tx.method?.toUpperCase() === 'CASH') {
+        cashAmount += amount;
+      } else {
+        bankAmount += amount;
       }
     });
 

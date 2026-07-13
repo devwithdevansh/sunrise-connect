@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import Student from '../models/Student.js';
 import ledgerRepository from '../repositories/ledgerRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
+import auditRepository from '../repositories/auditRepository.js';
 import AcademicYear from '../models/AcademicYear.js';
 import FeeCategory from '../models/FeeCategory.js';
 import FeeStructure from '../models/FeeStructure.js';
@@ -47,13 +48,10 @@ class DashboardController {
       Student.find({}).populate('parentId', 'parentName primaryMobileNumber secondaryMobileNumber').lean(),
       FeeStructure.find({ isActive: true }).lean(),
       TransportFeeStructure.find({ isActive: true }).lean(),
-      AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
+      auditRepository.find({}, { limit: 100 }),
       AcademicYear.find({}).sort({ startDate: -1 }).lean(),
       FeeCategory.find({}).sort({ order: 1 }).lean(),
-      Payment.find().sort({ createdAt: -1 }).limit(2000).populate({
-        path: 'ledgerId',
-        select: 'studentId academicYear feePeriod feeCategory totalAmount',
-      }).lean(),
+      paymentRepository.findWithLedger({}, { limit: 2000 }),
       User.find({}).select('-password').lean()
     ]);
 

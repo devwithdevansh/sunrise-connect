@@ -6,6 +6,7 @@ import { UserPlus, Users, ShieldCheck, ShieldOff, KeyRound, Eye, EyeOff, Trash2 
 
 export const StaffManagement: React.FC = () => {
   const { currentUser, authFetch, users, refreshData, isLoadingDetails } = useApp();
+  const staffMembers = users.filter((u: any) => u.role !== 'ADMIN');
 
   // Create form
   const [showForm, setShowForm] = useState(false);
@@ -153,7 +154,7 @@ export const StaffManagement: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         {isLoadingDetails ? (
           <div className="p-10 text-center text-slate-400 font-semibold">Loading staff...</div>
-        ) : users.length === 0 ? (
+        ) : staffMembers.length === 0 ? (
           <div className="p-10 text-center text-slate-400">
             <Users className="h-8 w-8 mx-auto mb-2 text-slate-300" />
             <p className="font-bold">No clerk accounts yet</p>
@@ -171,7 +172,7 @@ export const StaffManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {users.map((staff) => (
+              {staffMembers.map((staff: any) => (
                 <tr key={staff._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 font-bold text-slate-800">{staff.name}</td>
                   <td className="p-4 text-slate-600 font-mono text-xs">{staff.email}</td>
