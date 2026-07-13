@@ -50,10 +50,7 @@ class DashboardController {
       AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
       AcademicYear.find({}).sort({ startDate: -1 }).lean(),
       FeeCategory.find({}).sort({ order: 1 }).lean(),
-      Payment.find().sort({ createdAt: -1 }).limit(2000).populate({
-        path: 'ledgerId',
-        select: 'studentId academicYear feePeriod feeCategory totalAmount',
-      }).lean(),
+      paymentRepository.findWithLedger({}, { limit: 2000 }),
       User.find({}).select('-password').lean()
     ]);
 
