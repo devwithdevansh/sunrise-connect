@@ -50,32 +50,27 @@ class ReportService {
     pipeline.push({
       $lookup: {
         from: 'payments',
-        localField: 'student._id',
-        foreignField: 'studentId',
+        localField: '_id',
+        foreignField: 'ledgerId',
         as: 'payments'
       }
     });
 
     pipeline.push({
       $addFields: {
-        lastPayment: {
-          $arrayElemAt: [
-            {
-              $filter: {
-                input: '$payments',
-                as: 'p',
-                cond: { $ne: ['$$p.isReversal', true] } // ignoring reversed payments
-              }
-            },
-            -1 // wait, arrayElemAt -1 is just the last element, but payments isn't sorted.
-          ]
+        validPayments: {
+          $filter: {
+            input: '$payments',
+            as: 'p',
+            cond: { $ne: ['$$p.isReversal', true] }
+          }
         }
       }
     });
-    // Actually, to get max payment date, we can do $max
+
     pipeline.push({
       $addFields: {
-        lastPaidDate: { $max: '$payments.createdAt' }
+        lastPaidDate: { $max: '$validPayments.createdAt' }
       }
     });
 
@@ -88,7 +83,7 @@ class ReportService {
         rollNumber: { $first: '$student.rollNumber' },
         totalPendingAmount: { $sum: '$remainingAmount' },
         pendingLedgers: { $push: '$$ROOT' },
-        lastPaidDate: { $first: '$lastPaidDate' }
+        lastPaidDate: { $max: '$lastPaidDate' }
       }
     });
 

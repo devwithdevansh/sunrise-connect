@@ -3,7 +3,7 @@ import DashboardService from '../services/DashboardService.js';
 import catchAsync from '../utils/catchAsync.js';
 import sendResponse from '../utils/response.js';
 import mongoose from 'mongoose';
-import studentRepository from '../repositories/studentRepository.js';
+import Student from '../models/Student.js';
 import ledgerRepository from '../repositories/ledgerRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
 import AcademicYear from '../models/AcademicYear.js';
@@ -41,7 +41,7 @@ class DashboardController {
       academicYears,
       feeCategories
     ] = await Promise.all([
-      studentRepository.find({}, null, { limit: 50000 }),
+      Student.find({}).select('name standard division rollNumber parentId isActive').lean(),
       FeeStructure.find({ isActive: true }).lean(),
       TransportFeeStructure.find({ isActive: true }).lean(),
       AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
