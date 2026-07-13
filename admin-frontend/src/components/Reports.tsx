@@ -10,7 +10,7 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { activeStudents, authFetch, academicYears, feeStructures } = useApp();
+  const { activeStudents, unpaidData, feeStructures, academicYears, authFetch } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
@@ -67,7 +67,6 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   }, [dynamicMediums]);
 
   const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
-  const [unpaidData, setUnpaidData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -87,23 +86,6 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
     };
     fetchDaily();
   }, [activeTab, selectedDate, authFetch, activeStudents]);
-
-  useEffect(() => {
-    const fetchUnpaid = async () => {
-      if (activeTab === 'daily') return;
-      setIsLoading(true);
-      try {
-        const res = await authFetch('/api/v1/reports/unpaid');
-        const json = await res.json();
-        setUnpaidData(json.data || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUnpaid();
-  }, [activeTab, authFetch]);
 
   // ==========================================
   // 1. DAILY COLLECTIONS REPORT CALCULATION

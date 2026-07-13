@@ -82,6 +82,7 @@ interface AppContextType {
   setScreen: (screen: ScreenType) => void;
   students: Student[];
   activeStudents: Student[];
+  unpaidData: any[];
   ledgerEntries: LedgerEntry[];
   transactions: PaymentTransaction[];
   feeStructures: FeeStructureData[];
@@ -150,6 +151,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return saved ? 'dashboard' : 'login';
   });
   const [students, setStudents] = useState<Student[]>([]);
+  const [unpaidData, setGlobalUnpaidData] = useState<any[]>([]);
   const activeStudents = useMemo(() => students.filter(s => s.isActive !== false), [students]);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
@@ -316,6 +318,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
         });
         setStudents(mappedStudents);
+        setGlobalUnpaidData(unpaidData);
 
         setFeeStructures(data.feeStructures || []);
         setTransportFeeStructures(data.transportStructures || []);
@@ -1014,6 +1017,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setScreen,
         students,
         activeStudents,
+        unpaidData,
         ledgerEntries,
         transactions,
         feeStructures,

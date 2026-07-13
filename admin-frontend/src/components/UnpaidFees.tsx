@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, feeStructures, academicYears, setScreen, authFetch, setSelectedStudentIdForFee } = useApp();
+  const { students, unpaidData, feeStructures, academicYears, setScreen, authFetch, setSelectedStudentIdForFee } = useApp();
   
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
@@ -76,28 +76,6 @@ export const UnpaidFees: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
-
-  const [unpaidData, setUnpaidData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  useEffect(() => {
-    const fetchUnpaid = async () => {
-      setIsLoading(true);
-      try {
-        const res = await authFetch('/api/v1/reports/unpaid');
-        const json = await res.json();
-        setUnpaidData(json.data || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (students.length > 0) {
-      fetchUnpaid();
-    }
-  }, [authFetch, students]);
-
   // Combine fetched unpaid data with global students for UI filters
   const mappedUnpaidStudents = useMemo(() => {
     return unpaidData.map(reportItem => {

@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
+import { useApp } from '../../store';
 import type { Student } from '../../mockData';
 import { isPeriodOverdue, isLedgerPending } from '../../utils';
 
@@ -27,6 +28,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   authFetch,
   activeYearName,
 }) => {
+  const { unpaidData } = useApp();
   const PAGE_SIZE = 15;
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -39,33 +41,9 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     return filteredStudents.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredStudents, currentPage]);
 
-  const [sidebarUnpaidData, setSidebarUnpaidData] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (paginatedStudents.length === 0) {
-      setSidebarUnpaidData([]);
-      return;
-    }
-
-    const fetchSidebarUnpaid = async () => {
-      try {
-        const ids = paginatedStudents.map(s => s._id || s.id).join(',');
-        const res = await authFetch(`/api/v1/reports/unpaid?studentIds=${ids}`);
-        if (res.ok) {
-          const json = await res.json();
-          setSidebarUnpaidData(json.data || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch unpaid statuses for sidebar:', err);
-      }
-    };
-
-    fetchSidebarUnpaid();
-  }, [paginatedStudents, authFetch]);
-
   const getStudentDueLabel = (student: Student): StudentDueInfo => {
     const sId = student._id || student.id;
-    const reportItem = sidebarUnpaidData.find(item => item._id === sId);
+    const reportItem = unpaidData.find((item: any) => item._id === sId);
 
     if (!reportItem || !reportItem.pendingLedgers) {
       return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
