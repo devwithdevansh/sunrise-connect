@@ -36,7 +36,20 @@ class ReportService {
           as: 'student'
         }
       },
-      { $unwind: '$student' }
+      { $unwind: '$student' },
+      {
+        $lookup: {
+          from: 'academicyears',
+          localField: 'academicYear',
+          foreignField: '_id',
+          as: 'academicYearDoc'
+        }
+      },
+      {
+        $addFields: {
+          academicYearStr: { $arrayElemAt: ['$academicYearDoc.name', 0] }
+        }
+      }
     ];
 
     if (Object.keys(studentMatch).length > 0) {
@@ -87,7 +100,7 @@ class ReportService {
             _id: '$_id',
             status: '$status',
             feePeriod: '$feePeriod',
-            academicYear: '$academicYear',
+            academicYear: { $ifNull: ['$academicYearStr', '$academicYear'] },
             remainingAmount: '$remainingAmount',
             totalAmount: '$totalAmount'
           }
