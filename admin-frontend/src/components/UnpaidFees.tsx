@@ -85,12 +85,15 @@ export const UnpaidFees: React.FC = () => {
       );
       
       const uniquePeriods = new Set(
-        overdueLedgers.map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
+        overdueLedgers
+          .filter((l: any) => l.feePeriod !== 'One-time')
+          .map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
       );
       const dueCount = uniquePeriods.size;
       
       let status = 'PAID';
       if (globalStudent?.isRTE) status = 'RTE';
+      else if (dueCount === 0 && overdueLedgers.length > 0) status = '1 DUE'; // only One-time
       else if (dueCount === 1) status = '1 DUE';
       else if (dueCount === 2) status = '2 DUE';
       else if (dueCount >= 3) status = '3+ DUE';

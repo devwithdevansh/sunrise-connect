@@ -299,10 +299,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYear)
               );
               
-              const uniquePeriods = new Set(overdue.map((l: any) => `${l.academicYear || activeYear}_${l.feePeriod}`));
+              const uniquePeriods = new Set(
+                overdue
+                  .filter((l: any) => l.feePeriod !== 'One-time')
+                  .map((l: any) => `${l.academicYear || activeYear}_${l.feePeriod}`)
+              );
               const dueCount = uniquePeriods.size;
               
-              if (dueCount === 1) status = '1 DUE';
+              if (dueCount === 0 && overdue.length > 0) status = '1 DUE'; // only One-time fees
+              else if (dueCount === 1) status = '1 DUE';
               else if (dueCount === 2) status = '2 DUE';
               else if (dueCount >= 3) status = '3+ DUE';
             }

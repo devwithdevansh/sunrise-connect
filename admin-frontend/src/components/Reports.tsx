@@ -139,7 +139,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       );
       
       const uniquePeriods = new Set(
-        overdueLedgers.map((l: any) => `${l.academicYear || ''}_${l.feePeriod}`)
+        overdueLedgers
+          .filter((l: any) => l.feePeriod !== 'One-time')
+          .map((l: any) => `${l.academicYear || ''}_${l.feePeriod}`)
       );
 
       let educationDue = 0;
