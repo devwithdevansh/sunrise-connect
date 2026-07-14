@@ -11,7 +11,7 @@ class WhatsappService {
    * Queue and send a WhatsApp message to parents based on target criteria.
    */
   async sendWhatsapp(senderId, payload) {
-    const { templateName, body, targetType, targetFilter, parentIds } = payload;
+    const { templateName, body, targetType, targetFilter, parentIds, language } = payload;
 
     let targetParentIds = [];
 
@@ -140,20 +140,25 @@ class WhatsappService {
               const minDate = dueDates[0];
               const maxDate = dueDates[dueDates.length - 1];
               
-              const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long' });
+              const locale = language === 'gu' ? 'gu-IN' : 'en-US';
+              const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'long' });
               startMonthStr = monthFormatter.format(minDate);
               endMonthStr = monthFormatter.format(maxDate);
             }
 
-            // Determine language code based on template name
-            const languageCode = templateName.includes('_gu') ? 'gu' : 'en';
+            // Determine language code based on language from frontend
+            const languageCode = language === 'gu' ? 'gu' : 'en';
+            // Map fee_reminder to exact approved Meta template names
+            const finalTemplateName = templateName === 'fee_reminder' 
+              ? (language === 'gu' ? 'fee_reminder_gu_' : 'fee_reminder_en_') 
+              : templateName;
 
             payload = {
               messaging_product: 'whatsapp',
               to: phone,
               type: 'template',
               template: {
-                name: templateName,
+                name: finalTemplateName,
                 language: { code: languageCode },
                 components: [
                   {
@@ -170,13 +175,14 @@ class WhatsappService {
             };
           } else {
             // Generic template message
+            const languageCode = language === 'gu' ? 'gu' : 'en_US'; // Keep en_US default for other generic templates if not specified
             payload = {
               messaging_product: 'whatsapp',
               to: phone,
               type: 'template',
               template: {
                 name: templateName,
-                language: { code: 'en_US' }
+                language: { code: languageCode }
               }
             };
 

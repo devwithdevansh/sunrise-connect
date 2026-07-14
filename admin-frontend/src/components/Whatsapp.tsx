@@ -51,6 +51,7 @@ export const Whatsapp: React.FC = () => {
 
   // ── Compose state ──────────────────────────────────────────────────────────
   const [templateName, setTemplateName] = useState('custom_message');
+  const [language, setLanguage] = useState<'en' | 'gu'>('en');
   const [body, setBody] = useState('');
   const [targetType, setTargetType] = useState<'ALL' | 'CLASS' | 'PARENT'>('ALL');
   const [selectedClass, setSelectedClass] = useState<{ standard: string; medium: string }>({ standard: '', medium: '' });
@@ -112,7 +113,12 @@ export const Whatsapp: React.FC = () => {
     setIsSending(true);
     setSendResult(null);
     try {
-      const payload: any = { templateName, body: templateName === 'fee_reminder' ? 'Fee Reminder' : body.trim(), targetType };
+      const payload: any = { 
+        templateName, 
+        language,
+        body: templateName === 'fee_reminder' ? 'Fee Reminder' : body.trim(), 
+        targetType 
+      };
       if (targetType === 'CLASS') {
         payload.targetFilter = { standard: selectedClass.standard, medium: selectedClass.medium };
       } else if (targetType === 'PARENT') {
@@ -219,6 +225,35 @@ export const Whatsapp: React.FC = () => {
                 )}
               </div>
 
+              {/* Language */}
+              {templateName === 'fee_reminder' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Language</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setLanguage('en')}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-xl border transition-all ${
+                        language === 'en'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      English
+                    </button>
+                    <button
+                      onClick={() => setLanguage('gu')}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-xl border transition-all ${
+                        language === 'gu'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      Gujarati
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Body */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Message Body {templateName === 'custom_message' && <span className="text-red-500">*</span>}</label>
@@ -316,10 +351,31 @@ export const Whatsapp: React.FC = () => {
                 {templateName === 'fee_reminder' ? (
                   <div className="bg-white rounded-lg rounded-tl-none p-2 mb-4 shadow-sm inline-block max-w-[85%] relative">
                     <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
-                      Dear John Doe,{"\n\n"}
-                      This is a gentle reminder from Sunrise School. A fee amount of ₹12000 is currently due for Jane Doe (Std 10).{"\n\n"}
-                      Please make the payment at your earliest convenience via the Sunrise Connect App.{"\n\n"}
-                      Thank you,{"\n"}Sunrise School Administration
+                      {language === 'gu' ? (
+                        <>
+                          📢 ફી બાકી અંગે સૂચના{"\n\n"}
+                          માનનીય વાલીશ્રી,{"\n\n"}
+                          આપને વિનમ્ર યાદ અપાવવામાં આવે છે કે નીચે દર્શાવેલ વિદ્યાર્થીની શાળાની ફી હજુ સુધી ભરવામાં આવી નથી.{"\n\n"}
+                          વિદ્યાર્થીના નામ: Jane Doe{"\n"}
+                          બાકી મહિના: મે થી જુલાઈ{"\n"}
+                          કુલ બાકી ફી રકમ: ₹12000{"\n\n"}
+                          આપને વિનંતી છે કે બાકી ફી વહેલી તકે શાળાના કાર્યાલયમાં જમા કરાવી આપશો જેથી વિદ્યાર્થીના શૈક્ષણિક કાર્યમાં કોઈ વિક્ષેપ ન આવે.{"\n\n"}
+                          જો ફી પહેલેથી જ ભરેલ હોય, તો કૃપા કરીને આ સૂચનાને અવગણશો.{"\n\n"}
+                          આભાર સહ,{"\n"}Sunrise School
+                        </>
+                      ) : (
+                        <>
+                          📢 Fee Due Notice{"\n\n"}
+                          Respected Parent,{"\n\n"}
+                          This is a gentle reminder that the school fee for the student mentioned below has not been paid yet.{"\n\n"}
+                          Student Name: Jane Doe{"\n"}
+                          Pending Months: May to July{"\n"}
+                          Total Pending Fee Amount: ₹12000{"\n\n"}
+                          You are requested to pay the pending fee at the school office at your earliest convenience so that the student's academic progress is not disrupted.{"\n\n"}
+                          If the fee has already been paid, please ignore this notice.{"\n\n"}
+                          Thank you,{"\n"}Sunrise School
+                        </>
+                      )}
                     </p>
                     <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center gap-1">
                       <span>Now</span>
