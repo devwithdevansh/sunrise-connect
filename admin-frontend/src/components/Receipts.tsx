@@ -74,6 +74,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const PAGE_SIZE = 15;
 
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
+  const [isReversing, setIsReversing] = useState<string | null>(null);
 
   // Debounce search query by 200ms
   useEffect(() => {
@@ -440,13 +441,20 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
                                           <button
                                             onClick={async () => {
                                               if (window.confirm(`Are you sure you want to reverse payment of ₹${sub.amount.toLocaleString('en-IN')} for ${sub.description}? This will restore the balance back to the ledger.`)) {
+                                                setIsReversing(sub.id);
                                                 await reversePayment(sub.id);
+                                                setIsReversing(null);
                                               }
                                             }}
-                                            className="inline-flex items-center gap-1 text-red-500 hover:text-red-750 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2.5 py-1 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
+                                            disabled={isReversing === sub.id}
+                                            className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98] ${
+                                              isReversing === sub.id
+                                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                                                : 'text-red-500 hover:text-red-750 hover:bg-red-50 border border-red-200/50 hover:border-red-300'
+                                            }`}
                                           >
-                                            <RotateCcw className="h-2.5 w-2.5" />
-                                            Reverse Item
+                                            <RotateCcw className={`h-2.5 w-2.5 ${isReversing === sub.id ? 'animate-spin' : ''}`} />
+                                            {isReversing === sub.id ? 'Reversing...' : 'Reverse Item'}
                                           </button>
                                         ) : (
                                           <span className="text-slate-350 text-[9px] italic pr-2 font-medium">Not reversible</span>

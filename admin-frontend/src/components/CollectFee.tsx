@@ -44,6 +44,7 @@ export const CollectFee: React.FC = () => {
   const [chequeNo, setChequeNo] = useState('');
   const [bankName, setBankName] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [autoSyncSignature, setAutoSyncSignature] = useState<string>('');
 
@@ -390,7 +391,9 @@ export const CollectFee: React.FC = () => {
       return;
     }
 
+    setIsProcessingPayment(true);
     await recordPayment(selectedStudent._id || selectedStudent.id, lineItemsArray);
+    setIsProcessingPayment(false);
 
     setSuccessMsg(`✓ Collected ₹${totalPayingNow.toLocaleString('en-IN')} for ${selectedStudent.studentName}`);
     setSelectedFees([]);
@@ -723,6 +726,7 @@ export const CollectFee: React.FC = () => {
                 setBankName={setBankName}
                 getDueAmount={getDueAmount}
                 onSubmit={handleSubmit}
+                isSubmitting={isProcessingPayment}
               />
             </div>
 
