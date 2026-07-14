@@ -114,7 +114,11 @@ export const Whatsapp: React.FC = () => {
     try {
       const res = await authFetch(`/api/v1/whatsapp/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        loadHistory(histPage);
+        if (history.length === 1 && histPage > 1) {
+          loadHistory(histPage - 1);
+        } else {
+          loadHistory(histPage);
+        }
       } else {
         const json = await res.json();
         alert(json.message || 'Failed to delete message');

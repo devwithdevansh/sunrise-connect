@@ -124,7 +124,11 @@ export const Notifications: React.FC = () => {
     try {
       const res = await authFetch(`/api/v1/notifications/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        loadHistory(histPage);
+        if (history.length === 1 && histPage > 1) {
+          loadHistory(histPage - 1);
+        } else {
+          loadHistory(histPage);
+        }
       } else {
         const json = await res.json();
         alert(json.message || 'Failed to delete notification');
