@@ -535,7 +535,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return;
       }
       // Refresh data
-      debouncedFetchAll();
+      await fetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -592,7 +592,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to record batch payment:', errBody);
         alert(errBody.message || 'Failed to record payments. Please try again.');
       } else {
-        debouncedFetchAll();
+        await fetchAll();
       }
     } catch (err) {
       console.error(err);
@@ -607,7 +607,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify({ amount, reason: 'Applied concession manually' })
       });
       if (!res.ok) throw new Error('Failed to apply concession');
-      debouncedFetchAll();
+      await fetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -644,7 +644,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update fee structure');
-      debouncedFetchAll();
+      await fetchAll();
       return true;
     } catch (err) {
       console.error(err);
