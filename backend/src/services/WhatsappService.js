@@ -140,8 +140,8 @@ class WhatsappService {
               const minDate = dueDates[0];
               const maxDate = dueDates[dueDates.length - 1];
               
-              const locale = language === 'gu' ? 'gu-IN' : 'en-US';
-              const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'long' });
+              // Meta template variables expect English month strings even in Gujarati templates
+              const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long' });
               startMonthStr = monthFormatter.format(minDate);
               endMonthStr = monthFormatter.format(maxDate);
             }

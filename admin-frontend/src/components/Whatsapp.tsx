@@ -46,16 +46,18 @@ const DeliveryBadge: React.FC<{ status: SentWhatsappMessage['deliveryStatus']; s
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const Whatsapp: React.FC = () => {
-  const { authFetch, feeStructures, academicYears } = useApp();
+  const { authFetch, feeStructures, academicYears, students } = useApp();
   const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');
 
   // ── Compose state ──────────────────────────────────────────────────────────
   const [templateName, setTemplateName] = useState('custom_message');
   const [language, setLanguage] = useState<'en' | 'gu'>('en');
   const [body, setBody] = useState('');
-  const [targetType, setTargetType] = useState<'ALL' | 'CLASS' | 'PARENT'>('ALL');
+  const [targetType, setTargetType] = useState<'ALL' | 'CLASS' | 'PARENT' | 'STUDENT'>('ALL');
   const [selectedClass, setSelectedClass] = useState<{ standard: string; medium: string }>({ standard: '', medium: '' });
   const [parentSearch, setParentSearch] = useState('');
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const [selectedStudentForMsg, setSelectedStudentForMsg] = useState<any | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -124,6 +126,11 @@ export const Whatsapp: React.FC = () => {
       } else if (targetType === 'PARENT') {
         // If they enter a parent ID, convert it to array for the backend
         payload.parentIds = [parentSearch.trim()];
+      } else if (targetType === 'STUDENT') {
+        // Backend doesn't know about STUDENT target, so we override it to PARENT
+        payload.targetType = 'PARENT';
+        const pId = selectedStudentForMsg?.parentId;
+        payload.parentIds = pId ? [typeof pId === 'object' ? pId._id || pId.id : pId] : [];
       }
 
       const res = await authFetch('/api/v1/whatsapp/send', {
@@ -137,7 +144,7 @@ export const Whatsapp: React.FC = () => {
           success: true,
           message: `✅ Message queued for delivery. Check history for status.`,
         });
-        setBody(''); setParentSearch('');
+        setBody(''); setParentSearch(''); setStudentSearchQuery(''); setSelectedStudentForMsg(null);
       } else {
         setSendResult({ success: false, message: json.message || 'Send failed. Please try again.' });
       }
@@ -151,11 +158,13 @@ export const Whatsapp: React.FC = () => {
 
   const targetLabel = targetType === 'ALL' ? 'All Parents'
     : targetType === 'CLASS' ? (selectedClass.standard ? `Std ${selectedClass.standard} ${selectedClass.medium}` : 'Pick a class')
+    : targetType === 'STUDENT' ? (selectedStudentForMsg ? `Parent of ${selectedStudentForMsg.studentName}` : 'Specific Student')
     : 'Specific Parent';
 
   const canSend = (templateName === 'fee_reminder' || body.trim().length > 0) &&
     (targetType !== 'CLASS' || (selectedClass.standard && selectedClass.medium)) &&
-    (targetType !== 'PARENT' || parentSearch.trim().length > 0);
+    (targetType !== 'PARENT' || parentSearch.trim().length > 0) &&
+    (targetType !== 'STUDENT' || (selectedStudentForMsg && selectedStudentForMsg.parentId));
 
   const formatDate = (iso: string) => {
     try {
@@ -273,11 +282,12 @@ export const Whatsapp: React.FC = () => {
               {/* Target Type */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-2">Send to</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {([
                     { id: 'ALL', label: 'All Parents', icon: <Users className="h-4 w-4" />, desc: 'Every parent' },
-                    { id: 'CLASS', label: 'By Class', icon: <BookOpen className="h-4 w-4" />, desc: 'Filter by Std + Medium' },
-                    { id: 'PARENT', label: 'Specific Parent', icon: <User className="h-4 w-4" />, desc: 'One parent by ID' },
+                    { id: 'CLASS', label: 'By Class', icon: <BookOpen className="h-4 w-4" />, desc: 'Std + Medium' },
+                    { id: 'STUDENT', label: 'By Student', icon: <User className="h-4 w-4" />, desc: 'Search name' },
+                    { id: 'PARENT', label: 'By Parent ID', icon: <User className="h-4 w-4" />, desc: 'Raw Mongo ID' },
                   ] as const).map(opt => (
                     <button
                       key={opt.id}
@@ -329,6 +339,57 @@ export const Whatsapp: React.FC = () => {
                     onChange={e => setParentSearch(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
+                </div>
+              )}
+
+              {/* Conditional: Student search */}
+              {targetType === 'STUDENT' && (
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Search Student</label>
+                  {!selectedStudentForMsg ? (
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Type student name..."
+                        value={studentSearchQuery}
+                        onChange={e => setStudentSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                      {studentSearchQuery.trim().length >= 2 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                          {students.filter((s: any) => (s.studentName || '').toLowerCase().includes(studentSearchQuery.toLowerCase())).slice(0, 5).map((s: any) => (
+                            <button
+                              key={s._id || s.id}
+                              onClick={() => setSelectedStudentForMsg(s)}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-0"
+                            >
+                              <div className="font-semibold text-slate-800">{s.studentName}</div>
+                              <div className="text-[10px] text-slate-500">Std {s.standard} {s.medium} • {s.parentMobile || 'No Parent Phone'}</div>
+                            </button>
+                          ))}
+                          {students.filter((s: any) => (s.studentName || '').toLowerCase().includes(studentSearchQuery.toLowerCase())).length === 0 && (
+                            <div className="px-4 py-3 text-xs text-slate-500 text-center">No students found</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <div>
+                        <div className="text-sm font-semibold text-emerald-800">{selectedStudentForMsg.studentName}</div>
+                        <div className="text-[10px] text-emerald-600">Parent: {selectedStudentForMsg.parentMobile || 'No Phone'}</div>
+                      </div>
+                      <button 
+                        onClick={() => { setSelectedStudentForMsg(null); setStudentSearchQuery(''); }}
+                        className="text-emerald-700 hover:text-emerald-900 text-xs font-bold px-2 py-1 bg-emerald-100 rounded-lg"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+                  {selectedStudentForMsg && !selectedStudentForMsg.parentId && (
+                    <p className="text-[10px] text-red-500 mt-1">This student does not have a linked parent account.</p>
+                  )}
                 </div>
               )}
             </div>
