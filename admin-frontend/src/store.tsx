@@ -632,33 +632,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
         }));
 
-        // Do a lightweight targeted sync: only re-fetch unpaid data for THIS student.
-        // We do NOT call fetchAll() because it resets ledgerEntries to [] (line 345),
-        // which wipes the optimistic grid update and causes a visible flicker.
-        // The optimistic update above already correctly updated both the grid and badge.
-        // This targeted fetch just quietly confirms with the server in the background.
-        (async () => {
-          try {
-            const syncRes = await authFetch(`/api/v1/reports/unpaid?studentIds=${_studentId}&_t=${Date.now()}`);
-            if (!syncRes.ok) return;
-            const syncJson = await syncRes.json();
-            const freshStudentData = (syncJson.data || []).find((u: any) => u._id === _studentId);
-            setGlobalUnpaidData(prev => prev.map(studentData => {
-              if (studentData._id !== _studentId && studentData.id !== _studentId) return studentData;
-              if (!freshStudentData) {
-                // Student has no more pending ledgers — they're fully paid
-                return { ...studentData, pendingLedgers: [], totalPendingAmount: 0 };
-              }
-              return {
-                ...studentData,
-                pendingLedgers: freshStudentData.pendingLedgers || [],
-                totalPendingAmount: freshStudentData.totalPendingAmount ?? 0
-              };
-            }));
-          } catch (_) {
-            // Silent fail — optimistic update already showed correct state
-          }
-        })();
+        // The optimistic update above instantly and correctly updates the global unpaid data (badge).
+        // The local grid in CollectFee.tsx also performs its own optimistic update.
+        // We DO NOT fetch from the server immediately because MongoDB replication lag often returns 
+        // stale data, which overwrites our optimistic update and causes the badge to incorrectly jump up.
+        // The background sync-state poll will fetch the fully committed data in 0-15 seconds silently.
       }
     } catch (err) {
       console.error(err);
