@@ -396,6 +396,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let isSubscribed = true;
 
     const checkSync = async () => {
+      if (document.hidden) return;
       const now = Date.now();
       if (now - lastSyncCheckTimeRef.current < 15000) {
         return;
