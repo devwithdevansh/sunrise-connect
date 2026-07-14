@@ -109,17 +109,37 @@ class WhatsappService {
             const studentNames = [];
             const allPeriods = new Set();
             for (const st of students) {
-              // 2. Fetch all pending ledgers up to the current month
+              // Fetch all pending ledgers, we will manually filter by feePeriod to avoid broken dueDate in database
               const ledgers = await StudentFeeLedger.find({ 
                 studentId: st._id, 
-                status: { $in: ['PENDING', 'PARTIAL'] },
-                dueDate: { $lte: endOfCurrentMonth }
+                status: { $in: ['PENDING', 'PARTIAL'] }
               });
               
               let studentFeeDue = 0;
+              
+              const currentMonthValue = new Date().getMonth(); // 0=Jan, 6=Jul
+              const currentAcademicMonthIndex = currentMonthValue >= 5 ? currentMonthValue - 5 : currentMonthValue + 7;
+              const periodOrder = {
+                'term 1': 0, 'june': 0, 'july': 1, 'august': 2, 'september': 3, 
+                'term 2': 4, 'october': 4, 'november': 5, 'december': 6, 
+                'january': 7, 'february': 8, 'march': 9, 'april': 10, 'may': 11
+              };
+
               for (const l of ledgers) {
-                studentFeeDue += (l.remainingAmount || 0);
-                if (l.feePeriod) allPeriods.add(l.feePeriod);
+                let isDue = true;
+                if (l.feePeriod) {
+                  const pName = l.feePeriod.toLowerCase().trim();
+                  if (periodOrder[pName] !== undefined) {
+                    if (periodOrder[pName] > currentAcademicMonthIndex) {
+                      isDue = false;
+                    }
+                  }
+                }
+                
+                if (isDue) {
+                  studentFeeDue += (l.remainingAmount || 0);
+                  if (l.feePeriod) allPeriods.add(l.feePeriod);
+                }
               }
               if (studentFeeDue > 0) {
                 studentNames.push(st.studentName);
