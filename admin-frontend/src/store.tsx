@@ -632,12 +632,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
         }));
 
-        // Clear any in-flight fetch so we always get fresh post-payment data.
-        // Without this, if a previous fetchAll is still running (started before the
-        // payment was recorded), fetchAll() returns that OLD promise, which resolves
-        // with pre-payment data and overwrites our optimistic update.
-        activeFetchRef.current = null;
-        fetchAll();
+        // Do a lightweight targeted sync: only re-fetch unpaid data for THIS student.
+        // We do NOT call fetchAll() because it resets ledgerEntries to [] (line 345),
+        // which wipes the optimistic grid update and causes a visible flicker.
+        // The optimistic update above already correctly updated both the grid and badge.
+        // This targeted fetch just quietly confirms with the server in the background.
+        (async () => {
+          try {
+            const syncRes = await authFetch(`/api/v1/reports/unpaid?studentIds=${_studentId}&_t=${Date.now()}`);
+            if (!syncRes.ok) return;
+            const syncJson = await syncRes.json();
+            const freshStudentData = (syncJson.data || []).find((u: any) => u._id === _studentId);
+            setGlobalUnpaidData(prev => prev.map(studentData => {
+              if (studentData._id !== _studentId && studentData.id !== _studentId) return studentData;
+              if (!freshStudentData) {
+                // Student has no more pending ledgers — they're fully paid
+                return { ...studentData, pendingLedgers: [], totalPendingAmount: 0 };
+              }
+              return {
+                ...studentData,
+                pendingLedgers: freshStudentData.pendingLedgers || [],
+                totalPendingAmount: freshStudentData.totalPendingAmount ?? 0
+              };
+            }));
+          } catch (_) {
+            // Silent fail — optimistic update already showed correct state
+          }
+        })();
       }
     } catch (err) {
       console.error(err);
