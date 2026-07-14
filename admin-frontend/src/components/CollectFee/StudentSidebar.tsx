@@ -56,10 +56,12 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     }
 
     const uniquePeriods = new Set(
-      overdueLedgers.map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
+      overdueLedgers
+        .filter((l: any) => l.feePeriod !== 'One-time')
+        .map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
     );
     const dueCount = uniquePeriods.size;
-    const amount = overdueLedgers.reduce((sum: number, l: any) => sum + ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
+    const amount = overdueLedgers.reduce((sum: number, l: any) => sum + (l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0))), 0);
 
     let status = '1 DUE';
     if (dueCount === 2) status = '2 DUE';

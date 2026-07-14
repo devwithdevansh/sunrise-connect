@@ -273,7 +273,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         const [initRes, unpaidRes] = await Promise.all([
           authFetch('/api/v1/dashboard/init'),
-          authFetch('/api/v1/reports/unpaid')
+          authFetch(`/api/v1/reports/unpaid?_t=${Date.now()}`)
         ]);
         
         if (!initRes.ok) {
@@ -535,7 +535,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return;
       }
       // Refresh data
-      await fetchAll();
+      fetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -592,7 +592,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to record batch payment:', errBody);
         alert(errBody.message || 'Failed to record payments. Please try again.');
       } else {
-        await fetchAll();
+        setLedgerEntries(prev => prev.map(ledger => {
+          const payment = paymentsPayload.find(p => p.ledgerId === ledger._id);
+          if (!payment) return ledger;
+          const newPaid = (ledger.paidAmount || 0) + payment.amount;
+          const newConcession = (ledger.concessionAmount || 0) + payment.concessionAmount;
+          const newRemaining = (ledger.totalAmount || 0) - newPaid - newConcession;
+          return {
+            ...ledger,
+            paidAmount: newPaid,
+            concessionAmount: newConcession,
+            remainingAmount: newRemaining,
+            status: newRemaining <= 0 ? 'PAID' : (newPaid > 0 ? 'PARTIAL' : 'PENDING')
+          };
+        }));
+        
+        setGlobalUnpaidData(prev => prev.map(studentData => {
+          if (studentData._id !== _studentId && studentData.id !== _studentId) return studentData;
+          const newPending = (studentData.pendingLedgers || []).map((ledger: any) => {
+            const payment = paymentsPayload.find(p => p.ledgerId === ledger._id);
+            if (!payment) return ledger;
+            const newRemaining = (ledger.remainingAmount ?? ledger.totalAmount ?? 0) - payment.amount - payment.concessionAmount;
+            return {
+              ...ledger,
+              remainingAmount: newRemaining,
+              status: newRemaining <= 0 ? 'PAID' : (newRemaining < (ledger.totalAmount || 0) ? 'PARTIAL' : 'PENDING')
+            };
+          }).filter((l: any) => l.remainingAmount > 0);
+          
+          return {
+            ...studentData,
+            pendingLedgers: newPending,
+            totalPendingAmount: newPending.reduce((sum: number, l: any) => sum + (l.remainingAmount || 0), 0)
+          };
+        }));
+
+        fetchAll();
       }
     } catch (err) {
       console.error(err);
