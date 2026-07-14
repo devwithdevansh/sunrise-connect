@@ -21,7 +21,7 @@ const Student = mongoose.model('Student', studentSchema);
 const StudentFeeLedger = mongoose.model('StudentFeeLedger', ledgerSchema, 'studentfeeledgers');
 
 async function check() {
-  await mongoose.connect(process.env.MONGODB_URI);
+  await mongoose.connect(process.env.MONGO_URI);
   console.log('Connected to DB');
   
   const parentId = '6a553eecb0893da913a38993';
