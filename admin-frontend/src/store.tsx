@@ -632,6 +632,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
         }));
 
+        // Clear any in-flight fetch so we always get fresh post-payment data.
+        // Without this, if a previous fetchAll is still running (started before the
+        // payment was recorded), fetchAll() returns that OLD promise, which resolves
+        // with pre-payment data and overwrites our optimistic update.
+        activeFetchRef.current = null;
         fetchAll();
       }
     } catch (err) {
