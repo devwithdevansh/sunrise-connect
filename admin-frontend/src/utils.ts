@@ -62,7 +62,11 @@ export function isPeriodOverdue(
   if (academicYear) {
     const startYear = parseInt(academicYear.split('-')[0], 10);
     const activeStartYear = parseInt(activeAcademicYear.split('-')[0], 10);
-    if (!isNaN(startYear) && !isNaN(activeStartYear)) {
+    // Only trust the year comparison if BOTH values are sensible 4-digit calendar years.
+    // If academicYear is a MongoDB ObjectId (e.g. "6a55d050..."), parseInt gives a tiny
+    // number like 6, which would incorrectly mark every ledger as "past year → always overdue".
+    const isValidYear = (y: number) => !isNaN(y) && y >= 2000 && y <= 2100;
+    if (isValidYear(startYear) && isValidYear(activeStartYear)) {
       if (startYear < activeStartYear) {
         // Past academic year → always overdue
         return true;

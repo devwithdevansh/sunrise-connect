@@ -47,6 +47,17 @@ app.use((req, _res, next) => {
   next();
 });
 
+// ─── Disable Caching for all API routes ───────────────────────────────────────
+// Prevents Hostinger LiteSpeed (and any proxy/CDN) from caching dynamic API
+// responses which would cause stale badge counts and outdated fee data in UI.
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'UP', message: 'Sunrise Connect Backend is running' });
