@@ -8,6 +8,7 @@ import studentRepository from '../repositories/studentRepository.js';
 import logger from '../config/logger.js';
 import AppError from '../utils/AppError.js';
 import { getFirebaseAdmin } from '../config/firebase.js';
+import auditRepository from '../repositories/auditRepository.js';
 
 class NotificationService {
   /**
@@ -321,6 +322,31 @@ class NotificationService {
     } catch (err) {
       logger.error('Error cleaning invalid FCM tokens', err);
     }
+  }
+
+  /**
+   * Delete a sent notification from history.
+   */
+  static async deleteNotification(adminId, notificationId) {
+    const notification = await Notification.findById(notificationId);
+    if (!notification) {
+      throw new AppError('Notification not found', 404);
+    }
+
+    await Notification.findByIdAndDelete(notificationId);
+
+    await auditRepository.create({
+      action: 'NOTIFICATION_DELETED',
+      performedBy: adminId,
+      details: {
+        title: notification.title,
+        body: notification.body,
+        targetType: notification.targetType,
+        type: notification.type,
+      }
+    });
+
+    return true;
   }
 }
 
