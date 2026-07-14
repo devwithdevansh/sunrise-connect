@@ -5,6 +5,8 @@ import Student from '../models/Student.js';
 import StudentFeeLedger from '../models/StudentFeeLedger.js';
 import logger from '../config/logger.js';
 import env from '../config/env.js';
+import auditRepository from '../repositories/auditRepository.js';
+import AppError from '../utils/AppError.js';
 
 class WhatsappService {
   /**
@@ -297,6 +299,27 @@ class WhatsappService {
   /**
    * Process incoming webhook events from Meta (messages, statuses)
    */
+  async deleteMessage(adminId, messageId) {
+    const message = await WhatsappMessage.findById(messageId);
+    if (!message) {
+      throw new AppError('Message not found', 404);
+    }
+    await WhatsappMessage.findByIdAndDelete(messageId);
+
+    await auditRepository.create({
+      action: 'WHATSAPP_MESSAGE_DELETED',
+      performedBy: adminId,
+      details: {
+        templateName: message.templateName,
+        body: message.body,
+        targetType: message.targetType,
+        deliveryStatus: message.deliveryStatus
+      }
+    });
+
+    return true;
+  }
+
   async processWebhookEvent(payload) {
     if (payload.statuses) {
       // It's a delivery status update

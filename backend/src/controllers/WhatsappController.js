@@ -52,6 +52,14 @@ class WhatsappController {
     });
   });
 
+  deleteMessage = catchAsync(async (req, res) => {
+    await WhatsappService.deleteMessage(req.user.id, req.params.id);
+    res.status(200).json({
+      status: 'success',
+      message: 'Message history deleted successfully'
+    });
+  });
+
   verifyWebhook = (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];

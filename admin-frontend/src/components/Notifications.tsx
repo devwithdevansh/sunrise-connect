@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../store';
 import {
   Bell, Send, Users, BookOpen, User,
-  CheckCircle, AlertTriangle, Clock, RefreshCw, X
+  CheckCircle, AlertTriangle, Clock, RefreshCw, X, Trash2
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://linen-weasel-242678.hostingersite.com';
@@ -56,7 +56,7 @@ const DeliveryBadge: React.FC<{ status: SentNotification['deliveryStatus']; succ
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const Notifications: React.FC = () => {
-  const { authFetch, feeStructures, academicYears, students } = useApp();
+  const { authFetch, feeStructures, academicYears, students, currentUser } = useApp();
   const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');
 
   // ── Compose state ──────────────────────────────────────────────────────────
@@ -118,6 +118,21 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'history') loadHistory(1);
   }, [activeTab, loadHistory]);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this notification from history?')) return;
+    try {
+      const res = await authFetch(`/api/v1/notifications/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadHistory(histPage);
+      } else {
+        const json = await res.json();
+        alert(json.message || 'Failed to delete notification');
+      }
+    } catch (e) {
+      alert('Network error while deleting');
+    }
+  };
 
   // ── Send notification ──────────────────────────────────────────────────────
   const handleSend = async () => {
@@ -465,15 +480,26 @@ export const Notifications: React.FC = () => {
                           <DeliveryBadge status={notif.deliveryStatus} success={notif.successCount} fail={notif.failureCount} />
                         </div>
                         <p className="text-slate-500 text-xs mb-2 line-clamp-2">{notif.body}</p>
-                        <div className="flex items-center gap-4 text-[10px] text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {notif.targetType === 'ALL' ? 'All Parents'
-                              : notif.targetType === 'CLASS' ? `Std ${notif.targetFilter?.standard} ${notif.targetFilter?.medium}`
-                              : 'Specific Parent'}
-                          </span>
-                          {notif.sentBy && <span>By {notif.sentBy.name}</span>}
-                          <span>{formatDate(notif.createdAt)}</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-[10px] text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {notif.targetType === 'ALL' ? 'All Parents'
+                                : notif.targetType === 'CLASS' ? `Std ${notif.targetFilter?.standard} ${notif.targetFilter?.medium}`
+                                : 'Specific Parent'}
+                            </span>
+                            {notif.sentBy && <span>By {notif.sentBy.name}</span>}
+                            <span>{formatDate(notif.createdAt)}</span>
+                          </div>
+                          {currentUser?.role === 'ADMIN' && (
+                            <button
+                              onClick={() => handleDelete(notif._id)}
+                              className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                              title="Delete from history"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

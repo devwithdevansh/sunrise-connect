@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../store';
 import {
   MessageSquare, Send, Users, BookOpen, User,
-  CheckCircle, AlertTriangle, Clock, RefreshCw
+  CheckCircle, AlertTriangle, Clock, RefreshCw, Trash2
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ const DeliveryBadge: React.FC<{ status: SentWhatsappMessage['deliveryStatus']; s
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const Whatsapp: React.FC = () => {
-  const { authFetch, feeStructures, academicYears, students } = useApp();
+  const { authFetch, feeStructures, academicYears, students, currentUser } = useApp();
   const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');
 
   // ── Compose state ──────────────────────────────────────────────────────────
@@ -108,6 +108,21 @@ export const Whatsapp: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'history') loadHistory(1);
   }, [activeTab, loadHistory]);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this message from history?')) return;
+    try {
+      const res = await authFetch(`/api/v1/whatsapp/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadHistory(histPage);
+      } else {
+        const json = await res.json();
+        alert(json.message || 'Failed to delete message');
+      }
+    } catch (e) {
+      alert('Network error while deleting');
+    }
+  };
 
   // ── Send message ───────────────────────────────────────────────────────────
   const handleSend = async () => {
@@ -560,9 +575,20 @@ export const Whatsapp: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-3.5 w-3.5" />
-                        Sent by: <span className="font-medium text-slate-700">{msg.sentBy?.name || 'Unknown'}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <User className="h-3.5 w-3.5" />
+                          Sent by: <span className="font-medium text-slate-700">{msg.sentBy?.name || 'Unknown'}</span>
+                        </div>
+                        {currentUser?.role === 'ADMIN' && (
+                          <button
+                            onClick={() => handleDelete(msg._id)}
+                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            title="Delete from history"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -23,6 +23,13 @@ router.get(
   WhatsappController.list
 );
 
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('ADMIN'),
+  WhatsappController.deleteMessage
+);
+
 // ─── Webhook Routes (Public) ────────────────────────────────────────────────
 // GET  /api/v1/whatsapp/webhook       → verify webhook setup from Meta
 // POST /api/v1/whatsapp/webhook       → receive incoming webhook events from Meta
