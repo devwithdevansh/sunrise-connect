@@ -170,7 +170,7 @@ class WhatsappService {
             const languageCode = language === 'gu' ? 'gu' : 'en';
             // Map fee_reminder to exact approved Meta template names
             const finalTemplateName = templateName === 'fee_reminder' 
-              ? (language === 'gu' ? 'fee_reminder_gu_' : 'fee_reminder_en_') 
+              ? (language === 'gu' ? 'fee_reminder_gu' : 'fee_reminder_en') 
               : templateName;
 
             payload = {
