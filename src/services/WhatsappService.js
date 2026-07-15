@@ -108,20 +108,20 @@ class WhatsappService {
             const now = new Date();
             const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
             
+            let eduTotal = 0;
+            let transportTotal = 0;
             const studentNames = [];
-            const allPeriods = new Set();
+            const eduPeriods = new Set();
+            const transportPeriods = new Set();
+            
             for (const st of students) {
-              // Fetch all pending ledgers, only for recurring fee types (EDUCATION, TERM, TRANSPORT)
-              // We will manually filter by feePeriod to avoid broken dueDate in database
               const ledgers = await StudentFeeLedger.find({ 
                 studentId: st._id, 
                 status: { $in: ['PENDING', 'PARTIAL'] },
                 feeType: { $in: ['EDUCATION', 'TERM', 'TRANSPORT'] }
               });
               
-              let studentFeeDue = 0;
-              
-              const currentMonthValue = new Date().getMonth(); // 0=Jan, 6=Jul
+              const currentMonthValue = new Date().getMonth(); 
               const currentAcademicMonthIndex = currentMonthValue >= 5 ? currentMonthValue - 5 : currentMonthValue + 7;
               const periodOrder = {
                 'term 1': 0, 'june': 0, 'july': 1, 'august': 2, 'september': 3, 
@@ -129,66 +129,64 @@ class WhatsappService {
                 'january': 7, 'february': 8, 'march': 9, 'april': 10, 'may': 11
               };
 
+              let stEduDue = 0;
+              let stTransportDue = 0;
+
               for (const l of ledgers) {
                 let isDue = true;
                 if (l.feePeriod) {
                   const pName = l.feePeriod.toLowerCase().trim();
-                  if (periodOrder[pName] !== undefined) {
-                    if (periodOrder[pName] > currentAcademicMonthIndex) {
-                      isDue = false;
-                    }
+                  if (periodOrder[pName] !== undefined && periodOrder[pName] > currentAcademicMonthIndex) {
+                    isDue = false;
                   }
                 }
                 
                 if (isDue) {
-                  studentFeeDue += (l.remainingAmount || 0);
-                  if (l.feePeriod) allPeriods.add(l.feePeriod);
+                  if (l.feeType === 'TRANSPORT') {
+                    stTransportDue += (l.remainingAmount || 0);
+                    if (l.feePeriod) transportPeriods.add(l.feePeriod);
+                  } else {
+                    stEduDue += (l.remainingAmount || 0);
+                    if (l.feePeriod) eduPeriods.add(l.feePeriod);
+                  }
                 }
               }
-              if (studentFeeDue > 0) {
+              if (stEduDue > 0 || stTransportDue > 0) {
                 studentNames.push(st.studentName);
-                feeDue += studentFeeDue;
+                eduTotal += stEduDue;
+                transportTotal += stTransportDue;
               }
             }
 
-            // If no fee due, skip sending reminder to this parent
+            const feeDue = eduTotal + transportTotal;
             if (feeDue <= 0) {
               logger.info(`Skipping ${templateName} for parent ${parent._id} as feeDue is ${feeDue}`);
               continue;
             }
 
-            let periodsStr = '-';
-            
-            if (allPeriods.size > 0) {
-              const periodsArr = Array.from(allPeriods);
+            const formatPeriods = (periodSet) => {
+              if (periodSet.size === 0) return '-';
+              const periodsArr = Array.from(periodSet);
               const terms = periodsArr.filter(p => p.toLowerCase().includes('term'));
               const others = periodsArr.filter(p => !p.toLowerCase().includes('term') && p !== 'One-time');
-              const oneTime = periodsArr.filter(p => p === 'One-time');
-              
-              // Sort months in academic year order
               const monthsOrder = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
               others.sort((a, b) => monthsOrder.indexOf(a) - monthsOrder.indexOf(b));
-              
               let parts = [];
-              
-              if (terms.length > 0) {
-                parts.push(terms.join(', '));
-              }
-              
+              if (terms.length > 0) parts.push(terms.join(', '));
               if (others.length > 0) {
-                if (others.length === 1) {
-                  parts.push(others[0]);
-                } else {
-                  parts.push(`${others[0]} to ${others[others.length - 1]}`);
-                }
+                parts.push(others.length === 1 ? others[0] : `${others[0]} to ${others[others.length - 1]}`);
               }
-              
-              if (oneTime.length > 0) {
-                parts.push('One-time');
-              }
-              
-              periodsStr = parts.join(' + ');
+              return parts.join(' + ');
+            };
+
+            let detailsLines = [];
+            if (eduTotal > 0) {
+               detailsLines.push(`📚 Education & Term (${formatPeriods(eduPeriods)}): ₹${eduTotal}`);
             }
+            if (transportTotal > 0) {
+               detailsLines.push(`🚌 Transport (${formatPeriods(transportPeriods)}): ₹${transportTotal}`);
+            }
+            const periodsStr = detailsLines.join('\n');
 
             // Determine language code based on language from frontend
             const languageCode = language === 'gu' ? 'gu' : 'en';
