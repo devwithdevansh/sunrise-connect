@@ -188,12 +188,20 @@ class WhatsappService {
             }
             const periodsStr = detailsLines.join('\n');
 
-            // Determine language code based on language from frontend
-            const languageCode = language === 'gu' ? 'gu' : 'en';
             // Map fee_reminder to exact approved Meta template names
             const finalTemplateName = templateName === 'fee_reminder' 
               ? (language === 'gu' ? 'fees_gujarati' : 'fees_english') 
               : templateName;
+            
+            // Meta requires the EXACT language code that the template was created with.
+            let languageCode = 'en'; // fallback
+            if (finalTemplateName === 'fees_english') {
+              languageCode = 'en_US'; // because it was created as English (US)
+            } else if (finalTemplateName === 'fees_gujarati') {
+              languageCode = 'en'; // because it was created as English
+            } else if (language === 'gu') {
+              languageCode = 'gu';
+            }
 
             payload = {
               messaging_product: 'whatsapp',
