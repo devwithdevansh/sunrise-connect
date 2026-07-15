@@ -186,7 +186,7 @@ class WhatsappService {
             if (transportTotal > 0) {
                detailsLines.push(`🚌 Transport (${formatPeriods(transportPeriods)}): ₹${transportTotal}`);
             }
-            const periodsStr = detailsLines.join('\n');
+            const periodsStr = detailsLines.join(', ');
 
             // Map fee_reminder to exact approved Meta template names
             const finalTemplateName = templateName === 'fee_reminder' 
