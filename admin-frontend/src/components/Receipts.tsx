@@ -152,7 +152,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
 
   return (
-    <div className="flex-1 p-6 space-y-6 max-w-7xl mx-auto animate-fade-in">
+    <div className="flex-1 p-4 lg:p-6 space-y-4 lg:space-y-6 max-w-7xl mx-auto animate-fade-in w-full">
       {/* Header section */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
