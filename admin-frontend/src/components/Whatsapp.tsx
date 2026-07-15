@@ -437,9 +437,8 @@ export const Whatsapp: React.FC = () => {
                           માનનીય વાલીશ્રી,{"\n\n"}
                           આપને વિનમ્ર યાદ અપાવવામાં આવે છે કે નીચે દર્શાવેલ વિદ્યાર્થીની શાળાની ફી હજુ સુધી ભરવામાં આવી નથી.{"\n\n"}
                           વિદ્યાર્થીનું નામ: Jane Doe{"\n"}
-                          બાકી ફી:{"\n"}
-                          📚 Education & Term (Term 1 + May to July): ₹8000{"\n"}
-                          🚌 Transport (May to July): ₹4000{"\n"}
+                          બાકી શિક્ષણ ફી: Term 1 + June to July (₹2000){"\n"}
+                          બાકી ટ્રાન્સપોર્ટ ફી: June to July (₹1000){"\n"}
                           કુલ બાકી ફીની રકમ: ₹12000{"\n\n"}
                           આપને વિનંતી છે કે બાકી ફી વહેલી તકે શાળાના કાર્યાલયમાં જમા કરાવી આપશો જેથી વિદ્યાર્થીના શૈક્ષણિક કાર્યમાં કોઈ વિક્ષેપ ન આવે.{"\n\n"}
                           જો ફી પહેલેથી જ ભરેલ હોય, તો કૃપા કરીને આ સૂચનાને અવગણશો.{"\n\n"}
@@ -451,9 +450,8 @@ export const Whatsapp: React.FC = () => {
                           Respected Parent,{"\n\n"}
                           This is a gentle reminder that the school fee for the student mentioned below has not been paid yet.{"\n\n"}
                           Student Name: Jane Doe{"\n"}
-                          Pending Fees:{"\n"}
-                          📚 Education & Term (Term 1 + May to July): ₹8000{"\n"}
-                          🚌 Transport (May to July): ₹4000{"\n"}
+                          Pending Education Fees: Term 1 + June to July (₹2000){"\n"}
+                          Pending Transport Fees: June to July (₹1000){"\n"}
                           Total Pending Fee Amount: ₹12000{"\n\n"}
                           You are requested to pay the pending fee at the school office at your earliest convenience so that the student's academic progress is not disrupted.{"\n\n"}
                           If the fee has already been paid, please ignore this notice.{"\n\n"}

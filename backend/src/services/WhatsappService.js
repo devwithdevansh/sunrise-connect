@@ -179,26 +179,48 @@ class WhatsappService {
               return parts.join(' + ');
             };
 
-            let detailsLines = [];
-            if (eduTotal > 0) {
-               detailsLines.push(`Edu (${formatPeriods(eduPeriods)}): ₹${eduTotal}`);
-            }
-            if (transportTotal > 0) {
-               detailsLines.push(`Bus (${formatPeriods(transportPeriods)}): ₹${transportTotal}`);
-            }
-            const periodsStr = detailsLines.join(' + ');
+            let finalTemplateName = templateName;
+            let templateParameters = [];
 
-            // Map fee_reminder to exact approved Meta template names
-            const finalTemplateName = templateName === 'fee_reminder' 
-              ? (language === 'gu' ? 'fees_gujarati' : 'fees_english') 
-              : templateName;
-            
+            if (templateName === 'fee_reminder') {
+              const hasTransport = transportTotal > 0;
+              const hasEdu = eduTotal > 0;
+
+              if (hasTransport) {
+                // Use the new transport template (4 variables)
+                finalTemplateName = language === 'gu' ? 'fees_gujarati_transport' : 'fees_english_transport';
+                
+                const eduStr = hasEdu ? `${formatPeriods(eduPeriods)} (₹${eduTotal})` : 'None (₹0)';
+                const transportStr = `${formatPeriods(transportPeriods)} (₹${transportTotal})`;
+                
+                templateParameters = [
+                  { type: 'text', text: studentNames.join(', ') },
+                  { type: 'text', text: eduStr },
+                  { type: 'text', text: transportStr },
+                  { type: 'text', text: feeDue.toString() }
+                ];
+              } else {
+                // Use the original template (3 variables)
+                finalTemplateName = language === 'gu' ? 'fees_gujarati' : 'fees_english';
+                
+                const eduStr = `${formatPeriods(eduPeriods)} (₹${eduTotal})`;
+                
+                templateParameters = [
+                  { type: 'text', text: studentNames.join(', ') },
+                  { type: 'text', text: eduStr },
+                  { type: 'text', text: feeDue.toString() }
+                ];
+              }
+            }
+
             // Meta requires the EXACT language code that the template was created with.
             let languageCode = 'en'; // fallback
-            if (finalTemplateName === 'fees_english') {
-              languageCode = 'en_US'; // because it was created as English (US)
-            } else if (finalTemplateName === 'fees_gujarati') {
-              languageCode = 'en'; // because it was created as English
+            if (finalTemplateName === 'fees_english' || finalTemplateName === 'fees_english_transport') {
+              // The screenshot shows 'English' for fees_english_transport, which typically maps to 'en' or 'en_US'. 
+              // We'll stick to 'en_US' as that was working for fees_english, or fallback to 'en'.
+              languageCode = 'en_US'; 
+            } else if (finalTemplateName === 'fees_gujarati' || finalTemplateName === 'fees_gujarati_transport') {
+              languageCode = 'en'; // because it was created as English in Meta
             } else if (language === 'gu') {
               languageCode = 'gu';
             }
@@ -213,11 +235,7 @@ class WhatsappService {
                 components: [
                   {
                     type: 'body',
-                    parameters: [
-                      { type: 'text', text: studentNames.join(', ') },
-                      { type: 'text', text: periodsStr },
-                      { type: 'text', text: feeDue.toString() }
-                    ]
+                    parameters: templateParameters
                   }
                 ]
               }
