@@ -181,12 +181,12 @@ class WhatsappService {
 
             let detailsLines = [];
             if (eduTotal > 0) {
-               detailsLines.push(`📚 Education & Term (${formatPeriods(eduPeriods)}): ₹${eduTotal}`);
+               detailsLines.push(`Edu (${formatPeriods(eduPeriods)}): ₹${eduTotal}`);
             }
             if (transportTotal > 0) {
-               detailsLines.push(`🚌 Transport (${formatPeriods(transportPeriods)}): ₹${transportTotal}`);
+               detailsLines.push(`Bus (${formatPeriods(transportPeriods)}): ₹${transportTotal}`);
             }
-            const periodsStr = detailsLines.join(', ');
+            const periodsStr = detailsLines.join(' + ');
 
             // Map fee_reminder to exact approved Meta template names
             const finalTemplateName = templateName === 'fee_reminder' 
