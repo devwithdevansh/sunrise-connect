@@ -226,7 +226,7 @@ export const Whatsapp: React.FC = () => {
 
       {/* ── COMPOSE TAB ─────────────────────────────────────────────────────── */}
       {activeTab === 'compose' && (
-        <div className="flex-1 overflow-y-auto p-6 flex gap-6 max-w-5xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-6 max-w-5xl mx-auto w-full">
           {/* Left: Compose form */}
           <div className="flex-1 space-y-5">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
