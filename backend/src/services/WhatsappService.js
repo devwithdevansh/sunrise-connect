@@ -111,10 +111,12 @@ class WhatsappService {
             const studentNames = [];
             const allPeriods = new Set();
             for (const st of students) {
-              // Fetch all pending ledgers, we will manually filter by feePeriod to avoid broken dueDate in database
+              // Fetch all pending ledgers, only for recurring fee types (EDUCATION, TERM, TRANSPORT)
+              // We will manually filter by feePeriod to avoid broken dueDate in database
               const ledgers = await StudentFeeLedger.find({ 
                 studentId: st._id, 
-                status: { $in: ['PENDING', 'PARTIAL'] }
+                status: { $in: ['PENDING', 'PARTIAL'] },
+                feeType: { $in: ['EDUCATION', 'TERM', 'TRANSPORT'] }
               });
               
               let studentFeeDue = 0;
