@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Menu } from 'lucide-react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
@@ -125,20 +126,39 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
 const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
   const { currentScreen, isScreenLoading } = useApp();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (currentScreen === 'login') {
     return <Login />;
   }
 
   return (
-    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0">
-        {isScreenLoading ? (
-          <ScreenSkeleton />
-        ) : (
-          <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
-        )}
+    <div className="flex bg-[#F8FAFC] h-screen overflow-hidden text-slate-600 font-sans">
+      <Sidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-slate-100 text-slate-600"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <div className="flex items-center gap-2">
+              <img src={logoPath} alt="Logo" className="h-7 w-7 object-contain" />
+              <h1 className="font-bold text-slate-800 text-lg tracking-wide">Sunrise Connect</h1>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-auto relative">
+          {isScreenLoading ? (
+            <ScreenSkeleton />
+          ) : (
+            <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
+          )}
+        </div>
       </main>
     </div>
   );
