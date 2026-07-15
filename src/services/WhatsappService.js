@@ -158,7 +158,7 @@ class WhatsappService {
               }
             }
 
-            const feeDue = eduTotal + transportTotal;
+            feeDue = eduTotal + transportTotal;
             if (feeDue <= 0) {
               logger.info(`Skipping ${templateName} for parent ${parent._id} as feeDue is ${feeDue}`);
               continue;
