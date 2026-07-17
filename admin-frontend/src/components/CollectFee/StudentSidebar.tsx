@@ -17,6 +17,7 @@ interface StudentSidebarProps {
   selectedStudent: Student | null;
   onSelectStudent: (student: Student) => void;
   activeYearName: string;
+  className?: string;
 }
 
 export const StudentSidebar: React.FC<StudentSidebarProps> = ({
@@ -26,6 +27,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   selectedStudent,
   onSelectStudent,
   activeYearName,
+  className = '',
 }) => {
   const { unpaidData } = useApp();
   const PAGE_SIZE = 15;
@@ -100,7 +102,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   const totalPages = Math.ceil(filteredStudents.length / PAGE_SIZE);
 
   return (
-    <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
+    <section className={`w-full md:w-96 p-6 flex-col bg-[#FAFBFD] shrink-0 ${className || 'flex'}`}>
       <h3 className="text-base font-bold text-slate-800 mb-4">1. Find Student</h3>
 
       <div className="relative mb-5 group">

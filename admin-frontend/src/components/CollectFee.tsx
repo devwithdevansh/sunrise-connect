@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import type { Student, PaymentTransaction } from '../mockData';
 import { isPeriodOverdue } from '../utils';
-import { Plus, Check, X, Loader2 } from 'lucide-react';
+import { Plus, Check, X, Loader2, ArrowLeft } from 'lucide-react';
 
 import { buildEduTermConfig, STANDARD_MONTH_PERIODS } from './CollectFee/utils';
 import { PaymentHistoryPanel } from './CollectFee/PaymentHistoryPanel';
@@ -493,12 +493,22 @@ export const CollectFee: React.FC = () => {
           setSelectedYear(activeYearName);
         }}
         activeYearName={activeYearName}
+        className={selectedStudent ? 'hidden md:flex' : 'flex'}
       />
 
       {/* ── RIGHT: Payment Details ───────────────────────────── */}
-      <section className="flex-grow p-6 overflow-y-auto">
+      <section className={`flex-grow p-6 overflow-y-auto ${selectedStudent ? 'block' : 'hidden md:block'}`}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-base font-bold text-slate-800">2. Payment Details</h3>
+          <div className="flex items-center gap-3">
+            <button 
+              type="button"
+              className="md:hidden text-slate-500 hover:text-slate-800 transition-colors p-1"
+              onClick={() => setSelectedStudent(null)}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h3 className="text-base font-bold text-slate-800">2. Payment Details</h3>
+          </div>
           <button
             type="button"
             onClick={() => { if (selectedStudent) setIsCustomFeeModalOpen(true); }}
