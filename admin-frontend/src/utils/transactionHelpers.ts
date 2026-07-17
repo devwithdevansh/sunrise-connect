@@ -39,11 +39,16 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
 
     let firstTx = txGroup[0];
     let student: any = null;
+    let groupReceiptNumber: number | undefined = undefined;
 
     txGroup.forEach((tx: any) => {
       totalAmount += tx.amount || 0;
       totalConcession += tx.concessionAmount || 0;
       reversalIds.push(tx._id);
+
+      if (tx.receiptNumber !== undefined) {
+        groupReceiptNumber = tx.receiptNumber;
+      }
 
       const ledger = tx.ledger;
       if (!student && ledger) {
@@ -128,7 +133,8 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
       reversalIds: reversalIds.join(','),
       paymentBreakdown: paymentBreakdown,
       academicYear: primaryAcademicYear,
-      isDeleted: isDeleted
+      isDeleted: isDeleted,
+      receiptNumber: groupReceiptNumber
     });
   });
 
