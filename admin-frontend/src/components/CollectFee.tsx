@@ -71,10 +71,8 @@ export const CollectFee: React.FC = () => {
         setSelectedYear(activeYearName);
         setSelectedStudentIdForFee(null);
       }
-    } else if (activeStudents.length > 0 && !selectedStudent) {
-      setSelectedStudent(activeStudents[0]);
     }
-  }, [activeStudents, selectedStudent, selectedStudentIdForFee, setSelectedStudentIdForFee]);
+  }, [activeStudents, selectedStudentIdForFee, setSelectedStudentIdForFee, activeYearName]);
 
   // Sync selected student when activeStudents list is refreshed
   useEffect(() => {
