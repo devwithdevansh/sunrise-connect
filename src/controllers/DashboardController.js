@@ -42,10 +42,11 @@ class DashboardController {
   /** GET /api/v1/dashboard/init — BFF bundle endpoint to reduce parallel requests */
   static initDashboard = catchAsync(async (req, res) => {
     // Fetch dynamic data
-    const [students, auditLogs, transactions, users] = await Promise.all([
+    const [students, ledgers, auditLogs, transactions, users] = await Promise.all([
       Student.find({}).populate('parentId', 'parentName primaryMobileNumber secondaryMobileNumber').lean(),
+      ledgerRepository.find({}, null, { limit: 50000 }),
       auditRepository.find({}, { limit: 100 }),
-      paymentRepository.findWithLedger({}, { limit: 2000 }),
+      paymentRepository.findWithLedger({}, { limit: 10000 }),
       User.find({}).select('-password').lean()
     ]);
 
@@ -67,7 +68,7 @@ class DashboardController {
 
     sendResponse(res, 200, {
       students,
-      ledgers: [],
+      ledgers,
       transactions,
       feeStructures,
       transportStructures,
