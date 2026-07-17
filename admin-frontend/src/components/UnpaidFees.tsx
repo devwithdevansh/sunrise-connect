@@ -484,9 +484,9 @@ export const UnpaidFees: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 self-end xl:self-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto xl:self-auto">
           {/* Dropdown Filters */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Standard Selector */}
             <div className="relative">
               <select

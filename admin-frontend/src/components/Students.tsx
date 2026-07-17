@@ -500,8 +500,8 @@ export const Students: React.FC = () => {
         </div>
 
         {/* Quick Chip Filters & Add Student Trigger */}
-        <div className="flex items-center justify-between lg:justify-end gap-3">
-          <div className="bg-slate-100 p-0.5 rounded-lg border border-slate-200/50 flex">
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 w-full">
+          <div className="bg-slate-100 p-0.5 rounded-lg border border-slate-200/50 flex flex-wrap">
             <button
               onClick={() => setChipFilter('ALL')}
               className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all ${chipFilter === 'ALL'

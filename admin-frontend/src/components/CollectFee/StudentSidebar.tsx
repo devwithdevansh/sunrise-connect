@@ -118,8 +118,8 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
                     : 'bg-white border-slate-100 shadow-sm hover:border-slate-200'
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex-1 min-w-[120px]">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <h4 className="font-bold text-slate-800 text-sm">{student.studentName}</h4>
                       {student.isRTE && (
