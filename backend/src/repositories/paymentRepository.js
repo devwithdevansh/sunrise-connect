@@ -80,6 +80,7 @@ const paymentRepository = {
           _id: 1,
           ledgerId: 1,
           ledger: 1,
+          receiptNumber: 1,
           amount: 1,
           method: 1,
           details: 1,

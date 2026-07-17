@@ -21,6 +21,10 @@ const academicYearSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    lastReceiptNumber: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

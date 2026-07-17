@@ -71,6 +71,7 @@ class WhatsappService {
       try {
         let successCount = 0;
         let failureCount = 0;
+        let lastError = null;
 
         const parentDocs = await Parent.find({ _id: { $in: targetParentIds } }).select('primaryMobileNumber');
 
@@ -103,6 +104,12 @@ class WhatsappService {
             let studentQuery = { parentId: parent._id, isActive: true };
             if (targetType === 'STUDENT' && targetFilter && targetFilter.student) {
               studentQuery._id = targetFilter.student;
+            }
+            if (targetType === 'CLASS' && targetFilter && targetFilter.standard) {
+              studentQuery.standard = targetFilter.standard;
+              if (targetFilter.medium) {
+                studentQuery.medium = targetFilter.medium;
+              }
             }
             const students = await Student.find(studentQuery);
 
@@ -253,8 +260,6 @@ class WhatsappService {
             
             payloadsToSend.push(payload);
           }
-
-          let lastError = null;
           for (const payload of payloadsToSend) {
             try {
               const url = `https://graph.facebook.com/v20.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
