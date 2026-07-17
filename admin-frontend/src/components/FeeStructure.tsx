@@ -10,7 +10,7 @@ interface CreateFeeModalProps {
   onSave: (data: Partial<FeeStructureData>) => Promise<boolean>;
 }
 
-const STANDARD_OPTIONS = ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+const STANDARD_OPTIONS = ['Playhouse', 'Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
 const CreateFeeModal: React.FC<CreateFeeModalProps> = ({ initialAcademicYear, onClose, onSave }) => {
   const { academicYears, feeStructures } = useApp();

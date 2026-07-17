@@ -1800,7 +1800,7 @@ class StudentService {
       );
 
       // Map of how standards advance
-      const preSchoolMap = { 'nursery': 'LKG', 'lkg': 'UKG', 'ukg': '1' };
+      const preSchoolMap = { 'playhouse': 'Nursery', 'nursery': 'LKG', 'lkg': 'UKG', 'ukg': '1' };
       const getNextStandard = (currentStd) => {
         const stdLower = String(currentStd).toLowerCase().trim();
         if (preSchoolMap[stdLower]) return preSchoolMap[stdLower];

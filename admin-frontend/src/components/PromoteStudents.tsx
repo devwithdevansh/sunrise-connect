@@ -38,9 +38,9 @@ export const PromoteStudents: React.FC = () => {
       .map(f => f.standard);
     const stdSet = new Set(configuredStds);
     if (stdSet.size === 0) {
-      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      return ['Playhouse', 'Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
     }
-    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    const preSchoolMap: Record<string, number> = { 'playhouse': -4, 'nursery': -3, 'lkg': -2, 'ukg': -1 };
     return Array.from(stdSet).sort((a, b) => {
       const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
       const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
@@ -55,9 +55,9 @@ export const PromoteStudents: React.FC = () => {
       .map(f => f.standard);
     const stdSet = new Set(configuredStds);
     if (stdSet.size === 0) {
-      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      return ['Playhouse', 'Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
     }
-    const preSchoolMap: Record<string, number> = { 'nursery': -3, 'lkg': -2, 'ukg': -1 };
+    const preSchoolMap: Record<string, number> = { 'playhouse': -4, 'nursery': -3, 'lkg': -2, 'ukg': -1 };
     return Array.from(stdSet).sort((a, b) => {
       const orderA = preSchoolMap[a.toLowerCase()] !== undefined ? preSchoolMap[a.toLowerCase()] : (parseInt(a, 10) || 999);
       const orderB = preSchoolMap[b.toLowerCase()] !== undefined ? preSchoolMap[b.toLowerCase()] : (parseInt(b, 10) || 999);
@@ -100,6 +100,8 @@ export const PromoteStudents: React.FC = () => {
       let nextClass = sourceClass;
       if (!isNaN(nextNum)) {
         nextClass = (nextNum + 1).toString();
+      } else if (sourceClass.toLowerCase() === 'playhouse') {
+        nextClass = 'Nursery';
       } else if (sourceClass.toLowerCase() === 'nursery') {
         nextClass = 'LKG';
       } else if (sourceClass.toLowerCase() === 'lkg') {

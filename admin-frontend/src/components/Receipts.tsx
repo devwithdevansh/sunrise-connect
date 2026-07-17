@@ -38,7 +38,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
     const stdSet = new Set(activeYearFeeStructures.map(f => f.standard));
     const list = Array.from(stdSet);
     if (list.length === 0) {
-      return ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      return ['Playhouse', 'Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
     }
     return list.sort((a, b) => {
       const numA = parseInt(a, 10);

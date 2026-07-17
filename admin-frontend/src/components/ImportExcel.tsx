@@ -229,7 +229,7 @@ export const ImportExcel: React.FC = () => {
   const fieldsSchema = [
     { name: 'Student Name', dbName: 'studentName', required: true, example: 'Dhruv Solanki', desc: 'Full name of the student' },
     { name: 'Medium', dbName: 'medium', required: true, example: 'English', desc: 'Must be "English" or "Gujarati"' },
-    { name: 'Standard', dbName: 'standard', required: true, example: 'Nursery', desc: 'Class standard (e.g. Nursery, LKG, UKG, 1, 2 ... 10)' },
+    { name: 'Standard', dbName: 'standard', required: true, example: 'Nursery', desc: 'Class standard (e.g. Playhouse, Nursery, LKG, UKG, 1, 2 ... 10)' },
     { name: 'Division', dbName: 'division', required: true, example: 'A', desc: 'Section/division (A, B, C)' },
     { name: 'Parent Name', dbName: 'parentName', required: true, example: 'Bhavesh Solanki', desc: 'Full name of parent or guardian' },
     { name: 'Parent Mobile', dbName: 'parentMobile', required: true, example: '9009637290', desc: '10-digit Indian mobile number (no country code)' },
