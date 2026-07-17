@@ -37,7 +37,10 @@ export interface LedgerEntry {
 
 
 export interface PaymentTransaction {
+  _id?: string;
   id: string;
+  receiptNumber?: number;
+  ledgerId: string;
   studentId: string;
   studentName: string;
   studentCode: string;

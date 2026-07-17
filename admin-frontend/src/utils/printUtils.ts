@@ -284,7 +284,9 @@ export function generateReceiptHTML(
   const totalAmount = Math.abs(transaction.amount);
   const words = toIndianWords(totalAmount);
   const mode = modeLabel(transaction.method || "");
-  const receiptNo = transaction.id?.slice(-12).toUpperCase() || "N/A";
+  const receiptNo = transaction.receiptNumber 
+    ? transaction.receiptNumber.toString() 
+    : (transaction.id?.slice(-12).toUpperCase() || "N/A");
 
   const period = (() => {
     if (transaction.studentCode) {
