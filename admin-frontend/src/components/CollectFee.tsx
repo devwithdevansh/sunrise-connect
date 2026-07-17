@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
 import type { Student, PaymentTransaction } from '../mockData';
 import { isPeriodOverdue } from '../utils';
-import { Plus, Check, X, Loader2, ArrowLeft } from 'lucide-react';
-
+import { Plus, Check, X, Loader2 } from 'lucide-react';
 import { buildEduTermConfig, STANDARD_MONTH_PERIODS } from './CollectFee/utils';
 import { PaymentHistoryPanel } from './CollectFee/PaymentHistoryPanel';
 import type { TxItem } from './CollectFee/PaymentHistoryPanel';
@@ -477,48 +476,21 @@ export const CollectFee: React.FC = () => {
   // -------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------
-  return (
-    <div className="flex-grow flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-0 h-screen overflow-hidden">
-
-      {/* ── LEFT: Student Finder ─────────────────────────────── */}
-      <StudentSidebar
-        filteredStudents={filteredStudents}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedStudent={selectedStudent}
-        onSelectStudent={(student) => {
-          setSelectedStudent(student);
-          setSelectedFees([]);
-          setFeeCategory('EDUCATION');
-          setSelectedYear(activeYearName);
-        }}
-        activeYearName={activeYearName}
-        className={selectedStudent ? 'hidden md:flex' : 'flex'}
-      />
-
-      {/* ── RIGHT: Payment Details ───────────────────────────── */}
-      <section className={`flex-grow p-6 overflow-y-auto ${selectedStudent ? 'block' : 'hidden md:block'}`}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <button 
-              type="button"
-              className="md:hidden text-slate-500 hover:text-slate-800 transition-colors p-1"
-              onClick={() => setSelectedStudent(null)}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h3 className="text-base font-bold text-slate-800">2. Payment Details</h3>
-          </div>
-          <button
-            type="button"
-            onClick={() => { if (selectedStudent) setIsCustomFeeModalOpen(true); }}
-            disabled={!selectedStudent}
-            className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-3.5 w-3.5 stroke-[3]" />
-            Add Custom Fee
-          </button>
-        </div>
+  const renderPaymentDetails = () => (
+    <>
+      <div className="flex items-center justify-between md:mb-6 mb-4">
+        <h3 className="text-base font-bold text-slate-800 hidden md:block">2. Payment Details</h3>
+        <div className="md:hidden"></div>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); if (selectedStudent) setIsCustomFeeModalOpen(true); }}
+          disabled={!selectedStudent}
+          className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Plus className="h-3.5 w-3.5 stroke-[3]" />
+          Add Custom Fee
+        </button>
+      </div>
 
         {successMsg && (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm py-3 px-4 rounded-xl flex items-center gap-2">
@@ -804,10 +776,36 @@ export const CollectFee: React.FC = () => {
             })()}
           </>
         ) : (
-          <div className="text-center text-slate-400 py-20 text-sm">
+          <div className="text-center text-slate-400 py-20 text-sm hidden md:block">
             Select a student from the left panel to begin
           </div>
         )}
+    </>
+  );
+
+  return (
+    <div className="flex-grow flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-0 h-screen overflow-hidden">
+      <StudentSidebar
+        filteredStudents={filteredStudents}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedStudent={selectedStudent}
+        onSelectStudent={(student) => {
+          if (selectedStudent?._id === student._id) {
+            setSelectedStudent(null);
+          } else {
+            setSelectedStudent(student);
+            setSelectedFees([]);
+            setFeeCategory('EDUCATION');
+            setSelectedYear(activeYearName);
+          }
+        }}
+        activeYearName={activeYearName}
+        renderMobilePaymentDetails={renderPaymentDetails}
+      />
+      
+      <section className="hidden md:block flex-grow p-6 overflow-y-auto">
+        {renderPaymentDetails()}
       </section>
 
       {/* ── CUSTOM FEE MODAL ── */}

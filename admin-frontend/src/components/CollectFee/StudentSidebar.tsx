@@ -17,7 +17,7 @@ interface StudentSidebarProps {
   selectedStudent: Student | null;
   onSelectStudent: (student: Student) => void;
   activeYearName: string;
-  className?: string;
+  renderMobilePaymentDetails?: () => React.ReactNode;
 }
 
 export const StudentSidebar: React.FC<StudentSidebarProps> = ({
@@ -27,7 +27,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   selectedStudent,
   onSelectStudent,
   activeYearName,
-  className = '',
+  renderMobilePaymentDetails,
 }) => {
   const { unpaidData } = useApp();
   const PAGE_SIZE = 15;
@@ -102,7 +102,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   const totalPages = Math.ceil(filteredStudents.length / PAGE_SIZE);
 
   return (
-    <section className={`w-full md:w-96 p-6 flex-col bg-[#FAFBFD] shrink-0 ${className || 'flex'}`}>
+    <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
       <h3 className="text-base font-bold text-slate-800 mb-4">1. Find Student</h3>
 
       <div className="relative mb-5 group">
@@ -169,6 +169,11 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
                     ))}
                   </div>
                 </div>
+                {isSelected && renderMobilePaymentDetails && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 md:hidden cursor-default" onClick={(e) => e.stopPropagation()}>
+                    {renderMobilePaymentDetails()}
+                  </div>
+                )}
               </div>
             );
           })
