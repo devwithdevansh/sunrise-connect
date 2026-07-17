@@ -102,7 +102,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   const totalPages = Math.ceil(filteredStudents.length / PAGE_SIZE);
 
   return (
-    <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink-0">
+    <section className="w-full md:w-96 p-6 flex flex-col bg-[#FAFBFD] shrink md:shrink-0 flex-1 md:flex-none min-h-0">
       <h3 className="text-base font-bold text-slate-800 mb-4">1. Find Student</h3>
 
       <div className="relative mb-5 group">
