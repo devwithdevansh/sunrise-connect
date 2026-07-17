@@ -615,7 +615,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setGlobalUnpaidData(prev => prev.map(studentData => {
           if (studentData._id !== _studentId && studentData.id !== _studentId) return studentData;
           const newPending = (studentData.pendingLedgers || []).map((ledger: any) => {
-            const payment = paymentsPayload.find(p => p.ledgerId === ledger._id);
+            const payment = paymentsPayload.find(p => p.ledgerId === ledger._id || p.ledgerId === ledger.id);
             if (!payment) return ledger;
             const newRemaining = (ledger.remainingAmount ?? ledger.totalAmount ?? 0) - payment.amount - payment.concessionAmount;
             return {
@@ -645,15 +645,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const applyConcession = async (ledgerId: string, amount: number) => {
     try {
+      // Optimistic update for ledger entries
+      setLedgerEntries(prev => prev.map(ledger => {
+        if (ledger._id !== ledgerId && ledger.id !== ledgerId) return ledger;
+        const newConcession = (ledger.concessionAmount || 0) + amount;
+        const newRemaining = (ledger.totalAmount || 0) - (ledger.paidAmount || 0) - newConcession;
+        return {
+          ...ledger,
+          concessionAmount: newConcession,
+          remainingAmount: newRemaining,
+          status: newRemaining <= 0 ? 'PAID' : (ledger.paidAmount && ledger.paidAmount > 0 ? 'PARTIAL' : 'PENDING')
+        };
+      }));
+
+      // Optimistic update for unpaidData
+      setGlobalUnpaidData(prev => prev.map(studentData => {
+        if (!studentData.pendingLedgers) return studentData;
+        const ledgerExists = studentData.pendingLedgers.some((l: any) => l._id === ledgerId || l.id === ledgerId);
+        if (!ledgerExists) return studentData;
+
+        const newPending = studentData.pendingLedgers.map((ledger: any) => {
+          if (ledger._id !== ledgerId && ledger.id !== ledgerId) return ledger;
+          const newRemaining = (ledger.remainingAmount ?? ledger.totalAmount ?? 0) - amount;
+          return {
+            ...ledger,
+            remainingAmount: newRemaining,
+            status: newRemaining <= 0 ? 'PAID' : (newRemaining < (ledger.totalAmount || 0) ? 'PARTIAL' : 'PENDING')
+          };
+        }).filter((l: any) => l.remainingAmount > 0);
+        
+        return {
+          ...studentData,
+          pendingLedgers: newPending,
+          totalPendingAmount: newPending.reduce((sum: number, l: any) => sum + (l.remainingAmount || 0), 0)
+        };
+      }));
+
       const res = await authFetch(`/api/v1/ledgers/${ledgerId}/concession`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, reason: 'Applied concession manually' })
       });
       if (!res.ok) throw new Error('Failed to apply concession');
-      await fetchAll();
+      
+      debouncedFetchAll();
     } catch (err) {
       console.error(err);
+      fetchAll(); // Revert on failure
     }
   };
 
@@ -670,7 +708,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         alert(data.message || `Failed to reverse payment ${paymentId}`);
         return false;
       }
-      await fetchAll();
+      
+      // Delay the fetch slightly to bypass MongoDB replication lag, ensuring the DB is updated
+      setTimeout(() => {
+        fetchAll();
+      }, 1000);
+      
       return true;
     } catch (err: any) {
       console.error(err);
