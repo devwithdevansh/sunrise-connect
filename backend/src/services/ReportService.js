@@ -100,6 +100,7 @@ class ReportService {
             _id: '$_id',
             status: '$status',
             feePeriod: '$feePeriod',
+            feeType: '$feeType',
             academicYear: { $ifNull: ['$academicYearStr', '$academicYear'] },
             remainingAmount: '$remainingAmount',
             totalAmount: '$totalAmount'
