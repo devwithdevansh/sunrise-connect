@@ -69,6 +69,8 @@ class PaymentService {
       const createdPayments = [];
       const batchTxnId = `BATCH_TXN_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
+      let batchReceiptNumber = null;
+
       for (const payData of payments) {
         const { ledgerId, amount, concessionAmount = 0, method, remark } = payData;
 
@@ -76,14 +78,18 @@ class PaymentService {
         const ledger = await ledgerRepository.findById(ledgerId, null, { session });
         if (!ledger) throw new AppError(`Ledger not found for ID: ${ledgerId}`, 404);
 
-        if (amount > 0) {
+        if (batchReceiptNumber === null && amount > 0) {
           const ayDoc = await AcademicYear.findOneAndUpdate(
             { name: ledger.academicYear },
             { $inc: { lastReceiptNumber: 1 } },
             { new: true, session }
           );
           if (!ayDoc) throw new AppError(`Academic year not found for ledger ${ledgerId}`, 404);
-          const receiptNumber = ayDoc.lastReceiptNumber;
+          batchReceiptNumber = ayDoc.lastReceiptNumber;
+        }
+
+        if (amount > 0) {
+          const receiptNumber = batchReceiptNumber;
 
           // Process payment + concession
           const newPaid = ledger.paidAmount + amount;
