@@ -146,8 +146,7 @@ export const Whatsapp: React.FC = () => {
         // If they enter a parent ID, convert it to array for the backend
         payload.parentIds = [parentSearch.trim()];
       } else if (targetType === 'STUDENT') {
-        // Backend doesn't know about STUDENT target, so we override it to PARENT
-        payload.targetType = 'PARENT';
+        payload.targetFilter = { student: selectedStudentForMsg?._id || selectedStudentForMsg?.id };
         const pId = selectedStudentForMsg?.parentId;
         payload.parentIds = pId ? [typeof pId === 'object' ? pId._id || pId.id : pId] : [];
       }
