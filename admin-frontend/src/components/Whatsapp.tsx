@@ -10,7 +10,7 @@ interface SentWhatsappMessage {
   _id: string;
   templateName: string;
   body: string;
-  targetType: 'ALL' | 'CLASS' | 'PARENT';
+  targetType: 'ALL' | 'CLASS' | 'PARENT' | 'STUDENT';
   targetFilter: Record<string, string>;
   targetParentIds: string[];
   successCount: number;
