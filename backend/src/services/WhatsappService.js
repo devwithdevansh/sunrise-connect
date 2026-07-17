@@ -27,15 +27,15 @@ class WhatsappService {
         medium: targetFilter.medium,
         isActive: true
       }).select('parentId');
-      
+
       const pIds = students.map(s => s.parentId).filter(Boolean);
-      
+
       // Filter out parents without a mobile number
       const parents = await Parent.find({
         _id: { $in: pIds },
         primaryMobileNumber: { $exists: true, $ne: '' }
       }).select('_id');
-      
+
       targetParentIds = parents.map((p) => p._id);
     } else if (targetType === 'PARENT') {
       targetParentIds = parentIds || [];
@@ -73,10 +73,10 @@ class WhatsappService {
         let failureCount = 0;
 
         const parentDocs = await Parent.find({ _id: { $in: targetParentIds } }).select('primaryMobileNumber');
-        
+
         for (const parent of parentDocs) {
           if (!parent.primaryMobileNumber) continue;
-          
+
           let phone = parent.primaryMobileNumber;
           // Ensure it has country code, assuming India +91 if length is 10
           if (phone.length === 10) {
@@ -93,7 +93,7 @@ class WhatsappService {
               recipient_type: 'individual',
               to: phone,
               type: 'text',
-              text: { 
+              text: {
                 preview_url: false,
                 body: body || 'Empty message'
               }
@@ -103,29 +103,29 @@ class WhatsappService {
             const students = await Student.find({ parentId: parent._id, isActive: true });
             let feeDue = 0;
             const dueDates = [];
-            
+
             // Get end of current month
             const now = new Date();
             const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-            
+
             let eduTotal = 0;
             let transportTotal = 0;
             const studentNames = [];
             const eduPeriods = new Set();
             const transportPeriods = new Set();
-            
+
             for (const st of students) {
-              const ledgers = await StudentFeeLedger.find({ 
-                studentId: st._id, 
+              const ledgers = await StudentFeeLedger.find({
+                studentId: st._id,
                 status: { $in: ['PENDING', 'PARTIAL'] },
                 feeType: { $in: ['EDUCATION', 'TERM', 'TRANSPORT'] }
               });
-              
-              const currentMonthValue = new Date().getMonth(); 
+
+              const currentMonthValue = new Date().getMonth();
               const currentAcademicMonthIndex = currentMonthValue >= 5 ? currentMonthValue - 5 : currentMonthValue + 7;
               const periodOrder = {
-                'term 1': 0, 'june': 0, 'july': 1, 'august': 2, 'september': 3, 
-                'term 2': 4, 'october': 4, 'november': 5, 'december': 6, 
+                'term 1': 0, 'june': 0, 'july': 1, 'august': 2, 'september': 3,
+                'term 2': 4, 'october': 4, 'november': 5, 'december': 6,
                 'january': 7, 'february': 8, 'march': 9, 'april': 10, 'may': 11
               };
 
@@ -140,7 +140,7 @@ class WhatsappService {
                     isDue = false;
                   }
                 }
-                
+
                 if (isDue) {
                   if (l.feeType === 'TRANSPORT') {
                     stTransportDue += (l.remainingAmount || 0);
@@ -351,7 +351,7 @@ class WhatsappService {
       // It's a delivery status update
       for (const status of payload.statuses) {
         logger.info(`[WhatsApp Webhook] Status update: Message ID ${status.id} is now ${status.status}`);
-        
+
         if (status.status === 'failed') {
           const errorCode = status.errors ? status.errors[0].code : 'Unknown';
           const errorMsg = status.errors ? status.errors[0].title : 'Unknown';
@@ -366,14 +366,14 @@ class WhatsappService {
       // It's an incoming message from a parent
       for (const msg of payload.messages) {
         const fromNumber = msg.from; // Sender's phone number
-        
+
         if (msg.type === 'text') {
           const textBody = msg.text.body;
           logger.info(`[WhatsApp Webhook] Incoming text from ${fromNumber}: ${textBody}`);
         } else {
           logger.info(`[WhatsApp Webhook] Incoming message of type ${msg.type} from ${fromNumber}`);
         }
-        
+
         // TODO: In the future, we could save this message to a database table to show a live chat UI.
       }
     }
