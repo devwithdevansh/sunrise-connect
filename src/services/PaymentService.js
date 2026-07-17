@@ -3,6 +3,7 @@
 // All ledger updates happen inside the SAME session for atomicity (no cross-service session hand-off)
 
 import mongoose from 'mongoose';
+import AcademicYear from '../models/AcademicYear.js';
 import paymentRepository from '../repositories/paymentRepository.js';
 import ledgerRepository from '../repositories/ledgerRepository.js';
 import AuditService from './AuditService.js';
@@ -20,6 +21,14 @@ class PaymentService {
       const ledger = await ledgerRepository.findById(ledgerId, null, { session });
       if (!ledger) throw new AppError('Ledger not found', 404);
 
+      const ayDoc = await AcademicYear.findOneAndUpdate(
+        { name: ledger.academicYear },
+        { $inc: { lastReceiptNumber: 1 } },
+        { new: true, session }
+      );
+      if (!ayDoc) throw new AppError('Academic year not found for ledger', 404);
+      const receiptNumber = ayDoc.lastReceiptNumber;
+
       const newPaid = ledger.paidAmount + amount;
       const newConcession = ledger.concessionAmount + concessionAmount;
       const remaining = ledger.totalAmount - newPaid - newConcession;
@@ -27,7 +36,7 @@ class PaymentService {
 
       const status = remaining === 0 ? 'PAID' : 'PARTIAL';
       // Insert payment record
-      const payment = await paymentRepository.create({ ledgerId, amount, concessionAmount, method, details }, { session });
+      const payment = await paymentRepository.create({ ledgerId, amount, concessionAmount, method, details, receiptNumber }, { session });
 
       // Atomic OCC ledger update
       const updateResult = await ledgerRepository.updateOne(
@@ -68,6 +77,14 @@ class PaymentService {
         if (!ledger) throw new AppError(`Ledger not found for ID: ${ledgerId}`, 404);
 
         if (amount > 0) {
+          const ayDoc = await AcademicYear.findOneAndUpdate(
+            { name: ledger.academicYear },
+            { $inc: { lastReceiptNumber: 1 } },
+            { new: true, session }
+          );
+          if (!ayDoc) throw new AppError(`Academic year not found for ledger ${ledgerId}`, 404);
+          const receiptNumber = ayDoc.lastReceiptNumber;
+
           // Process payment + concession
           const newPaid = ledger.paidAmount + amount;
           const newConcession = ledger.concessionAmount + concessionAmount;
@@ -79,6 +96,7 @@ class PaymentService {
           // Insert payment record
           const payment = await paymentRepository.create({
             ledgerId,
+            receiptNumber,
             amount,
             concessionAmount,
             method,

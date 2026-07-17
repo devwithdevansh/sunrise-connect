@@ -11,6 +11,10 @@ const paymentSchema = new mongoose.Schema(
       required: [true, 'Ledger ID is required'],
       index: true,
     },
+    receiptNumber: {
+      type: Number,
+      // Optional for backwards compatibility
+    },
     amount: {
       type: Number,
       required: [true, 'Amount is required'],
