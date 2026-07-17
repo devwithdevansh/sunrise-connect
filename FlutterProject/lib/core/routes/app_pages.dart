@@ -8,6 +8,8 @@ import '../../modules/auth/login/bindings/login_binding.dart';
 import '../../modules/auth/login/views/login_view.dart';
 import '../../modules/auth/otp/bindings/otp_binding.dart';
 import '../../modules/auth/otp/views/otp_view.dart';
+import '../../modules/auth/create_password/bindings/create_password_binding.dart';
+import '../../modules/auth/create_password/views/create_password_view.dart';
 import '../../modules/dashboard/bindings/dashboard_binding.dart';
 import '../../modules/dashboard/views/dashboard_view.dart';
 import '../../modules/fees/fee_summary/bindings/fee_summary_binding.dart';
@@ -45,6 +47,11 @@ class AppPages {
       name: AppRoutes.otp,
       page: () => const OtpView(),
       binding: OtpBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.createPassword,
+      page: () => const CreatePasswordView(),
+      binding: CreatePasswordBinding(),
     ),
     GetPage(
       name: AppRoutes.dashboard,

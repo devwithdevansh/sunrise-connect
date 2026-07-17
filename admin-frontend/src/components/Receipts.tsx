@@ -17,28 +17,17 @@ interface ReceiptsProps {
 }
 
 export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
-  const { reversePayment, feeStructures, academicYears, authFetch, students } = useApp();
+  const { reversePayment, feeStructures, academicYears, students, transactions: globalTransactions, isLoadingDetails } = useApp();
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
+  // Format transactions whenever raw data or students change
   useEffect(() => {
-    const fetchTxs = async () => {
-      try {
-        setIsLoading(true);
-        const res = await authFetch('/api/v1/payments?limit=2000');
-        const json = await res.json();
-        const formatted = formatTransactions(json.data || [], students);
-        setTransactions(formatted);
-      } catch (err) {
-        console.error('Failed to fetch receipts', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (students.length > 0) {
-      fetchTxs();
+    if (globalTransactions.length > 0 && students.length > 0) {
+      setTransactions(formatTransactions(globalTransactions, students));
+    } else {
+      setTransactions([]);
     }
-  }, [authFetch, students]);
+  }, [globalTransactions, students]);
 
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   const activeYearFeeStructures = useMemo(() => {
@@ -85,6 +74,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const PAGE_SIZE = 15;
 
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
+  const [isReversing, setIsReversing] = useState<string | null>(null);
 
   // Debounce search query by 200ms
   useEffect(() => {
@@ -162,7 +152,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
 
   return (
-    <div className="flex-1 p-6 space-y-6 max-w-7xl mx-auto animate-fade-in">
+    <div className="flex-1 p-4 lg:p-6 space-y-4 lg:space-y-6 max-w-7xl mx-auto animate-fade-in w-full">
       {/* Header section */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -173,7 +163,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
         </div>
       </header>
 
-      {isLoading ? (
+        {isLoadingDetails ? (
         <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           <p className="text-sm font-semibold">Loading receipts...</p>
@@ -451,13 +441,20 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
                                           <button
                                             onClick={async () => {
                                               if (window.confirm(`Are you sure you want to reverse payment of ₹${sub.amount.toLocaleString('en-IN')} for ${sub.description}? This will restore the balance back to the ledger.`)) {
+                                                setIsReversing(sub.id);
                                                 await reversePayment(sub.id);
+                                                setIsReversing(null);
                                               }
                                             }}
-                                            className="inline-flex items-center gap-1 text-red-500 hover:text-red-750 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2.5 py-1 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
+                                            disabled={isReversing === sub.id}
+                                            className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98] ${
+                                              isReversing === sub.id
+                                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                                                : 'text-red-500 hover:text-red-750 hover:bg-red-50 border border-red-200/50 hover:border-red-300'
+                                            }`}
                                           >
-                                            <RotateCcw className="h-2.5 w-2.5" />
-                                            Reverse Item
+                                            <RotateCcw className={`h-2.5 w-2.5 ${isReversing === sub.id ? 'animate-spin' : ''}`} />
+                                            {isReversing === sub.id ? 'Reversing...' : 'Reverse Item'}
                                           </button>
                                         ) : (
                                           <span className="text-slate-350 text-[9px] italic pr-2 font-medium">Not reversible</span>

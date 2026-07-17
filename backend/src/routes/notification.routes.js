@@ -23,6 +23,13 @@ router.get(
   NotificationController.list
 );
 
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('ADMIN'),
+  NotificationController.deleteNotification
+);
+
 // ─── Parent routes ────────────────────────────────────────────────────────────
 // GET    /api/v1/notifications/inbox                 → parent's notification inbox
 // GET    /api/v1/notifications/inbox/unread-count    → badge count

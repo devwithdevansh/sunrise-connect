@@ -9,12 +9,11 @@ import {
   FileSpreadsheet,
   MessageSquare,
   CheckSquare,
-  Square,
-  Loader2
+  Square
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
-  const { students, feeStructures, academicYears, setScreen, authFetch, setSelectedStudentIdForFee } = useApp();
+  const { students, unpaidData, feeStructures, academicYears, setScreen, setSelectedStudentIdForFee } = useApp();
   
   const activeYearName = useMemo(() => academicYears.find(y => y.isActive)?.name || academicYears[0]?.name || '', [academicYears]);
   
@@ -76,28 +75,6 @@ export const UnpaidFees: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [dueFilter, stdFilter, divFilter, mediumFilter, zoneFilter, searchQuery]);
-
-  const [unpaidData, setUnpaidData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  useEffect(() => {
-    const fetchUnpaid = async () => {
-      setIsLoading(true);
-      try {
-        const res = await authFetch('/api/v1/reports/unpaid');
-        const json = await res.json();
-        setUnpaidData(json.data || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (students.length > 0) {
-      fetchUnpaid();
-    }
-  }, [authFetch, students]);
-
   // Combine fetched unpaid data with global students for UI filters
   const mappedUnpaidStudents = useMemo(() => {
     return unpaidData.map(reportItem => {
@@ -108,12 +85,15 @@ export const UnpaidFees: React.FC = () => {
       );
       
       const uniquePeriods = new Set(
-        overdueLedgers.map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
+        overdueLedgers
+          .filter((l: any) => l.feePeriod !== 'One-time')
+          .map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
       );
       const dueCount = uniquePeriods.size;
       
       let status = 'PAID';
       if (globalStudent?.isRTE) status = 'RTE';
+      else if (dueCount === 0 && overdueLedgers.length > 0) status = '1 DUE'; // only One-time
       else if (dueCount === 1) status = '1 DUE';
       else if (dueCount === 2) status = '2 DUE';
       else if (dueCount >= 3) status = '3+ DUE';
@@ -237,7 +217,7 @@ export const UnpaidFees: React.FC = () => {
       if (s.pendingLedgers) {
         s.pendingLedgers.forEach((l: any) => {
           if (isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName)) {
-            const remaining = (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0);
+            const remaining = l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0));
             if (remaining > 0 && l.academicYear) {
               yearsSet.add(l.academicYear);
             }
@@ -324,7 +304,7 @@ export const UnpaidFees: React.FC = () => {
         l.academicYear === year && 
         isLedgerPending(l) &&
         isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName) &&
-        ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0) > 0)
+        (l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0))) > 0
       );
 
       if (studentLedgers.length === 0) return '';
@@ -350,7 +330,7 @@ export const UnpaidFees: React.FC = () => {
       if (!student.pendingLedgers) return 0;
       return student.pendingLedgers
         .filter((l: any) => l.academicYear === year && isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName))
-        .reduce((sum: number, l: any) => sum + Math.max(0, (l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
+        .reduce((sum: number, l: any) => sum + Math.max(0, l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0))), 0);
     };
 
     // 4. Fill Student Row Data
@@ -429,12 +409,6 @@ export const UnpaidFees: React.FC = () => {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Unpaid Fees</h2>
-            {isLoading && (
-              <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
-                <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
-                Loading...
-              </span>
-            )}
           </div>
           <p className="text-xs font-medium text-slate-500 mt-1">
             Track and manage outstanding student dues

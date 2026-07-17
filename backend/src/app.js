@@ -22,6 +22,7 @@ import academicYearRoutes from './routes/academic-year.routes.js';
 import userRoutes             from './routes/user.routes.js';
 import reportRoutes           from './routes/report.routes.js';
 import notificationRoutes     from './routes/notification.routes.js';
+import whatsappRoutes         from './routes/whatsapp.routes.js';
 
 const app = express();
 
@@ -31,17 +32,8 @@ app.set('trust proxy', true);
 // Security headers (XSS, clickjacking, content-type sniffing, etc.)
 app.use(helmet());
 
-// Restrict CORS to the deployed frontend only.
-// Set ALLOWED_ORIGINS in your hosting env vars (comma-separated for multiple).
-const allowedOrigins = env.ALLOWED_ORIGINS
-  ? env.ALLOWED_ORIGINS.split(',')
-  : ['https://sunrise-connect.vercel.app'];
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow server-to-server calls (no origin) and whitelisted origins
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS blocked: ${origin}`));
-  },
+  origin: true,
   credentials: true,
 }));
 
@@ -52,6 +44,17 @@ app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 // ─── Request Logger ───────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.originalUrl}`);
+  next();
+});
+
+// ─── Disable Caching for all API routes ───────────────────────────────────────
+// Prevents Hostinger LiteSpeed (and any proxy/CDN) from caching dynamic API
+// responses which would cause stale badge counts and outdated fee data in UI.
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   next();
 });
 
@@ -76,6 +79,7 @@ app.use(`${V1}/academic-years`, academicYearRoutes);
 app.use(`${V1}/users`,          userRoutes);
 app.use(`${V1}/reports`,        reportRoutes);
 app.use(`${V1}/notifications`,  notificationRoutes);
+app.use(`${V1}/whatsapp`,       whatsappRoutes);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.all('/{*splat}', (req, _res, next) => {

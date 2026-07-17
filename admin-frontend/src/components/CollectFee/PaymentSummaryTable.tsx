@@ -18,6 +18,7 @@ interface PaymentSummaryTableProps {
   setBankName: (v: string) => void;
   getDueAmount: (category: string, period: string) => number;
   onSubmit: (e: React.FormEvent) => void;
+  isSubmitting?: boolean;
 }
 
 export const PaymentSummaryTable: React.FC<PaymentSummaryTableProps> = ({
@@ -31,6 +32,7 @@ export const PaymentSummaryTable: React.FC<PaymentSummaryTableProps> = ({
   setBankName,
   getDueAmount,
   onSubmit,
+  isSubmitting = false,
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -222,14 +224,16 @@ export const PaymentSummaryTable: React.FC<PaymentSummaryTableProps> = ({
       {/* Submit button */}
       <button
         type="submit"
-        disabled={selectedFees.length === 0}
+        disabled={selectedFees.length === 0 || isSubmitting}
         className={`w-full py-3.5 rounded-xl font-bold tracking-wide transition-all text-center flex items-center justify-center gap-2 ${
-          selectedFees.length === 0
+          selectedFees.length === 0 || isSubmitting
             ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
             : 'bg-[#F59E0B] hover:bg-amber-600 text-slate-900 shadow-lg shadow-amber-500/10 hover:scale-[1.01] active:scale-[0.99]'
         }`}
       >
-        {selectedFees.length === 0
+        {isSubmitting
+          ? 'Processing Payment...'
+          : selectedFees.length === 0
           ? 'Select a fee above to collect'
           : `Collect Payment of ₹${totalPayingNow.toLocaleString('en-IN')}`}
       </button>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
+import { useApp } from '../../store';
 import type { Student } from '../../mockData';
 import { isPeriodOverdue, isLedgerPending } from '../../utils';
 
@@ -14,7 +15,6 @@ interface StudentSidebarProps {
   setSearchQuery: (q: string) => void;
   selectedStudent: Student | null;
   onSelectStudent: (student: Student) => void;
-  authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   activeYearName: string;
 }
 
@@ -24,9 +24,9 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
   setSearchQuery,
   selectedStudent,
   onSelectStudent,
-  authFetch,
   activeYearName,
 }) => {
+  const { unpaidData } = useApp();
   const PAGE_SIZE = 15;
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -39,33 +39,9 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     return filteredStudents.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredStudents, currentPage]);
 
-  const [sidebarUnpaidData, setSidebarUnpaidData] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (paginatedStudents.length === 0) {
-      setSidebarUnpaidData([]);
-      return;
-    }
-
-    const fetchSidebarUnpaid = async () => {
-      try {
-        const ids = paginatedStudents.map(s => s._id || s.id).join(',');
-        const res = await authFetch(`/api/v1/reports/unpaid?studentIds=${ids}`);
-        if (res.ok) {
-          const json = await res.json();
-          setSidebarUnpaidData(json.data || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch unpaid statuses for sidebar:', err);
-      }
-    };
-
-    fetchSidebarUnpaid();
-  }, [paginatedStudents, authFetch]);
-
   const getStudentDueLabel = (student: Student): StudentDueInfo => {
     const sId = student._id || student.id;
-    const reportItem = sidebarUnpaidData.find(item => item._id === sId);
+    const reportItem = unpaidData.find((item: any) => item._id === sId);
 
     if (!reportItem || !reportItem.pendingLedgers) {
       return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
@@ -80,10 +56,12 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     }
 
     const uniquePeriods = new Set(
-      overdueLedgers.map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
+      overdueLedgers
+        .filter((l: any) => l.feePeriod !== 'One-time')
+        .map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
     );
     const dueCount = uniquePeriods.size;
-    const amount = overdueLedgers.reduce((sum: number, l: any) => sum + ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0)), 0);
+    const amount = overdueLedgers.reduce((sum: number, l: any) => sum + (l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0))), 0);
 
     let status = '1 DUE';
     if (dueCount === 2) status = '2 DUE';

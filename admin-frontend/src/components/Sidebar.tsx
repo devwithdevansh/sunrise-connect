@@ -32,7 +32,12 @@ interface MenuGroup {
   items: MenuItem[];
 }
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
   const { currentScreen, setScreen, currentUser, logout, activeStudents } = useApp();
 
   if (currentScreen === 'login') return null;
@@ -69,7 +74,7 @@ export const Sidebar: React.FC = () => {
     {
       title: 'NOTIFY',
       items: [
-        { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, disabled: true },
+        ...(currentUser?.role === 'ADMIN' ? [{ id: 'whatsapp' as ScreenType, label: 'WhatsApp', icon: MessageSquare }] : []),
         { id: 'notifications', label: 'Notifications', icon: Bell },
       ]
     },
@@ -92,7 +97,20 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-[#1E293B] text-slate-300 flex flex-col h-screen sticky top-0 shrink-0 border-r border-slate-700/50">
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={onClose}
+        />
+      )}
+      
+      <aside className={`
+        bg-[#1E293B] text-slate-300 flex flex-col h-screen shrink-0 border-r border-slate-700/50
+        transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? 'fixed inset-y-0 left-0 z-50 w-72 translate-x-0 shadow-2xl' : 'fixed inset-y-0 left-0 z-50 w-72 -translate-x-full lg:relative lg:translate-x-0 lg:w-64 lg:flex lg:sticky lg:top-0'}
+      `}>
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-700/50 flex items-center gap-3">
         <div className="flex-shrink-0">
@@ -118,7 +136,12 @@ export const Sidebar: React.FC = () => {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => !item.disabled && setScreen(item.id)}
+                    onClick={() => {
+                      if (!item.disabled) {
+                        setScreen(item.id);
+                        if (onClose) onClose();
+                      }
+                    }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
                         ? 'bg-slate-700/50 text-[#F59E0B] border-l-4 border-[#F59E0B]'
@@ -166,5 +189,6 @@ export const Sidebar: React.FC = () => {
         </div>
       )}
     </aside>
+    </>
   );
 };

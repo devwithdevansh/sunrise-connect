@@ -3,6 +3,7 @@ class AppRoutes {
   static const String onboarding      = '/onboarding';
   static const String login           = '/login';
   static const String otp             = '/otp';
+  static const String createPassword  = '/create-password';
   static const String dashboard       = '/dashboard';
   static const String feeSummary      = '/fee-summary';
   static const String pendingFees     = '/pending-fees';

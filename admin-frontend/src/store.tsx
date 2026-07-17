@@ -82,6 +82,7 @@ interface AppContextType {
   setScreen: (screen: ScreenType) => void;
   students: Student[];
   activeStudents: Student[];
+  unpaidData: any[];
   ledgerEntries: LedgerEntry[];
   transactions: PaymentTransaction[];
   feeStructures: FeeStructureData[];
@@ -89,6 +90,7 @@ interface AppContextType {
   academicYears: AcademicYearData[];
   feeCategories: FeeCategoryData[];
   auditLogs: AuditLog[];
+  users: any[];
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
   recordPayment: (
@@ -136,6 +138,7 @@ interface AppContextType {
   currentUser: { name: string; role: 'ADMIN' | 'STAFF' } | null;
   isLoadingDetails: boolean;
   isScreenLoading: boolean;
+  refreshData: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -150,6 +153,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return saved ? 'dashboard' : 'login';
   });
   const [students, setStudents] = useState<Student[]>([]);
+  const [unpaidData, setGlobalUnpaidData] = useState<any[]>([]);
   const activeStudents = useMemo(() => students.filter(s => s.isActive !== false), [students]);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
@@ -158,6 +162,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(() => {
@@ -268,7 +273,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         const [initRes, unpaidRes] = await Promise.all([
           authFetch('/api/v1/dashboard/init'),
-          authFetch('/api/v1/reports/unpaid')
+          authFetch(`/api/v1/reports/unpaid?_t=${Date.now()}`)
         ]);
         
         if (!initRes.ok) {
@@ -294,10 +299,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYear)
               );
               
-              const uniquePeriods = new Set(overdue.map((l: any) => `${l.academicYear || activeYear}_${l.feePeriod}`));
+              const uniquePeriods = new Set(
+                overdue
+                  .filter((l: any) => l.feePeriod !== 'One-time')
+                  .map((l: any) => `${l.academicYear || activeYear}_${l.feePeriod}`)
+              );
               const dueCount = uniquePeriods.size;
               
-              if (dueCount === 1) status = '1 DUE';
+              if (dueCount === 0 && overdue.length > 0) status = '1 DUE'; // only One-time fees
+              else if (dueCount === 1) status = '1 DUE';
               else if (dueCount === 2) status = '2 DUE';
               else if (dueCount >= 3) status = '3+ DUE';
             }
@@ -316,6 +326,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
         });
         setStudents(mappedStudents);
+        setGlobalUnpaidData(unpaidData);
 
         setFeeStructures(data.feeStructures || []);
         setTransportFeeStructures(data.transportStructures || []);
@@ -329,9 +340,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         setAcademicYears(data.academicYears || []);
         setFeeCategories(data.feeCategories || []);
+        setUsers(data.users || []);
 
         setLedgerEntries([]);
-        setTransactions([]);
+        setTransactions(data.transactions || []);
       } catch (err) {
         console.error('Failed to fetch data from backend', err);
       } finally {
@@ -389,6 +401,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let isSubscribed = true;
 
     const checkSync = async () => {
+      if (document.hidden) return;
       const now = Date.now();
       if (now - lastSyncCheckTimeRef.current < 15000) {
         return;
@@ -527,7 +540,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return;
       }
       // Refresh data
-      debouncedFetchAll();
+      fetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -584,7 +597,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to record batch payment:', errBody);
         alert(errBody.message || 'Failed to record payments. Please try again.');
       } else {
-        debouncedFetchAll();
+        setLedgerEntries(prev => prev.map(ledger => {
+          const payment = paymentsPayload.find(p => p.ledgerId === ledger._id);
+          if (!payment) return ledger;
+          const newPaid = (ledger.paidAmount || 0) + payment.amount;
+          const newConcession = (ledger.concessionAmount || 0) + payment.concessionAmount;
+          const newRemaining = (ledger.totalAmount || 0) - newPaid - newConcession;
+          return {
+            ...ledger,
+            paidAmount: newPaid,
+            concessionAmount: newConcession,
+            remainingAmount: newRemaining,
+            status: newRemaining <= 0 ? 'PAID' : (newPaid > 0 ? 'PARTIAL' : 'PENDING')
+          };
+        }));
+        
+        setGlobalUnpaidData(prev => prev.map(studentData => {
+          if (studentData._id !== _studentId && studentData.id !== _studentId) return studentData;
+          const newPending = (studentData.pendingLedgers || []).map((ledger: any) => {
+            const payment = paymentsPayload.find(p => p.ledgerId === ledger._id);
+            if (!payment) return ledger;
+            const newRemaining = (ledger.remainingAmount ?? ledger.totalAmount ?? 0) - payment.amount - payment.concessionAmount;
+            return {
+              ...ledger,
+              remainingAmount: newRemaining,
+              status: newRemaining <= 0 ? 'PAID' : (newRemaining < (ledger.totalAmount || 0) ? 'PARTIAL' : 'PENDING')
+            };
+          }).filter((l: any) => l.remainingAmount > 0);
+          
+          return {
+            ...studentData,
+            pendingLedgers: newPending,
+            totalPendingAmount: newPending.reduce((sum: number, l: any) => sum + (l.remainingAmount || 0), 0)
+          };
+        }));
+
+        // The optimistic update above instantly and correctly updates the global unpaid data (badge).
+        // The local grid in CollectFee.tsx also performs its own optimistic update.
+        // We DO NOT fetch from the server immediately because MongoDB replication lag often returns 
+        // stale data, which overwrites our optimistic update and causes the badge to incorrectly jump up.
+        // The background sync-state poll will fetch the fully committed data in 0-15 seconds silently.
       }
     } catch (err) {
       console.error(err);
@@ -599,7 +651,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify({ amount, reason: 'Applied concession manually' })
       });
       if (!res.ok) throw new Error('Failed to apply concession');
-      debouncedFetchAll();
+      await fetchAll();
     } catch (err) {
       console.error(err);
     }
@@ -636,7 +688,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update fee structure');
-      debouncedFetchAll();
+      await fetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -1014,6 +1066,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setScreen,
         students,
         activeStudents,
+        unpaidData,
         ledgerEntries,
         transactions,
         feeStructures,
@@ -1021,6 +1074,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         academicYears,
         feeCategories,
         auditLogs,
+        users,
         authFetch,
         addStudent,
         recordPayment,
@@ -1055,7 +1109,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         selectedStudentIdForFee,
         setSelectedStudentIdForFee,
         isLoadingDetails,
-        isScreenLoading
+        isScreenLoading,
+        refreshData: debouncedFetchAll
       }}
     >
       {children}

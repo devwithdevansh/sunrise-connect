@@ -1,21 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../store';
 import { UserPlus, Users, ShieldCheck, ShieldOff, KeyRound, Eye, EyeOff, Trash2 } from 'lucide-react';
 
-interface StaffUser {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  lastLogin: string | null;
-  createdAt: string;
-}
+// Removed StaffUser interface as it's no longer used locally
 
 export const StaffManagement: React.FC = () => {
-  const { currentUser, authFetch } = useApp();
-  const [staffList, setStaffList] = useState<StaffUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { currentUser, authFetch, users, refreshData, isLoadingDetails } = useApp();
+  const staffMembers = users.filter((u: any) => u.role !== 'ADMIN');
 
   // Create form
   const [showForm, setShowForm] = useState(false);
@@ -32,21 +23,6 @@ export const StaffManagement: React.FC = () => {
 
   // Headers are automatically handled by authFetch, but we still need Content-Type for POST/PATCH
   const defaultHeaders = { 'Content-Type': 'application/json' };
-
-  const fetchStaff = async () => {
-    setLoading(true);
-    try {
-      const res = await authFetch('/api/v1/users');
-      const data = await res.json();
-      setStaffList(data.data || []);
-    } catch (err) {
-      console.error('Failed to load staff', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchStaff(); }, []);
 
   const handleCreate = async () => {
     setFormError('');
@@ -72,7 +48,7 @@ export const StaffManagement: React.FC = () => {
       }
       setShowForm(false);
       setFormName(''); setFormEmail(''); setFormPassword('');
-      fetchStaff();
+      refreshData();
     } catch (err) {
       setFormError('Network error');
     } finally {
@@ -82,7 +58,7 @@ export const StaffManagement: React.FC = () => {
 
   const handleToggle = async (userId: string) => {
     await authFetch(`/api/v1/users/${userId}/toggle-status`, { method: 'PATCH' });
-    fetchStaff();
+    refreshData();
   };
 
   const handleResetPassword = async () => {
@@ -101,7 +77,7 @@ export const StaffManagement: React.FC = () => {
     if (!window.confirm(`Are you sure you want to permanently delete the account for "${name}"? This action cannot be undone.`)) return;
     const res = await authFetch(`/api/v1/users/${userId}`, { method: 'DELETE' });
     if (res.ok) {
-      fetchStaff();
+      refreshData();
     } else {
       const data = await res.json();
       alert(data.message || 'Failed to delete staff account');
@@ -176,9 +152,9 @@ export const StaffManagement: React.FC = () => {
 
       {/* Staff List */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        {loading ? (
+        {isLoadingDetails ? (
           <div className="p-10 text-center text-slate-400 font-semibold">Loading staff...</div>
-        ) : staffList.length === 0 ? (
+        ) : staffMembers.length === 0 ? (
           <div className="p-10 text-center text-slate-400">
             <Users className="h-8 w-8 mx-auto mb-2 text-slate-300" />
             <p className="font-bold">No clerk accounts yet</p>
@@ -196,7 +172,7 @@ export const StaffManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {staffList.map(staff => (
+              {staffMembers.map((staff: any) => (
                 <tr key={staff._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 font-bold text-slate-800">{staff.name}</td>
                   <td className="p-4 text-slate-600 font-mono text-xs">{staff.email}</td>

@@ -44,6 +44,7 @@ export const CollectFee: React.FC = () => {
   const [chequeNo, setChequeNo] = useState('');
   const [bankName, setBankName] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [autoSyncSignature, setAutoSyncSignature] = useState<string>('');
 
@@ -390,7 +391,26 @@ export const CollectFee: React.FC = () => {
       return;
     }
 
+    setIsProcessingPayment(true);
     await recordPayment(selectedStudent._id || selectedStudent.id, lineItemsArray);
+    
+    // Optimistic update for the local grid so it instantly turns green
+    setLedgerEntries(prev => prev.map(ledger => {
+      const payment = lineItemsArray.find(p => p.ledgerId === ledger._id);
+      if (!payment) return ledger;
+      const newPaid = (ledger.paidAmount || 0) + payment.paymentAmount;
+      const newConcession = (ledger.concessionAmount || 0) + payment.concessionAmount;
+      const newRemaining = (ledger.totalAmount || 0) - newPaid - newConcession;
+      return {
+        ...ledger,
+        paidAmount: newPaid,
+        concessionAmount: newConcession,
+        remainingAmount: newRemaining,
+        status: newRemaining <= 0 ? 'PAID' : (newPaid > 0 ? 'PARTIAL' : 'PENDING')
+      };
+    }));
+    
+    setIsProcessingPayment(false);
 
     setSuccessMsg(`✓ Collected ₹${totalPayingNow.toLocaleString('en-IN')} for ${selectedStudent.studentName}`);
     setSelectedFees([]);
@@ -472,7 +492,6 @@ export const CollectFee: React.FC = () => {
           setFeeCategory('EDUCATION');
           setSelectedYear(activeYearName);
         }}
-        authFetch={authFetch}
         activeYearName={activeYearName}
       />
 
@@ -724,6 +743,7 @@ export const CollectFee: React.FC = () => {
                 setBankName={setBankName}
                 getDueAmount={getDueAmount}
                 onSubmit={handleSubmit}
+                isSubmitting={isProcessingPayment}
               />
             </div>
 

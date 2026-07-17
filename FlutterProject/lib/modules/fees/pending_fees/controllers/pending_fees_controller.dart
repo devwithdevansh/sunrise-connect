@@ -6,6 +6,7 @@ import '../../../../data/models/fee_model.dart';
 import '../../../../data/repositories/fee_repository.dart';
 import '../../../../services/sound_service.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENUMS & HELPERS
@@ -25,8 +26,8 @@ extension TermGroupX on TermGroup {
 
   IconData get icon {
     switch (this) {
-      case TermGroup.term1: return Icons.wb_sunny_rounded;
-      case TermGroup.term2: return Icons.ac_unit_rounded;
+      case TermGroup.term1: return Icons.assignment_rounded;
+      case TermGroup.term2: return Icons.assignment_rounded;
     }
   }
 }
@@ -139,6 +140,8 @@ class PendingFeesController extends GetxController
 
   final RxSet<String> expandedMonths = <String>{}.obs;
 
+  late Razorpay _razorpay;
+
   // ── Animation ─────────────────────────────────────────────────────────────
   late final AnimationController payBarController;
   late final Animation<double> payBarSlide;
@@ -249,11 +252,24 @@ class PendingFeesController extends GetxController
     payBarFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: payBarController, curve: Curves.easeOut));
     ever(selectedIds, (_) => _syncPayBar());
-    _loadFees();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+
+    if (Get.isRegistered<DashboardController>()) {
+      ever(Get.find<DashboardController>().fees, (_) {
+        _syncWithDashboard();
+      });
+      _syncWithDashboard();
+    } else {
+      _loadFees();
+    }
   }
 
   @override
   void onClose() {
+    _razorpay.clear();
     payBarController.dispose();
     super.onClose();
   }
@@ -265,6 +281,28 @@ class PendingFeesController extends GetxController
   }
 
   // ── Data loading ──────────────────────────────────────────────────────────
+  void _syncWithDashboard() {
+    isLoading.value = true;
+    final allFees = Get.find<DashboardController>().fees;
+    final filteredData = allFees.where((f) => !f.isAdmission && !f.isBagKit).toList();
+    
+    final mapped = filteredData.map((f) => FeeItem(
+      id:       f.id,
+      termName: f.termName,
+      feeType:  f.feeType,
+      amount:   f.amount,
+      paidAmount: f.paidAmount,
+      concessionAmount: f.concessionAmount,
+      remainingAmount: f.remainingAmount,
+      dueDate:  DateTime.tryParse(f.dueDate) ?? DateTime.now(),
+      status:   f.status,
+    )).toList();
+    
+    fees.assignAll(mapped);
+    isLoading.value = false;
+    hasLoadedOnce.value = true;
+  }
+
   Future<void> _loadFees() async {
     isLoading.value = true;
     try {
@@ -277,9 +315,6 @@ class PendingFeesController extends GetxController
         final filteredData = data.where((f) {
           return !f.isAdmission && !f.isBagKit;
         }).toList();
-        
-        print('DEBUG - API returned ${data.length} fees for student $studentId');
-        print('DEBUG - Filtered data has ${filteredData.length} fees');
 
         final mapped = filteredData.map((f) => FeeItem(
           id:       f.id,
@@ -470,14 +505,59 @@ class PendingFeesController extends GetxController
 
     isLoading.value = true;
     try {
-      final batchTxnId = 'TXN${DateTime.now().millisecondsSinceEpoch}';
-      bool allSuccess = true;
-      for (final fee in toPayItems) {
-        final ok = await _feeRepo.payFee(fee.id, fee.remainingAmount, 'online', transactionId: batchTxnId);
-        if (!ok) allSuccess = false;
+      final totalAmount = toPayItems.fold(0.0, (sum, f) => sum + f.remainingAmount);
+      
+      final orderId = await _feeRepo.createRazorpayOrder(totalAmount);
+      if (orderId == null) {
+        throw Exception('Failed to generate order ID');
       }
 
-      if (allSuccess) {
+      final prefs = await SharedPreferences.getInstance();
+      final pNumber = prefs.getString(StorageKeys.phone) ?? '';
+      
+      var options = {
+        'key': 'rzp_test_TB1GJEYwnak6uQ',
+        'amount': (totalAmount * 100).round(),
+        'name': 'Sunrise Connect',
+        'description': 'Fee Payment',
+        'order_id': orderId,
+        'prefill': {
+          'contact': pNumber,
+          'email': 'test@example.com',
+        },
+        'theme': {
+          'color': '#3399cc'
+        }
+      };
+
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint('Error in paySelected: $e');
+      SoundService.instance.play(AppSound.error);
+      Get.snackbar('Payment Error',
+          'Failed to initiate payment. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+      isLoading.value = false;
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      final toPayItems = pendingFees.where((f) => selectedIds.contains(f.id)).toList();
+      final payments = toPayItems.map((f) => {
+        'ledgerId': f.id,
+        'amount': f.remainingAmount,
+        'method': 'ONLINE'
+      }).toList();
+
+      final success = await _feeRepo.verifyRazorpayPayment(
+        response.orderId!,
+        response.paymentId!,
+        response.signature!,
+        payments
+      );
+
+      if (success) {
         SoundService.instance.play(AppSound.success);
         showConfetti.value = true;
         Future.delayed(const Duration(seconds: 4), () {
@@ -519,18 +599,23 @@ class PendingFeesController extends GetxController
         }
       } else {
         SoundService.instance.play(AppSound.error);
-        Get.snackbar('Payment Failed',
-            'Unable to process one or more fees. Please try again.',
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('Verification Failed', 'Payment was successful but verification failed.');
       }
     } catch (e) {
-      debugPrint('Error in paySelected: $e');
-      SoundService.instance.play(AppSound.error);
-      Get.snackbar('Payment Error',
-          'An error occurred. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
+      debugPrint('Error in _handlePaymentSuccess: $e');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    isLoading.value = false;
+    SoundService.instance.play(AppSound.error);
+    Get.snackbar('Payment Failed', response.message ?? 'Payment was cancelled or failed.', snackPosition: SnackPosition.BOTTOM);
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    isLoading.value = false;
+    Get.snackbar('External Wallet', 'Selected wallet: ${response.walletName}');
   }
 }

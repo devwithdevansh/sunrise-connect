@@ -36,7 +36,20 @@ class ReportService {
           as: 'student'
         }
       },
-      { $unwind: '$student' }
+      { $unwind: '$student' },
+      {
+        $lookup: {
+          from: 'academicyears',
+          localField: 'academicYear',
+          foreignField: '_id',
+          as: 'academicYearDoc'
+        }
+      },
+      {
+        $addFields: {
+          academicYearStr: { $arrayElemAt: ['$academicYearDoc.name', 0] }
+        }
+      }
     ];
 
     if (Object.keys(studentMatch).length > 0) {
@@ -50,32 +63,27 @@ class ReportService {
     pipeline.push({
       $lookup: {
         from: 'payments',
-        localField: 'student._id',
-        foreignField: 'studentId',
+        localField: '_id',
+        foreignField: 'ledgerId',
         as: 'payments'
       }
     });
 
     pipeline.push({
       $addFields: {
-        lastPayment: {
-          $arrayElemAt: [
-            {
-              $filter: {
-                input: '$payments',
-                as: 'p',
-                cond: { $ne: ['$$p.isReversal', true] } // ignoring reversed payments
-              }
-            },
-            -1 // wait, arrayElemAt -1 is just the last element, but payments isn't sorted.
-          ]
+        validPayments: {
+          $filter: {
+            input: '$payments',
+            as: 'p',
+            cond: { $ne: ['$$p.isReversal', true] }
+          }
         }
       }
     });
-    // Actually, to get max payment date, we can do $max
+
     pipeline.push({
       $addFields: {
-        lastPaidDate: { $max: '$payments.createdAt' }
+        lastPaidDate: { $max: '$validPayments.createdAt' }
       }
     });
 
@@ -87,8 +95,17 @@ class ReportService {
         division: { $first: '$student.division' },
         rollNumber: { $first: '$student.rollNumber' },
         totalPendingAmount: { $sum: '$remainingAmount' },
-        pendingLedgers: { $push: '$$ROOT' },
-        lastPaidDate: { $first: '$lastPaidDate' }
+        pendingLedgers: {
+          $push: {
+            _id: '$_id',
+            status: '$status',
+            feePeriod: '$feePeriod',
+            academicYear: { $ifNull: ['$academicYearStr', '$academicYear'] },
+            remainingAmount: '$remainingAmount',
+            totalAmount: '$totalAmount'
+          }
+        },
+        lastPaidDate: { $max: '$lastPaidDate' }
       }
     });
 

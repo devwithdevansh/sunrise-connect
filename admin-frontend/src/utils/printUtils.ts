@@ -397,7 +397,6 @@ export function generateReceiptHTML(
       position: relative;
       display: flex;
       flex-direction: column;
-      margin-top: 5mm;
       overflow: hidden;
     }
 

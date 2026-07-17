@@ -18,6 +18,11 @@ const env = {
   RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
   // Comma-separated list of allowed frontend origins (set this in your hosting env vars)
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || 'https://sunrise-connect.vercel.app',
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || 'rzp_test_TB1GJEYwnak6uQ',
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '65c3eMSo5DNCZ4IEVPda4aYh',
+  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+  WHATSAPP_API_TOKEN: process.env.WHATSAPP_API_TOKEN || '',
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'SunriseWebhook2026',
 };
 
 export default env;

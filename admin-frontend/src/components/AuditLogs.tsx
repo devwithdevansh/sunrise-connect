@@ -11,10 +11,8 @@ interface AuditLogEntry {
 }
 
 export const AuditLogs: React.FC = () => {
-  const { authFetch } = useApp();
+  const { auditLogs: globalAuditLogs, users: staffList, isLoadingDetails } = useApp();
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
-  const [staffList, setStaffList] = useState<{ _id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Filters
   const [searchVal, setSearchVal] = useState('');
@@ -41,27 +39,10 @@ export const AuditLogs: React.FC = () => {
   }, [searchQuery, selectedAction, selectedStaff, dateRange]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [auditRes, staffRes] = await Promise.all([
-          authFetch('/api/v1/audit?limit=500'), // Get more logs for filtering
-          authFetch('/api/v1/users')
-        ]);
-        
-        const auditData = await auditRes.json();
-        const staffData = await staffRes.json();
-
-        setLogs(auditData.data || []);
-        setStaffList(staffData.data || []);
-      } catch (err) {
-        console.error('Failed to fetch audit logs', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [authFetch]);
+    // AuditLogs might need mapping from the global AuditLog interface if it diverges, 
+    // but the backend returns the same object.
+    setLogs(globalAuditLogs as any[]);
+  }, [globalAuditLogs]);
 
   // Derived unique actions for the filter dropdown
   const uniqueActions = useMemo(() => {
@@ -215,7 +196,7 @@ export const AuditLogs: React.FC = () => {
 
       {/* Results Table */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        {loading ? (
+        {isLoadingDetails ? (
           <div className="p-12 text-center text-slate-400 font-semibold animate-pulse">Loading audit trail...</div>
         ) : filteredLogs.length === 0 ? (
           <div className="p-12 text-center text-slate-400 flex flex-col items-center">

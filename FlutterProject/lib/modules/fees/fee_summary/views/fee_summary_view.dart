@@ -175,7 +175,7 @@ class FeeSummaryView extends StatelessWidget {
 
               // Term 1 Breakdown
               if (term1Months.isNotEmpty) ...[
-                _buildTermHeader('Term 1  (Jun – Nov)', Icons.wb_sunny_rounded, const Color(0xFFD97706)),
+                _buildTermHeader('Term 1  (Jun – Nov)', Icons.assignment_rounded, const Color(0xFFD97706)),
                 const SizedBox(height: 12),
                 ..._buildMonthCards(term1Months),
                 const SizedBox(height: 20),
@@ -183,7 +183,7 @@ class FeeSummaryView extends StatelessWidget {
 
               // Term 2 Breakdown
               if (term2Months.isNotEmpty) ...[
-                _buildTermHeader('Term 2  (Dec – May)', Icons.ac_unit_rounded, const Color(0xFF2563EB)),
+                _buildTermHeader('Term 2  (Dec – May)', Icons.assignment_rounded, const Color(0xFF2563EB)),
                 const SizedBox(height: 12),
                 ..._buildMonthCards(term2Months),
               ],
@@ -244,7 +244,7 @@ class FeeSummaryView extends StatelessWidget {
           child: Icon(icon, color: color, size: 18),
         ),
         const SizedBox(width: 10),
-        Text(title, style: AppTextStyles.h2),
+        Expanded(child: Text(title, style: AppTextStyles.h2)),
       ],
     );
   }
@@ -275,7 +275,7 @@ class FeeSummaryView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(monthName, style: AppTextStyles.labelLarge),
+                Expanded(child: Text(monthName, style: AppTextStyles.labelLarge)),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
@@ -358,7 +358,7 @@ class FeeSummaryView extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTextStyles.bodyMedium),
+        Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
         Text(
           value,
           style: bold
@@ -412,7 +412,7 @@ class FeeSummaryView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(typeLabel, style: AppTextStyles.labelLarge),
+                    Expanded(child: Text(typeLabel, style: AppTextStyles.labelLarge)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(8)),
@@ -431,7 +431,7 @@ class FeeSummaryView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total Amount:', style: AppTextStyles.bodyMedium),
+                    Expanded(child: Text('Total Amount:', style: AppTextStyles.bodyMedium)),
                     Text('₹${fee.amount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -440,7 +440,7 @@ class FeeSummaryView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Concession Deducted:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal)),
+                      Expanded(child: Text('Concession Deducted:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal))),
                       Text('-₹${fee.concessionAmount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal, fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -449,7 +449,7 @@ class FeeSummaryView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Paid:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal)),
+                    Expanded(child: Text('Paid:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal))),
                     Text('₹${fee.paidAmount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.teal, fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -457,7 +457,7 @@ class FeeSummaryView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Remaining:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.red)),
+                    Expanded(child: Text('Remaining:', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.red))),
                     Text('₹${fee.remainingAmount.toInt()}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.red, fontWeight: FontWeight.w600)),
                   ],
                 ),

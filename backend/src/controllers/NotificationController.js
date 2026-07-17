@@ -35,6 +35,15 @@ class NotificationController {
   });
 
   /**
+   * DELETE /api/v1/notifications/:id
+   * Admin — delete a notification from history
+   */
+  static deleteNotification = catchAsync(async (req, res) => {
+    await NotificationService.deleteNotification(req.user.id, req.params.id);
+    sendResponse(res, 200, null, 'Notification history deleted successfully');
+  });
+
+  /**
    * GET /api/v1/notifications/inbox
    * Parent — get their notification inbox
    */

@@ -71,4 +71,43 @@ class FeeRepository {
       return false;
     }
   }
+
+  Future<String?> createRazorpayOrder(double amount) async {
+    try {
+      final response = await ApiClient.post('/payments/razorpay/order', {'amount': amount});
+      if (response.statusCode == 201) {
+        final body = json.decode(response.body);
+        return body['data']['id'] as String?;
+      }
+    } catch (e) {
+      print('Error in createRazorpayOrder: $e');
+    }
+    return null;
+  }
+
+  Future<bool> verifyRazorpayPayment(String orderId, String paymentId, String signature, List<Map<String, dynamic>> payments) async {
+    try {
+      final random = Random.secure();
+      final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+      final idempotencyKey = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+      final response = await ApiClient.post(
+        '/payments/razorpay/verify',
+        {
+          'razorpay_order_id': orderId,
+          'razorpay_payment_id': paymentId,
+          'razorpay_signature': signature,
+          'payments': payments,
+        },
+        extraHeaders: {
+          'Idempotency-Key': idempotencyKey,
+        }
+      );
+      return response.statusCode == 201;
+    } catch (e) {
+      print('Error in verifyRazorpayPayment: $e');
+      return false;
+    }
+  }
 }
+

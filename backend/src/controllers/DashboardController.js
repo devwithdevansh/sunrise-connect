@@ -3,14 +3,22 @@ import DashboardService from '../services/DashboardService.js';
 import catchAsync from '../utils/catchAsync.js';
 import sendResponse from '../utils/response.js';
 import mongoose from 'mongoose';
-import studentRepository from '../repositories/studentRepository.js';
+import Student from '../models/Student.js';
 import ledgerRepository from '../repositories/ledgerRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
+import auditRepository from '../repositories/auditRepository.js';
 import AcademicYear from '../models/AcademicYear.js';
 import FeeCategory from '../models/FeeCategory.js';
 import FeeStructure from '../models/FeeStructure.js';
 import TransportFeeStructure from '../models/TransportFeeStructure.js';
 import AuditLog from '../models/AuditLog.js';
+import Payment from '../models/Payment.js';
+import User from '../models/User.js';
+const staticCache = {
+  data: null,
+  timestamp: 0
+};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 class DashboardController {
   /** GET /api/v1/dashboard/system */
@@ -33,25 +41,30 @@ class DashboardController {
 
   /** GET /api/v1/dashboard/init — BFF bundle endpoint to reduce parallel requests */
   static initDashboard = catchAsync(async (req, res) => {
-    const [
-      students,
-      ledgers,
-      transactions,
-      feeStructures,
-      transportStructures,
-      auditLogs,
-      academicYears,
-      feeCategories
-    ] = await Promise.all([
-      studentRepository.find({}, null, { limit: 50000 }),
+    // Fetch dynamic data
+    const [students, ledgers, auditLogs, transactions, users] = await Promise.all([
+      Student.find({}).populate('parentId', 'parentName primaryMobileNumber secondaryMobileNumber').lean(),
       ledgerRepository.find({}, null, { limit: 50000 }),
-      paymentRepository.find({}, null, { limit: 10000, sort: { createdAt: -1 } }),
-      FeeStructure.find({ isActive: true }).lean(),
-      TransportFeeStructure.find({ isActive: true }).lean(),
-      AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
-      AcademicYear.find({}).sort({ startDate: -1 }).lean(),
-      FeeCategory.find({}).sort({ order: 1 }).lean()
+      auditRepository.find({}, { limit: 100 }),
+      paymentRepository.findWithLedger({}, { limit: 10000 }),
+      User.find({}).select('-password').lean()
     ]);
+
+    // Fetch or use cached static config
+    let feeStructures, transportStructures, academicYears, feeCategories;
+    
+    if (staticCache.data && (Date.now() - staticCache.timestamp < CACHE_TTL)) {
+      ({ feeStructures, transportStructures, academicYears, feeCategories } = staticCache.data);
+    } else {
+      [feeStructures, transportStructures, academicYears, feeCategories] = await Promise.all([
+        FeeStructure.find({ isActive: true }).lean(),
+        TransportFeeStructure.find({ isActive: true }).lean(),
+        AcademicYear.find({}).sort({ startDate: -1 }).lean(),
+        FeeCategory.find({}).sort({ order: 1 }).lean(),
+      ]);
+      staticCache.data = { feeStructures, transportStructures, academicYears, feeCategories };
+      staticCache.timestamp = Date.now();
+    }
 
     sendResponse(res, 200, {
       students,
@@ -61,7 +74,8 @@ class DashboardController {
       transportStructures,
       auditLogs,
       academicYears,
-      feeCategories
+      feeCategories,
+      users
     });
   });
 

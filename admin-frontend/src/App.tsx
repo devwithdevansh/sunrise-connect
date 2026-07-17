@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Menu } from 'lucide-react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
@@ -14,12 +15,11 @@ import { PromoteStudents } from './components/PromoteStudents';
 import { StaffManagement } from './components/StaffManagement';
 import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
-import {
-  MessageSquare
-} from 'lucide-react';
+
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
 import { Notifications } from './components/Notifications';
+import { Whatsapp } from './components/Whatsapp';
 import { generateReceiptHTML, generateReportHTML, printHTML, fetchAsBase64 } from './utils/printUtils';
 import logoPath from './assets/sunrise-logo.png';
 import watermarkPath from './assets/sunrise-round-logo.png';
@@ -49,27 +49,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
     // Fallback views with high-fidelity polish
     case 'whatsapp':
-      return (
-        <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
-          <div className="bg-emerald-100 text-emerald-600 p-4 rounded-2xl border border-emerald-200">
-            <MessageSquare className="h-8 w-8" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800">WhatsApp Messaging Engine</h3>
-          <p className="text-sm text-slate-500 max-w-sm">
-            Automated alerts, receipts distribution, and due reminders are successfully queued. Integration active with WhatsApp Business API API Gateway.
-          </p>
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-xs font-semibold text-slate-500 max-w-md w-full">
-            <div className="flex justify-between border-b border-slate-200/50 pb-2 mb-2">
-              <span>API Connection Status:</span>
-              <span className="text-emerald-600 font-bold">ACTIVE</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Messages Sent Today:</span>
-              <strong className="text-slate-800">142 Messages</strong>
-            </div>
-          </div>
-        </div>
-      );
+      return <Whatsapp />;
 
     case 'notifications':
       return <Notifications />;
@@ -146,20 +126,39 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 
 const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
   const { currentScreen, isScreenLoading } = useApp();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (currentScreen === 'login') {
     return <Login />;
   }
 
   return (
-    <div className="flex bg-[#F8FAFC] min-h-screen text-slate-600 font-sans">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0">
-        {isScreenLoading ? (
-          <ScreenSkeleton />
-        ) : (
-          <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
-        )}
+    <div className="flex bg-[#F8FAFC] h-screen overflow-hidden text-slate-600 font-sans">
+      <Sidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-slate-100 text-slate-600"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <div className="flex items-center gap-2">
+              <img src={logoPath} alt="Logo" className="h-7 w-7 object-contain" />
+              <h1 className="font-bold text-slate-800 text-lg tracking-wide">Sunrise Connect</h1>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-auto relative">
+          {isScreenLoading ? (
+            <ScreenSkeleton />
+          ) : (
+            <ScreenContent onPrint={onPrint} onPrintReport={onPrintReport} />
+          )}
+        </div>
       </main>
     </div>
   );

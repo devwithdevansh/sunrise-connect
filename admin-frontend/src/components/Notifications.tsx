@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../store';
 import {
   Bell, Send, Users, BookOpen, User,
-  CheckCircle, AlertTriangle, Clock, RefreshCw, X
+  CheckCircle, AlertTriangle, Clock, RefreshCw, X, Trash2
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://linen-weasel-242678.hostingersite.com';
@@ -56,15 +56,17 @@ const DeliveryBadge: React.FC<{ status: SentNotification['deliveryStatus']; succ
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const Notifications: React.FC = () => {
-  const { authFetch, feeStructures, academicYears } = useApp();
+  const { authFetch, feeStructures, academicYears, students, currentUser } = useApp();
   const [activeTab, setActiveTab] = useState<'compose' | 'history'>('compose');
 
   // ── Compose state ──────────────────────────────────────────────────────────
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [targetType, setTargetType] = useState<'ALL' | 'CLASS' | 'PARENT'>('ALL');
+  const [targetType, setTargetType] = useState<'ALL' | 'CLASS' | 'PARENT' | 'STUDENT'>('ALL');
   const [selectedClass, setSelectedClass] = useState<{ standard: string; medium: string }>({ standard: '', medium: '' });
   const [parentSearch, setParentSearch] = useState('');
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const [selectedStudentForMsg, setSelectedStudentForMsg] = useState<any | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -117,6 +119,25 @@ export const Notifications: React.FC = () => {
     if (activeTab === 'history') loadHistory(1);
   }, [activeTab, loadHistory]);
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this notification from history?')) return;
+    try {
+      const res = await authFetch(`/api/v1/notifications/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (history.length === 1 && histPage > 1) {
+          loadHistory(histPage - 1);
+        } else {
+          loadHistory(histPage);
+        }
+      } else {
+        const json = await res.json();
+        alert(json.message || 'Failed to delete notification');
+      }
+    } catch (e) {
+      alert('Network error while deleting');
+    }
+  };
+
   // ── Send notification ──────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) return;
@@ -128,6 +149,10 @@ export const Notifications: React.FC = () => {
         payload.targetFilter = { standard: selectedClass.standard, medium: selectedClass.medium };
       } else if (targetType === 'PARENT') {
         payload.targetFilter = { parentId: parentSearch.trim() };
+      } else if (targetType === 'STUDENT') {
+        payload.targetType = 'PARENT';
+        const pId = selectedStudentForMsg?.parentId;
+        payload.targetFilter = { parentId: pId ? (typeof pId === 'object' ? pId._id || pId.id : pId) : '' };
       }
 
       const res = await authFetch('/api/v1/notifications/send', {
@@ -142,7 +167,7 @@ export const Notifications: React.FC = () => {
           success: true,
           message: `✅ Sent to ${d.successCount ?? 0} device(s). ${d.failureCount ? `${d.failureCount} failed.` : ''}`,
         });
-        setTitle(''); setBody(''); setParentSearch('');
+        setTitle(''); setBody(''); setParentSearch(''); setStudentSearchQuery(''); setSelectedStudentForMsg(null);
       } else {
         setSendResult({ success: false, message: json.message || 'Send failed. Please try again.' });
       }
@@ -156,11 +181,13 @@ export const Notifications: React.FC = () => {
 
   const targetLabel = targetType === 'ALL' ? 'All Parents'
     : targetType === 'CLASS' ? (selectedClass.standard ? `Std ${selectedClass.standard} ${selectedClass.medium}` : 'Pick a class')
+    : targetType === 'STUDENT' ? (selectedStudentForMsg ? `Parent of ${selectedStudentForMsg.studentName}` : 'Specific Student')
     : 'Specific Parent';
 
   const canSend = title.trim().length > 0 && body.trim().length > 0 &&
     (targetType !== 'CLASS' || (selectedClass.standard && selectedClass.medium)) &&
-    (targetType !== 'PARENT' || parentSearch.trim().length > 0);
+    (targetType !== 'PARENT' || parentSearch.trim().length > 0) &&
+    (targetType !== 'STUDENT' || (selectedStudentForMsg && selectedStudentForMsg.parentId));
 
   const formatDate = (iso: string) => {
     try {
@@ -203,7 +230,7 @@ export const Notifications: React.FC = () => {
 
       {/* ── COMPOSE TAB ─────────────────────────────────────────────────────── */}
       {activeTab === 'compose' && (
-        <div className="flex-1 overflow-y-auto p-6 flex gap-6 max-w-5xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-6 max-w-5xl mx-auto w-full">
           {/* Left: Compose form */}
           <div className="flex-1 space-y-5">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
@@ -242,16 +269,17 @@ export const Notifications: React.FC = () => {
               {/* Target Type */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-2">Send to</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {([
                     { id: 'ALL', label: 'All Parents', icon: <Users className="h-4 w-4" />, desc: 'Every parent' },
                     { id: 'CLASS', label: 'By Class', icon: <BookOpen className="h-4 w-4" />, desc: 'Filter by Std + Medium' },
-                    { id: 'PARENT', label: 'Specific Parent', icon: <User className="h-4 w-4" />, desc: 'One parent by ID' },
+                    { id: 'STUDENT', label: 'By Student', icon: <User className="h-4 w-4" />, desc: 'Search name' },
+                    { id: 'PARENT', label: 'By Parent ID', icon: <User className="h-4 w-4" />, desc: 'Raw Mongo ID' },
                   ] as const).map(opt => (
                     <button
                       key={opt.id}
                       id={`target-${opt.id.toLowerCase()}`}
-                      onClick={() => setTargetType(opt.id)}
+                      onClick={() => setTargetType(opt.id as any)}
                       className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all ${
                         targetType === opt.id
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -301,6 +329,57 @@ export const Notifications: React.FC = () => {
                     onChange={e => setParentSearch(e.target.value)}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
+                </div>
+              )}
+
+              {/* Conditional: Student search */}
+              {targetType === 'STUDENT' && (
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Search Student</label>
+                  {!selectedStudentForMsg ? (
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Type student name..."
+                        value={studentSearchQuery}
+                        onChange={e => setStudentSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                      />
+                      {studentSearchQuery.trim().length >= 2 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                          {students.filter((s: any) => (s.studentName || '').toLowerCase().includes(studentSearchQuery.toLowerCase())).slice(0, 5).map((s: any) => (
+                            <button
+                              key={s._id || s.id}
+                              onClick={() => setSelectedStudentForMsg(s)}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-0"
+                            >
+                              <div className="font-semibold text-slate-800">{s.studentName}</div>
+                              <div className="text-[10px] text-slate-500">Std {s.standard} {s.medium} • {s.parentMobile || 'No Parent Phone'}</div>
+                            </button>
+                          ))}
+                          {students.filter((s: any) => (s.studentName || '').toLowerCase().includes(studentSearchQuery.toLowerCase())).length === 0 && (
+                            <div className="px-4 py-3 text-xs text-slate-500 text-center">No students found</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                      <div>
+                        <div className="text-sm font-semibold text-blue-800">{selectedStudentForMsg.studentName}</div>
+                        <div className="text-[10px] text-blue-600">Parent: {selectedStudentForMsg.parentMobile || 'No Phone'}</div>
+                      </div>
+                      <button 
+                        onClick={() => { setSelectedStudentForMsg(null); setStudentSearchQuery(''); }}
+                        className="text-blue-700 hover:text-blue-900 text-xs font-bold px-2 py-1 bg-blue-100 rounded-lg"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+                  {selectedStudentForMsg && !selectedStudentForMsg.parentId && (
+                    <p className="text-[10px] text-red-500 mt-1">This student does not have a linked parent account.</p>
+                  )}
                 </div>
               )}
 
@@ -405,15 +484,26 @@ export const Notifications: React.FC = () => {
                           <DeliveryBadge status={notif.deliveryStatus} success={notif.successCount} fail={notif.failureCount} />
                         </div>
                         <p className="text-slate-500 text-xs mb-2 line-clamp-2">{notif.body}</p>
-                        <div className="flex items-center gap-4 text-[10px] text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {notif.targetType === 'ALL' ? 'All Parents'
-                              : notif.targetType === 'CLASS' ? `Std ${notif.targetFilter?.standard} ${notif.targetFilter?.medium}`
-                              : 'Specific Parent'}
-                          </span>
-                          {notif.sentBy && <span>By {notif.sentBy.name}</span>}
-                          <span>{formatDate(notif.createdAt)}</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-[10px] text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {notif.targetType === 'ALL' ? 'All Parents'
+                                : notif.targetType === 'CLASS' ? `Std ${notif.targetFilter?.standard} ${notif.targetFilter?.medium}`
+                                : 'Specific Parent'}
+                            </span>
+                            {notif.sentBy && <span>By {notif.sentBy.name}</span>}
+                            <span>{formatDate(notif.createdAt)}</span>
+                          </div>
+                          {currentUser?.role === 'ADMIN' && (
+                            <button
+                              onClick={() => handleDelete(notif._id)}
+                              className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                              title="Delete from history"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

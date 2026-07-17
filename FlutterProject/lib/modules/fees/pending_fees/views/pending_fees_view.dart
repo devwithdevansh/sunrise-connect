@@ -323,7 +323,7 @@ class _QuickSelect extends StatelessWidget {
       ]),
       const SizedBox(height: 10),
       SizedBox(
-        height: 40,
+        height: 55,
         child: ListView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
@@ -1086,7 +1086,8 @@ class _PaySheet extends StatelessWidget {
               Expanded(
                 child: GestureDetector(
                   onTap: () => Get.back(),
-                  child: Container(height: 50,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(color: _C.pageBg, borderRadius: BorderRadius.circular(13), border: Border.all(color: _C.borderMid)),
                     child: const Center(child: Text('Cancel', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _C.inkMid)))),
                 ),
@@ -1105,7 +1106,8 @@ class _PaySheet extends StatelessWidget {
                         margin: const EdgeInsets.all(16), borderRadius: 14,
                         duration: const Duration(seconds: 3));
                   },
-                  child: Container(height: 50,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(colors: [Color(0xFF1B3A7A), Color(0xFF2E4E9A)]),
                       borderRadius: BorderRadius.circular(13),

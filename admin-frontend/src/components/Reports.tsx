@@ -10,7 +10,7 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { activeStudents, authFetch, academicYears, feeStructures } = useApp();
+  const { activeStudents, unpaidData, feeStructures, academicYears, transactions: globalTransactions } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
@@ -67,43 +67,20 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   }, [dynamicMediums]);
 
   const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
-  const [unpaidData, setUnpaidData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchDaily = async () => {
-      if (activeTab !== 'daily') return;
-      setIsLoading(true);
-      try {
-        const txRes = await authFetch(`/api/v1/payments?date=${selectedDate}&limit=2000`);
-        const txData = await txRes.json();
-        const formatted = formatTransactions(txData.data || [], activeStudents);
-        setDailyTransactions(formatted);
-      } catch (err) {
-        console.error('Failed to fetch daily', err);
-      } finally {
-        setIsLoading(false);
+    if (activeTab === 'daily') {
+      const filtered = globalTransactions.filter((tx: any) => {
+        const txDate = new Date(tx.createdAt).toISOString().split('T')[0];
+        return txDate === selectedDate;
+      });
+      if (filtered.length > 0 && activeStudents.length > 0) {
+        setDailyTransactions(formatTransactions(filtered, activeStudents));
+      } else {
+        setDailyTransactions([]);
       }
-    };
-    fetchDaily();
-  }, [activeTab, selectedDate, authFetch, activeStudents]);
-
-  useEffect(() => {
-    const fetchUnpaid = async () => {
-      if (activeTab === 'daily') return;
-      setIsLoading(true);
-      try {
-        const res = await authFetch('/api/v1/reports/unpaid');
-        const json = await res.json();
-        setUnpaidData(json.data || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUnpaid();
-  }, [activeTab, authFetch]);
+    }
+  }, [activeTab, selectedDate, globalTransactions, activeStudents]);
 
   // ==========================================
   // 1. DAILY COLLECTIONS REPORT CALCULATION
@@ -162,7 +139,9 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       );
       
       const uniquePeriods = new Set(
-        overdueLedgers.map((l: any) => `${l.academicYear || ''}_${l.feePeriod}`)
+        overdueLedgers
+          .filter((l: any) => l.feePeriod !== 'One-time')
+          .map((l: any) => `${l.academicYear || ''}_${l.feePeriod}`)
       );
 
       let educationDue = 0;
@@ -378,7 +357,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Reports & Analytics</h2>
-            {isLoading && (
+            {false && (
               <span className="flex items-center gap-1.5 bg-amber-50 text-[#F59E0B] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-100 animate-pulse">
                 <Loader2 className="animate-spin h-3 w-3 text-[#F59E0B]" strokeWidth={3} />
                 Loading...
