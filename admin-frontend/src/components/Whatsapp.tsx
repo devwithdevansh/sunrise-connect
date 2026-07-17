@@ -146,7 +146,10 @@ export const Whatsapp: React.FC = () => {
         // If they enter a parent ID, convert it to array for the backend
         payload.parentIds = [parentSearch.trim()];
       } else if (targetType === 'STUDENT') {
-        payload.targetFilter = { student: selectedStudentForMsg?._id || selectedStudentForMsg?.id };
+        payload.targetFilter = { 
+          student: selectedStudentForMsg?._id || selectedStudentForMsg?.id,
+          studentName: selectedStudentForMsg?.studentName
+        };
         const pId = selectedStudentForMsg?.parentId;
         payload.parentIds = pId ? [typeof pId === 'object' ? pId._id || pId.id : pId] : [];
       }
@@ -573,10 +576,20 @@ export const Whatsapp: React.FC = () => {
                           <Users className="h-3.5 w-3.5" />
                           Target: <span className="font-semibold text-slate-700">{msg.targetType}</span>
                         </span>
-                        {msg.targetType === 'CLASS' && (
+                        {msg.targetType === 'CLASS' && msg.targetFilter && (
                           <span className="flex items-center gap-1">
                             <BookOpen className="h-3.5 w-3.5" />
-                            Class: <span className="font-semibold text-slate-700">Std {msg.targetFilter?.standard} {msg.targetFilter?.medium}</span>
+                            Class: <span className="font-semibold text-slate-700">Std {msg.targetFilter.standard} {msg.targetFilter.medium}</span>
+                          </span>
+                        )}
+                        {msg.targetType === 'STUDENT' && msg.targetFilter && msg.targetFilter.studentName && (
+                          <span className="flex items-center gap-1 text-slate-600">
+                            (Student: <span className="font-semibold text-slate-700">{msg.targetFilter.studentName}</span>)
+                          </span>
+                        )}
+                        {msg.targetType === 'PARENT' && (
+                          <span className="flex items-center gap-1 text-slate-600">
+                            (Parent Specific)
                           </span>
                         )}
                       </div>
