@@ -27,17 +27,17 @@ class WhatsappService {
         medium: targetFilter.medium,
         isActive: true
       }).select('parentId');
-      
+
       const pIds = students.map(s => s.parentId).filter(Boolean);
-      
+
       // Filter out parents without a mobile number
       const parents = await Parent.find({
         _id: { $in: pIds },
         primaryMobileNumber: { $exists: true, $ne: '' }
       }).select('_id');
-      
+
       targetParentIds = parents.map((p) => p._id);
-    } else if (targetType === 'PARENT') {
+    } else if (targetType === 'PARENT' || targetType === 'STUDENT') {
       targetParentIds = parentIds || [];
     }
 
@@ -73,64 +73,58 @@ class WhatsappService {
         let failureCount = 0;
 
         const parentDocs = await Parent.find({ _id: { $in: targetParentIds } }).select('primaryMobileNumber');
-        
+
         for (const parent of parentDocs) {
           if (!parent.primaryMobileNumber) continue;
-          
+
           let phone = parent.primaryMobileNumber;
           // Ensure it has country code, assuming India +91 if length is 10
           if (phone.length === 10) {
             phone = '91' + phone;
           }
 
-          let payload;
+          let payloadsToSend = [];
 
           if (templateName === 'custom_message') {
             // Send a free-form text message
             // Note: This requires the recipient to have messaged the business within the last 24 hours.
-            payload = {
+            payloadsToSend.push({
               messaging_product: 'whatsapp',
               recipient_type: 'individual',
               to: phone,
               type: 'text',
-              text: { 
+              text: {
                 preview_url: false,
                 body: body || 'Empty message'
               }
-            };
+            });
           } else if (templateName.startsWith('fee_reminder')) {
-            // 1. Fetch active students for this parent
-            const students = await Student.find({ parentId: parent._id, isActive: true });
-            let feeDue = 0;
-            const dueDates = [];
-            
-            // Get end of current month
-            const now = new Date();
-            const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-            
-            let eduTotal = 0;
-            let transportTotal = 0;
-            const studentNames = [];
-            const eduPeriods = new Set();
-            const transportPeriods = new Set();
-            
+            // 1. Fetch active students for this parent. If targetType is STUDENT, only fetch that one.
+            let studentQuery = { parentId: parent._id, isActive: true };
+            if (targetType === 'STUDENT' && targetFilter && targetFilter.student) {
+              studentQuery._id = targetFilter.student;
+            }
+            const students = await Student.find(studentQuery);
+
             for (const st of students) {
-              const ledgers = await StudentFeeLedger.find({ 
-                studentId: st._id, 
+              const ledgers = await StudentFeeLedger.find({
+                studentId: st._id,
                 status: { $in: ['PENDING', 'PARTIAL'] },
                 feeType: { $in: ['EDUCATION', 'TERM', 'TRANSPORT'] }
               });
+
+              let eduTotal = 0;
+              let transportTotal = 0;
+              const eduPeriods = new Set();
+              const transportPeriods = new Set();
               
-              const currentMonthValue = new Date().getMonth(); 
+              const currentMonthValue = new Date().getMonth();
               const currentAcademicMonthIndex = currentMonthValue >= 5 ? currentMonthValue - 5 : currentMonthValue + 7;
               const periodOrder = {
-                'term 1': 0, 'june': 0, 'july': 1, 'august': 2, 'september': 3, 
-                'term 2': 4, 'october': 4, 'november': 5, 'december': 6, 
+                'term 1': 0, 'june': 0, 'july': 1, 'august': 2, 'september': 3,
+                'term 2': 4, 'october': 4, 'november': 5, 'december': 6,
                 'january': 7, 'february': 8, 'march': 9, 'april': 10, 'may': 11
               };
-
-              let stEduDue = 0;
-              let stTransportDue = 0;
 
               for (const l of ledgers) {
                 let isDue = true;
@@ -140,110 +134,103 @@ class WhatsappService {
                     isDue = false;
                   }
                 }
-                
+
                 if (isDue) {
                   if (l.feeType === 'TRANSPORT') {
-                    stTransportDue += (l.remainingAmount || 0);
+                    transportTotal += (l.remainingAmount || 0);
                     if (l.feePeriod) transportPeriods.add(l.feePeriod);
                   } else {
-                    stEduDue += (l.remainingAmount || 0);
+                    eduTotal += (l.remainingAmount || 0);
                     if (l.feePeriod) eduPeriods.add(l.feePeriod);
                   }
                 }
               }
-              if (stEduDue > 0 || stTransportDue > 0) {
-                studentNames.push(st.studentName);
-                eduTotal += stEduDue;
-                transportTotal += stTransportDue;
+
+              const feeDue = eduTotal + transportTotal;
+              if (feeDue <= 0) {
+                logger.info(`Skipping ${templateName} for student ${st._id} (parent ${parent._id}) as feeDue is ${feeDue}`);
+                continue;
               }
-            }
 
-            feeDue = eduTotal + transportTotal;
-            if (feeDue <= 0) {
-              logger.info(`Skipping ${templateName} for parent ${parent._id} as feeDue is ${feeDue}`);
-              continue;
-            }
+              const formatPeriods = (periodSet) => {
+                if (periodSet.size === 0) return '-';
+                const periodsArr = Array.from(periodSet);
+                const terms = periodsArr.filter(p => p.toLowerCase().includes('term'));
+                const others = periodsArr.filter(p => !p.toLowerCase().includes('term') && p !== 'One-time');
+                const monthsOrder = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+                others.sort((a, b) => monthsOrder.indexOf(a) - monthsOrder.indexOf(b));
+                let parts = [];
+                if (terms.length > 0) parts.push(terms.join(', '));
+                if (others.length > 0) {
+                  parts.push(others.length === 1 ? others[0] : `${others[0]} to ${others[others.length - 1]}`);
+                }
+                return parts.join(' + ');
+              };
 
-            const formatPeriods = (periodSet) => {
-              if (periodSet.size === 0) return '-';
-              const periodsArr = Array.from(periodSet);
-              const terms = periodsArr.filter(p => p.toLowerCase().includes('term'));
-              const others = periodsArr.filter(p => !p.toLowerCase().includes('term') && p !== 'One-time');
-              const monthsOrder = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-              others.sort((a, b) => monthsOrder.indexOf(a) - monthsOrder.indexOf(b));
-              let parts = [];
-              if (terms.length > 0) parts.push(terms.join(', '));
-              if (others.length > 0) {
-                parts.push(others.length === 1 ? others[0] : `${others[0]} to ${others[others.length - 1]}`);
+              let finalTemplateName = templateName;
+              let templateParameters = [];
+
+              if (templateName === 'fee_reminder') {
+                const hasTransport = transportTotal > 0;
+                const hasEdu = eduTotal > 0;
+
+                if (hasTransport) {
+                  // Use the new transport template (4 variables)
+                  finalTemplateName = language === 'gu' ? 'fees_gujarati_transport' : 'fees_english_transport';
+                  
+                  const eduStr = hasEdu ? `${formatPeriods(eduPeriods)} (₹${eduTotal})` : 'None (₹0)';
+                  const transportStr = `${formatPeriods(transportPeriods)} (₹${transportTotal})`;
+                  
+                  templateParameters = [
+                    { type: 'text', text: st.studentName },
+                    { type: 'text', text: eduStr },
+                    { type: 'text', text: transportStr },
+                    { type: 'text', text: feeDue.toString() }
+                  ];
+                } else {
+                  // Use the original template (3 variables)
+                  finalTemplateName = language === 'gu' ? 'fees_gujarati' : 'fees_english';
+                  
+                  const eduStr = `${formatPeriods(eduPeriods)} (₹${eduTotal})`;
+                  
+                  templateParameters = [
+                    { type: 'text', text: st.studentName },
+                    { type: 'text', text: eduStr },
+                    { type: 'text', text: feeDue.toString() }
+                  ];
+                }
               }
-              return parts.join(' + ');
-            };
 
-            let finalTemplateName = templateName;
-            let templateParameters = [];
-
-            if (templateName === 'fee_reminder') {
-              const hasTransport = transportTotal > 0;
-              const hasEdu = eduTotal > 0;
-
-              if (hasTransport) {
-                // Use the new transport template (4 variables)
-                finalTemplateName = language === 'gu' ? 'fees_gujarati_transport' : 'fees_english_transport';
-                
-                const eduStr = hasEdu ? `${formatPeriods(eduPeriods)} (₹${eduTotal})` : 'None (₹0)';
-                const transportStr = `${formatPeriods(transportPeriods)} (₹${transportTotal})`;
-                
-                templateParameters = [
-                  { type: 'text', text: studentNames.join(', ') },
-                  { type: 'text', text: eduStr },
-                  { type: 'text', text: transportStr },
-                  { type: 'text', text: feeDue.toString() }
-                ];
-              } else {
-                // Use the original template (3 variables)
-                finalTemplateName = language === 'gu' ? 'fees_gujarati' : 'fees_english';
-                
-                const eduStr = `${formatPeriods(eduPeriods)} (₹${eduTotal})`;
-                
-                templateParameters = [
-                  { type: 'text', text: studentNames.join(', ') },
-                  { type: 'text', text: eduStr },
-                  { type: 'text', text: feeDue.toString() }
-                ];
+              // Meta requires the EXACT language code that the template was created with.
+              let languageCode = 'en'; // fallback
+              if (finalTemplateName === 'fees_english' || finalTemplateName === 'fees_english_transport') {
+                languageCode = 'en_US'; 
+              } else if (finalTemplateName === 'fees_gujarati' || finalTemplateName === 'fees_gujarati_transport') {
+                languageCode = 'en'; // because it was created as English in Meta
+              } else if (language === 'gu') {
+                languageCode = 'gu';
               }
-            }
 
-            // Meta requires the EXACT language code that the template was created with.
-            let languageCode = 'en'; // fallback
-            if (finalTemplateName === 'fees_english' || finalTemplateName === 'fees_english_transport') {
-              // The screenshot shows 'English' for fees_english_transport, which typically maps to 'en' or 'en_US'. 
-              // We'll stick to 'en_US' as that was working for fees_english, or fallback to 'en'.
-              languageCode = 'en_US'; 
-            } else if (finalTemplateName === 'fees_gujarati' || finalTemplateName === 'fees_gujarati_transport') {
-              languageCode = 'en'; // because it was created as English in Meta
-            } else if (language === 'gu') {
-              languageCode = 'gu';
+              payloadsToSend.push({
+                messaging_product: 'whatsapp',
+                to: phone,
+                type: 'template',
+                template: {
+                  name: finalTemplateName,
+                  language: { code: languageCode },
+                  components: [
+                    {
+                      type: 'body',
+                      parameters: templateParameters
+                    }
+                  ]
+                }
+              });
             }
-
-            payload = {
-              messaging_product: 'whatsapp',
-              to: phone,
-              type: 'template',
-              template: {
-                name: finalTemplateName,
-                language: { code: languageCode },
-                components: [
-                  {
-                    type: 'body',
-                    parameters: templateParameters
-                  }
-                ]
-              }
-            };
           } else {
             // Generic template message
             const languageCode = language === 'gu' ? 'gu' : 'en_US'; // Keep en_US default for other generic templates if not specified
-            payload = {
+            let payload = {
               messaging_product: 'whatsapp',
               to: phone,
               type: 'template',
@@ -263,29 +250,33 @@ class WhatsappService {
                 }
               ];
             }
+            
+            payloadsToSend.push(payload);
           }
 
-          try {
-            const url = `https://graph.facebook.com/v20.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${env.WHATSAPP_API_TOKEN}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
-            });
+          for (const payload of payloadsToSend) {
+            try {
+              const url = `https://graph.facebook.com/v20.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+              const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${env.WHATSAPP_API_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+              });
 
-            if (!response.ok) {
-              const errJson = await response.json();
-              logger.error(`WhatsApp send failed to ${phone}: ${JSON.stringify(errJson)}`);
+              if (!response.ok) {
+                const errJson = await response.json();
+                logger.error(`WhatsApp send failed to ${phone}: ${JSON.stringify(errJson)}`);
+                failureCount++;
+              } else {
+                successCount++;
+              }
+            } catch (fetchErr) {
+              logger.error(`WhatsApp network error to ${phone}: ${fetchErr}`);
               failureCount++;
-            } else {
-              successCount++;
             }
-          } catch (fetchErr) {
-            logger.error(`WhatsApp network error to ${phone}: ${fetchErr}`);
-            failureCount++;
           }
         }
 
@@ -351,7 +342,7 @@ class WhatsappService {
       // It's a delivery status update
       for (const status of payload.statuses) {
         logger.info(`[WhatsApp Webhook] Status update: Message ID ${status.id} is now ${status.status}`);
-        
+
         if (status.status === 'failed') {
           const errorCode = status.errors ? status.errors[0].code : 'Unknown';
           const errorMsg = status.errors ? status.errors[0].title : 'Unknown';
@@ -366,14 +357,14 @@ class WhatsappService {
       // It's an incoming message from a parent
       for (const msg of payload.messages) {
         const fromNumber = msg.from; // Sender's phone number
-        
+
         if (msg.type === 'text') {
           const textBody = msg.text.body;
           logger.info(`[WhatsApp Webhook] Incoming text from ${fromNumber}: ${textBody}`);
         } else {
           logger.info(`[WhatsApp Webhook] Incoming message of type ${msg.type} from ${fromNumber}`);
         }
-        
+
         // TODO: In the future, we could save this message to a database table to show a live chat UI.
       }
     }
