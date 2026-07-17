@@ -498,6 +498,8 @@ class PendingFeesController extends GetxController
 
   // ── Payment ───────────────────────────────────────────────────────────────
   Future<void> paySelected() async {
+    if (isLoading.value) return; // Prevent double-tap double-charges
+
     final toPayItems = pendingFees
         .where((f) => selectedIds.contains(f.id))
         .toList();

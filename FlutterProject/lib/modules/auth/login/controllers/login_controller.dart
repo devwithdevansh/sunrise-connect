@@ -22,6 +22,7 @@ class LoginController extends GetxController {
       if (response.statusCode == 200) {
         final body = json.decode(response.body);
         final accessToken = body['data']['accessToken'] as String;
+        final refreshToken = body['data']['refreshToken'] as String?; // might be missing if backend not updated but schema says it's there
 
         // Decode token to extract parentId
         final jwtData = ApiClient.decodeJwt(accessToken);
@@ -30,6 +31,9 @@ class LoginController extends GetxController {
         final prefs = await SharedPreferences.getInstance();
         const secureStorage = FlutterSecureStorage();
         await secureStorage.write(key: StorageKeys.accessToken, value: accessToken);
+        if (refreshToken != null) {
+          await secureStorage.write(key: 'refresh_token', value: refreshToken);
+        }
         await prefs.setString(StorageKeys.parentId, parentId);
         await prefs.setString(StorageKeys.phone, phone);
         await prefs.setBool(StorageKeys.isLoggedIn, true);

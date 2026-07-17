@@ -7,6 +7,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/constants/storage_keys.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../../services/sound_service.dart';
 
@@ -15,9 +16,14 @@ class ProfileView extends StatelessWidget {
 
   Future<void> _logout() async {
     SoundService.instance.play(AppSound.pop);
+    
+    // Unregister FCM token from backend to stop receiving notifications
+    await FcmService.removeToken();
+
     final prefs = await SharedPreferences.getInstance();
     const secureStorage = FlutterSecureStorage();
     await secureStorage.delete(key: StorageKeys.accessToken);
+    await secureStorage.delete(key: 'refresh_token');
     await prefs.remove(StorageKeys.parentId);
     await prefs.remove(StorageKeys.studentId);
     await prefs.remove(StorageKeys.phone);

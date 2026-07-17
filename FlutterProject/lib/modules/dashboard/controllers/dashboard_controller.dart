@@ -261,79 +261,9 @@ class DashboardController extends GetxController {
     }
   }
 
-  /// Perform fee payment
+  /// Navigate to Pending Fees view to process payment via Razorpay
   Future<void> payFee(FeeModel fee) async {
     if (fee.isPaid) return;
-
-    isLoading.value = true;
-    final success = await _feeRepo.payFee(fee.id, fee.remainingAmount, 'online');
-
-    if (success) {
-      // ── Optimistic UI update ────────────────────────────────────────────
-      // Immediately reflect the payment in the local fees list so that
-      // PendingFees and FeeSummary update right away, without waiting for
-      // the network refresh to complete.
-      final updatedFees = fees.map((f) {
-        if (f.id == fee.id) {
-          return FeeModel(
-            id: f.id,
-            studentId: f.studentId,
-            termName: f.termName,
-            feeType: f.feeType,
-            amount: f.amount,
-            paidAmount: f.amount,       // fully paid
-            concessionAmount: f.concessionAmount,
-            remainingAmount: 0,          // nothing left
-            dueDate: f.dueDate,
-            status: 'PAID',
-            academicYear: f.academicYear,
-          );
-        }
-        return f;
-      }).toList();
-      fees.assignAll(updatedFees);
-      _calculateAggregates(updatedFees);
-      // ───────────────────────────────────────────────────────────────────
-
-      SoundService.instance.play(AppSound.success);
-      Get.snackbar(
-        'Payment Successful',
-        'Your payment of ₹${fee.remainingAmount.toInt()} for ${fee.termName} has been processed.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-
-      // Clear all caches so next load fetches fresh data from server
-      final prefs = await SharedPreferences.getInstance();
-      final sId = student.value?.id ?? '';
-      final pId = prefs.getString(StorageKeys.parentId) ?? '';
-      if (sId.isNotEmpty) {
-        await prefs.remove('fees_cache_$sId');
-        await prefs.remove('payments_cache_$sId');
-        await prefs.remove('payments_time_$sId');
-        await prefs.remove('receipts_cache_$sId');
-        await prefs.remove('receipts_time_$sId');
-      }
-      if (pId.isNotEmpty) {
-        // Reset student cache timestamp so next loadDashboardData hits network
-        await prefs.remove('student_time_$pId');
-      }
-
-      // Background refresh to sync with server truth
-      refreshData();
-
-      // If payment history screen is already open, refresh it immediately
-      if (Get.isRegistered<PaymentHistoryController>()) {
-        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
-      }
-    } else {
-      SoundService.instance.play(AppSound.error);
-      Get.snackbar(
-        'Payment Failed',
-        'Unable to process payment. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
-
-    isLoading.value = false;
+    Get.toNamed(AppRoutes.pendingFees);
   }
 }
