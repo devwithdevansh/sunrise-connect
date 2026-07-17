@@ -203,9 +203,9 @@ class WhatsappService {
 
               // Meta requires the EXACT language code that the template was created with.
               let languageCode = 'en'; // fallback
-              if (finalTemplateName === 'fees_english' || finalTemplateName === 'fees_english_transport') {
+              if (finalTemplateName === 'fees_english') {
                 languageCode = 'en_US'; 
-              } else if (finalTemplateName === 'fees_gujarati' || finalTemplateName === 'fees_gujarati_transport') {
+              } else if (finalTemplateName === 'fees_english_transport' || finalTemplateName === 'fees_gujarati' || finalTemplateName === 'fees_gujarati_transport') {
                 languageCode = 'en'; // because it was created as English in Meta
               } else if (language === 'gu') {
                 languageCode = 'gu';
