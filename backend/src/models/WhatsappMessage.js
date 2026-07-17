@@ -28,7 +28,7 @@ const whatsappMessageSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: {
-        values: ['ALL', 'CLASS', 'PARENT'],
+        values: ['ALL', 'CLASS', 'PARENT', 'STUDENT'],
         message: '{VALUE} is not a valid target type',
       },
     },
