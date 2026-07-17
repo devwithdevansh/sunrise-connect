@@ -4,9 +4,10 @@ import { useApp } from '../../store';
 import type { Student } from '../../mockData';
 import { isPeriodOverdue, isLedgerPending } from '../../utils';
 
-export interface StudentDueInfo {
+export interface StudentDueBadge {
   text: string;
   color: string;
+  type: 'ACADEMIC' | 'TRANSPORT' | 'BALANCE';
 }
 
 interface StudentSidebarProps {
@@ -39,38 +40,61 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
     return filteredStudents.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredStudents, currentPage]);
 
-  const getStudentDueLabel = (student: Student): StudentDueInfo => {
+  const getStudentDueBadges = (student: Student): StudentDueBadge[] => {
     const sId = student._id || student.id;
     const reportItem = unpaidData.find((item: any) => item._id === sId);
 
-    if (!reportItem || !reportItem.pendingLedgers) {
-      return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
-    }
+    const balanceBadge: StudentDueBadge = { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50', type: 'BALANCE' };
+
+    if (!reportItem || !reportItem.pendingLedgers) return [balanceBadge];
 
     const overdueLedgers = reportItem.pendingLedgers.filter((l: any) => 
       isLedgerPending(l) && isPeriodOverdue(l.feePeriod, l.academicYear, activeYearName)
     );
     
-    if (overdueLedgers.length === 0) {
-      return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
-    }
+    if (overdueLedgers.length === 0) return [balanceBadge];
 
-    const uniquePeriods = new Set(
-      overdueLedgers
-        .filter((l: any) => l.feePeriod !== 'One-time')
-        .map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
-    );
-    const dueCount = uniquePeriods.size;
-    const amount = overdueLedgers.reduce((sum: number, l: any) => sum + (l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0))), 0);
+    const academicLedgers = overdueLedgers.filter((l: any) => l.feeType !== 'TRANSPORT');
+    const transportLedgers = overdueLedgers.filter((l: any) => l.feeType === 'TRANSPORT');
 
-    let status = '1 DUE';
-    if (dueCount === 2) status = '2 DUE';
-    else if (dueCount >= 3) status = '3+ DUE';
+    const formatBadge = (ledgers: any[], isTransport: boolean): StudentDueBadge | null => {
+      if (ledgers.length === 0) return null;
+      const uniquePeriods = new Set(
+        ledgers
+          .filter((l: any) => l.feePeriod !== 'One-time')
+          .map((l: any) => `${l.academicYear || activeYearName}_${l.feePeriod}`)
+      );
+      const dueCount = uniquePeriods.size;
+      const amount = ledgers.reduce((sum: number, l: any) => sum + (l.remainingAmount ?? ((l.totalAmount || 0) - (l.paidAmount || 0) - (l.concessionAmount || 0))), 0);
 
-    if (amount === 0) return { text: 'BALANCE', color: 'text-emerald-600 bg-emerald-50' };
-    if (status === '2 DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (2 MONTHS)`, color: 'text-amber-600 bg-amber-50' };
-    if (status === '3+ DUE') return { text: `₹${amount.toLocaleString('en-IN')} DUE (3+ MONTHS)`, color: 'text-red-600 bg-red-50' };
-    return { text: `₹${amount.toLocaleString('en-IN')} DUE`, color: 'text-blue-600 bg-blue-50 font-bold' };
+      if (amount <= 0) return null;
+
+      let suffix = '';
+      if (dueCount === 2) suffix = ' (2 MONTHS)';
+      else if (dueCount >= 3) suffix = ' (3+ MONTHS)';
+
+      const prefix = isTransport ? '🚌 ' : '';
+      const text = `${prefix}₹${amount.toLocaleString('en-IN')} DUE${suffix}`;
+      
+      let color = 'text-blue-600 bg-blue-50 font-bold';
+      if (isTransport) {
+        color = 'text-purple-600 bg-purple-50 font-bold';
+      } else {
+        if (dueCount === 2) color = 'text-amber-600 bg-amber-50';
+        else if (dueCount >= 3) color = 'text-red-600 bg-red-50';
+      }
+
+      return { text, color, type: isTransport ? 'TRANSPORT' : 'ACADEMIC' };
+    };
+
+    const badges: StudentDueBadge[] = [];
+    const academicBadge = formatBadge(academicLedgers, false);
+    if (academicBadge) badges.push(academicBadge);
+    
+    const transportBadge = formatBadge(transportLedgers, true);
+    if (transportBadge) badges.push(transportBadge);
+
+    return badges.length > 0 ? badges : [balanceBadge];
   };
 
   const totalPages = Math.ceil(filteredStudents.length / PAGE_SIZE);
@@ -107,7 +131,7 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
         ) : (
           paginatedStudents.map((student) => {
             const isSelected = selectedStudent?._id === student._id;
-            const dueInfo = getStudentDueLabel(student);
+            const dueBadges = getStudentDueBadges(student);
             return (
               <div
                 key={student._id}
@@ -135,9 +159,13 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({
                       {student.studentCode}
                     </span>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 ${dueInfo.color}`}>
-                    {dueInfo.text}
-                  </span>
+                  <div className="flex flex-col gap-1.5 items-end shrink-0">
+                    {dueBadges.map((badge, idx) => (
+                      <span key={idx} className={`text-[10px] font-bold px-2 py-1 rounded-lg ${badge.color}`}>
+                        {badge.text}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             );
