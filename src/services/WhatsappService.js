@@ -37,7 +37,7 @@ class WhatsappService {
       }).select('_id');
 
       targetParentIds = parents.map((p) => p._id);
-    } else if (targetType === 'PARENT') {
+    } else if (targetType === 'PARENT' || targetType === 'STUDENT') {
       targetParentIds = parentIds || [];
     }
 
