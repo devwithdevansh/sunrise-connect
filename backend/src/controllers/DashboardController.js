@@ -35,6 +35,8 @@ class DashboardController {
   static initDashboard = catchAsync(async (req, res) => {
     const [
       students,
+      ledgers,
+      transactions,
       feeStructures,
       transportStructures,
       auditLogs,
@@ -42,6 +44,8 @@ class DashboardController {
       feeCategories
     ] = await Promise.all([
       studentRepository.find({}, null, { limit: 50000 }),
+      ledgerRepository.find({}, null, { limit: 50000 }),
+      paymentRepository.find({}, null, { limit: 10000, sort: { createdAt: -1 } }),
       FeeStructure.find({ isActive: true }).lean(),
       TransportFeeStructure.find({ isActive: true }).lean(),
       AuditLog.find().sort({ createdAt: -1 }).limit(100).lean(),
@@ -51,8 +55,8 @@ class DashboardController {
 
     sendResponse(res, 200, {
       students,
-      ledgers: [],
-      transactions: [],
+      ledgers,
+      transactions,
       feeStructures,
       transportStructures,
       auditLogs,
