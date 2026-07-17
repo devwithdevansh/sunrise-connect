@@ -254,6 +254,7 @@ class WhatsappService {
             payloadsToSend.push(payload);
           }
 
+          let lastError = null;
           for (const payload of payloadsToSend) {
             try {
               const url = `https://graph.facebook.com/v20.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -268,12 +269,14 @@ class WhatsappService {
 
               if (!response.ok) {
                 const errJson = await response.json();
-                logger.error(`WhatsApp send failed to ${phone}: ${JSON.stringify(errJson)}`);
+                lastError = JSON.stringify(errJson);
+                logger.error(`WhatsApp send failed to ${phone}: ${lastError}`);
                 failureCount++;
               } else {
                 successCount++;
               }
             } catch (fetchErr) {
+              lastError = fetchErr.toString();
               logger.error(`WhatsApp network error to ${phone}: ${fetchErr}`);
               failureCount++;
             }
@@ -284,6 +287,7 @@ class WhatsappService {
           successCount,
           failureCount,
           deliveryStatus: failureCount > 0 ? (successCount > 0 ? 'PARTIAL_FAIL' : 'FAILED') : 'SENT',
+          body: lastError ? `${body}\n\nMeta Error: ${lastError}` : body
         });
         logger.info(`WhatsApp message ${msgRecord._id} processed. Success: ${successCount}, Fail: ${failureCount}`);
       } catch (e) {
