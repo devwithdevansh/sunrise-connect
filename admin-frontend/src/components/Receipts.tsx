@@ -76,6 +76,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [isReversing, setIsReversing] = useState<string | null>(null);
   const [showReceiptNumbers, setShowReceiptNumbers] = useState(false);
+  const [showOnlyPaid, setShowOnlyPaid] = useState(false);
 
 
   // Debounce search query by 200ms
@@ -89,7 +90,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
   // Reset pagination on filter or search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, methodFilter, dateFilterMode, customDate, classFilter, mediumFilter]);
+  }, [searchQuery, methodFilter, dateFilterMode, customDate, classFilter, mediumFilter, showOnlyPaid]);
 
   const todayString = useMemo(() => {
     return new Date().toISOString().split('T')[0];
@@ -141,9 +142,14 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
         if (tx.academicYear !== academicYearFilter) return false;
       }
 
+      // 7. Status Filter (Only Paid)
+      if (showOnlyPaid && tx.status !== 'PAID') {
+        return false;
+      }
+
       return true;
     });
-  }, [transactions, searchQuery, dateFilterMode, customDate, methodFilter, classFilter, mediumFilter, academicYearFilter, todayString]);
+  }, [transactions, searchQuery, dateFilterMode, customDate, methodFilter, classFilter, mediumFilter, academicYearFilter, todayString, showOnlyPaid]);
 
   // Paginated transactions computation
   const paginatedTransactions = useMemo(() => {
@@ -292,6 +298,20 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
               }`}
             >
               {showReceiptNumbers ? 'Hide Receipt No.' : 'See Receipt No.'}
+            </button>
+          </div>
+
+          {/* Toggle Only Paid Button */}
+          <div className="md:col-span-2 flex items-center">
+            <button
+              onClick={() => setShowOnlyPaid(!showOnlyPaid)}
+              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
+                showOnlyPaid
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'bg-white border border-slate-200 text-slate-655 hover:bg-slate-50'
+              }`}
+            >
+              {showOnlyPaid ? 'Show All' : 'Only Paid'}
             </button>
           </div>
         </div>
