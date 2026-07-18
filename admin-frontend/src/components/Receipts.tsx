@@ -258,7 +258,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
           </div>
 
           {/* Class Filter */}
-          <div className="md:col-span-1 relative">
+          <div className="md:col-span-2 relative">
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
@@ -273,7 +273,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
           </div>
 
           {/* Medium Filter */}
-          <div className="md:col-span-1 relative">
+          <div className="md:col-span-2 relative">
             <select
               value={mediumFilter}
               onChange={(e) => setMediumFilter(e.target.value)}
