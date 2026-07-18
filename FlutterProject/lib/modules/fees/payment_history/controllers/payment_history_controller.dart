@@ -156,6 +156,9 @@ class PaymentHistoryController extends GetxController {
       await prefs.setInt(timeKey, nowMs);
     } catch (e) {
       debugPrint('Error loading payment history: $e');
+      if (payments.isEmpty) {
+        // Keep previously cached values if any, otherwise log it
+      }
     } finally {
       isLoading.value = false;
     }

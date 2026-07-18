@@ -10,6 +10,7 @@ import '../../../../data/repositories/student_repository.dart';
 import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../fees/payment_history/controllers/payment_history_controller.dart';
+import '../../fees/receipt_details/controllers/receipt_details_controller.dart';
 import '../../../services/sound_service.dart';
 import '../../../../core/widgets/permission_dialog.dart';
 import '../../../../core/services/fcm_service.dart';
@@ -23,6 +24,7 @@ class DashboardController extends GetxController {
   final students = <StudentModel>[].obs;
   final student = Rxn<StudentModel>();
   final fees = <FeeModel>[].obs;
+  final _allNotifications = <NotificationModel>[].obs;
   final notifications = <NotificationModel>[].obs;
   final unreadNotificationCount = 0.obs;
 
@@ -197,10 +199,14 @@ class DashboardController extends GetxController {
       _calculateAggregates(filteredFees);
       
       final notifs = await _notificationRepo.getNotifications();
-      notifications.assignAll(notifs);
+      _allNotifications.assignAll(notifs);
+      _updateVisibleNotifications();
       
       if (Get.isRegistered<PaymentHistoryController>()) {
         Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
+      }
+      if (Get.isRegistered<ReceiptDetailsController>()) {
+        Get.find<ReceiptDetailsController>().loadReceipts(forceRefresh: true);
       }
     } catch (e) {
       print('Error switching student: $e');
@@ -228,11 +234,32 @@ class DashboardController extends GetxController {
   Future<void> _loadNotifications() async {
     try {
       final notifs = await _notificationRepo.getNotifications();
-      notifications.assignAll(notifs);
-      unreadNotificationCount.value = notifs.where((n) => !n.isRead).length;
+      _allNotifications.assignAll(notifs);
+      _updateVisibleNotifications();
     } catch (e) {
       print('Error loading notifications: $e');
     }
+  }
+
+  void _updateVisibleNotifications() {
+    final sId = student.value?.id;
+    if (sId == null) {
+      notifications.assignAll(_allNotifications);
+      unreadNotificationCount.value = _allNotifications.where((n) => !n.isRead).length;
+    } else {
+      final filtered = _allNotifications.where((n) {
+        return n.studentId == null || n.studentId!.isEmpty || n.studentId == sId;
+      }).toList();
+      notifications.assignAll(filtered);
+      unreadNotificationCount.value = filtered.where((n) => !n.isRead).length;
+    }
+  }
+
+  bool hasUnreadNotificationsFor(String studentId) {
+    return _allNotifications.any((n) {
+      final isForStudent = n.studentId == null || n.studentId!.isEmpty || n.studentId == studentId;
+      return isForStudent && !n.isRead;
+    });
   }
 
   /// Refresh notifications only (called when tapping notification bell).

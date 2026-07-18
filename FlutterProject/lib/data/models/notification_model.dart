@@ -7,6 +7,7 @@ class NotificationModel {
   final String body;
   final String type; // 'BROADCAST' | 'PAYMENT_RECEIVED' | 'FEE_REMINDER' | 'SYSTEM'
   final String createdAt;
+  final String? studentId; // Extracted from metadata for student-specific rendering
   bool isRead;
 
   NotificationModel({
@@ -15,15 +16,24 @@ class NotificationModel {
     required this.body,
     required this.type,
     required this.createdAt,
+    this.studentId,
     required this.isRead,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) => NotificationModel(
-        id: (json['id'] ?? json['_id'] ?? '').toString(),
-        title: json['title'] as String? ?? '',
-        body: json['body'] as String? ?? json['message'] as String? ?? '',
-        type: json['type'] as String? ?? 'BROADCAST',
-        createdAt: json['createdAt'] as String? ?? '',
-        isRead: json['isRead'] as bool? ?? false,
-      );
+  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    String? sId;
+    if (json['metadata'] != null && json['metadata'] is Map) {
+      sId = (json['metadata'] as Map)['studentId']?.toString();
+    }
+    
+    return NotificationModel(
+      id: (json['id'] ?? json['_id'] ?? '').toString(),
+      title: json['title'] as String? ?? '',
+      body: json['body'] as String? ?? json['message'] as String? ?? '',
+      type: json['type'] as String? ?? 'BROADCAST',
+      createdAt: json['createdAt'] as String? ?? '',
+      studentId: sId,
+      isRead: json['isRead'] as bool? ?? false,
+    );
+  }
 }

@@ -232,6 +232,11 @@ class ReceiptDetailsController extends GetxController {
       await prefs.setInt(timeKey, nowMs);
     } catch (e) {
       debugPrint('Error loading receipts: $e');
+      // If there's an error (like a network failure), we don't cache an empty list.
+      // We also don't clear existing receipts so the user can still see cached data if any was loaded before.
+      if (receipts.isEmpty) {
+         // Optionally, show an error UI state, but for now we'll just log it.
+      }
     } finally {
       isLoading.value = false;
     }

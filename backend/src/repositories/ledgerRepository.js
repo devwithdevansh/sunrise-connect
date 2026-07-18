@@ -22,6 +22,10 @@ const ledgerRepository = {
     return StudentFeeLedger.find(filter, projection, { limit, skip, sort, session }).lean();
   },
 
+  async findDistinct(field, filter = {}) {
+    return StudentFeeLedger.distinct(field, filter);
+  },
+
   async updateOne(filter, update, opts = {}) {
     return StudentFeeLedger.updateOne(filter, update, opts);
   },

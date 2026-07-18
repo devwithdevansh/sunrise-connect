@@ -11,11 +11,13 @@ class FeeRepository {
         final body = json.decode(response.body);
         final list = body['data'] as List;
         return list.map((item) => FeeModel.fromJson(item as Map<String, dynamic>)).toList();
+      } else {
+        throw Exception('Failed to load fees: ${response.statusCode}');
       }
     } catch (e) {
       print('Error in getFees: $e');
+      rethrow;
     }
-    return [];
   }
 
   Future<List<FeeModel>> getPendingFees(String studentId) async {

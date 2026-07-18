@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/storage_keys.dart';
 import '../network/api_client.dart';
+import '../../modules/dashboard/controllers/dashboard_controller.dart';
 import 'firebase_options.dart';
 
 /// Top-level handler — required by FCM for background/terminated messages.
@@ -32,6 +33,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class FcmService {
   static final _messaging = FirebaseMessaging.instance;
   static final _localNotifications = FlutterLocalNotificationsPlugin();
+  static String? initialRoute; // Stores route if app launched from terminated state via push notification
 
   // Android notification channel
   static const _androidChannel = AndroidNotificationChannel(
@@ -82,7 +84,7 @@ class FcmService {
     // 8. Handle notification tap when app was terminated
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
-      _handleNotificationTap(initialMessage);
+      initialRoute = '/notifications'; // Save for splash screen to handle
     }
 
     // 9. Register token with backend & listen for refreshes
@@ -166,6 +168,11 @@ class FcmService {
       ),
       payload: json.encode(message.data),
     );
+
+    // Refresh notifications real-time on dashboard if it's currently loaded
+    if (Get.isRegistered<DashboardController>()) {
+      Get.find<DashboardController>().refreshNotifications();
+    }
   }
 
   /// Navigate to the Notifications screen when a notification is tapped.

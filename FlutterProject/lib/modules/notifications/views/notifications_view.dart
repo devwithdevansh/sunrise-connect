@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../data/repositories/notification_repository.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 
 class NotificationsView extends StatelessWidget {
@@ -102,13 +103,20 @@ class NotificationsView extends StatelessWidget {
   }
 }
 
-class _NotificationCard extends StatelessWidget {
+class _NotificationCard extends StatefulWidget {
   final NotificationModel notif;
   final VoidCallback onTap;
   const _NotificationCard({required this.notif, required this.onTap});
 
+  @override
+  State<_NotificationCard> createState() => _NotificationCardState();
+}
+
+class _NotificationCardState extends State<_NotificationCard> {
+  bool _isExpanded = false;
+
   IconData get _icon {
-    switch (notif.type) {
+    switch (widget.notif.type) {
       case 'PAYMENT_RECEIVED':
         return Icons.check_circle_rounded;
       case 'FEE_REMINDER':
@@ -121,7 +129,7 @@ class _NotificationCard extends StatelessWidget {
   }
 
   Color get _iconColor {
-    switch (notif.type) {
+    switch (widget.notif.type) {
       case 'PAYMENT_RECEIVED':
         return AppColors.teal;
       case 'FEE_REMINDER':
@@ -134,7 +142,7 @@ class _NotificationCard extends StatelessWidget {
   }
 
   Color get _iconBg {
-    switch (notif.type) {
+    switch (widget.notif.type) {
       case 'PAYMENT_RECEIVED':
         return AppColors.tealPale;
       case 'FEE_REMINDER':
@@ -145,31 +153,38 @@ class _NotificationCard extends StatelessWidget {
   }
 
   String get _formattedDate {
-    if (notif.createdAt.isEmpty) return '';
+    if (widget.notif.createdAt.isEmpty) return '';
     try {
-      final dt = DateTime.parse(notif.createdAt).toLocal();
+      final dt = DateTime.parse(widget.notif.createdAt).toLocal();
       final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return '${dt.day} ${months[dt.month - 1]} ${dt.year}, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } catch (_) {
-      return notif.createdAt.split('T').first;
+      return widget.notif.createdAt.split('T').first;
     }
+  }
+
+  void _handleTap() {
+    widget.onTap(); // Mark as read
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: notif.isRead ? AppColors.white : AppColors.primaryLight.withOpacity(0.4),
+          color: widget.notif.isRead ? AppColors.white : AppColors.primaryLight.withOpacity(0.4),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: notif.isRead ? AppColors.border : AppColors.primaryMid.withOpacity(0.25),
-            width: notif.isRead ? 1 : 1.5,
+            color: widget.notif.isRead ? AppColors.border : AppColors.primaryMid.withOpacity(0.25),
+            width: widget.notif.isRead ? 1 : 1.5,
           ),
         ),
         child: Row(
@@ -190,33 +205,90 @@ class _NotificationCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          notif.title,
+                          widget.notif.title,
                           style: AppTextStyles.labelLarge.copyWith(
-                            fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
+                            fontWeight: widget.notif.isRead ? FontWeight.w600 : FontWeight.w800,
                           ),
                         ),
                       ),
-                      if (!notif.isRead)
+                      if (!widget.notif.isRead)
                         Container(
                           width: 8,
                           height: 8,
+                          margin: const EdgeInsets.only(right: 8),
                           decoration: const BoxDecoration(
                             color: AppColors.primaryMid,
                             shape: BoxShape.circle,
                           ),
                         ),
+                      AnimatedRotation(
+                        turns: _isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.inkLight,
+                          size: 20,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    notif.body,
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.inkMid),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      widget.notif.body,
+                      maxLines: _isExpanded ? null : 2,
+                      overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.inkMid),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     _formattedDate,
                     style: AppTextStyles.bodySmall,
                   ),
+                  
+                  // Contextual actions when expanded
+                  if (_isExpanded && widget.notif.type == 'FEE_REMINDER') ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          // Try changing dashboard tab to fee or routing to pending fees
+                          // We'll route directly to pendingFees as it's safe.
+                          Get.toNamed(AppRoutes.pendingFees);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.amber,
+                          side: const BorderSide(color: AppColors.amber),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text('Pay Now', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                  if (_isExpanded && widget.notif.type == 'PAYMENT_RECEIVED') ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Get.offNamed(AppRoutes.paymentHistory);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.teal,
+                          side: const BorderSide(color: AppColors.teal),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text('View Receipt', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

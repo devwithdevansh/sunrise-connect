@@ -22,6 +22,10 @@ const studentRepository = {
     return Student.find(filter, projection, { limit, skip, sort, session }).populate('parentId').lean();
   },
 
+  async findDistinct(field, filter = {}) {
+    return Student.distinct(field, filter);
+  },
+
   async updateOne(filter, update, opts = {}) {
     return Student.updateOne(filter, update, opts);
   },

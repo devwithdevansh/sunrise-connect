@@ -18,9 +18,12 @@ class ReceiptRepository {
         allPayments.addAll(
           list.map((item) => PaymentModel.fromJson(item as Map<String, dynamic>)),
         );
+      } else {
+        throw Exception('Failed to load payments: ${response.statusCode}');
       }
     } catch (e) {
       print('Error in getPaymentsForStudent: $e');
+      rethrow;
     }
     return allPayments;
   }

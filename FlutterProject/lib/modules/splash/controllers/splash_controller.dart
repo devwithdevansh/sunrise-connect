@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/storage_keys.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/fcm_service.dart';
 
 class SplashController extends GetxController {
   @override
@@ -24,6 +25,12 @@ class SplashController extends GetxController {
         Get.offAllNamed(AppRoutes.login);
       } else {
         Get.offAllNamed(AppRoutes.dashboard);
+        
+        // Handle deep-link from push notification if app was terminated
+        if (FcmService.initialRoute != null) {
+          Get.toNamed(FcmService.initialRoute!);
+          FcmService.initialRoute = null; // Clear so it only triggers once
+        }
       }
     } catch (e) {
       Get.offAllNamed(AppRoutes.login);
