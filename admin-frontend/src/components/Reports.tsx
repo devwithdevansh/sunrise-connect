@@ -88,7 +88,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   const dailyReportData = useMemo(() => {
     // Filter transactions by selected date (YYYY-MM-DD)
     const filteredTxns = dailyTransactions.filter(t => {
-      if (!t.date || t.status === 'REVERSED') return false; // Ignore reversed txns
+      if (!t.date) return false;
       const matchesDate = t.date === selectedDate;
       if (!matchesDate) return false;
 

@@ -131,6 +131,7 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
       remark: firstTx.details?.remark || firstTx.details?.reason || '',
       subItems: subItems,
       reversalIds: reversalIds.join(','),
+      isReversal: !!firstTx.isReversal,
       paymentBreakdown: paymentBreakdown,
       academicYear: primaryAcademicYear,
       isDeleted: isDeleted,
