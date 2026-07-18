@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/utils/pdf_download_helper.dart';
 import '../../../../data/models/receipt_model.dart';
 import '../../../../data/repositories/receipt_repository.dart';
+import '../../../../data/repositories/notification_repository.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
 import 'receipt_pdf_generator.dart';
 
@@ -184,6 +185,28 @@ class ReceiptDetailsController extends GetxController {
       ..sort((a, b) => b.paidAt.compareTo(a.paidAt));
   }
 
+  Future<void> _clearUnreadReceiptNotifications(String studentId) async {
+    try {
+      final dashCtrl = Get.find<DashboardController>();
+      final notifs = dashCtrl.notifications.where((n) => 
+        !n.isRead && n.type == 'PAYMENT_RECEIVED' && (n.studentId == studentId || n.studentId == null || n.studentId!.isEmpty)
+      ).toList();
+      
+      if (notifs.isEmpty) return;
+
+      final repo = NotificationRepository();
+      for (final n in notifs) {
+        await repo.markAsRead(n.id);
+        n.isRead = true; // Optimistic UI update
+      }
+      
+      // Update badge count
+      dashCtrl.refreshNotifications();
+    } catch (e) {
+      debugPrint('Error clearing unread receipt notifications: $e');
+    }
+  }
+
   // ── Data loading ──────────────────────────────────────────────────────────
 
   Future<void> loadReceipts({bool forceRefresh = false}) async {
@@ -232,6 +255,9 @@ class ReceiptDetailsController extends GetxController {
 
       await prefs.setString(cacheKey, json.encode(list.map((r) => r.toJson()).toList()));
       await prefs.setInt(timeKey, nowMs);
+
+      // Mark receipt notifications as read so the red dot goes away
+      _clearUnreadReceiptNotifications(sId);
     } catch (e) {
       debugPrint('Error loading receipts: $e');
       // If there's an error (like a network failure), we don't cache an empty list.
