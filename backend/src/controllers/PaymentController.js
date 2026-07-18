@@ -45,8 +45,18 @@ class PaymentController {
   /** GET /api/v1/payments */
   static listPayments = catchAsync(async (req, res) => {
     const { limit = 20, skip = 0, ...filter } = req.query;
+    
+    // Dynamic import to avoid circular dependencies at top level if any, or just import it at top.
+    const mongoose = (await import('mongoose')).default;
+
     if (filter.studentId) {
-      const ledgerIds = await ledgerRepository.findDistinct('_id', { studentId: filter.studentId });
+      let sId;
+      try {
+        sId = new mongoose.Types.ObjectId(filter.studentId);
+      } catch (e) {
+        return sendResponse(res, 400, 'Invalid studentId');
+      }
+      const ledgerIds = await ledgerRepository.findDistinct('_id', { studentId: sId });
       if (ledgerIds.length === 0) {
         return sendResponse(res, 200, []);
       }
@@ -55,7 +65,13 @@ class PaymentController {
     }
     
     if (req.user?.role === 'parent') {
-      const studentIds = await studentRepository.findDistinct('_id', { parentId: req.user.id });
+      let parentId;
+      try {
+        parentId = new mongoose.Types.ObjectId(req.user.id);
+      } catch (e) {
+        return sendResponse(res, 400, 'Invalid parentId');
+      }
+      const studentIds = await studentRepository.findDistinct('_id', { parentId: parentId });
       const parentLedgerIds = await ledgerRepository.findDistinct('_id', { studentId: { $in: studentIds } });
       const parentLedgerIdStrs = parentLedgerIds.map(id => id.toString());
 
