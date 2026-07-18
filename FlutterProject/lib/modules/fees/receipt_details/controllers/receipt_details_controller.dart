@@ -198,14 +198,16 @@ class ReceiptDetailsController extends GetxController {
     if (forceRefresh) {
       await prefs.remove(cacheKey);
       await prefs.remove(timeKey);
-      // Invalidate dashboard caches and sync outstanding fees in the background
-      dashCtrl.refreshData();
     }
 
     final cachedStr    = prefs.getString(cacheKey);
     final cachedTime   = prefs.getInt(timeKey) ?? 0;
     final nowMs        = DateTime.now().millisecondsSinceEpoch;
     final isCacheFresh = (nowMs - cachedTime) < 5 * 60 * 1000;
+
+    // Clear old state so we don't show the previous student's receipts
+    receipts.clear();
+    receiptGroups.clear();
 
     if (!forceRefresh && cachedStr != null && cachedStr.isNotEmpty) {
       try {

@@ -132,6 +132,10 @@ class PaymentHistoryController extends GetxController {
     final nowMs        = DateTime.now().millisecondsSinceEpoch;
     final isCacheFresh = (nowMs - cachedTime) < 5 * 60 * 1000;
 
+    // Clear old state so we don't show the previous student's payments
+    payments.clear();
+    paymentGroups.clear();
+
     if (!forceRefresh && cachedStr != null && cachedStr.isNotEmpty) {
       try {
         final decoded = json.decode(cachedStr) as List;
