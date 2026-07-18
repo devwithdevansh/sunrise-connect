@@ -25,8 +25,7 @@ class PaymentController {
     const { payments } = req.body;
     if (req.user?.role === 'parent') {
       const ledgerIds = payments.map(p => p.ledgerId);
-      const ledgers = await ledgerRepository.find({ _id: { $in: ledgerIds } });
-      const studentIds = ledgers.map(l => l.studentId);
+      const studentIds = await ledgerRepository.findDistinct('studentId', { _id: { $in: ledgerIds } });
       const studentCount = await studentRepository.countDocuments({
         _id: { $in: studentIds },
         parentId: req.user.id
@@ -47,19 +46,18 @@ class PaymentController {
   static listPayments = catchAsync(async (req, res) => {
     const { limit = 20, skip = 0, ...filter } = req.query;
     if (filter.studentId) {
-      const ledgers = await ledgerRepository.find({ studentId: filter.studentId });
-      if (ledgers.length === 0) {
+      const ledgerIds = await ledgerRepository.findDistinct('_id', { studentId: filter.studentId });
+      if (ledgerIds.length === 0) {
         return sendResponse(res, 200, []);
       }
-      filter.ledgerIds = ledgers.map(l => l._id.toString()).join(',');
+      filter.ledgerIds = ledgerIds.map(id => id.toString()).join(',');
       delete filter.studentId;
     }
     
     if (req.user?.role === 'parent') {
-      const students = await studentRepository.find({ parentId: req.user.id });
-      const studentIds = students.map(s => s._id);
-      const parentLedgers = await ledgerRepository.find({ studentId: { $in: studentIds } });
-      const parentLedgerIdStrs = parentLedgers.map(id => id._id.toString());
+      const studentIds = await studentRepository.findDistinct('_id', { parentId: req.user.id });
+      const parentLedgerIds = await ledgerRepository.findDistinct('_id', { studentId: { $in: studentIds } });
+      const parentLedgerIdStrs = parentLedgerIds.map(id => id.toString());
 
       if (filter.ledgerIds) {
         const requestedIds = filter.ledgerIds.split(',').map(id => id.trim()).filter(Boolean);
@@ -121,8 +119,7 @@ class PaymentController {
 
     if (req.user?.role === 'parent') {
       const ledgerIds = payments.map(p => p.ledgerId);
-      const ledgers = await ledgerRepository.find({ _id: { $in: ledgerIds } });
-      const studentIds = ledgers.map(l => l.studentId);
+      const studentIds = await ledgerRepository.findDistinct('studentId', { _id: { $in: ledgerIds } });
       const studentCount = await studentRepository.countDocuments({
         _id: { $in: studentIds },
         parentId: req.user.id
