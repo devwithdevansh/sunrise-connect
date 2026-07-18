@@ -75,6 +75,8 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
 
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [isReversing, setIsReversing] = useState<string | null>(null);
+  const [showReceiptNumbers, setShowReceiptNumbers] = useState(false);
+
 
   // Debounce search query by 200ms
   useEffect(() => {
@@ -278,6 +280,20 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           </div>
+
+          {/* Toggle Receipt Numbers Button */}
+          <div className="md:col-span-2 flex items-center">
+            <button
+              onClick={() => setShowReceiptNumbers(!showReceiptNumbers)}
+              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
+                showReceiptNumbers
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'bg-white border border-slate-200 text-slate-655 hover:bg-slate-50'
+              }`}
+            >
+              {showReceiptNumbers ? 'Hide Receipt No.' : 'See Receipt No.'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -293,7 +309,7 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
                 <th className="py-3.5 px-5">Paid Amount</th>
                 <th className="py-3.5 px-5">Method</th>
                 <th className="py-3.5 px-5">Date & Time</th>
-                <th className="py-3.5 px-5 text-center">Action</th>
+                <th className="py-3.5 px-5 text-center">{showReceiptNumbers ? 'Receipt No.' : 'Action'}</th>
                 <th className="py-3.5 px-5 text-center">Status</th>
               </tr>
             </thead>
@@ -373,13 +389,21 @@ export const Receipts: React.FC<ReceiptsProps> = ({ onPrint }) => {
                           <span className="block text-[10px] text-slate-400/80 mt-0.5">{t.time}</span>
                         </td>
                         <td className="py-4 px-5 text-center">
-                          <button
-                            onClick={() => onPrint(t)}
-                            className="inline-flex items-center gap-1.5 text-xs font-extrabold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all active:scale-[0.98]"
-                          >
-                            <Printer className="h-3.5 w-3.5" />
-                            Print
-                          </button>
+                          {showReceiptNumbers ? (
+                            <span className="text-xs font-extrabold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                              {t.receiptNumber 
+                                 ? `#${t.receiptNumber}` 
+                                 : `#${(t.id?.slice(-12).toUpperCase() || 'N/A')}`}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => onPrint(t)}
+                              className="inline-flex items-center gap-1.5 text-xs font-extrabold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all active:scale-[0.98]"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                              Print
+                            </button>
+                          )}
                         </td>
                         <td className="py-4 px-5 text-center">
                           <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
