@@ -717,27 +717,27 @@ export const Students: React.FC = () => {
                               Collect
                             </button>
                           )}
+                          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'STAFF') && (
+                            <button
+                              onClick={() => openEditModal(s)}
+                              className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                              title="Edit Student"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
                           {currentUser?.role === 'ADMIN' && (
-                            <>
-                              <button
-                                onClick={() => openEditModal(s)}
-                                className="bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                                title="Edit Student"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (window.confirm("Are you sure you want to delete this student? If they have payments, they will be marked as inactive. If no payments exist, they will be permanently deleted.")) {
-                                    deleteStudent(s._id || s.id);
-                                  }
-                                }}
-                                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
-                                title="Delete Student"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </>
+                            <button
+                              onClick={() => {
+                                if (window.confirm("Are you sure you want to delete this student? If they have payments, they will be marked as inactive. If no payments exist, they will be permanently deleted.")) {
+                                  deleteStudent(s._id || s.id);
+                                }
+                              }}
+                              className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                              title="Delete Student"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           )}
                         </>
                       )}
