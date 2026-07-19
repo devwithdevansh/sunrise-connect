@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
@@ -95,6 +95,13 @@ class DashboardView extends GetView<DashboardController> {
             width: 200,
             height: 200,
             repeat: false,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.person_off_rounded,
+                size: 80,
+                color: Colors.grey,
+              );
+            },
           ),
           const SizedBox(height: 16),
           Text('No student records found.', style: AppTextStyles.h3),
