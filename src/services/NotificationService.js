@@ -61,7 +61,7 @@ class NotificationService {
    * @param {string} opts.targetType - 'ALL' | 'CLASS' | 'PARENT'
    * @param {object} opts.targetFilter - { standard, medium, parentId } depending on targetType
    */
-  static async sendBroadcast({ sentBy, title, body, targetType, targetFilter = {} }) {
+  static async sendBroadcast({ sentBy, title, body, targetType, targetFilter = {}, type = 'BROADCAST', metadata = {} }) {
     // ── 1. Resolve target parents ─────────────────────────────────────────────
     let parentIds = [];
 
@@ -97,13 +97,14 @@ class NotificationService {
         sentBy,
         title,
         body,
-        type: 'BROADCAST',
+        type,
         targetType,
         targetFilter,
         targetParentIds: [],
         successCount: 0,
         failureCount: 0,
         deliveryStatus: 'NO_TOKENS',
+        metadata,
       });
       logger.warn(`Notification sent but no target parents found (targetType: ${targetType})`);
       return notification;
@@ -122,11 +123,12 @@ class NotificationService {
       sentBy,
       title,
       body,
-      type: 'BROADCAST',
+      type,
       targetType,
       targetFilter,
       targetParentIds: parentIds,
       deliveryStatus: 'PENDING',
+      metadata,
     });
 
     // ── 4. Send via Firebase (fire-and-forget update of status) ───────────────

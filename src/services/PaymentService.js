@@ -7,6 +7,9 @@ import AcademicYear from '../models/AcademicYear.js';
 import paymentRepository from '../repositories/paymentRepository.js';
 import ledgerRepository from '../repositories/ledgerRepository.js';
 import AuditService from './AuditService.js';
+import NotificationService from './NotificationService.js';
+import Notification from '../models/Notification.js';
+import studentRepository from '../repositories/studentRepository.js';
 import logger from '../config/logger.js';
 import AppError from '../utils/AppError.js';
 
@@ -51,6 +54,27 @@ class PaymentService {
         session
       );
       await session.commitTransaction();
+
+      // Send notification asynchronously
+      setImmediate(async () => {
+        try {
+          const student = await studentRepository.findById(ledger.studentId);
+          if (student && student.parentId) {
+            const notif = await NotificationService.sendBroadcast({
+              sentBy: performedBy || student.parentId,
+              title: 'Payment Received',
+              body: `A payment of ₹${amount} has been successfully processed for receipt #${receiptNumber}.`,
+              targetType: 'PARENT',
+              targetFilter: { parentId: student.parentId.toString() },
+              type: 'PAYMENT_RECEIVED',
+              metadata: { studentId: ledger.studentId.toString() }
+            });
+          }
+        } catch (err) {
+          logger.error('Failed to send payment notification', err);
+        }
+      });
+
       return payment;
     } catch (e) {
       await session.abortTransaction();
@@ -147,6 +171,31 @@ class PaymentService {
       }
 
       await session.commitTransaction();
+
+      // Send notifications for batch payments asynchronously
+      setImmediate(async () => {
+        try {
+          for (const payment of createdPayments) {
+            const ledger = await ledgerRepository.findById(payment.ledgerId);
+            if (!ledger) continue;
+            const student = await studentRepository.findById(ledger.studentId);
+            if (student && student.parentId && payment.amount > 0) {
+              const notif = await NotificationService.sendBroadcast({
+                sentBy: performedBy || student.parentId,
+                title: 'Payment Received',
+                body: `A payment of ₹${payment.amount} has been successfully processed for receipt #${payment.receiptNumber}.`,
+                targetType: 'PARENT',
+                targetFilter: { parentId: student.parentId.toString() },
+                type: 'PAYMENT_RECEIVED',
+                metadata: { studentId: ledger.studentId.toString() }
+              });
+            }
+          }
+        } catch (err) {
+          logger.error('Failed to send batch payment notifications', err);
+        }
+      });
+
       return createdPayments;
     } catch (e) {
       await session.abortTransaction();
@@ -187,7 +236,7 @@ class PaymentService {
 
       const concessionToReverse = payment.concessionAmount || 0;
       const newConcession = ledger.concessionAmount - concessionToReverse;
-      
+
       const remaining = ledger.totalAmount - newPaid - newConcession;
       const status = remaining === 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'PENDING';
 
