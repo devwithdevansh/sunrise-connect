@@ -9,6 +9,17 @@ const router = Router();
 // ─── Admin / Staff routes ─────────────────────────────────────────────────────
 // POST   /api/v1/notifications/send        → compose & send a notification
 // GET    /api/v1/notifications             → list all sent notifications
+import Notification from '../models/Notification.js';
+
+router.get('/clear-all-danger', async (req, res) => {
+  try {
+    const result = await Notification.deleteMany({});
+    res.json({ success: true, deleted: result.deletedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post(
   '/send',
   authenticate,
