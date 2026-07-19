@@ -65,9 +65,10 @@ class PaymentService {
               title: 'Payment Received',
               body: `A payment of ₹${amount} has been successfully processed for receipt #${receiptNumber}.`,
               targetType: 'PARENT',
-              targetFilter: { parentId: student.parentId.toString() }
+              targetFilter: { parentId: student.parentId.toString() },
+              type: 'PAYMENT_RECEIVED',
+              metadata: { studentId: ledger.studentId.toString() }
             });
-            await Notification.updateOne({ _id: notif._id }, { $set: { 'metadata.studentId': ledger.studentId.toString(), type: 'PAYMENT_RECEIVED' } });
           }
         } catch (err) {
           logger.error('Failed to send payment notification', err);
@@ -184,9 +185,10 @@ class PaymentService {
                 title: 'Payment Received',
                 body: `A payment of ₹${payment.amount} has been successfully processed for receipt #${payment.receiptNumber}.`,
                 targetType: 'PARENT',
-                targetFilter: { parentId: student.parentId.toString() }
+                targetFilter: { parentId: student.parentId.toString() },
+                type: 'PAYMENT_RECEIVED',
+                metadata: { studentId: ledger.studentId.toString() }
               });
-              await Notification.updateOne({ _id: notif._id }, { $set: { 'metadata.studentId': ledger.studentId.toString(), type: 'PAYMENT_RECEIVED' } });
             }
           }
         } catch (err) {
@@ -234,7 +236,7 @@ class PaymentService {
 
       const concessionToReverse = payment.concessionAmount || 0;
       const newConcession = ledger.concessionAmount - concessionToReverse;
-      
+
       const remaining = ledger.totalAmount - newPaid - newConcession;
       const status = remaining === 0 ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'PENDING';
 
