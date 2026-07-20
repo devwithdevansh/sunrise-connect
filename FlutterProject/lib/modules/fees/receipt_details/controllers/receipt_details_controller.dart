@@ -189,15 +189,15 @@ class ReceiptDetailsController extends GetxController {
     try {
       final dashCtrl = Get.find<DashboardController>();
       final notifs = dashCtrl.notifications.where((n) => 
-        !n.isRead && n.type == 'PAYMENT_RECEIVED' && (n.studentId == studentId || n.studentId == null || n.studentId!.isEmpty)
+        !n.isReadFor(studentId) && n.type == 'PAYMENT_RECEIVED' && (n.studentId == studentId || n.studentId == null || n.studentId!.isEmpty)
       ).toList();
       
       if (notifs.isEmpty) return;
 
       final repo = NotificationRepository();
       for (final n in notifs) {
-        await repo.markAsRead(n.id);
-        n.isRead = true; // Optimistic UI update
+        await repo.markAsRead(n.id, studentId: studentId);
+        n.markAsReadFor(studentId); // Optimistic UI update
       }
       
       // Update badge count

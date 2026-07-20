@@ -56,7 +56,9 @@ class _NotifCard extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: notif.isRead
+          color: (Get.find<DashboardController>().student.value?.id != null 
+                  ? notif.isReadFor(Get.find<DashboardController>().student.value!.id) 
+                  : notif.isRead)
               ? AppColors.border
               : iconColor.withOpacity(0.3),
         ),
@@ -101,7 +103,9 @@ class _NotifCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (!notif.isRead) ...[
+                    if (!(Get.find<DashboardController>().student.value?.id != null 
+                            ? notif.isReadFor(Get.find<DashboardController>().student.value!.id) 
+                            : notif.isRead)) ...[
                       const SizedBox(width: 6),
                       Container(
                         width: 8,

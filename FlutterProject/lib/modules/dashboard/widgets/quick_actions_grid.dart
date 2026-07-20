@@ -17,8 +17,7 @@ class QuickActionsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final pending = controller.totalPending.value.toInt();
     final paidCount = controller.mainFees.where((f) => f.isPaid).length;
-    final unreadCount =
-        controller.notifications.where((n) => !n.isRead).length;
+    final unreadCount = controller.unreadNotificationCount.value;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
