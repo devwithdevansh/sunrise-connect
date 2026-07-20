@@ -257,7 +257,7 @@ class DashboardController extends GetxController {
 
   bool hasUnreadNotificationsFor(String studentId) {
     return _allNotifications.any((n) {
-      final isForStudent = n.studentId == null || n.studentId!.isEmpty || n.studentId == studentId;
+      final isForStudent = n.studentId == studentId;
       return isForStudent && !n.isRead;
     });
   }

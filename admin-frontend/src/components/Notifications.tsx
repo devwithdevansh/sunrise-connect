@@ -153,6 +153,9 @@ export const Notifications: React.FC = () => {
         payload.targetType = 'PARENT';
         const pId = selectedStudentForMsg?.parentId;
         payload.targetFilter = { parentId: pId ? (typeof pId === 'object' ? pId._id || pId.id : pId) : '' };
+        if (selectedStudentForMsg) {
+          payload.metadata = { studentId: selectedStudentForMsg._id || selectedStudentForMsg.id };
+        }
       }
 
       const res = await authFetch('/api/v1/notifications/send', {

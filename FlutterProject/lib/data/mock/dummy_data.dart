@@ -117,6 +117,7 @@ class DummyData {
       'type': 'REMINDER',
       'createdAt': '2026-07-10',
       'isRead': false,
+      'metadata': {'studentId': 1},
     }),
     NotificationModel.fromJson({
       'id': 2,
@@ -133,6 +134,7 @@ class DummyData {
       'type': 'ALERT',
       'createdAt': '2026-09-03',
       'isRead': false,
+      'metadata': {'studentId': 1},
     }),
     NotificationModel.fromJson({
       'id': 4,

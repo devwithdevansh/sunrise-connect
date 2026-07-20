@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/storage_keys.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/routes/app_routes.dart';
 
 import '../config/env.dart';
@@ -46,11 +47,21 @@ class ApiClient {
     _isRefreshing = true;
     try {
       final rToken = await _secureStorage.read(key: 'refresh_token');
-      if (rToken == null || rToken.isEmpty) return false;
+      if (rToken == null || rToken.isEmpty) {
+        await _secureStorage.delete(key: StorageKeys.accessToken);
+        await _secureStorage.delete(key: 'refresh_token');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        Get.offAllNamed(AppRoutes.login);
+        return false;
+      }
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth/refresh'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SunriseConnectApp/1.0.0',
+        },
         body: json.encode({'refreshToken': rToken}),
       ).timeout(_timeout);
 
@@ -69,6 +80,8 @@ class ApiClient {
         // Refresh token invalid or expired. Force logout.
         await _secureStorage.delete(key: StorageKeys.accessToken);
         await _secureStorage.delete(key: 'refresh_token');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
         Get.offAllNamed(AppRoutes.login);
         return false;
       }
@@ -101,6 +114,7 @@ class ApiClient {
       final token = await getParentToken();
       final headers = <String, String>{
         'Content-Type': 'application/json',
+        'User-Agent': 'SunriseConnectApp/1.0.0',
       };
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
@@ -119,6 +133,7 @@ class ApiClient {
       final token = await getParentToken();
       final headers = <String, String>{
         'Content-Type': 'application/json',
+        'User-Agent': 'SunriseConnectApp/1.0.0',
       };
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
@@ -141,6 +156,7 @@ class ApiClient {
       final token = await getParentToken();
       final headers = <String, String>{
         'Content-Type': 'application/json',
+        'User-Agent': 'SunriseConnectApp/1.0.0',
       };
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';

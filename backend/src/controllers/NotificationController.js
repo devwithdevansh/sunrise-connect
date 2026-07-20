@@ -9,7 +9,7 @@ class NotificationController {
    * Admin/Staff — send a broadcast notification
    */
   static send = catchAsync(async (req, res) => {
-    const { title, body, targetType, targetFilter } = req.body;
+    const { title, body, targetType, targetFilter, metadata } = req.body;
     const sentBy = req.user.id;
 
     const result = await NotificationService.sendBroadcast({
@@ -18,6 +18,7 @@ class NotificationController {
       body,
       targetType: targetType || 'ALL',
       targetFilter: targetFilter || {},
+      metadata: metadata || {},
     });
 
     sendResponse(res, 201, result, 'Notification sent successfully');
