@@ -9,7 +9,8 @@ import {
   FileSpreadsheet,
   MessageSquare,
   CheckSquare,
-  Square
+  Square,
+  Bus
 } from 'lucide-react';
 
 export const UnpaidFees: React.FC = () => {
@@ -143,10 +144,8 @@ export const UnpaidFees: React.FC = () => {
       if (divFilter !== 'All Divisions' && s.division !== divFilter.replace('Division ', '')) return false;
       if (mediumFilter !== 'All Mediums' && s.medium !== mediumFilter.split(' ')[0]) return false;
       if (zoneFilter !== 'All Zones') {
-        const zoneType = zoneFilter.split(' ')[0];
-        if (zoneType === 'Railnagar' && s.transportType !== 'Railnagar') return false;
-        if (zoneType === 'Outside' && s.transportType !== 'Outside Railnagar') return false;
-        if (zoneType === 'None' && s.transportType !== 'None') return false;
+        if (zoneFilter === 'None' && s.transportType !== 'None') return false;
+        if (zoneFilter !== 'None' && s.transportType !== zoneFilter) return false;
       }
 
       // Filter by Search Query — search name, code, or parent mobile
@@ -541,9 +540,10 @@ export const UnpaidFees: React.FC = () => {
                 className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-600 focus:outline-none hover:border-slate-300 shadow-sm"
               >
                 <option value="All Zones">All Zones</option>
-                <option value="Railnagar Zone">Railnagar</option>
-                <option value="Outside Zone">Outside Railnagar</option>
-                <option value="None Zone">No Transport</option>
+                {Array.from(new Set(students.map((s: any) => s.transportType).filter((t: any) => t && t !== 'None'))).sort().map((zone: any) => (
+                  <option key={zone} value={zone}>{zone}</option>
+                ))}
+                <option value="None">No Transport</option>
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             </div>
@@ -641,15 +641,15 @@ export const UnpaidFees: React.FC = () => {
                         {getLastPaidMonth(sId!)}
                       </td>
                       <td className="py-4 px-4">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
-                          s.transportType === 'Railnagar'
-                            ? 'bg-blue-100 text-blue-600'
-                            : s.transportType === 'Outside Railnagar'
-                            ? 'bg-indigo-100 text-indigo-600'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          {s.transportType === 'Railnagar' ? 'RAILNAGAR' : s.transportType === 'Outside Railnagar' ? 'OUTSIDE' : 'NONE'}
-                        </span>
+                        <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            s.transportType !== 'None' 
+                              ? 'bg-amber-100 text-amber-700 border border-amber-200/50' 
+                              : 'bg-slate-100 text-slate-500 border border-slate-200/50'
+                          }`}
+                        >
+                          <Bus className="h-3 w-3" />
+                          {s.transportType === 'None' ? 'NONE' : s.transportType.toUpperCase()}
+                        </div>
                       </td>
                       <td className="py-4 px-4 text-center">
                         <button

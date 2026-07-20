@@ -315,8 +315,6 @@ export const Dashboard: React.FC = () => {
   const gujaratiStudents = activeStudents.filter(s => s.medium.toLowerCase() === 'gujarati').length;
 
   const transportStudents = activeStudents.filter(s => s.transportType && s.transportType !== 'None').length;
-  const railnagarStudents = activeStudents.filter(s => s.transportType === 'Railnagar').length;
-  const outsideStudents = activeStudents.filter(s => s.transportType === 'Outside Railnagar').length;
 
   const rteStudents = activeStudents.filter(s => s.isRTE).length;
 
@@ -341,7 +339,7 @@ export const Dashboard: React.FC = () => {
     {
       title: 'TRANSPORT STUDENTS',
       value: transportStudents.toLocaleString('en-IN'),
-      subtitle: `Railnagar: ${railnagarStudents} · Outside: ${outsideStudents}`,
+      subtitle: `Multiple active zones`,
       icon: Bus,
       color: 'border-t-4 border-t-amber-500'
     },

@@ -86,7 +86,7 @@ export const Students: React.FC = () => {
   const [newSMedium, setNewSMedium] = useState<'English' | 'Gujarati'>('English');
   const [newSStandard, setNewSStandard] = useState('1');
   const [newSDivision, setNewSDivision] = useState('A');
-  const [newSTransport, setNewSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
+  const [newSTransport, setNewSTransport] = useState<string>('None');
   const [newSIsRTE, setNewSIsRTE] = useState(false);
   const [newSIsNewAdmission, setNewSIsNewAdmission] = useState(true);
   const [newSBuyBagKit, setNewSBuyBagKit] = useState(false);
@@ -100,8 +100,8 @@ export const Students: React.FC = () => {
   const [editSMedium, setEditSMedium] = useState<'English' | 'Gujarati'>('English');
   const [editSStandard, setEditSStandard] = useState('5');
   const [editSDivision, setEditSDivision] = useState('A');
-  const [editSTransport, setEditSTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
-  const [originalTransport, setOriginalTransport] = useState<"None" | "Railnagar" | "Outside Railnagar">('None');
+  const [editSTransport, setEditSTransport] = useState<string>('None');
+  const [originalTransport, setOriginalTransport] = useState<string>('None');
   const [editSTransportStartMonth, setEditSTransportStartMonth] = useState('June');
   const [originalTransportStartMonth, setOriginalTransportStartMonth] = useState('June');
   const [editSParentName, setEditSParentName] = useState('');
@@ -1231,7 +1231,7 @@ export const Students: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
                   <select
                     value={newSTransport}
-                    onChange={(e) => setNewSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
+                    onChange={(e) => setNewSTransport(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="None">None</option>
@@ -1449,7 +1449,7 @@ export const Students: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Transport Zone</label>
                   <select
                     value={editSTransport}
-                    onChange={(e) => setEditSTransport(e.target.value as "None" | "Railnagar" | "Outside Railnagar")}
+                    onChange={(e) => setEditSTransport(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="None">None</option>
