@@ -42,18 +42,22 @@ class NotificationRepository {
   }
 
   /// Mark a specific notification as read.
-  Future<void> markAsRead(String notificationId) async {
+  Future<void> markAsRead(String notificationId, {String? studentId}) async {
     try {
-      await ApiClient.post('/notifications/inbox/$notificationId/read', {});
+      await ApiClient.post('/notifications/inbox/$notificationId/read', {
+        if (studentId != null) 'studentId': studentId,
+      });
     } catch (e) {
       print('NotificationRepository.markAsRead error: $e');
     }
   }
 
   /// Mark all notifications as read.
-  Future<void> markAllAsRead() async {
+  Future<void> markAllAsRead({String? studentId}) async {
     try {
-      await ApiClient.post('/notifications/inbox/mark-all-read', {});
+      await ApiClient.post('/notifications/inbox/mark-all-read', {
+        if (studentId != null) 'studentId': studentId,
+      });
     } catch (e) {
       print('NotificationRepository.markAllAsRead error: $e');
     }

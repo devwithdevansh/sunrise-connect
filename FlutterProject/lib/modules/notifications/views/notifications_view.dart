@@ -19,10 +19,19 @@ class NotificationsView extends StatelessWidget {
     final repo = NotificationRepository();
 
     Future<void> markAllRead() async {
-      await repo.markAllAsRead();
-      for (final n in controller.notifications) {
-        n.isRead = true;
+      final sId = controller.student.value?.id;
+      if (sId != null) {
+        await repo.markAllAsRead(studentId: sId);
+        for (final n in controller.notifications) {
+          n.markAsReadFor(sId);
+        }
+      } else {
+        await repo.markAllAsRead();
+        for (final n in controller.notifications) {
+          n.isRead = true;
+        }
       }
+      
       controller.unreadNotificationCount.value = 0;
       controller.notifications.refresh();
     }
@@ -85,13 +94,25 @@ class NotificationsView extends StatelessWidget {
               final notif = controller.notifications[index];
               return _NotificationCard(
                 notif: notif,
+                studentId: controller.student.value?.id,
                 onTap: () async {
-                  if (!notif.isRead) {
-                    await repo.markAsRead(notif.id);
-                    notif.isRead = true;
-                    controller.notifications.refresh();
-                    controller.unreadNotificationCount.value =
-                        controller.notifications.where((n) => !n.isRead).length;
+                  final sId = controller.student.value?.id;
+                  if (sId != null) {
+                    if (!notif.isReadFor(sId)) {
+                      await repo.markAsRead(notif.id, studentId: sId);
+                      notif.markAsReadFor(sId);
+                      controller.notifications.refresh();
+                      controller.unreadNotificationCount.value =
+                          controller.notifications.where((n) => !n.isReadFor(sId)).length;
+                    }
+                  } else {
+                    if (!notif.isRead) {
+                      await repo.markAsRead(notif.id);
+                      notif.isRead = true;
+                      controller.notifications.refresh();
+                      controller.unreadNotificationCount.value =
+                          controller.notifications.where((n) => !n.isRead).length;
+                    }
                   }
                 },
               );
@@ -105,8 +126,9 @@ class NotificationsView extends StatelessWidget {
 
 class _NotificationCard extends StatefulWidget {
   final NotificationModel notif;
+  final String? studentId;
   final VoidCallback onTap;
-  const _NotificationCard({required this.notif, required this.onTap});
+  const _NotificationCard({required this.notif, this.studentId, required this.onTap});
 
   @override
   State<_NotificationCard> createState() => _NotificationCardState();
@@ -173,6 +195,9 @@ class _NotificationCardState extends State<_NotificationCard> {
 
   @override
   Widget build(BuildContext context) {
+    final sId = widget.studentId;
+    final isRead = sId != null ? widget.notif.isReadFor(sId) : widget.notif.isRead;
+
     return GestureDetector(
       onTap: _handleTap,
       child: AnimatedContainer(
@@ -180,11 +205,11 @@ class _NotificationCardState extends State<_NotificationCard> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: widget.notif.isRead ? AppColors.white : AppColors.primaryLight.withOpacity(0.4),
+          color: isRead ? AppColors.white : AppColors.primaryLight.withOpacity(0.4),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: widget.notif.isRead ? AppColors.border : AppColors.primaryMid.withOpacity(0.25),
-            width: widget.notif.isRead ? 1 : 1.5,
+            color: isRead ? AppColors.border : AppColors.primaryMid.withOpacity(0.25),
+            width: isRead ? 1 : 1.5,
           ),
         ),
         child: Row(
@@ -207,11 +232,11 @@ class _NotificationCardState extends State<_NotificationCard> {
                         child: Text(
                           widget.notif.title,
                           style: AppTextStyles.labelLarge.copyWith(
-                            fontWeight: widget.notif.isRead ? FontWeight.w600 : FontWeight.w800,
+                            fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
                           ),
                         ),
                       ),
-                      if (!widget.notif.isRead)
+                      if (!isRead)
                         Container(
                           width: 8,
                           height: 8,

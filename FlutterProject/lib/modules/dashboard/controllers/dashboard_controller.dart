@@ -251,14 +251,14 @@ class DashboardController extends GetxController {
         return n.studentId == null || n.studentId!.isEmpty || n.studentId == sId;
       }).toList();
       notifications.assignAll(filtered);
-      unreadNotificationCount.value = filtered.where((n) => !n.isRead).length;
+      unreadNotificationCount.value = filtered.where((n) => !n.isReadFor(sId)).length;
     }
   }
 
   bool hasUnreadNotificationsFor(String studentId) {
     return _allNotifications.any((n) {
-      final isForStudent = n.studentId == studentId;
-      return isForStudent && !n.isRead;
+      final isForStudent = n.studentId == null || n.studentId!.isEmpty || n.studentId == studentId;
+      return isForStudent && !n.isReadFor(studentId);
     });
   }
 
