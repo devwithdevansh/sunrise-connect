@@ -189,7 +189,7 @@ class ReceiptDetailsController extends GetxController {
     try {
       final dashCtrl = Get.find<DashboardController>();
       final notifs = dashCtrl.notifications.where((n) => 
-        !n.isReadFor(studentId) && n.type == 'PAYMENT_RECEIVED' && (n.studentId == studentId || n.studentId == null || n.studentId!.isEmpty)
+        !n.isReadFor(studentId) && n.type == 'PAYMENT_RECEIVED' && (n.targetStudentIds.isEmpty || n.targetStudentIds.contains(studentId))
       ).toList();
       
       if (notifs.isEmpty) return;

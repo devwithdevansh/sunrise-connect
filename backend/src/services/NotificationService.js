@@ -62,8 +62,8 @@ class NotificationService {
    * @param {object} opts.targetFilter - { standard, medium, parentId } depending on targetType
    */
   static async sendBroadcast({ sentBy, title, body, targetType, targetFilter = {}, type = 'BROADCAST', metadata = {} }) {
-    // ── 1. Resolve target parents ─────────────────────────────────────────────
     let parentIds = [];
+    let targetStudentIds = [];
 
     if (targetType === 'ALL') {
       // Get all active parents who have at least one FCM token
@@ -87,6 +87,14 @@ class NotificationService {
       const { parentId } = targetFilter;
       if (!parentId) throw new AppError('parentId is required for PARENT targeting', 400);
       parentIds = [parentId];
+    } else if (targetType === 'STUDENT') {
+      const { studentId } = targetFilter;
+      if (!studentId) throw new AppError('studentId is required for STUDENT targeting', 400);
+      const student = await studentRepository.findById(studentId);
+      if (!student) throw new AppError('Student not found', 404);
+      if (!student.parentId) throw new AppError('Student has no parent associated', 400);
+      parentIds = [student.parentId.toString()];
+      targetStudentIds = [studentId];
     } else {
       throw new AppError('Invalid targetType', 400);
     }
@@ -127,6 +135,7 @@ class NotificationService {
       targetType,
       targetFilter,
       targetParentIds: parentIds,
+      targetStudentIds,
       deliveryStatus: 'PENDING',
       metadata,
     });

@@ -150,11 +150,8 @@ export const Notifications: React.FC = () => {
       } else if (targetType === 'PARENT') {
         payload.targetFilter = { parentId: parentSearch.trim() };
       } else if (targetType === 'STUDENT') {
-        payload.targetType = 'PARENT';
-        const pId = selectedStudentForMsg?.parentId;
-        payload.targetFilter = { parentId: pId ? (typeof pId === 'object' ? pId._id || pId.id : pId) : '' };
         if (selectedStudentForMsg) {
-          payload.metadata = { studentId: selectedStudentForMsg._id || selectedStudentForMsg.id };
+          payload.targetFilter = { studentId: selectedStudentForMsg._id || selectedStudentForMsg.id };
         }
       }
 

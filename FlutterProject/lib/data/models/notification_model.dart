@@ -7,7 +7,7 @@ class NotificationModel {
   final String body;
   final String type; // 'BROADCAST' | 'PAYMENT_RECEIVED' | 'FEE_REMINDER' | 'SYSTEM'
   final String createdAt;
-  final String? studentId; // Extracted from metadata for student-specific rendering
+  final List<String> targetStudentIds; // Empty if broadcast, else contains target student IDs
   
   // For backward compatibility (read by parent without studentId)
   bool _isGloballyRead;
@@ -20,7 +20,7 @@ class NotificationModel {
     required this.body,
     required this.type,
     required this.createdAt,
-    this.studentId,
+    this.targetStudentIds = const [],
     required bool isRead,
     this.readByStudents = const [],
   }) : _isGloballyRead = isRead;
@@ -40,9 +40,9 @@ class NotificationModel {
   }
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    String? sId;
-    if (json['metadata'] != null && json['metadata'] is Map) {
-      sId = (json['metadata'] as Map)['studentId']?.toString();
+    List<String> tStudents = [];
+    if (json['targetStudentIds'] != null && json['targetStudentIds'] is List) {
+      tStudents = (json['targetStudentIds'] as List).map((e) => e.toString()).toList();
     }
     
     List<String> readStudents = [];
@@ -56,7 +56,7 @@ class NotificationModel {
       body: json['body'] as String? ?? json['message'] as String? ?? '',
       type: json['type'] as String? ?? 'BROADCAST',
       createdAt: json['createdAt'] as String? ?? '',
-      studentId: sId,
+      targetStudentIds: tStudents,
       isRead: json['isRead'] as bool? ?? false,
       readByStudents: readStudents,
     );
