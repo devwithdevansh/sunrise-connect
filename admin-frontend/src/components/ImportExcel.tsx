@@ -234,7 +234,7 @@ export const ImportExcel: React.FC = () => {
     { name: 'Parent Name', dbName: 'parentName', required: true, example: 'Bhavesh Solanki', desc: 'Full name of parent or guardian' },
     { name: 'Parent Mobile', dbName: 'parentMobile', required: true, example: '9009637290', desc: '10-digit Indian mobile number (no country code)' },
     { name: 'Parent Secondary Mobile', dbName: 'parentSecondaryMobile', required: false, example: '9191421620', desc: 'Optional second contact number. Leave blank if none.' },
-    { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: 'Write "Railnagar", "Outside Railnagar", "None", or leave blank. "None"/blank = no transport enrolled.' },
+    { name: 'Transport Type', dbName: 'transportType', required: false, example: 'Railnagar', desc: 'Write the exact Zone Name configured in Fee Structures, or "None". Leave blank for "None".' },
     { name: 'Transport fees pending from month', dbName: 'transportStartMonth', required: false, example: 'June', desc: 'Only fill this if the student has PENDING transport fees. Write the month from which fees are due (e.g. "June", "August"). Leave blank if transport fees are fully paid.' },
     { name: 'Is RTE', dbName: 'isRTE', required: false, example: 'No', desc: 'Is the student admitted under Right to Education (RTE) scheme? Write "Yes" or "No". Leave blank = No.' },
     { name: `Year YYYY-YYYY (e.g. Year ${activeYearName || '2026-2027'})`, dbName: 'pendingFees', required: false, example: 'oct to may', desc: 'Education fee pending status. Write "paid" / "gov paid" if fully paid, or a month range like "oct to may" if fees are pending from October.' },
@@ -527,10 +527,6 @@ export const ImportExcel: React.FC = () => {
       if (secMobile && !/^[6-9]\d{9}$/.test(secMobile)) {
         errors.push("Invalid backup mobile");
       }
-    }
-
-    if (row.transportType && !['Railnagar', 'Outside Railnagar', 'None'].includes(row.transportType)) {
-      errors.push("Invalid transport type");
     }
 
     if (row.pendingFees) {
@@ -1053,15 +1049,13 @@ export const ImportExcel: React.FC = () => {
               {/* Transport Type */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Transport Type</label>
-                <select
+                <input
+                  type="text"
+                  placeholder="e.g. Outside Railnagar, or None"
                   value={editForm.transportType || 'None'}
                   onChange={(e) => setEditForm({ ...editForm, transportType: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
-                >
-                  <option value="None">None</option>
-                  <option value="Railnagar">Railnagar</option>
-                  <option value="Outside Railnagar">Outside Railnagar</option>
-                </select>
+                />
               </div>
 
               {/* Transport Pending Month */}

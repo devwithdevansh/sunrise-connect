@@ -6,7 +6,7 @@ export interface Student {
   medium: 'English' | 'Gujarati';
   standard: string;
   division: string;
-  transportType: 'Railnagar' | 'Outside Railnagar' | 'None';
+  transportType: string;
   isRTE: boolean;
   isNewAdmission?: boolean;
   buyBagKit?: boolean;

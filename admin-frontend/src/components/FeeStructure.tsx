@@ -221,10 +221,13 @@ const CreateTransportModal: React.FC<CreateTransportModalProps> = ({ initialAcad
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Zone Name</label>
-            <select value={transportType} onChange={e => setTransportType(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800">
-              <option value="Railnagar">Railnagar</option>
-              <option value="Outside Railnagar">Outside Railnagar</option>
-            </select>
+            <input 
+              type="text" 
+              placeholder="e.g. Outside Railnagar (Zone A)"
+              value={transportType} 
+              onChange={e => setTransportType(e.target.value)} 
+              className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800" 
+            />
           </div>
           <div>
             <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Monthly Fee (₹)</label>
