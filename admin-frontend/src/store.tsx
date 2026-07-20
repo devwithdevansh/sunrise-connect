@@ -745,6 +745,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete fee structure');
+      setFeeStructures(prev => prev.filter(f => f._id !== id));
       debouncedFetchAll();
       return true;
     } catch (err) {
@@ -776,6 +777,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete transport fee structure');
+      setTransportFeeStructures(prev => prev.filter(t => t._id !== id));
       debouncedFetchAll();
       return true;
     } catch (err) {
