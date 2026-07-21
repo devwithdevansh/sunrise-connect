@@ -4,11 +4,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'custom_button.dart';
 
-class PermissionDialog extends StatelessWidget {
+class PermissionSheet extends StatelessWidget {
   final VoidCallback onAllow;
   final VoidCallback onDeny;
 
-  const PermissionDialog({
+  const PermissionSheet({
     super.key,
     required this.onAllow,
     required this.onDeny,
@@ -16,62 +16,106 @@ class PermissionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: AppColors.white,
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.notifications_active_rounded,
-                color: AppColors.primaryMid,
-                size: 40,
-              ),
-            ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
-            const SizedBox(height: 24),
-            Text(
-              'Stay Updated',
-              style: AppTextStyles.h2.copyWith(color: AppColors.ink),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Allow notifications and sound so we can send you instant fee reminders and payment receipts.',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.inkLight),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            CustomButton(
-              label: 'Allow Notifications',
-              onTap: onAllow,
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: onDeny,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.inkLight,
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Not Now',
-                style: AppTextStyles.labelLarge.copyWith(color: AppColors.inkLight),
-              ),
-            ),
-          ],
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 20,
+            spreadRadius: 5,
+          )
+        ],
       ),
-    ).animate().fade().scale(curve: Curves.easeOutBack, duration: 300.ms);
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              color: AppColors.slate200,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Icon with glowing effect
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.primaryLight, Colors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryMid.withOpacity(0.3),
+                  blurRadius: 24,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 8),
+                )
+              ],
+            ),
+            child: const Icon(
+              Icons.notifications_active_rounded,
+              color: AppColors.primaryMid,
+              size: 48,
+            ),
+          ).animate().scale(delay: 200.ms, duration: 500.ms, curve: Curves.easeOutBack),
+          
+          const SizedBox(height: 28),
+          
+          Text(
+            'Never Miss an Update',
+            style: AppTextStyles.h2.copyWith(color: AppColors.ink, fontSize: 22, fontWeight: FontWeight.w800),
+            textAlign: TextAlign.center,
+          ).animate().fade(delay: 300.ms).slideY(begin: 0.2, curve: Curves.easeOut),
+          
+          const SizedBox(height: 12),
+          
+          Text(
+            'Allow notifications to receive instant fee reminders, payment receipts, and important school announcements directly on your device.',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.inkLight, height: 1.5),
+            textAlign: TextAlign.center,
+          ).animate().fade(delay: 400.ms).slideY(begin: 0.2, curve: Curves.easeOut),
+          
+          const SizedBox(height: 36),
+          
+          CustomButton(
+            label: 'Enable Notifications',
+            onTap: onAllow,
+          ).animate().fade(delay: 500.ms).scale(curve: Curves.easeOutBack),
+          
+          const SizedBox(height: 12),
+          
+          TextButton(
+            onPressed: onDeny,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.inkLight,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Text(
+              'Maybe Later',
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.slate400,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ).animate().fade(delay: 600.ms),
+        ],
+      ),
+    );
   }
 }

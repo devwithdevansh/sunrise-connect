@@ -50,8 +50,8 @@ class DashboardController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     final hasAsked = prefs.getBool('has_asked_fcm_permission') ?? false;
     if (!hasAsked) {
-      Get.dialog(
-         PermissionDialog(
+      Get.bottomSheet(
+         PermissionSheet(
            onAllow: () async {
              Get.back();
              await prefs.setBool('has_asked_fcm_permission', true);
@@ -62,7 +62,9 @@ class DashboardController extends GetxController {
              await prefs.setBool('has_asked_fcm_permission', true);
            }
          ),
-         barrierDismissible: false,
+         isDismissible: false,
+         enableDrag: false,
+         isScrollControlled: true,
       );
     }
   }
