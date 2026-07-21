@@ -147,7 +147,7 @@ class ReceiptPdfGenerator {
     final totalAmount = group.totalAmount;
     final totalConcession = group.activeItems.fold<double>(0.0, (s, item) => s + item.concessionAmount);
     final words = _toIndianWords(totalAmount);
-    final receiptNo = group.receiptNumber.isNotEmpty ? group.receiptNumber.toUpperCase() : "N/A";
+    final receiptNo = group.displayReceiptNumber.toUpperCase();
     final academicYear = group.activeItems.isNotEmpty && group.activeItems.first.academicYear.isNotEmpty 
         ? group.activeItems.first.academicYear 
         : '${group.paidAt.year} - ${group.paidAt.year + 1}';

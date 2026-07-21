@@ -19,6 +19,12 @@ class ReceiptGroup {
   final String receiptNumber;
   final DateTime paidAt;
 
+  String get displayReceiptNumber {
+    if (receiptNumber.isEmpty) return 'N/A';
+    // If it's a long Mongo ID fallback, slice it. Otherwise keep sequential number.
+    return receiptNumber.length > 12 ? receiptNumber.substring(0, 12) : receiptNumber;
+  }
+
   List<ReceiptModel> get activeItems => items.where((item) => !item.isReversed).toList();
   bool get isPartiallyReversed => items.any((item) => item.isReversed) && items.any((item) => !item.isReversed);
   double get revisedTotal => activeItems.fold(0.0, (s, r) => s + r.amount);

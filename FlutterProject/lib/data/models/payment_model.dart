@@ -5,6 +5,7 @@ class PaymentModel {
   final String paymentDate;
   final String paymentMode;
   final String transactionId;
+  final String receiptNumber;
   final String termName;       // feePeriod from ledger e.g. "June", "Term 1"
   final String feeType;        // feeType from ledger e.g. "TRANSPORT", "TERM", "EDUCATION"
   final String studentName;    // snapshot.studentName from ledger
@@ -21,6 +22,7 @@ class PaymentModel {
     required this.paymentDate,
     required this.paymentMode,
     required this.transactionId,
+    this.receiptNumber = '',
     this.termName = '',
     this.feeType = 'EDUCATION',
     this.studentName = '',
@@ -38,6 +40,7 @@ class PaymentModel {
         paymentDate: json['paymentDate'] as String? ?? json['createdAt'] as String? ?? '',
         paymentMode: json['paymentMode'] as String? ?? json['method'] as String? ?? 'UPI',
         transactionId: _extractTxnId(json),
+        receiptNumber: json['receiptNumber']?.toString() ?? '',
         termName: json['termName'] as String? ?? json['feePeriod'] as String? ?? '',
         feeType: json['feeType'] as String? ?? 'EDUCATION',
         studentName: json['studentName'] as String? ?? '',
@@ -88,6 +91,7 @@ class PaymentModel {
         'paymentDate': paymentDate,
         'paymentMode': paymentMode,
         'transactionId': transactionId,
+        'receiptNumber': receiptNumber,
         'termName': termName,
         'feeType': feeType,
         'studentName': studentName,

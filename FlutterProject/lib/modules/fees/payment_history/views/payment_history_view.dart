@@ -210,8 +210,10 @@ class _GroupCardState extends State<_GroupCard> {
                   style: AppTextStyles.bodySmall,
                 ),
                 // Txn ID
-                if (g.transactionId.isNotEmpty)
-                  Text('Txn: ${g.transactionId}', style: AppTextStyles.bodySmall.copyWith(color: AppColors.inkLight)),
+                if (g.receiptNumber.isNotEmpty)
+                  Text('Receipt #${g.receiptNumber}', style: AppTextStyles.bodySmall.copyWith(color: AppColors.inkLight))
+                else if (g.transactionId.isNotEmpty)
+                  Text('Txn: ${g.transactionId.length > 12 ? g.transactionId.substring(0, 12) : g.transactionId}', style: AppTextStyles.bodySmall.copyWith(color: AppColors.inkLight)),
               ])),
               // Amount + badge
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

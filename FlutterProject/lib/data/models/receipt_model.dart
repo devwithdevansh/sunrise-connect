@@ -33,8 +33,8 @@ class ReceiptModel {
 
   factory ReceiptModel.fromJson(Map<String, dynamic> json) => ReceiptModel(
         id: (json['id'] ?? json['_id'] ?? '').toString(),
-        receiptNumber: json['receiptNumber'] as String? ??
-            json['transactionId'] as String? ?? '',
+        receiptNumber: json['receiptNumber']?.toString() ??
+            json['transactionId']?.toString() ?? '',
         studentName: json['studentName'] as String? ?? '',
         amount: ((json['amount'] ?? 0) as num).toDouble(),
         paymentDate: json['paymentDate'] as String? ??

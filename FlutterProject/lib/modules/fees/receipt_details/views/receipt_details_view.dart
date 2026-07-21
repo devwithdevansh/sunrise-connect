@@ -165,7 +165,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                 const SizedBox(height: 18),
 
                 // ── Meta rows ─────────────────────────────────────────────
-                _row('Receipt No:', group.receiptNumber.isNotEmpty ? group.receiptNumber : '—'),
+                _row('Receipt No:', group.displayReceiptNumber),
                 const SizedBox(height: 8),
                 _row('Student Name:', group.studentName),
                 const SizedBox(height: 8),
@@ -384,7 +384,7 @@ class _ReceiptGroupCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(fmtDateTime(group.paidAt), style: AppTextStyles.bodySmall),
             if (group.receiptNumber.isNotEmpty)
-              Text('Receipt #${group.receiptNumber.length > 12 ? group.receiptNumber.substring(0, 12) : group.receiptNumber}',
+              Text('Receipt #${group.displayReceiptNumber}',
                   style: AppTextStyles.bodySmall.copyWith(color: AppColors.inkLight)),
           ])),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
