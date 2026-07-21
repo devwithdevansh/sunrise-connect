@@ -373,11 +373,66 @@ class PendingFeesController extends GetxController
   }
 
   // ── Selection & Expansion ─────────────────────────────────────────────────
+  static const _eduTermOrder = [
+    'term 1', 'june', 'july', 'august', 'september', 'october', 'november',
+    'term 2', 'december', 'january', 'february', 'march', 'april', 'may'
+  ];
+
+  static const _transportOrder = [
+    'june', 'july', 'august', 'september', 'october', 'november',
+    'december', 'january', 'february', 'march', 'april', 'may'
+  ];
+
+  int _getFeeSequenceIndex(FeeItem fee) {
+    if (fee.isEducation || fee.isTerm) {
+      return _eduTermOrder.indexOf(fee.termName.toLowerCase().trim());
+    } else if (fee.isTransport) {
+      return _transportOrder.indexOf(fee.termName.toLowerCase().trim());
+    }
+    return -1;
+  }
+
   void toggleFee(FeeItem fee) {
     activeQuickSelect.value = -1;
-    selectedIds.contains(fee.id)
-        ? selectedIds.remove(fee.id)
-        : selectedIds.add(fee.id);
+    final isCurrentlySelected = selectedIds.contains(fee.id);
+    final feeIndex = _getFeeSequenceIndex(fee);
+
+    if (feeIndex == -1 || fee.isPaid) {
+      // Independent fee (e.g. Admission, Bag/Kit) -> simple toggle
+      isCurrentlySelected ? selectedIds.remove(fee.id) : selectedIds.add(fee.id);
+      return;
+    }
+
+    // Chronological cascading logic
+    if (isCurrentlySelected) {
+      // Deselect this and all subsequent fees in the same sequence
+      final sequenceFees = fees.where((f) {
+        if (f.isPaid) return false;
+        if (fee.isEducation || fee.isTerm) return f.isEducation || f.isTerm;
+        if (fee.isTransport) return f.isTransport;
+        return false;
+      }).toList();
+
+      for (final f in sequenceFees) {
+        if (_getFeeSequenceIndex(f) >= feeIndex) {
+          selectedIds.remove(f.id);
+        }
+      }
+    } else {
+      // Select this and all prior unpaid fees in the same sequence
+      final sequenceFees = fees.where((f) {
+        if (f.isPaid) return false;
+        if (fee.isEducation || fee.isTerm) return f.isEducation || f.isTerm;
+        if (fee.isTransport) return f.isTransport;
+        return false;
+      }).toList();
+
+      for (final f in sequenceFees) {
+        if (_getFeeSequenceIndex(f) <= feeIndex) {
+          selectedIds.add(f.id);
+        }
+      }
+    }
   }
 
   bool isMonthExpanded(String monthName) {
@@ -407,16 +462,35 @@ class PendingFeesController extends GetxController
 
   void toggleMonthGroup(MonthGroup group) {
     final unpaidSubFees = group.subFees.where((f) => !f.isPaid).toList();
+    if (unpaidSubFees.isEmpty) return;
+
     final allSel = isMonthGroupFullySelected(group);
+    
+    // To support cascading, we find the highest index in this group if we are selecting,
+    // or the lowest index if we are deselecting, and let toggleFee handle the cascade.
+    // However, month groups might contain both Education and Transport. 
+    // We should trigger toggleFee for each distinct unpaid item in the group, 
+    // processing them sequentially to allow the cascade to work across sequences.
+
     if (allSel) {
+      // Deselect all
       for (final f in unpaidSubFees) {
-        selectedIds.remove(f.id);
+        if (selectedIds.contains(f.id)) {
+           // Direct removal is safer here to avoid over-cascading if not intended,
+           // but toggleFee with cascade ensures consistency. We will use cascade.
+           toggleFee(f);
+        }
       }
     } else {
+      // Select all. We find the "latest" item in each sequence within this group and toggle it.
+      // E.g. toggle the Transport and toggle the Education/Term fee for this month.
       for (final f in unpaidSubFees) {
-        selectedIds.add(f.id);
+        if (!selectedIds.contains(f.id)) {
+           toggleFee(f); // This will auto-select prior months!
+        }
       }
     }
+    
     activeQuickSelect.value = -1;
   }
 
@@ -449,14 +523,21 @@ class PendingFeesController extends GetxController
 
   void selectAllInTerm(TermGroup term) {
     final unpaid = _unpaidFeesForTerm(term);
+    if (unpaid.isEmpty) return;
+
     final allSel = unpaid.every((f) => selectedIds.contains(f.id));
+    
     if (allSel) {
       for (final f in unpaid) {
-        selectedIds.remove(f.id);
+        if (selectedIds.contains(f.id)) {
+          toggleFee(f);
+        }
       }
     } else {
       for (final f in unpaid) {
-        selectedIds.add(f.id);
+        if (!selectedIds.contains(f.id)) {
+          toggleFee(f);
+        }
       }
     }
     activeQuickSelect.value = -1;
