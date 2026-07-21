@@ -1099,12 +1099,12 @@ class _PaySheet extends StatelessWidget {
                     Get.back();
                     HapticFeedback.mediumImpact();
                     await c.paySelected();
-                    Get.snackbar('Payment Successful',
-                        '${fees.length} fee${fees.length == 1 ? '' : 's'} · ${_fmt(total)}',
-                        backgroundColor: _C.green, colorText: Colors.white,
-                        snackPosition: SnackPosition.TOP,
-                        margin: const EdgeInsets.all(16), borderRadius: 14,
-                        duration: const Duration(seconds: 3));
+                    // Get.snackbar('Payment Successful',
+                    //     '${fees.length} fee${fees.length == 1 ? '' : 's'} · ${_fmt(total)}',
+                    //     backgroundColor: _C.green, colorText: Colors.white,
+                    //     snackPosition: SnackPosition.TOP,
+                    //     margin: const EdgeInsets.all(16), borderRadius: 14,
+                    //     duration: const Duration(seconds: 3));
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),

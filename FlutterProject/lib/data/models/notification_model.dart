@@ -45,6 +45,16 @@ class NotificationModel {
       tStudents = (json['targetStudentIds'] as List).map((e) => e.toString()).toList();
     }
     
+    if (json['metadata'] != null && json['metadata'] is Map) {
+      final meta = json['metadata'] as Map;
+      if (meta['studentId'] != null) {
+        final sId = meta['studentId'].toString();
+        if (!tStudents.contains(sId)) {
+          tStudents.add(sId);
+        }
+      }
+    }
+
     List<String> readStudents = [];
     if (json['readByStudents'] != null && json['readByStudents'] is List) {
       readStudents = (json['readByStudents'] as List).map((e) => e.toString()).toList();
