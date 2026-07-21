@@ -143,7 +143,18 @@ class NotificationService {
     });
 
     // ── 4. Send via Firebase (fire-and-forget update of status) ───────────────
-    const { successCount, failureCount } = await NotificationService._sendViaFcm(allTokens, { title, body, notificationId: notification._id.toString() });
+    const fcmData = { notificationId: notification._id.toString() };
+    if (targetStudentIds && targetStudentIds.length === 1) {
+      fcmData.studentId = targetStudentIds[0].toString();
+    } else if (metadata && metadata.studentId) {
+      fcmData.studentId = metadata.studentId.toString();
+    }
+
+    const { successCount, failureCount } = await NotificationService._sendViaFcm(allTokens, { 
+      title, 
+      body, 
+      data: fcmData 
+    });
 
     let deliveryStatus = 'PENDING';
     if (allTokens.length === 0) {
