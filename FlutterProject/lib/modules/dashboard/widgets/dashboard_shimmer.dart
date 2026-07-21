@@ -59,11 +59,11 @@ class DashboardShimmer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: const [
-                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
+                Expanded(child: ShimmerLoader(width: double.infinity, height: 34, borderRadius: 12)),
                 SizedBox(width: 8),
-                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
+                Expanded(child: ShimmerLoader(width: double.infinity, height: 34, borderRadius: 12)),
                 SizedBox(width: 8),
-                ShimmerLoader(width: 110, height: 34, borderRadius: 12),
+                Expanded(child: ShimmerLoader(width: double.infinity, height: 34, borderRadius: 12)),
               ],
             ),
           ),
