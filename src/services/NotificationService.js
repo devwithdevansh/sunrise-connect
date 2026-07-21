@@ -88,14 +88,6 @@ class NotificationService {
       const { parentId } = targetFilter;
       if (!parentId) throw new AppError('parentId is required for PARENT targeting', 400);
       parentIds = [parentId];
-    } else if (targetType === 'STUDENT') {
-      const { studentId } = targetFilter;
-      if (!studentId) throw new AppError('studentId is required for STUDENT targeting', 400);
-      const student = await studentRepository.findById(studentId);
-      if (!student) throw new AppError('Student not found', 404);
-      if (!student.parentId) throw new AppError('Student has no parent associated', 400);
-      parentIds = [student.parentId._id?.toString() || student.parentId.toString()];
-      targetStudentIds = [studentId];
     } else {
       throw new AppError('Invalid targetType', 400);
     }
@@ -225,8 +217,8 @@ class NotificationService {
     const notification = await Notification.findOne({ _id: notificationId, targetParentIds: parentId });
     if (!notification) throw new AppError('Notification not found', 404);
 
-    const alreadyRead = notification.readBy.some(r => 
-      r.parentId?.toString() === parentId.toString() && 
+    const alreadyRead = notification.readBy.some(r =>
+      r.parentId?.toString() === parentId.toString() &&
       (studentId ? r.studentId?.toString() === studentId.toString() : !r.studentId)
     );
 
@@ -248,11 +240,11 @@ class NotificationService {
   static async markAllAsRead({ parentId, studentId }) {
     // Find all notifications for this parent
     const notifications = await Notification.find({ targetParentIds: parentId }).select('_id readBy');
-    
+
     // Filter to those NOT read by this specific student (or parent if studentId is empty)
     const unread = notifications.filter(n => {
-      return !n.readBy.some(r => 
-        r.parentId?.toString() === parentId.toString() && 
+      return !n.readBy.some(r =>
+        r.parentId?.toString() === parentId.toString() &&
         (studentId ? r.studentId?.toString() === studentId.toString() : !r.studentId)
       );
     });
