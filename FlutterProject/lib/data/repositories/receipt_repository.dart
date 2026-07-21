@@ -37,9 +37,11 @@ class ReceiptRepository {
         .where((p) => !p.isReversal && p.amount > 0)
         .map((p) => ReceiptModel(
               id: p.id,
-              receiptNumber: p.transactionId.isNotEmpty
-                  ? p.transactionId
-                  : 'REC-${p.id.substring(p.id.length > 6 ? p.id.length - 6 : 0).toUpperCase()}',
+              receiptNumber: p.receiptNumber.isNotEmpty
+                  ? p.receiptNumber
+                  : p.transactionId.isNotEmpty
+                      ? p.transactionId
+                      : 'REC-${p.id.substring(p.id.length > 6 ? p.id.length - 6 : 0).toUpperCase()}',
               studentName: p.studentName.isNotEmpty ? p.studentName : fallbackStudentName,
               amount: p.amount,
               paymentDate: p.paymentDate,
