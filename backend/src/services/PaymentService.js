@@ -60,12 +60,13 @@ class PaymentService {
         try {
           const student = await studentRepository.findById(ledger.studentId);
           if (student && student.parentId) {
+            const parentIdStr = student.parentId._id?.toString() || student.parentId.toString();
             const notif = await NotificationService.sendBroadcast({
-              sentBy: performedBy || student.parentId,
+              sentBy: performedBy || parentIdStr,
               title: 'Payment Received',
               body: `A payment of ₹${amount} has been successfully processed for receipt #${receiptNumber}.`,
               targetType: 'PARENT',
-              targetFilter: { parentId: student.parentId.toString() },
+              targetFilter: { parentId: parentIdStr },
               type: 'PAYMENT_RECEIVED',
               metadata: { studentId: ledger.studentId.toString() }
             });

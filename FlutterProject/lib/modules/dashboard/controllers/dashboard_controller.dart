@@ -143,12 +143,18 @@ class DashboardController extends GetxController {
 
         final activeId = prefs.getString(StorageKeys.studentId) ?? '';
         StudentModel activeStudent = studentsList.first;
-        if (activeId.isNotEmpty) {
-          final matched = studentsList.firstWhereOrNull((s) => s.id == activeId);
+        
+        String? targetId = FcmService.initialStudentId ?? (activeId.isNotEmpty ? activeId : null);
+        
+        if (targetId != null) {
+          final matched = studentsList.firstWhereOrNull((s) => s.id == targetId);
           if (matched != null) {
             activeStudent = matched;
           }
         }
+        
+        // Clear it so it only applies on the first load from push
+        FcmService.initialStudentId = null;
         student.value = activeStudent;
         await prefs.setString(StorageKeys.studentId, activeStudent.id);
 

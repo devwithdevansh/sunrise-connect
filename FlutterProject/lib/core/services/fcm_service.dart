@@ -34,6 +34,7 @@ class FcmService {
   static final _messaging = FirebaseMessaging.instance;
   static final _localNotifications = FlutterLocalNotificationsPlugin();
   static String? initialRoute; // Stores route if app launched from terminated state via push notification
+  static String? initialStudentId; // Stores studentId to auto-select
 
   // Android notification channel
   static const _androidChannel = AndroidNotificationChannel(
@@ -85,6 +86,9 @@ class FcmService {
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       initialRoute = '/notifications'; // Save for splash screen to handle
+      if (initialMessage.data.containsKey('studentId')) {
+        initialStudentId = initialMessage.data['studentId'].toString();
+      }
     }
 
     // 9. Register token with backend & listen for refreshes
@@ -177,11 +181,38 @@ class FcmService {
 
   /// Navigate to the Notifications screen when a notification is tapped.
   static void _handleNotificationTap(RemoteMessage message) {
-    Get.toNamed('/notifications');
+    _navigateToNotifications(message.data);
   }
 
   /// Local notification tap handler.
   static void _onNotificationTap(NotificationResponse response) {
+    if (response.payload != null) {
+      try {
+        final Map<String, dynamic> data = json.decode(response.payload!);
+        _navigateToNotifications(data);
+      } catch (e) {
+        Get.toNamed('/notifications');
+      }
+    } else {
+      Get.toNamed('/notifications');
+    }
+  }
+
+  static void _navigateToNotifications(Map<String, dynamic> data) {
+    if (data.containsKey('studentId')) {
+      final String sId = data['studentId'].toString();
+      _switchStudent(sId);
+    }
     Get.toNamed('/notifications');
+  }
+
+  static void _switchStudent(String studentId) {
+    if (Get.isRegistered<DashboardController>()) {
+      final controller = Get.find<DashboardController>();
+      final s = controller.students.firstWhereOrNull((s) => s.id == studentId);
+      if (s != null && s.id != controller.student.value?.id) {
+        controller.switchStudent(s);
+      }
+    }
   }
 }
