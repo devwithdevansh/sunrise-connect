@@ -41,7 +41,7 @@ class PermissionSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              color: AppColors.slate200,
+              color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -109,7 +109,7 @@ class PermissionSheet extends StatelessWidget {
             child: Text(
               'Maybe Later',
               style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.slate400,
+                color: AppColors.inkLight,
                 fontWeight: FontWeight.w600,
               ),
             ),
