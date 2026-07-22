@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide GetNumUtils;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/payment_history_controller.dart';
 
@@ -121,10 +120,11 @@ class PaymentHistoryView extends GetView<PaymentHistoryController> {
                     fmt: _fmt,
                     fmtDate: _fmtDate,
                     fmtTime: _fmtTime,
-                  ),
+                  ).animate()
+                    .fade(delay: (100 * index).ms)
+                    .slideY(begin: 0.1, curve: Curves.easeOutQuad),
                   const SizedBox(height: 12),
-                  ],
-                ).animate().fade(delay: (100 * index).ms).slideY(begin: 0.1, curve: Curves.easeOutQuad),
+                ],
               );
             },
           );
