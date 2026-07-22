@@ -18,6 +18,7 @@ import {
   Settings
 } from 'lucide-react';
 import logo from '../assets/sunrise-round-logo.png';
+import dwdLogo from '../assets/logo.png';
 
 interface MenuItem {
   id: ScreenType;
@@ -191,12 +192,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
 
       {/* Company Footprint */}
       <div className="p-3 border-t border-slate-800/80 bg-slate-900/80 backdrop-blur-md">
-        <div className="flex flex-col items-center justify-center gap-1 opacity-70 hover:opacity-100 transition-opacity duration-300">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest">Made by</span>
-            <span className="text-xs font-black italic tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-slate-200 to-slate-400">dwd</span>
+        <div className="flex flex-col items-center justify-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest leading-none mt-1">Made by</span>
+            <img src={dwdLogo} alt="dwd" className="h-5 object-contain opacity-90" />
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] text-slate-500 font-bold tracking-wider">
+          <div className="flex items-center gap-1.5 text-[9px] text-slate-500 font-bold tracking-wider leading-none">
             <span>9687629341</span>
           </div>
         </div>
