@@ -427,9 +427,9 @@ export const Notifications: React.FC = () => {
                   </div>
                 </div>
                 {/* Mock phone notification */}
-                <div className="bg-white/10 backdrop-blur rounded-xl p-3">
-                  <p className="font-bold text-white text-sm leading-tight">{title || 'Notification Title'}</p>
-                  <p className="text-slate-300 text-xs mt-1 leading-relaxed">{body || 'Your notification message will appear here...'}</p>
+                <div className="bg-white/10 backdrop-blur rounded-xl p-3 overflow-hidden">
+                  <p className="font-bold text-white text-sm leading-tight break-words">{title || 'Notification Title'}</p>
+                  <p className="text-slate-300 text-xs mt-1 leading-relaxed break-words">{body || 'Your notification message will appear here...'}</p>
                 </div>
                 <div className="pt-1 border-t border-white/10">
                   <p className="text-[10px] text-slate-400">To: <span className="text-slate-300 font-semibold">{targetLabel}</span></p>
