@@ -18,7 +18,9 @@ import 'firebase_options.dart';
 /// Must be a top-level function (not inside a class).
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
   
   // We DO NOT show a local notification here if the message already has a notification payload.
   // FCM automatically displays system tray notifications for background apps.
@@ -54,9 +56,11 @@ class FcmService {
   /// Call once from main.dart before runApp().
   static Future<void> init() async {
     // 1. Initialize Firebase
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
 
     // 2. Register background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
