@@ -199,6 +199,10 @@ class FcmService {
   }
 
   static Future<void> _navigateToNotifications(Map<String, dynamic> data) async {
+    // VISUAL DEBUGGING: Show a snackbar so the user knows the tap handler fired and what data it got
+    String debugMsg = data.containsKey('studentId') ? 'Found studentId: ${data['studentId']}' : 'No studentId in payload';
+    Get.snackbar('Push Tapped', debugMsg, duration: const Duration(seconds: 4));
+
     if (data.containsKey('studentId')) {
       FcmService.initialStudentId = data['studentId'].toString();
     }
@@ -213,6 +217,8 @@ class FcmService {
         if (s != null && s.id != controller.student.value?.id) {
           await controller.switchStudent(s);
           switched = true;
+        } else if (s == null) {
+          Get.snackbar('Error', 'Student not found in loaded list!');
         }
       }
       
