@@ -20,14 +20,19 @@ import 'firebase_options.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   
-  // Initialize local notifications for background isolate
-  final localNotifications = FlutterLocalNotificationsPlugin();
-  const initSettings = InitializationSettings(
-    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-  );
-  await localNotifications.initialize(initSettings);
-
-  await FcmService._showLocalNotification(message);
+  // We DO NOT show a local notification here if the message already has a notification payload.
+  // FCM automatically displays system tray notifications for background apps.
+  // Showing a manual local notification here creates a duplicate that has no tap handler,
+  // causing the app to just resume without switching students when tapped!
+  if (message.notification == null) {
+    // Only show local notification if it's a data-only background message
+    final localNotifications = FlutterLocalNotificationsPlugin();
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    );
+    await localNotifications.initialize(initSettings);
+    await FcmService._showLocalNotification(message);
+  }
 }
 
 class FcmService {
