@@ -2,7 +2,7 @@
 // Real notification inbox — fetches from backend, supports mark-as-read.
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide GetNumUtils;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/notification_model.dart';
