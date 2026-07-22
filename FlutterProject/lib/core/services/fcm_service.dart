@@ -18,8 +18,10 @@ import 'firebase_options.dart';
 /// Must be a top-level function (not inside a class).
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (Firebase.apps.isEmpty) {
+  try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    if (!e.toString().contains('duplicate-app')) rethrow;
   }
   
   // We DO NOT show a local notification here if the message already has a notification payload.
@@ -55,11 +57,15 @@ class FcmService {
 
   /// Call once from main.dart before runApp().
   static Future<void> init() async {
-    // 1. Initialize Firebase
-    if (Firebase.apps.isEmpty) {
+    // 1. Initialize Firebase (with try/catch for hot restart safety)
+    try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+    } catch (e) {
+      if (!e.toString().contains('duplicate-app')) {
+        rethrow;
+      }
     }
 
     // 2. Register background message handler
