@@ -137,9 +137,11 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
       <Sidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
         {isLoadingDetails && !isScreenLoading && (
-          <div className="absolute top-4 right-6 bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg shadow-blue-500/20 flex items-center gap-2 z-50 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            Syncing data...
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-md border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-[100] px-8 py-5 rounded-2xl flex flex-col items-center gap-3 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-full">
+              <RefreshCw className="w-6 h-6 animate-spin" />
+            </div>
+            <span className="text-sm font-extrabold text-slate-700">Syncing background data...</span>
           </div>
         )}
         
