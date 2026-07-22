@@ -684,7 +684,7 @@ class PendingFeesController extends GetxController
           'contact': pNumber,
         },
         'theme': {
-          'color': '#1B3A7A'
+          'color': '#3399cc'
         }
       };
 

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide GetNumUtils;
 import 'package:lottie/lottie.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/pending_fees_controller.dart';
-import '../../../../../core/widgets/animated_button.dart';
-import 'package:flutter_animate/flutter_animate.dart' hide GetNumUtils;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — Sunrise Connect Premium Theme
@@ -437,19 +436,19 @@ class _CategorySegmentedControl extends StatelessWidget {
 class _SegButton extends StatelessWidget {
   const _SegButton({
     required this.title,
-    required this.icon,
     required this.badgeCount,
     required this.isSelected,
     required this.activeColor,
     required this.onTap,
+    required this.icon,
   });
 
   final String title;
-  final IconData icon;
   final int badgeCount;
   final bool isSelected;
   final Color activeColor;
   final VoidCallback onTap;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -468,6 +467,8 @@ class _SegButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(icon, size: 15, color: isSelected ? Colors.white : _C.inkMid),
+            const SizedBox(width: 6),
             Text(
               title,
               style: TextStyle(
@@ -481,7 +482,7 @@ class _SegButton extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.25) : _C.pageBg,
+                  color: isSelected ? Colors.white.withValues(alpha: 0.25) : _C.pageBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -686,61 +687,6 @@ class _TimelineTile extends StatelessWidget {
     return Icons.bookmark_rounded;
   }
 
-  Widget _tileContent(bool isPaid, bool isOverdue, bool isSelected, Color themeColor) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: fee.isTransport
-                ? _C.tealBg
-                : (fee.isEducation ? _C.accentBg : _C.purpleBg),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(_typeIcon, color: themeColor, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${fee.termName} · ${fee.isTransport ? "Transport" : (fee.isEducation ? "Education" : "Term")}',
-                style: _T.h2,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'Due: ${_fmtDate(fee.dueDate)}',
-                style: const TextStyle(fontSize: 11, color: _C.inkMid),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              _fmt(fee.amount),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: isPaid ? _C.teal : (isOverdue ? _C.red : _C.ink),
-              ),
-            ),
-            const SizedBox(height: 4),
-            if (isPaid)
-              const _StatusPill(label: 'Paid', color: _C.teal, bg: _C.tealBg, border: _C.tealBorder)
-            else if (isOverdue)
-              const _StatusPill(label: 'Overdue', color: _C.red, bg: _C.redBg, border: _C.redBorder)
-            else
-              const _StatusPill(label: 'Pending', color: _C.amber, bg: _C.amberBg, border: _C.amberBorder),
-          ],
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isPaid = fee.isPaid;
@@ -758,6 +704,7 @@ class _TimelineTile extends StatelessWidget {
               width: 32,
               child: Column(
                 children: [
+                  // Top Line
                   Expanded(
                     child: Container(
                       width: 3,
@@ -766,6 +713,7 @@ class _TimelineTile extends StatelessWidget {
                           : (isSelected ? themeColor : _C.border),
                     ),
                   ),
+                  // Circle Node
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 24,
@@ -802,6 +750,7 @@ class _TimelineTile extends StatelessWidget {
                             ),
                     ),
                   ),
+                  // Bottom Line
                   Expanded(
                     child: Container(
                       width: 3,
@@ -890,6 +839,8 @@ class _TimelineTile extends StatelessWidget {
                       ),
                     ],
                   ),
+                ).animate(target: isPaid ? 1 : 0)
+                  .shimmer(duration: 1200.ms, color: _C.teal.withValues(alpha: 0.15), delay: 300.ms),
                 ),
               ),
             ),
@@ -952,7 +903,7 @@ class _PayBar extends StatelessWidget {
               child: Obx(() {
                 final count = c.selectedIds.length;
                 final total = c.selectedTotal;
-                return GestureDetector(
+                return _AnimTap(
                   onTap: () { HapticFeedback.mediumImpact(); _showPaySheet(context, c); },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -1117,7 +1068,7 @@ class _PaySheet extends StatelessWidget {
             const SizedBox(height: 18),
             Row(children: [
               Expanded(
-                child: AnimatedTapButton(
+                child: GestureDetector(
                   onTap: () => Get.back(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1127,7 +1078,7 @@ class _PaySheet extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(flex: 2,
-                child: AnimatedTapButton(
+                child: GestureDetector(
                   onTap: () async {
                     Get.back();
                     HapticFeedback.mediumImpact();
@@ -1138,7 +1089,7 @@ class _PaySheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(colors: [_C.navyDark, _C.navyLight]),
                       borderRadius: BorderRadius.circular(13),
-                      boxShadow: [BoxShadow(color: _C.navy.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]),
+                      boxShadow: [BoxShadow(color: _C.navy.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]),
                     child: Center(child: Text('Pay ${_fmt(total)}',
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)))),
                 ),
@@ -1241,7 +1192,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           const Text('No outstanding fee dues on this account.', style: _T.body, textAlign: TextAlign.center),
           const SizedBox(height: 28),
-          AnimatedTapButton(
+          _AnimTap(
             onTap: () => Get.back(),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
@@ -1252,6 +1203,43 @@ class _EmptyState extends StatelessWidget {
           ),
         ]),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED TAP BUTTON — Scales down on press for premium tactile feedback
+// ─────────────────────────────────────────────────────────────────────────────
+class _AnimTap extends StatefulWidget {
+  const _AnimTap({required this.onTap, required this.child});
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  State<_AnimTap> createState() => _AnimTapState();
+}
+
+class _AnimTapState extends State<_AnimTap> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 80));
+    _scale = Tween<double>(begin: 1.0, end: 0.96).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _ctrl.forward(),
+      onTapUp: (_) { _ctrl.reverse(); widget.onTap(); },
+      onTapCancel: () => _ctrl.reverse(),
+      child: ScaleTransition(scale: _scale, child: widget.child),
     );
   }
 }
