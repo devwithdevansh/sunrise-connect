@@ -195,7 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
         <div className="flex flex-col items-center justify-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity duration-300">
           <div className="flex items-center justify-center gap-2">
             <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest leading-none mt-1">Made by</span>
-            <img src={dwdLogo} alt="dwd" className="h-5 object-contain opacity-90" />
+            <img src={dwdLogo} alt="dwd" className="h-5 object-contain opacity-90 invert mix-blend-screen contrast-125" />
           </div>
           <div className="flex items-center gap-1.5 text-[9px] text-slate-500 font-bold tracking-wider leading-none">
             <span>9687629341</span>
