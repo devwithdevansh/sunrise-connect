@@ -291,9 +291,9 @@ class DashboardController extends GetxController {
       }
       await loadDashboardData(pId, forceRefresh: true);
       
-      // Sync payment history if controller is registered
-      if (Get.isRegistered<PaymentHistoryController>()) {
-        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
+      // Sync receipts if controller is registered
+      if (Get.isRegistered<ReceiptDetailsController>()) {
+        Get.find<ReceiptDetailsController>().loadReceipts(forceRefresh: true);
       }
     }
   }
