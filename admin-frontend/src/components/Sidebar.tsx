@@ -182,12 +182,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
           <button
             onClick={(e) => { e.preventDefault(); logout(); }}
             title="Log Out"
-            className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors shrink-0"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
       )}
+
+      {/* Company Footprint */}
+      <div className="p-3 border-t border-slate-800/80 bg-slate-900/80 backdrop-blur-md">
+        <div className="flex flex-col items-center justify-center gap-1 opacity-70 hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-widest">Made by</span>
+            <span className="text-xs font-black italic tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-slate-200 to-slate-400">dwd</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[9px] text-slate-500 font-bold tracking-wider">
+            <span>9687629341</span>
+          </div>
+        </div>
+      </div>
     </aside>
     </>
   );
