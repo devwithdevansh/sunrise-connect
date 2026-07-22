@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Loader2, RefreshCw } from 'lucide-react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
@@ -125,7 +125,7 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
 };
 
 const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPrintReport: (report: any) => void }> = ({ onPrint, onPrintReport }) => {
-  const { currentScreen, isScreenLoading } = useApp();
+  const { currentScreen, isScreenLoading, isLoadingDetails } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (currentScreen === 'login') {
@@ -135,7 +135,14 @@ const MainAppLayout: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
   return (
     <div className="flex bg-[#F8FAFC] h-screen overflow-hidden text-slate-600 font-sans">
       <Sidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+        {isLoadingDetails && !isScreenLoading && (
+          <div className="absolute top-4 right-6 bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg shadow-blue-500/20 flex items-center gap-2 z-50 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            Syncing data...
+          </div>
+        )}
+        
         {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-3">

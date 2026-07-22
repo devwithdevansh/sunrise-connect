@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../store';
-import { Search, ChevronDown, ChevronUp, Plus, X, Trash2, Pencil, Phone, Users, Landmark, History, RotateCcw } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, X, Trash2, Pencil, Phone, Users, Landmark, History, RotateCcw, Loader2 } from 'lucide-react';
 
 export const Students: React.FC = () => {
   const {
@@ -79,6 +79,7 @@ export const Students: React.FC = () => {
 
   // Add Student Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newSName, setNewSName] = useState('');
   const [newSParentMobile, setNewSParentMobile] = useState('');
   const [newSParentSecondaryMobile, setNewSParentSecondaryMobile] = useState('');
@@ -113,6 +114,9 @@ export const Students: React.FC = () => {
 
   // Sibling Modal State
   const [siblingModalData, setSiblingModalData] = useState<{ parentName: string, parentId: string } | null>(null);
+
+  // Inline action loading state
+  const [processingActionId, setProcessingActionId] = useState<string | null>(null);
 
   // Debounce search query updates by 200ms
   useEffect(() => {
@@ -306,17 +310,19 @@ export const Students: React.FC = () => {
     e.preventDefault();
     if (!newSName || !newSParentMobile || !newSParentName) return;
 
+    setIsSubmitting(true);
     // Check if mobile numbers already exist
     const checkRes = await checkMobile(newSParentMobile, newSParentSecondaryMobile);
     if (checkRes && checkRes.exists && checkRes.parent) {
       setSiblingModalData({ parentName: checkRes.parent.parentName, parentId: checkRes.parent._id });
+      setIsSubmitting(false);
     } else {
-      submitStudentCreation();
+      await submitStudentCreation();
     }
   };
 
-  const submitStudentCreation = (existingParentId?: string) => {
-    addStudent({
+  const submitStudentCreation = async (existingParentId?: string) => {
+    const success = await addStudent({
       studentCode: `STU${Date.now()}`,
       studentName: newSName,
       parentName: newSParentName,
@@ -336,20 +342,23 @@ export const Students: React.FC = () => {
     });
 
     // Reset states
-    setNewSName('');
-    setNewSParentMobile('');
-    setNewSParentSecondaryMobile('');
-    setNewSParentName('');
-    setNewSMedium('English');
-    setNewSStandard('1');
-    setNewSDivision('A');
-    setNewSTransport('None');
-    setNewSIsRTE(false);
-    setNewSIsNewAdmission(true);
-    setNewSBuyBagKit(false);
-    setNewSAdmissionMonth('June');
-    setNewSTransportStartMonth('June');
-    setIsModalOpen(false);
+    if (success) {
+      setNewSName('');
+      setNewSParentMobile('');
+      setNewSParentSecondaryMobile('');
+      setNewSParentName('');
+      setNewSMedium('English');
+      setNewSStandard('1');
+      setNewSDivision('A');
+      setNewSTransport('None');
+      setNewSIsRTE(false);
+      setNewSIsNewAdmission(true);
+      setNewSBuyBagKit(false);
+      setNewSAdmissionMonth('June');
+      setNewSTransportStartMonth('June');
+      setIsModalOpen(false);
+    }
+    setIsSubmitting(false);
   };
 
   const openEditModal = (s: any) => {
@@ -375,6 +384,7 @@ export const Students: React.FC = () => {
     e.preventDefault();
     if (!editingStudentId) return;
 
+    setIsSubmitting(true);
     const updates: any = {
       studentName: editSName,
       medium: editSMedium,
@@ -409,6 +419,7 @@ export const Students: React.FC = () => {
     }
 
     const result = await updateStudent(editingStudentId, updates);
+    setIsSubmitting(false);
     if (result.success) {
       setIsEditModalOpen(false);
     } else {
@@ -693,15 +704,22 @@ export const Students: React.FC = () => {
                       </button>
                       {s.isActive === false ? (
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (window.confirm("Are you sure you want to restore this deleted student?")) {
-                              restoreStudent(s._id || s.id);
+                              setProcessingActionId(`restore-${s._id || s.id}`);
+                              await restoreStudent(s._id || s.id);
+                              setProcessingActionId(null);
                             }
                           }}
-                          className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5"
+                          disabled={processingActionId === `restore-${s._id || s.id}`}
+                          className="bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 border border-emerald-200 text-emerald-700 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5"
                           title="Restore Student"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" />
+                          {processingActionId === `restore-${s._id || s.id}` ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          )}
                           Restore
                         </button>
                       ) : (
@@ -728,15 +746,22 @@ export const Students: React.FC = () => {
                           )}
                           {currentUser?.role === 'ADMIN' && (
                             <button
-                              onClick={() => {
+                              onClick={async () => {
                                 if (window.confirm("Are you sure you want to delete this student? If they have payments, they will be marked as inactive. If no payments exist, they will be permanently deleted.")) {
-                                  deleteStudent(s._id || s.id);
+                                  setProcessingActionId(`delete-${s._id || s.id}`);
+                                  await deleteStudent(s._id || s.id);
+                                  setProcessingActionId(null);
                                 }
                               }}
-                              className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all"
+                              disabled={processingActionId === `delete-${s._id || s.id}`}
+                              className="bg-red-50 hover:bg-red-100 disabled:opacity-50 border border-red-200 text-red-600 font-bold p-1.5 rounded-xl shadow-sm transition-all flex items-center justify-center"
                               title="Delete Student"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              {processingActionId === `delete-${s._id || s.id}` ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
                             </button>
                           )}
                         </>
@@ -1026,12 +1051,19 @@ export const Students: React.FC = () => {
                                                             <button
                                                               onClick={async () => {
                                                                 if (window.confirm(`Are you sure you want to reverse payment of ₹${sub.amount.toLocaleString('en-IN')} for ${sub.description}? This will restore the balance back to the ledger.`)) {
+                                                                  setProcessingActionId(`reverse-${sub.id}`);
                                                                   await reversePayment(sub.id);
+                                                                  setProcessingActionId(null);
                                                                 }
                                                               }}
-                                                              className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200/50 hover:border-red-300 font-bold px-2 py-0.5 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
+                                                              disabled={processingActionId === `reverse-${sub.id}`}
+                                                              className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 border border-red-200/50 hover:border-red-300 font-bold px-2 py-0.5 rounded-lg text-[9px] tracking-wide transition-all shadow-sm active:scale-[0.98]"
                                                             >
-                                                              <RotateCcw className="h-2 w-2" />
+                                                              {processingActionId === `reverse-${sub.id}` ? (
+                                                                <Loader2 className="h-2 w-2 animate-spin" />
+                                                              ) : (
+                                                                <RotateCcw className="h-2 w-2" />
+                                                              )}
                                                               Reverse Item
                                                             </button>
                                                           ) : (
@@ -1325,9 +1357,11 @@ export const Students: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2"
                 >
-                  Create Student Profile
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isSubmitting ? 'Creating...' : 'Create Student Profile'}
                 </button>
               </div>
             </form>
@@ -1526,9 +1560,11 @@ export const Students: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2"
                 >
-                  Save Changes
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

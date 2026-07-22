@@ -882,6 +882,7 @@ export const CollectFee: React.FC = () => {
                 }}
                 className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
+                {isSubmittingCustomFee && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isSubmittingCustomFee ? 'Saving...' : 'Save Fee'}
               </button>
             </div>

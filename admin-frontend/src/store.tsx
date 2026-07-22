@@ -92,7 +92,7 @@ interface AppContextType {
   auditLogs: AuditLog[];
   users: any[];
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
-  addStudent: (student: Omit<Student, 'id' | 'status'>) => void;
+  addStudent: (student: Omit<Student, 'id' | 'status'>) => Promise<boolean>;
   recordPayment: (
     studentId: string,
     lineItems: {
@@ -527,7 +527,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addStudent = async (newS: Omit<Student, 'id' | 'status'>) => {
+  const addStudent = async (newS: Omit<Student, 'id' | 'status'>): Promise<boolean> => {
     try {
       const res = await authFetch('/api/v1/students', {
         method: 'POST',
@@ -537,12 +537,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         console.error('Failed to add student:', errBody);
-        return;
+        return false;
       }
       // Refresh data
-      fetchAll();
+      await fetchAll();
+      return true;
     } catch (err) {
       console.error(err);
+      return false;
     }
   };
 

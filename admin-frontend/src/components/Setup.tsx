@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
-import { Calendar, Tag, Layers, Plus, Check, X, Pencil, Trash2, Info } from 'lucide-react';
+import { Calendar, Tag, Layers, Plus, Check, X, Pencil, Trash2, Info, Loader2 } from 'lucide-react';
 import { FeeStructure } from './FeeStructure'; // Reuse existing component for the Fee Structure tab
 
 // ── Edit Academic Year Modal ─────
@@ -222,6 +222,11 @@ export const Setup: React.FC = () => {
   const [editingFC, setEditingFC] = useState<any | null>(null);
   const [showAYGuide, setShowAYGuide] = useState(false);
 
+  // Loaders
+  const [isSubmittingAY, setIsSubmittingAY] = useState(false);
+  const [isSubmittingFC, setIsSubmittingFC] = useState(false);
+  const [processingActionId, setProcessingActionId] = useState<string | null>(null);
+
   const handleCreateAY = async () => {
     if (!newAY.name || !newAY.startDate || !newAY.endDate) return;
     
@@ -232,7 +237,10 @@ export const Setup: React.FC = () => {
       return;
     }
 
+    setAyNameError('');
+    setIsSubmittingAY(true);
     const ok = await createAcademicYear({ ...newAY, name: newAY.name.trim() });
+    setIsSubmittingAY(false);
     if (ok) {
       setShowAYForm(false);
       setNewAY({ name: '', startDate: '', endDate: '' });
@@ -244,7 +252,9 @@ export const Setup: React.FC = () => {
     const target = academicYears.find(y => y._id === id);
     const targetName = target ? target.name : 'this academic year';
     if (window.confirm(`⚠️ WARNING: You are about to switch the active academic year to "${targetName}".\n\nAll future fee generation, ledger calculations, and student management features will target this year.\n\nAre you sure you want to proceed?`)) {
+      setProcessingActionId(`activate-${id}`);
       await activateAcademicYear(id);
+      setProcessingActionId(null);
     }
   };
 
@@ -254,7 +264,9 @@ export const Setup: React.FC = () => {
       return;
     }
     if (window.confirm(`Are you sure you want to delete academic year "${ay.name}"?\nThis action cannot be undone.`)) {
+      setProcessingActionId(`delete-ay-${ay._id}`);
       const ok = await deleteAcademicYear(ay._id);
+      setProcessingActionId(null);
       if (!ok) alert("Failed to delete academic year.");
     }
   };
@@ -264,8 +276,10 @@ export const Setup: React.FC = () => {
   const handleCreateFC = async () => {
     if (!newFC.name || !newFC.type) return;
     setFCError('');
+    setIsSubmittingFC(true);
     const payload = { ...newFC };
     const ok = await createFeeCategory(payload);
+    setIsSubmittingFC(false);
     if (ok) {
       setShowFCForm(false);
       setNewFC({ name: '', type: 'EDUCATION', description: '' });
@@ -280,7 +294,9 @@ export const Setup: React.FC = () => {
       return;
     }
     if (window.confirm(`Are you sure you want to delete fee category "${fc.name}"?\nThis action cannot be undone.`)) {
+      setProcessingActionId(`delete-fc-${fc._id}`);
       const ok = await deleteFeeCategory(fc._id);
+      setProcessingActionId(null);
       if (!ok) alert("Failed to delete fee category. It might be in use.");
     }
   };
@@ -430,7 +446,14 @@ export const Setup: React.FC = () => {
                 </div>
                 <div className="mt-4 flex justify-end gap-2">
                   <button onClick={() => setShowAYForm(false)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                  <button onClick={handleCreateAY} className="px-4 py-2 bg-[#F59E0B] text-slate-900 font-bold rounded-lg text-sm shadow-sm hover:bg-amber-500">Save</button>
+                  <button 
+                    onClick={handleCreateAY} 
+                    disabled={isSubmittingAY}
+                    className="px-4 py-2 bg-[#F59E0B] hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg text-sm shadow-sm flex items-center justify-center gap-2 transition-all"
+                  >
+                    {isSubmittingAY && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmittingAY ? 'Saving...' : 'Save'}
+                  </button>
                 </div>
               </div>
             )}
@@ -446,7 +469,12 @@ export const Setup: React.FC = () => {
                           <Check className="w-3 h-3" /> Active
                         </span>
                       ) : (
-                        <button onClick={() => handleActivateAY(ay._id)} className="text-xs font-bold text-slate-400 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 px-2.5 py-1 rounded-full border border-slate-200 transition-colors">
+                        <button 
+                          onClick={() => handleActivateAY(ay._id)} 
+                          disabled={processingActionId === `activate-${ay._id}`}
+                          className="text-xs font-bold text-slate-400 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 px-2.5 py-1 rounded-full border border-slate-200 transition-colors flex items-center gap-1 disabled:opacity-50"
+                        >
+                          {processingActionId === `activate-${ay._id}` && <Loader2 className="w-3 h-3 animate-spin" />}
                           Set Active
                         </button>
                       )}
@@ -469,10 +497,15 @@ export const Setup: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleDeleteAY(ay)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      disabled={processingActionId === `delete-ay-${ay._id}`}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 rounded-lg transition-all"
                       title="Delete Academic Year"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {processingActionId === `delete-ay-${ay._id}` ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -534,7 +567,14 @@ export const Setup: React.FC = () => {
                 {fcError && <p className="mt-3 text-xs font-bold text-red-500">{fcError}</p>}
                 <div className="mt-4 flex justify-end gap-2">
                   <button onClick={() => { setShowFCForm(false); setFCError(''); }} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-                  <button onClick={handleCreateFC} className="px-4 py-2 bg-[#F59E0B] text-slate-900 font-bold rounded-lg text-sm shadow-sm hover:bg-amber-500">Save</button>
+                  <button 
+                    onClick={handleCreateFC} 
+                    disabled={isSubmittingFC}
+                    className="px-4 py-2 bg-[#F59E0B] hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold rounded-lg text-sm shadow-sm flex items-center justify-center gap-2 transition-all"
+                  >
+                    {isSubmittingFC && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmittingFC ? 'Saving...' : 'Save'}
+                  </button>
                 </div>
               </div>
             )}
@@ -577,10 +617,15 @@ export const Setup: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleDeleteFC(cat)}
-                          className="inline-flex p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          disabled={processingActionId === `delete-fc-${cat._id}`}
+                          className="inline-flex p-1.5 text-slate-400 hover:text-red-600 disabled:opacity-50 hover:bg-red-50 rounded-lg transition-all"
                           title="Delete Category"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {processingActionId === `delete-fc-${cat._id}` ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </button>
                       </td>
                     </tr>

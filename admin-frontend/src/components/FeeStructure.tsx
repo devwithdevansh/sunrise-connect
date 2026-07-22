@@ -511,6 +511,7 @@ export const FeeStructure: React.FC = () => {
   const [isCreatingTransport, setIsCreatingTransport] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
+  const [processingActionId, setProcessingActionId] = useState<string | null>(null);
 
   // Filter transport by selected academic year (with legacy fallback)
   const filteredTransportStructures = useMemo(() => {
@@ -538,14 +539,18 @@ export const FeeStructure: React.FC = () => {
 
   const handleDeleteFee = async (structure: FeeStructureData) => {
     if (window.confirm(`Are you sure you want to delete the fee structure for Standard ${structure.standard} (${structure.medium} Medium)?\nThis action cannot be undone.`)) {
+      setProcessingActionId(`delete-fee-${structure._id}`);
       const ok = await deleteFeeStructure(structure._id);
+      setProcessingActionId(null);
       if (!ok) alert("Failed to delete fee structure.");
     }
   };
 
   const handleDeleteTransport = async (trans: TransportFeeStructureData) => {
     if (window.confirm(`Are you sure you want to delete the transport rate for ${trans.transportType} zone?\nThis action cannot be undone.`)) {
+      setProcessingActionId(`delete-transport-${trans._id}`);
       const ok = await deleteTransportFeeStructure(trans._id);
+      setProcessingActionId(null);
       if (!ok) alert("Failed to delete transport rate.");
     }
   };
@@ -745,10 +750,15 @@ export const FeeStructure: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteFee(englishStructure)}
-                        className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 hover:text-red-200 border border-white/10 transition-all group"
+                        disabled={processingActionId === `delete-fee-${englishStructure._id}`}
+                        className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 disabled:opacity-50 hover:text-red-200 border border-white/10 transition-all group"
                         title="Delete Fee Structure"
                       >
-                        <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                        {processingActionId === `delete-fee-${englishStructure._id}` ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                        )}
                       </button>
                     </div>
                   )}
@@ -827,10 +837,15 @@ export const FeeStructure: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteFee(gujaratiStructure)}
-                      className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 hover:text-red-200 border border-white/10 transition-all group"
+                      disabled={processingActionId === `delete-fee-${gujaratiStructure._id}`}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-red-600/30 disabled:opacity-50 hover:text-red-200 border border-white/10 transition-all group"
                       title="Delete Fee Structure"
                     >
-                      <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                      {processingActionId === `delete-fee-${gujaratiStructure._id}` ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                      )}
                     </button>
                   </div>
                 )}
@@ -933,10 +948,15 @@ export const FeeStructure: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteTransport(trans)}
-                    className="p-2 rounded-lg bg-red-50 hover:bg-red-100 border border-red-100 text-red-600 transition-all group"
+                    disabled={processingActionId === `delete-transport-${trans._id}`}
+                    className="p-2 rounded-lg bg-red-50 hover:bg-red-100 disabled:opacity-50 border border-red-100 text-red-600 transition-all group"
                     title="Delete Transport Rate"
                   >
-                    <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    {processingActionId === `delete-transport-${trans._id}` ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    )}
                   </button>
                 </div>
               </div>
