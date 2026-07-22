@@ -432,7 +432,7 @@ export const Whatsapp: React.FC = () => {
               <div className="flex-1 p-4 overflow-y-auto bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-cover">
                 {templateName === 'fee_reminder' ? (
                   <div className="bg-white rounded-lg rounded-tl-none p-2 mb-4 shadow-sm inline-block max-w-[85%] relative">
-                    <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed break-words">
                       {language === 'gu' ? (
                         <>
                           📢 ફી બાકી અંગે સૂચના{"\n\n"}
@@ -468,7 +468,7 @@ export const Whatsapp: React.FC = () => {
                   </div>
                 ) : body ? (
                   <div className="bg-white rounded-lg rounded-tl-none p-2 mb-4 shadow-sm inline-block max-w-[85%] relative">
-                    <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">{body}</p>
+                    <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed break-words">{body}</p>
                     <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center gap-1">
                       <span>Now</span>
                       <CheckCircle className="h-3 w-3 text-slate-300" />
