@@ -199,6 +199,10 @@ class FcmService {
   }
 
   static Future<void> _navigateToNotifications(Map<String, dynamic> data) async {
+    if (data.containsKey('studentId')) {
+      FcmService.initialStudentId = data['studentId'].toString();
+    }
+
     if (Get.isRegistered<DashboardController>()) {
       final controller = Get.find<DashboardController>();
       bool switched = false;
@@ -218,9 +222,8 @@ class FcmService {
       }
     }
     
-    // As per your request, redirect to dashboard so the student switch is visible,
-    // and then automatically push the notifications screen on top!
-    Get.offAllNamed('/dashboard');
+    // Pop back to dashboard smoothly so the switch is visible without destroying controllers
+    Get.until((route) => route.settings.name == '/dashboard' || route.isFirst);
     Future.delayed(const Duration(milliseconds: 300), () {
       Get.toNamed('/notifications');
     });
