@@ -99,8 +99,10 @@ class DashboardController extends GetxController {
         if (cachedStudents.isNotEmpty) {
           final activeId = prefs.getString(StorageKeys.studentId) ?? '';
           StudentModel activeStudent = cachedStudents.first;
-          if (activeId.isNotEmpty) {
-            final matched = cachedStudents.firstWhereOrNull((s) => s.id == activeId);
+          
+          String? targetId = FcmService.initialStudentId ?? (activeId.isNotEmpty ? activeId : null);
+          if (targetId != null) {
+            final matched = cachedStudents.firstWhereOrNull((s) => s.id == targetId);
             if (matched != null) {
               activeStudent = matched;
             }

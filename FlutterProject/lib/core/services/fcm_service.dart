@@ -198,21 +198,31 @@ class FcmService {
     }
   }
 
-  static void _navigateToNotifications(Map<String, dynamic> data) {
-    if (data.containsKey('studentId')) {
-      final String sId = data['studentId'].toString();
-      _switchStudent(sId);
-    }
-    Get.toNamed('/notifications');
-  }
-
-  static void _switchStudent(String studentId) {
+  static Future<void> _navigateToNotifications(Map<String, dynamic> data) async {
     if (Get.isRegistered<DashboardController>()) {
       final controller = Get.find<DashboardController>();
-      final s = controller.students.firstWhereOrNull((s) => s.id == studentId);
-      if (s != null && s.id != controller.student.value?.id) {
-        controller.switchStudent(s);
+      bool switched = false;
+      
+      if (data.containsKey('studentId')) {
+        final String sId = data['studentId'].toString();
+        final s = controller.students.firstWhereOrNull((student) => student.id == sId);
+        if (s != null && s.id != controller.student.value?.id) {
+          await controller.switchStudent(s);
+          switched = true;
+        }
+      }
+      
+      if (!switched) {
+        // Force refresh to pull the newly arrived notification from the server
+        await controller.refreshNotifications();
       }
     }
+    
+    // As per your request, redirect to dashboard so the student switch is visible,
+    // and then automatically push the notifications screen on top!
+    Get.offAllNamed('/dashboard');
+    Future.delayed(const Duration(milliseconds: 300), () {
+      Get.toNamed('/notifications');
+    });
   }
 }
