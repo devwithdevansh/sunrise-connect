@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import '../controllers/pending_fees_controller.dart';
+import '../../../../../core/widgets/animated_button.dart';
+import 'package:flutter_animate/flutter_animate.dart' hide GetNumUtils;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — Sunrise Connect Premium Theme
@@ -227,7 +229,7 @@ class _HeroSummaryCard extends StatelessWidget {
             Row(
               children: [
                 const Text(
-                  'Outstanding Balance',
+                  'Total Fees Due',
                   style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
                 ),
                 const Spacer(),
@@ -278,7 +280,7 @@ class _HeroSummaryCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '${(pct * 100).round()}% paid of academic fees',
+                  '${(pct * 100).round()}% of total dues paid',
                   style: const TextStyle(fontSize: 11, color: Colors.white60, fontWeight: FontWeight.w500),
                 ),
                 const Spacer(),
@@ -369,7 +371,7 @@ class _OverdueBanner extends StatelessWidget {
               Text('${overdue.length} overdue item${overdue.length == 1 ? '' : 's'} · ${_fmt(c.overdueTotal)}',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _C.red)),
               const SizedBox(height: 2),
-              const Text('Tap to select all overdue fees chronologically',
+              const Text('Tap to select and pay all overdue fees.',
                   style: TextStyle(fontSize: 11, color: _C.red)),
             ])),
             const Icon(Icons.chevron_right_rounded, color: _C.red, size: 20),
@@ -406,7 +408,8 @@ class _CategorySegmentedControl extends StatelessWidget {
           children: [
             Expanded(
               child: _SegButton(
-                title: 'Academic Fees 📚',
+                title: 'Academic Fees',
+                icon: Icons.menu_book_rounded,
                 badgeCount: eduCount,
                 isSelected: selected == FeeFilterCategory.all || selected == FeeFilterCategory.education || selected == FeeFilterCategory.term,
                 activeColor: _C.navy,
@@ -416,7 +419,8 @@ class _CategorySegmentedControl extends StatelessWidget {
             const SizedBox(width: 4),
             Expanded(
               child: _SegButton(
-                title: 'Transport Dues 🚌',
+                title: 'Transport Dues',
+                icon: Icons.directions_bus_rounded,
                 badgeCount: transportCount,
                 isSelected: selected == FeeFilterCategory.transport,
                 activeColor: _C.teal,
@@ -433,6 +437,7 @@ class _CategorySegmentedControl extends StatelessWidget {
 class _SegButton extends StatelessWidget {
   const _SegButton({
     required this.title,
+    required this.icon,
     required this.badgeCount,
     required this.isSelected,
     required this.activeColor,
@@ -440,6 +445,7 @@ class _SegButton extends StatelessWidget {
   });
 
   final String title;
+  final IconData icon;
   final int badgeCount;
   final bool isSelected;
   final Color activeColor;
@@ -564,7 +570,7 @@ class _AcademicTimeline extends StatelessWidget {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Academic fees follow month timeline order. Selecting a month includes prior unpaid months.',
+                    'Please pay older months first before paying newer ones.',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _C.accent),
                   ),
                 ),
@@ -634,7 +640,7 @@ class _TransportTimeline extends StatelessWidget {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Transport fees follow their own month timeline, independent of education fees.',
+                    'Bus fees are separate from school fees and can be paid anytime.',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _C.teal),
                   ),
                 ),
@@ -680,6 +686,61 @@ class _TimelineTile extends StatelessWidget {
     return Icons.bookmark_rounded;
   }
 
+  Widget _tileContent(bool isPaid, bool isOverdue, bool isSelected, Color themeColor) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: fee.isTransport
+                ? _C.tealBg
+                : (fee.isEducation ? _C.accentBg : _C.purpleBg),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(_typeIcon, color: themeColor, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${fee.termName} · ${fee.isTransport ? "Transport" : (fee.isEducation ? "Education" : "Term")}',
+                style: _T.h2,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Due: ${_fmtDate(fee.dueDate)}',
+                style: const TextStyle(fontSize: 11, color: _C.inkMid),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _fmt(fee.amount),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: isPaid ? _C.teal : (isOverdue ? _C.red : _C.ink),
+              ),
+            ),
+            const SizedBox(height: 4),
+            if (isPaid)
+              const _StatusPill(label: 'Paid', color: _C.teal, bg: _C.tealBg, border: _C.tealBorder)
+            else if (isOverdue)
+              const _StatusPill(label: 'Overdue', color: _C.red, bg: _C.redBg, border: _C.redBorder)
+            else
+              const _StatusPill(label: 'Pending', color: _C.amber, bg: _C.amberBg, border: _C.amberBorder),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPaid = fee.isPaid;
@@ -697,7 +758,6 @@ class _TimelineTile extends StatelessWidget {
               width: 32,
               child: Column(
                 children: [
-                  // Top Line
                   Expanded(
                     child: Container(
                       width: 3,
@@ -706,7 +766,6 @@ class _TimelineTile extends StatelessWidget {
                           : (isSelected ? themeColor : _C.border),
                     ),
                   ),
-                  // Circle Node
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 24,
@@ -743,7 +802,6 @@ class _TimelineTile extends StatelessWidget {
                             ),
                     ),
                   ),
-                  // Bottom Line
                   Expanded(
                     child: Container(
                       width: 3,
@@ -1052,14 +1110,14 @@ class _PaySheet extends StatelessWidget {
               child: const Row(children: [
                 Icon(Icons.info_outline_rounded, color: _C.amber, size: 15),
                 SizedBox(width: 8),
-                Expanded(child: Text('Partial payments are not accepted. Full amount only.',
+                Expanded(child: Text('You must pay the full amount for each fee. If you need help, please contact your school.',
                     style: TextStyle(fontSize: 11, color: _C.amber, fontWeight: FontWeight.w500, height: 1.4))),
               ]),
             ),
             const SizedBox(height: 18),
             Row(children: [
               Expanded(
-                child: GestureDetector(
+                child: AnimatedTapButton(
                   onTap: () => Get.back(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1069,7 +1127,7 @@ class _PaySheet extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(flex: 2,
-                child: GestureDetector(
+                child: AnimatedTapButton(
                   onTap: () async {
                     Get.back();
                     HapticFeedback.mediumImpact();
@@ -1080,7 +1138,7 @@ class _PaySheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(colors: [_C.navyDark, _C.navyLight]),
                       borderRadius: BorderRadius.circular(13),
-                      boxShadow: [BoxShadow(color: _C.navy.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]),
+                      boxShadow: [BoxShadow(color: _C.navy.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]),
                     child: Center(child: Text('Pay ${_fmt(total)}',
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)))),
                 ),
@@ -1183,7 +1241,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           const Text('No outstanding fee dues on this account.', style: _T.body, textAlign: TextAlign.center),
           const SizedBox(height: 28),
-          GestureDetector(
+          AnimatedTapButton(
             onTap: () => Get.back(),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),

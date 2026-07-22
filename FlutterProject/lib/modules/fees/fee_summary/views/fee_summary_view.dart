@@ -238,7 +238,7 @@ class FeeSummaryView extends StatelessWidget {
         Container(
           width: 32, height: 32,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 18),
@@ -291,7 +291,7 @@ class FeeSummaryView extends StatelessWidget {
             ...fees.map((fee) {
               final iconData = fee.isTransport ? Icons.directions_bus_rounded : (fee.isTerm ? Icons.assignment_rounded : Icons.menu_book_rounded);
               final iconColor = fee.isTransport ? AppColors.teal : (fee.isTerm ? AppColors.purple : AppColors.primaryMid);
-              final iconBg = fee.isTransport ? AppColors.tealPale : (fee.isTerm ? AppColors.purple.withOpacity(0.12) : AppColors.primaryLight);
+              final iconBg = fee.isTransport ? AppColors.tealPale : (fee.isTerm ? AppColors.purple.withValues(alpha: 0.12) : AppColors.primaryLight);
               final typeLabel = fee.isTransport ? 'Transport' : (fee.isTerm ? fee.termName : 'Education');
               final feeIsPaid = fee.isPaid;
               final isRTEWaived = (fee.isEducation || fee.isTerm) && fee.concessionAmount >= fee.amount && fee.concessionAmount > 0;
