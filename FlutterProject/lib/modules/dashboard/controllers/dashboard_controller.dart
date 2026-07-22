@@ -9,7 +9,6 @@ import '../../../../data/models/notification_model.dart';
 import '../../../../data/repositories/student_repository.dart';
 import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
-import '../../fees/payment_history/controllers/payment_history_controller.dart';
 import '../../fees/receipt_details/controllers/receipt_details_controller.dart';
 import '../../../services/sound_service.dart';
 import '../../../../core/widgets/permission_dialog.dart';
@@ -212,9 +211,6 @@ class DashboardController extends GetxController {
       _allNotifications.assignAll(notifs);
       _updateVisibleNotifications();
       
-      if (Get.isRegistered<PaymentHistoryController>()) {
-        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
-      }
       if (Get.isRegistered<ReceiptDetailsController>()) {
         Get.find<ReceiptDetailsController>().loadReceipts(forceRefresh: true);
       }

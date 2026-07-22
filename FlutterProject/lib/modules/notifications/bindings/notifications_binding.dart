@@ -1,1 +1,11 @@
-import 'package:get/get.dart'; class NotificationsBinding extends Bindings { @override void dependencies() {} }
+import 'package:get/get.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
+
+class NotificationsBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController());
+    }
+  }
+}

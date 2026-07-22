@@ -16,8 +16,6 @@ import '../../modules/fees/fee_summary/bindings/fee_summary_binding.dart';
 import '../../modules/fees/fee_summary/views/fee_summary_view.dart';
 import '../../modules/fees/pending_fees/bindings/pending_fees_binding.dart';
 import '../../modules/fees/pending_fees/views/pending_fees_view.dart';
-import '../../modules/fees/payment_history/bindings/payment_history_binding.dart';
-import '../../modules/fees/payment_history/views/payment_history_view.dart';
 import '../../modules/fees/receipt_details/bindings/receipt_details_binding.dart';
 import '../../modules/fees/receipt_details/views/receipt_details_view.dart';
 import '../../modules/notifications/bindings/notifications_binding.dart';
@@ -70,8 +68,8 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.paymentHistory,
-      page: () => const PaymentHistoryView(),
-      binding: PaymentHistoryBinding(),
+      page: () => const ReceiptDetailsView(),
+      binding: ReceiptDetailsBinding(),
     ),
     GetPage(
       name: AppRoutes.receiptDetails,

@@ -214,12 +214,12 @@ class FcmService {
   }
 
   static Future<void> _navigateToNotifications(Map<String, dynamic> data) async {
-    // VISUAL DEBUGGING: Show a snackbar so the user knows the tap handler fired and what data it got
-    String debugMsg = data.containsKey('studentId') ? 'Found studentId: ${data['studentId']}' : 'No studentId in payload';
-    Get.snackbar('Push Tapped', debugMsg, duration: const Duration(seconds: 4));
-
     if (data.containsKey('studentId')) {
       FcmService.initialStudentId = data['studentId'].toString();
+    }
+
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController());
     }
 
     if (Get.isRegistered<DashboardController>()) {
@@ -232,20 +232,16 @@ class FcmService {
         if (s != null && s.id != controller.student.value?.id) {
           await controller.switchStudent(s);
           switched = true;
-        } else if (s == null) {
-          Get.snackbar('Error', 'Student not found in loaded list!');
         }
       }
       
       if (!switched) {
-        // Force refresh to pull the newly arrived notification from the server
         await controller.refreshNotifications();
       }
     }
     
-    // Pop back to dashboard smoothly so the switch is visible without destroying controllers
     Get.until((route) => route.settings.name == '/dashboard' || route.isFirst);
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 200), () {
       Get.toNamed('/notifications');
     });
   }

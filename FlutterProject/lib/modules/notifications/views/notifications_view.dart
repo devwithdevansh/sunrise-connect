@@ -302,7 +302,7 @@ class _NotificationCardState extends State<_NotificationCard> {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () {
-                          Get.offNamed(AppRoutes.paymentHistory);
+                          Get.toNamed(AppRoutes.receiptDetails);
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.teal,
