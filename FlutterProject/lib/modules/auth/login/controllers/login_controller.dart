@@ -45,18 +45,26 @@ class LoginController extends GetxController {
         Get.offAllNamed(AppRoutes.dashboard);
       } else {
         final body = json.decode(response.body);
-        final msg = body['message'] ?? 'Invalid credentials';
+        final statusCode = response.statusCode;
+        String friendlyMsg;
+        if (statusCode == 401 || statusCode == 403) {
+          friendlyMsg = 'Mobile number or password is wrong. Please check and try again.';
+        } else if (statusCode == 404) {
+          friendlyMsg = 'This mobile number is not registered. Please contact your school.';
+        } else {
+          friendlyMsg = 'Login failed. Please try again after some time.';
+        }
         Get.snackbar(
-          'Login Failed',
-          msg.toString(),
+          'Could Not Login',
+          friendlyMsg,
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } catch (e) {
       print('Error during login: $e');
       Get.snackbar(
-        'Error',
-        'Could not connect to the server. Please verify the backend is running.',
+        'No Internet Connection',
+        'Please check your internet and try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {

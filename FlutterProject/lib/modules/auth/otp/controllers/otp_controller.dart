@@ -20,7 +20,7 @@ class OtpController extends GetxController {
       return;
     }
     if (inputPhone.length != 10 || !RegExp(r'^[6-9]\d{9}$').hasMatch(inputPhone)) {
-      errorMsg.value = 'Enter Indian number or invalid number';
+      errorMsg.value = 'Please enter a valid 10-digit mobile number.';
       return;
     }
     phone.value = inputPhone;
@@ -47,11 +47,11 @@ class OtpController extends GetxController {
         return body['data']['parentId'] as String;
       } else {
         final body = json.decode(response.body);
-        errorMsg.value = body['message'] ?? 'Verification failed';
+        errorMsg.value = 'The code you entered is wrong. Please check and try again.';
       }
     } catch (e) {
       print('Verification error: $e');
-      errorMsg.value = 'Network error during verification';
+      errorMsg.value = 'No internet connection. Please check your network and try again.';
     } finally {
       isLoading.value = false;
     }
@@ -68,18 +68,18 @@ class OtpController extends GetxController {
 
       if (response.statusCode == 200) {
         Get.snackbar(
-          'Onboarding Complete',
-          'Your password has been set. Please login now.',
+          'Password Set!',
+          'Your password is ready. Please login to continue.',
           snackPosition: SnackPosition.BOTTOM,
         );
         Get.offAllNamed(AppRoutes.login);
       } else {
         final body = json.decode(response.body);
-        Get.snackbar('Error', body['message'] ?? 'Failed to set password');
+        Get.snackbar('Something went wrong', 'Could not save your password. Please try again.');
       }
     } catch (e) {
       print('Password setup error: $e');
-      Get.snackbar('Error', 'Failed to connect for password configuration');
+      Get.snackbar('No Internet Connection', 'Please check your internet and try again.');
     } finally {
       isLoading.value = false;
     }

@@ -12,13 +12,13 @@ class CreatePasswordController extends GetxController {
     super.onInit();
     parentId = Get.arguments as String? ?? '';
     if (parentId.isEmpty) {
-      Get.snackbar('Error', 'Missing parent ID, cannot set password.');
+      Get.snackbar('Setup Error', 'Something went wrong. Please go back and try again.');
     }
   }
 
   Future<void> setPassword(String newPassword) async {
     if (newPassword.length < 8) {
-      Get.snackbar('Error', 'Password must be at least 8 characters long');
+      Get.snackbar('Password Too Short', 'Please use at least 8 characters for a safe password.');
       return;
     }
 
@@ -31,18 +31,18 @@ class CreatePasswordController extends GetxController {
 
       if (response.statusCode == 200) {
         Get.snackbar(
-          'Onboarding Complete',
-          'Your password has been set. Please login now.',
+          'Password Set!',
+          'Your password is ready. Please login to continue.',
           snackPosition: SnackPosition.BOTTOM,
         );
         Get.offAllNamed(AppRoutes.login);
       } else {
         final body = json.decode(response.body);
-        Get.snackbar('Error', body['message'] ?? 'Failed to set password');
+        Get.snackbar('Something went wrong', 'Could not save your password. Please try again.');
       }
     } catch (e) {
       print('Password setup error: $e');
-      Get.snackbar('Error', 'Failed to connect for password configuration');
+      Get.snackbar('No Internet Connection', 'Please check your internet and try again.');
     } finally {
       isLoading.value = false;
     }

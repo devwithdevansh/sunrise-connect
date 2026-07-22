@@ -32,7 +32,7 @@ class _CreatePasswordViewState extends State<CreatePasswordView> {
     final confirm = _confirmPasswordController.text;
     
     if (pass != confirm) {
-      Get.snackbar('Error', 'Passwords do not match');
+      Get.snackbar('Passwords Do Not Match', 'Both passwords should be the same. Please check and try again.');
       return;
     }
     

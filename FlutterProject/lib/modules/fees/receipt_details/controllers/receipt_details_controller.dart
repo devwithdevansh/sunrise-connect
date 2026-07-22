@@ -279,8 +279,8 @@ class ReceiptDetailsController extends GetxController {
   Future<void> downloadReceiptPdf(ReceiptGroup group) async {
     try {
       Get.snackbar(
-        'Generating Receipt',
-        'Please wait while we generate the PDF...',
+        'Getting Your Receipt',
+        'Please wait, your receipt is being prepared...',
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFE8FAF5),
         colorText: const Color(0xFF0FB893),
@@ -297,8 +297,8 @@ class ReceiptDetailsController extends GetxController {
       await saveAndOpenPdf(pdfBytes, fileName);
 
       Get.snackbar(
-        'Receipt Downloaded',
-        'Receipt saved and opened successfully.',
+        'Receipt Ready!',
+        'Your receipt has been saved. You can share it anytime.',
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFE8FAF5),
         colorText: const Color(0xFF0FB893),
@@ -308,8 +308,8 @@ class ReceiptDetailsController extends GetxController {
     } catch (e) {
       debugPrint('Error downloading PDF: $e');
       Get.snackbar(
-        'Error',
-        'Failed to download PDF receipt: $e',
+        'Could Not Download',
+        'Something went wrong while downloading. Please try again.',
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFFFF0F0),
         colorText: const Color(0xFFDC2626),

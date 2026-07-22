@@ -693,8 +693,9 @@ class PendingFeesController extends GetxController
     } catch (e) {
       debugPrint('Error in paySelected: $e');
       SoundService.instance.play(AppSound.error);
-      Get.snackbar('Payment Error',
-          'Failed to initiate payment. Please try again.',
+      Get.snackbar(
+          'Payment Could Not Start',
+          'Something went wrong. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
       isLoading.value = false;
     }
@@ -758,7 +759,10 @@ class PendingFeesController extends GetxController
         }
       } else {
         SoundService.instance.play(AppSound.error);
-        Get.snackbar('Verification Failed', 'Payment was successful but verification failed.');
+        Get.snackbar(
+          'Please Contact School',
+          'Payment was done, but we could not confirm it. Please contact your school with your payment ID.',
+        );
       }
     } catch (e) {
       debugPrint('Error in _handlePaymentSuccess: $e');
@@ -770,11 +774,18 @@ class PendingFeesController extends GetxController
   void _handlePaymentError(PaymentFailureResponse response) {
     isLoading.value = false;
     SoundService.instance.play(AppSound.error);
-    Get.snackbar('Payment Failed', response.message ?? 'Payment was cancelled or failed.', snackPosition: SnackPosition.BOTTOM);
+    final String msg = (response.message != null && response.message!.isNotEmpty)
+        ? 'Payment could not be completed. Please try again.'
+        : 'Payment was cancelled. No money has been deducted.';
+    Get.snackbar(
+      'Payment Not Done',
+      msg,
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
     isLoading.value = false;
-    Get.snackbar('External Wallet', 'Selected wallet: ${response.walletName}');
+    Get.snackbar('Wallet Selected', 'You selected ${response.walletName}. Please complete the payment there.');
   }
 }
