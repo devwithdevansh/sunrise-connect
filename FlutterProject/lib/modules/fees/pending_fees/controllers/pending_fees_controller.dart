@@ -406,7 +406,6 @@ class PendingFeesController extends GetxController
   }
 
   /// Chronological list of pending Education & Term fee items in strict sequence.
-  /// Note: Transport fees are flexible and excluded from this sequence restriction.
   List<FeeItem> get unifiedEducationPendingFees {
     final list = pendingFees.where((f) => f.isEducation || f.isTerm).toList()
       ..sort((a, b) {
@@ -421,22 +420,26 @@ class PendingFeesController extends GetxController
     return list;
   }
 
+  /// Chronological list of pending Transport fee items in strict sequence.
+  List<FeeItem> get unifiedTransportPendingFees {
+    final list = pendingFees.where((f) => f.isTransport).toList()
+      ..sort((a, b) {
+        final ma = _monthIndex(a.termName);
+        final mb = _monthIndex(b.termName);
+        if (ma != mb) return ma.compareTo(mb);
+        return a.dueDate.compareTo(b.dueDate);
+      });
+    return list;
+  }
+
   void toggleFee(FeeItem fee) {
     activeQuickSelect.value = -1;
     if (fee.isPaid) return;
 
-    if (fee.isTransport) {
-      // Transport fee: completely flexible, toggle independently from anywhere
-      if (selectedIds.contains(fee.id)) {
-        selectedIds.remove(fee.id);
-      } else {
-        selectedIds.add(fee.id);
-      }
-      return;
-    }
+    final list = fee.isTransport
+        ? unifiedTransportPendingFees
+        : unifiedEducationPendingFees;
 
-    // Education & Term fees: follow sequential order within Education/Term items
-    final list = unifiedEducationPendingFees;
     final index = list.indexWhere((f) => f.id == fee.id);
     if (index == -1) {
       if (selectedIds.contains(fee.id)) {
@@ -450,12 +453,12 @@ class PendingFeesController extends GetxController
     final isCurrentlySelected = selectedIds.contains(fee.id);
 
     if (isCurrentlySelected) {
-      // Deselect this education item AND ALL SUBSEQUENT education items in sequence
+      // Deselect this item AND ALL SUBSEQUENT items in its category sequence
       for (int i = index; i < list.length; i++) {
         selectedIds.remove(list[i].id);
       }
     } else {
-      // Select this education item AND ALL PRIOR unpaid education items in sequence
+      // Select this item AND ALL PRIOR unpaid items in its category sequence
       for (int i = 0; i <= index; i++) {
         selectedIds.add(list[i].id);
       }
