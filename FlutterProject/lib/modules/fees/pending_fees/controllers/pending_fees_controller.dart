@@ -16,6 +16,8 @@ enum FeeStatus { overdue, dueSoon, upcoming }
 
 enum TermGroup { term1, term2 }
 
+enum FeeFilterCategory { all, transport, education, term }
+
 extension TermGroupX on TermGroup {
   String get label {
     switch (this) {
@@ -378,6 +380,16 @@ class PendingFeesController extends GetxController
     'december', 'january', 'february', 'march', 'april', 'may'
   ];
 
+  final Rx<FeeFilterCategory> selectedCategory = FeeFilterCategory.all.obs;
+
+  void setCategory(FeeFilterCategory cat) {
+    selectedCategory.value = cat;
+  }
+
+  List<FeeItem> get transportPendingFees => pendingFees.where((f) => f.isTransport).toList();
+  List<FeeItem> get educationPendingFees => pendingFees.where((f) => f.isEducation).toList();
+  List<FeeItem> get termPendingFees => pendingFees.where((f) => f.isTerm).toList();
+
   int _monthIndex(String termName) {
     final clean = termName.toLowerCase().trim();
     if (clean == 'term 1') return 0;
@@ -393,9 +405,10 @@ class PendingFeesController extends GetxController
     return 3;
   }
 
-  /// Master unified chronological list of all pending fee items in strict order.
-  List<FeeItem> get unifiedPendingFees {
-    final list = pendingFees.toList()
+  /// Chronological list of pending Education & Term fee items in strict sequence.
+  /// Note: Transport fees are flexible and excluded from this sequence restriction.
+  List<FeeItem> get unifiedEducationPendingFees {
+    final list = pendingFees.where((f) => f.isEducation || f.isTerm).toList()
       ..sort((a, b) {
         final ma = _monthIndex(a.termName);
         final mb = _monthIndex(b.termName);
@@ -412,23 +425,37 @@ class PendingFeesController extends GetxController
     activeQuickSelect.value = -1;
     if (fee.isPaid) return;
 
-    final list = unifiedPendingFees;
+    if (fee.isTransport) {
+      // Transport fee: completely flexible, toggle independently from anywhere
+      if (selectedIds.contains(fee.id)) {
+        selectedIds.remove(fee.id);
+      } else {
+        selectedIds.add(fee.id);
+      }
+      return;
+    }
+
+    // Education & Term fees: follow sequential order within Education/Term items
+    final list = unifiedEducationPendingFees;
     final index = list.indexWhere((f) => f.id == fee.id);
     if (index == -1) {
-      // Independent fee (e.g. Admission, Bag/Kit) -> simple toggle
-      selectedIds.contains(fee.id) ? selectedIds.remove(fee.id) : selectedIds.add(fee.id);
+      if (selectedIds.contains(fee.id)) {
+        selectedIds.remove(fee.id);
+      } else {
+        selectedIds.add(fee.id);
+      }
       return;
     }
 
     final isCurrentlySelected = selectedIds.contains(fee.id);
 
     if (isCurrentlySelected) {
-      // Deselect this item AND ALL SUBSEQUENT items in unified sequence!
+      // Deselect this education item AND ALL SUBSEQUENT education items in sequence
       for (int i = index; i < list.length; i++) {
         selectedIds.remove(list[i].id);
       }
     } else {
-      // Select this item AND ALL PRIOR unpaid items in unified sequence!
+      // Select this education item AND ALL PRIOR unpaid education items in sequence
       for (int i = 0; i <= index; i++) {
         selectedIds.add(list[i].id);
       }
@@ -464,36 +491,47 @@ class PendingFeesController extends GetxController
     final unpaidSubFees = group.subFees.where((f) => !f.isPaid).toList();
     if (unpaidSubFees.isEmpty) return;
 
-    final list = unifiedPendingFees;
     final allSel = isMonthGroupFullySelected(group);
 
     if (allSel) {
-      // Deselect month: find earliest item in group and deselect it
-      FeeItem? earliest;
-      int earliestIdx = 999999;
+      // Deselect transport fees in this month independently
       for (final f in unpaidSubFees) {
-        final idx = list.indexWhere((item) => item.id == f.id);
-        if (idx != -1 && idx < earliestIdx) {
-          earliestIdx = idx;
-          earliest = f;
-        }
+        if (f.isTransport) selectedIds.remove(f.id);
       }
-      if (earliest != null) {
-        toggleFee(earliest);
+      // For education/term fees, deselect starting from earliest in group
+      final eduList = unpaidSubFees.where((f) => !f.isTransport).toList();
+      if (eduList.isNotEmpty) {
+        final list = unifiedEducationPendingFees;
+        FeeItem? earliest;
+        int earliestIdx = 999999;
+        for (final f in eduList) {
+          final idx = list.indexWhere((item) => item.id == f.id);
+          if (idx != -1 && idx < earliestIdx) {
+            earliestIdx = idx;
+            earliest = f;
+          }
+        }
+        if (earliest != null) toggleFee(earliest);
       }
     } else {
-      // Select month: find latest item in group and select it
-      FeeItem? latest;
-      int latestIdx = -1;
+      // Select transport fees in this month independently
       for (final f in unpaidSubFees) {
-        final idx = list.indexWhere((item) => item.id == f.id);
-        if (idx != -1 && idx > latestIdx) {
-          latestIdx = idx;
-          latest = f;
-        }
+        if (f.isTransport) selectedIds.add(f.id);
       }
-      if (latest != null) {
-        toggleFee(latest);
+      // For education/term fees, select up to latest in group
+      final eduList = unpaidSubFees.where((f) => !f.isTransport).toList();
+      if (eduList.isNotEmpty) {
+        final list = unifiedEducationPendingFees;
+        FeeItem? latest;
+        int latestIdx = -1;
+        for (final f in eduList) {
+          final idx = list.indexWhere((item) => item.id == f.id);
+          if (idx != -1 && idx > latestIdx) {
+            latestIdx = idx;
+            latest = f;
+          }
+        }
+        if (latest != null) toggleFee(latest);
       }
     }
     
@@ -531,34 +569,43 @@ class PendingFeesController extends GetxController
     final unpaid = _unpaidFeesForTerm(term);
     if (unpaid.isEmpty) return;
 
-    final list = unifiedPendingFees;
     final allSel = unpaid.every((f) => selectedIds.contains(f.id));
     
     if (allSel) {
-      FeeItem? earliest;
-      int earliestIdx = 999999;
       for (final f in unpaid) {
-        final idx = list.indexWhere((item) => item.id == f.id);
-        if (idx != -1 && idx < earliestIdx) {
-          earliestIdx = idx;
-          earliest = f;
-        }
+        if (f.isTransport) selectedIds.remove(f.id);
       }
-      if (earliest != null) {
-        toggleFee(earliest);
+      final eduList = unpaid.where((f) => !f.isTransport).toList();
+      if (eduList.isNotEmpty) {
+        final list = unifiedEducationPendingFees;
+        FeeItem? earliest;
+        int earliestIdx = 999999;
+        for (final f in eduList) {
+          final idx = list.indexWhere((item) => item.id == f.id);
+          if (idx != -1 && idx < earliestIdx) {
+            earliestIdx = idx;
+            earliest = f;
+          }
+        }
+        if (earliest != null) toggleFee(earliest);
       }
     } else {
-      FeeItem? latest;
-      int latestIdx = -1;
       for (final f in unpaid) {
-        final idx = list.indexWhere((item) => item.id == f.id);
-        if (idx != -1 && idx > latestIdx) {
-          latestIdx = idx;
-          latest = f;
-        }
+        if (f.isTransport) selectedIds.add(f.id);
       }
-      if (latest != null) {
-        toggleFee(latest);
+      final eduList = unpaid.where((f) => !f.isTransport).toList();
+      if (eduList.isNotEmpty) {
+        final list = unifiedEducationPendingFees;
+        FeeItem? latest;
+        int latestIdx = -1;
+        for (final f in eduList) {
+          final idx = list.indexWhere((item) => item.id == f.id);
+          if (idx != -1 && idx > latestIdx) {
+            latestIdx = idx;
+            latest = f;
+          }
+        }
+        if (latest != null) toggleFee(latest);
       }
     }
     activeQuickSelect.value = -1;
@@ -570,11 +617,11 @@ class PendingFeesController extends GetxController
     final count = n == 9999 ? groups.length : n.clamp(0, groups.length);
     if (count <= 0) return;
     
-    final targetGroup = groups[count - 1];
-    final unpaidSubFees = targetGroup.subFees.where((f) => !f.isPaid).toList();
-    if (unpaidSubFees.isNotEmpty) {
-      final lastFee = unpaidSubFees.last;
-      toggleFee(lastFee);
+    for (int i = 0; i < count; i++) {
+      final g = groups[i];
+      for (final f in g.subFees.where((sub) => !sub.isPaid)) {
+        selectedIds.add(f.id);
+      }
     }
   }
 
