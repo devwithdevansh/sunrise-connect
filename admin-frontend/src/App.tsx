@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Loader2, RefreshCw } from 'lucide-react';
+import { Menu, RefreshCw } from 'lucide-react';
 import { useApp } from './store';
 import type { PaymentTransaction } from './mockData';
 import { ScreenSkeleton } from './components/ScreenSkeleton';
