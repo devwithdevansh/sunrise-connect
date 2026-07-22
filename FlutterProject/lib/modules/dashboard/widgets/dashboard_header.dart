@@ -23,7 +23,6 @@ class DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = controller.student.value;
-    final unread = controller.unreadNotificationCount.value;
 
     return Container(
       width: double.infinity,
@@ -97,11 +96,14 @@ class DashboardHeader extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          _HeaderIconButton(
+                          Obx(() => _HeaderIconButton(
                             icon: Icons.notifications_outlined,
-                            badgeCount: unread,
-                            onTap: () => Get.toNamed(AppRoutes.notifications),
-                          ),
+                            badgeCount: controller.unreadNotificationCount.value,
+                            onTap: () async {
+                              await Get.toNamed(AppRoutes.notifications);
+                              controller.refreshNotifications();
+                            },
+                          )),
                           const SizedBox(width: 10),
                           AnimatedTapButton(
                             onTap: () => Get.toNamed(AppRoutes.profile),

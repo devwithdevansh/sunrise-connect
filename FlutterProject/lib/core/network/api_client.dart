@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/storage_keys.dart';
@@ -103,8 +105,15 @@ class ApiClient {
       }
       return response;
     } catch (e) {
-      // Re-throw or return a generic 500 response so callers can handle it gracefully.
-      return http.Response(json.encode({'message': 'Network error: $e'}), 500);
+      String message = 'Unable to connect to the server. Please check your internet connection.';
+      if (e is TimeoutException) {
+        message = 'The connection timed out. Please try again.';
+      } else if (e is SocketException || e.toString().contains('SocketException')) {
+        message = 'No internet connection. Please check your network and try again.';
+      } else if (e is FormatException) {
+        message = 'Received invalid data from the server.';
+      }
+      return http.Response(json.encode({'message': message}), 500);
     }
   }
 
