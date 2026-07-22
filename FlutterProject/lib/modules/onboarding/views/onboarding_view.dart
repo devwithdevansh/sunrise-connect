@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../controllers/onboarding_controller.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class OnboardingView extends GetView<OnboardingController> {
   const OnboardingView({super.key});
@@ -128,9 +129,11 @@ class _OnboardPage extends StatelessWidget {
                 : Icon(icon, size: 60, color: iconColor),
           ),
           const SizedBox(height: 48),
-          Text(title, style: AppTextStyles.displayMedium, textAlign: TextAlign.center),
+          Text(title, style: AppTextStyles.displayMedium, textAlign: TextAlign.center)
+              .animate().fade(duration: 400.ms).slideY(begin: 0.2),
           const SizedBox(height: 16),
-          Text(subtitle, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+          Text(subtitle, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center)
+              .animate().fade(delay: 200.ms).slideY(begin: 0.2),
         ],
       ),
     );

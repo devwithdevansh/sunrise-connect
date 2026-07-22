@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -71,14 +72,15 @@ class _OtpViewState extends State<OtpView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                Text('Account Setup', style: AppTextStyles.displayMedium),
+                Text('Account Setup', style: AppTextStyles.displayMedium)
+                    .animate().fade(duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                 const SizedBox(height: 8),
                 Text(
                   isPhoneEmpty
                       ? 'Enter your registered mobile number to set up your password.'
                       : 'For verification, please enter the last 4 digits of your mobile number (+91 ${_controller.phone.value}).',
                   style: AppTextStyles.bodyMedium,
-                ),
+                ).animate().fade(delay: 100.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                 const SizedBox(height: 32),
 
                 if (isPhoneEmpty) ...[
@@ -93,7 +95,7 @@ class _OtpViewState extends State<OtpView> {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text('+91', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.ink)),
                     ),
-                  ),
+                  ).animate().fade(delay: 200.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 24),
                   CustomButton(
                     label: 'Continue',
@@ -101,7 +103,7 @@ class _OtpViewState extends State<OtpView> {
                     onTap: () {
                       _controller.startVerification(_phoneController.text.trim());
                     },
-                  ),
+                  ).animate().fade(delay: 300.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                 ] else ...[
                   // 4 OTP boxes
                   Row(
@@ -115,7 +117,7 @@ class _OtpViewState extends State<OtpView> {
                         onChanged: _onOtpChanged,
                       ),
                     ),
-                  ),
+                  ).animate().fade(delay: 200.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 32),
                   if (_controller.errorMsg.value.isNotEmpty)
                     Padding(
@@ -124,7 +126,7 @@ class _OtpViewState extends State<OtpView> {
                         _controller.errorMsg.value,
                         style: AppTextStyles.bodySmall.copyWith(color: AppColors.red),
                       ),
-                    ),
+                    ).animate().fade(delay: 300.ms),
                   CustomButton(
                     label: 'Verify Code',
                     loading: _controller.isLoading.value,
@@ -135,7 +137,7 @@ class _OtpViewState extends State<OtpView> {
                         Get.toNamed(AppRoutes.createPassword, arguments: parentId);
                       }
                     },
-                  ),
+                  ).animate().fade(delay: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 24),
                   Center(
                     child: TextButton(
@@ -149,7 +151,7 @@ class _OtpViewState extends State<OtpView> {
                         'Change Mobile Number',
                         style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid),
                       ),
-                    ),
+                    ).animate().fade(delay: 500.ms),
                   ),
                 ],
               ],

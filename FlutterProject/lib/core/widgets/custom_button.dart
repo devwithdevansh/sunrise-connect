@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'animated_button.dart';
 
 enum ButtonVariant { primary, sun, ghost, danger }
 
@@ -36,36 +37,32 @@ class CustomButton extends StatelessWidget {
     return SizedBox(
       width: width ?? double.infinity,
       height: height,
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: loading ? null : onTap,
-          child: Container(
-            decoration: variant == ButtonVariant.ghost
-                ? BoxDecoration(
-                    border: Border.all(color: AppColors.primaryMid, width: 1.5),
-                    borderRadius: BorderRadius.circular(14),
-                  )
+      child: AnimatedTapButton(
+        onTap: loading ? () {} : (onTap ?? () {}),
+        child: Container(
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
+            border: variant == ButtonVariant.ghost
+                ? Border.all(color: AppColors.primaryMid, width: 1.5)
                 : null,
-            alignment: Alignment.center,
-            child: loading
-                ? SizedBox(
-                    width: 22, height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: fg,
-                    ),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (icon != null) ...[icon!, const SizedBox(width: 8)],
-                      Text(label, style: AppTextStyles.button.copyWith(color: fg)),
-                    ],
-                  ),
           ),
+          alignment: Alignment.center,
+          child: loading
+              ? SizedBox(
+                  width: 22, height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: fg,
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[icon!, const SizedBox(width: 8)],
+                    Text(label, style: AppTextStyles.button.copyWith(color: fg)),
+                  ],
+                ),
         ),
       ),
     );

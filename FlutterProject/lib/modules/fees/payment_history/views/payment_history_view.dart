@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/payment_history_controller.dart';
 
 class PaymentHistoryView extends GetView<PaymentHistoryController> {
@@ -66,8 +68,10 @@ class PaymentHistoryView extends GetView<PaymentHistoryController> {
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Container(
                       width: 84, height: 84,
-                      decoration: BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
-                      child: const Icon(Icons.history_toggle_off_rounded, size: 42, color: AppColors.primaryMid),
+                      decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+                      child: const Icon(Icons.history_toggle_off_rounded, size: 42, color: AppColors.primaryMid)
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 1.seconds),
                     ),
                     const SizedBox(height: 20),
                     Text('No Payment History', style: AppTextStyles.h2),
@@ -119,7 +123,8 @@ class PaymentHistoryView extends GetView<PaymentHistoryController> {
                     fmtTime: _fmtTime,
                   ),
                   const SizedBox(height: 12),
-                ],
+                  ],
+                ).animate().fade(delay: (100 * index).ms).slideY(begin: 0.1, curve: Curves.easeOutQuad),
               );
             },
           );

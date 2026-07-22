@@ -9,7 +9,9 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/constants/storage_keys.dart';
 import '../../../core/services/fcm_service.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../../services/sound_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -65,10 +67,10 @@ class ProfileView extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryMid.withOpacity(.3),
+                      color: AppColors.primaryMid.withValues(alpha: 0.3),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),
@@ -80,11 +82,11 @@ class ProfileView extends StatelessWidget {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
                       ),
                       child: CircleAvatar(
                         radius: 36,
-                        backgroundColor: Colors.white.withOpacity(.2),
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
                         child: Text(
                           s.initials,
                           style: AppTextStyles.displayMedium.copyWith(color: Colors.white, fontSize: 28),
@@ -141,7 +143,7 @@ class ProfileView extends StatelessWidget {
                     _buildInfoRow('Academic Year', '2026-27'),
                   ],
                 ),
-              ),
+              ).animate().fade(delay: 250.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
               Text('App Settings', style: AppTextStyles.h2),
               const SizedBox(height: 12),
               Container(

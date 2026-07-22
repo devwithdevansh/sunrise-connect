@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -65,14 +66,15 @@ class _LoginViewState extends State<LoginView> {
                     ),
                     padding: const EdgeInsets.all(12),
                     child: Image.asset('assets/images/sunrise-logo.png', fit: BoxFit.contain),
-                  ),
+                  ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack).fadeIn(duration: 400.ms),
                   const SizedBox(height: 32),
-                  Text('Parent Portal', style: AppTextStyles.displayMedium),
+                  Text('Parent Portal', style: AppTextStyles.displayMedium)
+                      .animate().fade(delay: 100.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 8),
                   Text(
                     'Enter your mobile number and password to log in.',
                     style: AppTextStyles.bodyMedium,
-                  ),
+                  ).animate().fade(delay: 200.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 32),
                   CustomTextField(
                     label: 'Mobile Number',
@@ -86,7 +88,7 @@ class _LoginViewState extends State<LoginView> {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text('+91', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.ink)),
                     ),
-                  ),
+                  ).animate().fade(delay: 300.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 16),
                   CustomTextField(
                     label: 'Password',
@@ -97,7 +99,7 @@ class _LoginViewState extends State<LoginView> {
                       if (val == null || val.isEmpty) return 'Password is required';
                       return null;
                     },
-                  ),
+                  ).animate().fade(delay: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 32),
                   Obx(() => CustomButton(
                         label: 'Login',
@@ -110,7 +112,8 @@ class _LoginViewState extends State<LoginView> {
                             );
                           }
                         },
-                      )),
+                      ))
+                      .animate().fade(delay: 500.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                   const SizedBox(height: 24),
                   Center(
                     child: TextButton(
@@ -119,7 +122,7 @@ class _LoginViewState extends State<LoginView> {
                         'First time here? Set up password',
                         style: AppTextStyles.labelLarge.copyWith(color: AppColors.primaryMid),
                       ),
-                    ),
+                    ).animate().fade(delay: 600.ms),
                   ),
                   const SizedBox(height: 16),
                   Center(
@@ -127,7 +130,7 @@ class _LoginViewState extends State<LoginView> {
                       'By continuing, you agree to our Terms & Privacy Policy.',
                       style: AppTextStyles.bodySmall,
                       textAlign: TextAlign.center,
-                    ),
+                    ).animate().fade(delay: 700.ms),
                   ),
                 ],
               ),

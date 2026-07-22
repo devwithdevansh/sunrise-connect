@@ -96,10 +96,18 @@ class DashboardView extends GetView<DashboardController> {
             height: 200,
             repeat: false,
             errorBuilder: (context, error, stackTrace) {
-              return const Icon(
-                Icons.person_off_rounded,
-                size: 80,
-                color: Colors.grey,
+              return Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_off_rounded,
+                  size: 60,
+                  color: AppColors.primaryMid,
+                ),
               );
             },
           ),

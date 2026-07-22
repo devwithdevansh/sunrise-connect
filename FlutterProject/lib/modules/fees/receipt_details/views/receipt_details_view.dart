@@ -65,7 +65,9 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                     Container(
                       width: 84, height: 84,
                       decoration: const BoxDecoration(color: AppColors.purplePale, shape: BoxShape.circle),
-                      child: const Icon(Icons.receipt_long_rounded, size: 42, color: AppColors.purple),
+                      child: const Icon(Icons.receipt_long_rounded, size: 42, color: AppColors.purple)
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 1.seconds),
                     ),
                     const SizedBox(height: 20),
                     Text('No Receipts Available', style: AppTextStyles.h2),
@@ -110,8 +112,8 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
                   fmtDateTime: _fmtDateTime,
                   onTap: () => _showReceiptModal(context, group),
                 ),
-                const SizedBox(height: 12),
-              ]);
+                ],
+              ).animate().fade(delay: (100 * index).ms).slideX(begin: 0.1, curve: Curves.easeOutQuad);
             },
           );
         }),
@@ -306,7 +308,7 @@ class ReceiptDetailsView extends GetView<ReceiptDetailsController> {
             ),
           ),
         ),
-      ),
+      ).animate().scale(curve: Curves.easeOutBack, duration: 400.ms).fadeIn(duration: 200.ms),
     );
   }
 

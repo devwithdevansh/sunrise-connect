@@ -9,6 +9,7 @@ import '../../../data/models/notification_model.dart';
 import '../../../data/repositories/notification_repository.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key});
@@ -74,7 +75,10 @@ class NotificationsView extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.inkLight),
+                      const Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.inkLight)
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 1.seconds)
+                          .shake(hz: 2, curve: Curves.easeInOutCubic),
                       const SizedBox(height: 16),
                       Text('All caught up!', style: AppTextStyles.h2),
                       const SizedBox(height: 8),
@@ -100,22 +104,16 @@ class NotificationsView extends StatelessWidget {
                   if (sId != null) {
                     if (!notif.isReadFor(sId)) {
                       await repo.markAsRead(notif.id, studentId: sId);
-                      notif.markAsReadFor(sId);
-                      controller.notifications.refresh();
-                      controller.unreadNotificationCount.value =
-                          controller.notifications.where((n) => !n.isReadFor(sId)).length;
+                      controller.markNotificationAsReadLocally(notif.id, studentId: sId);
                     }
                   } else {
                     if (!notif.isRead) {
                       await repo.markAsRead(notif.id);
-                      notif.isRead = true;
-                      controller.notifications.refresh();
-                      controller.unreadNotificationCount.value =
-                          controller.notifications.where((n) => !n.isRead).length;
+                      controller.markNotificationAsReadLocally(notif.id);
                     }
                   }
                 },
-              );
+              ).animate().fade(delay: (100 * index).ms).slideX(begin: 0.1, curve: Curves.easeOutQuad);
             },
           );
         }),

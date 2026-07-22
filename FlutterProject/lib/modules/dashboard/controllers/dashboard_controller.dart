@@ -272,6 +272,32 @@ class DashboardController extends GetxController {
     });
   }
 
+  /// Instantly sync local state without waiting for a network fetch.
+  void markNotificationAsReadLocally(String notifId, {String? studentId}) {
+    final notif = _allNotifications.firstWhereOrNull((n) => n.id == notifId);
+    if (notif != null) {
+      if (studentId != null) {
+        notif.markAsReadFor(studentId);
+      } else {
+        notif.isRead = true;
+      }
+      _allNotifications.refresh();
+      _updateVisibleNotifications();
+    }
+  }
+
+  void markAllNotificationsAsReadLocally({String? studentId}) {
+    for (final n in _allNotifications) {
+      if (studentId != null) {
+        n.markAsReadFor(studentId);
+      } else {
+        n.isRead = true;
+      }
+    }
+    _allNotifications.refresh();
+    _updateVisibleNotifications();
+  }
+
   /// Refresh notifications only (called when tapping notification bell).
   Future<void> refreshNotifications() async {
     await _loadNotifications();

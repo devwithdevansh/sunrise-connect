@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -57,12 +58,13 @@ class _CreatePasswordViewState extends State<CreatePasswordView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              Text('Create Password', style: AppTextStyles.displayMedium),
+              Text('Create Password', style: AppTextStyles.displayMedium)
+                  .animate().fade(duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
               const SizedBox(height: 8),
               Text(
                 'Set a strong password for your account to proceed.',
                 style: AppTextStyles.bodyMedium,
-              ),
+              ).animate().fade(delay: 100.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
               const SizedBox(height: 32),
               
               TextField(
@@ -98,7 +100,7 @@ class _CreatePasswordViewState extends State<CreatePasswordView> {
                 label: 'Save & Login',
                 loading: _controller.isLoading.value,
                 onTap: _submit,
-              )),
+              )).animate().fade(delay: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
             ],
           ),
         ),
