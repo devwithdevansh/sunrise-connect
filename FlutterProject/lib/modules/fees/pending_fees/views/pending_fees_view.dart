@@ -216,7 +216,7 @@ class _HeroSummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: _C.navy.withOpacity(0.35),
+              color: _C.navy.withValues(alpha: 0.35),
               blurRadius: 18,
               offset: const Offset(0, 8),
             )
@@ -236,9 +236,9 @@ class _HeroSummaryCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _C.teal.withOpacity(0.2),
+                      color: _C.teal.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _C.tealBorder.withOpacity(0.4)),
+                      border: Border.all(color: _C.tealBorder.withValues(alpha: 0.4)),
                     ),
                     child: const Text(
                       'RTE Concession',
@@ -316,9 +316,9 @@ class _HeroChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.12)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Row(
           children: [
@@ -363,7 +363,7 @@ class _OverdueBanner extends StatelessWidget {
           ),
           child: Row(children: [
             Container(width: 36, height: 36,
-              decoration: BoxDecoration(color: _C.red.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: _C.red.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.warning_amber_rounded, color: _C.red, size: 20)),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -563,7 +563,7 @@ class _AcademicTimeline extends StatelessWidget {
             decoration: BoxDecoration(
               color: _C.accentBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _C.accent.withOpacity(0.2)),
+              border: Border.all(color: _C.accent.withValues(alpha: 0.2)),
             ),
             child: const Row(
               children: [
@@ -734,7 +734,7 @@ class _TimelineTile extends StatelessWidget {
                         width: 2.5,
                       ),
                       boxShadow: isSelected
-                          ? [BoxShadow(color: themeColor.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 2))]
+                          ? [BoxShadow(color: themeColor.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2))]
                           : [],
                     ),
                     child: Center(
@@ -777,14 +777,14 @@ class _TimelineTile extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isSelected ? themeColor.withOpacity(0.06) : _C.white,
+                    color: isSelected ? themeColor.withValues(alpha: 0.06) : _C.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected ? themeColor : _C.border,
                       width: isSelected ? 1.8 : 1,
                     ),
                     boxShadow: isSelected
-                        ? [BoxShadow(color: themeColor.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3))]
+                        ? [BoxShadow(color: themeColor.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 3))]
                         : [const BoxShadow(color: Color(0x06000000), blurRadius: 6, offset: Offset(0, 2))],
                   ),
                   child: Row(
@@ -841,7 +841,6 @@ class _TimelineTile extends StatelessWidget {
                   ),
                 ).animate(target: isPaid ? 1 : 0)
                   .shimmer(duration: 1200.ms, color: _C.teal.withValues(alpha: 0.15), delay: 300.ms),
-                ),
               ),
             ),
           ],
@@ -910,7 +909,7 @@ class _PayBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(colors: [_C.navyDark, _C.navyLight]),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: _C.navy.withOpacity(0.32), blurRadius: 16, offset: const Offset(0, 6))],
+                      boxShadow: [BoxShadow(color: _C.navy.withValues(alpha: 0.32), blurRadius: 16, offset: const Offset(0, 6))],
                     ),
                     child: Row(children: [
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -924,9 +923,9 @@ class _PayBar extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
+                          color: Colors.white.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(11),
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1089,7 +1088,7 @@ class _PaySheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(colors: [_C.navyDark, _C.navyLight]),
                       borderRadius: BorderRadius.circular(13),
-                      boxShadow: [BoxShadow(color: _C.navy.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]),
+                      boxShadow: [BoxShadow(color: _C.navy.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]),
                     child: Center(child: Text('Pay ${_fmt(total)}',
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)))),
                 ),
