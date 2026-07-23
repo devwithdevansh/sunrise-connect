@@ -135,7 +135,8 @@ export function formatTransactions(rawTransactions: any[], students: any[]) {
       paymentBreakdown: paymentBreakdown,
       academicYear: primaryAcademicYear,
       isDeleted: isDeleted,
-      receiptNumber: groupReceiptNumber
+      receiptNumber: groupReceiptNumber,
+      performedBy: firstTx.performedBy
     });
   });
 

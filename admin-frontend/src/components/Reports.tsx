@@ -10,9 +10,9 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { activeStudents, unpaidData, feeStructures, academicYears, transactions: globalTransactions, expenses } = useApp();
+  const { activeStudents, unpaidData, feeStructures, academicYears, transactions: globalTransactions, expenses, users } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
+  const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte' | 'concessions'>('daily');
 
   // Daily Collections State
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -309,7 +309,39 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   }, [activeStudents, rteClassFilter, rteSearchQuery]);
 
   // ==========================================
-  // EXCEL EXPORTS USING XLSX LIBRARY
+  // 4. CONCESSIONS REPORT CALCULATION
+  // ==========================================
+  const getCashierName = (id?: string) => {
+    if (!id) return 'Admin';
+    const u = users.find(u => u._id === id);
+    return u ? u.name : 'Admin';
+  };
+
+  const concessionsReportData = useMemo(() => {
+    const filteredTxns = dailyTransactions.filter(t => {
+      if (!t.date || t.date !== selectedDate) return false;
+      if (t.concessionAmount <= 0) return false;
+      if (dailySearchQuery) {
+        const q = dailySearchQuery.toLowerCase();
+        return (
+          t.studentName.toLowerCase().includes(q) ||
+          t.studentCode.toLowerCase().includes(q) ||
+          t.feeType.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+
+    const totalConcessionGiven = filteredTxns.reduce((sum, tx) => sum + (tx.concessionAmount || 0), 0);
+
+    return {
+      transactions: filteredTxns,
+      totalConcessionGiven
+    };
+  }, [dailyTransactions, selectedDate, dailySearchQuery]);
+
+  // ==========================================
+  // EXPORT EXCEL FUNCTIONS
   // ==========================================
   const exportDailyExcel = () => {
     const data = dailyReportData.transactions.map((t, idx) => ({
@@ -462,6 +494,17 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
               </button>
             </>
           )}
+          {activeTab === 'concessions' && (
+            <>
+              <button
+                onClick={() => {}}
+                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 border border-emerald-100 transition-all active:scale-[0.98]"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span>Export Excel</span>
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -496,6 +539,16 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
         >
           <Award className="h-4 w-4" />
           <span>RTE Reconcile</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('concessions')}
+          className={`pb-3 font-bold text-sm flex items-center gap-2 transition-all border-b-2 -mb-[2px] ${activeTab === 'concessions'
+              ? 'border-amber-500 text-slate-800'
+              : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+        >
+          <Award className="h-4 w-4" />
+          <span>Concessions Given</span>
         </button>
       </div>
 
@@ -883,6 +936,123 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
           </div>
         </div>
       )}
+      {/* ======================================================== */}
+      {/* 4. CONCESSIONS TAB */}
+      {/* ======================================================== */}
+      {activeTab === 'concessions' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 animate-fadeIn">
+              <div className="bg-purple-50 text-purple-500 p-3 rounded-xl">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Total Concessions Given</span>
+                <h3 className="text-xl font-bold text-slate-800">₹{concessionsReportData.totalConcessionGiven.toLocaleString()}</h3>
+              </div>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 animate-fadeIn">
+              <div className="bg-amber-50 text-amber-500 p-3 rounded-xl">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Total Students</span>
+                <h3 className="text-xl font-bold text-slate-800">{concessionsReportData.transactions.length} Students</h3>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters Panel */}
+          <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <Search className="h-4 w-4" />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search student or code..."
+                  value={dailySearchQuery}
+                  onChange={(e) => setDailySearchQuery(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-150 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-800 focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-slate-50 border border-slate-150 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <th className="py-4 px-6">Student Info</th>
+                    <th className="py-4 px-6">Fee Description</th>
+                    <th className="py-4 px-6 text-right">Concession Amt</th>
+                    <th className="py-4 px-6 text-center">Time</th>
+                    <th className="py-4 px-6">Given By</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {concessionsReportData.transactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400 font-semibold">
+                        No concessions recorded on this date matching the criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    concessionsReportData.transactions.map((t) => (
+                      <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-3 px-6">
+                          <div className="font-bold text-slate-800 mb-0.5 whitespace-nowrap">{t.studentName}</div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                            <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">
+                              {t.studentCode}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap">
+                              {t.classInfo}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-6">
+                          <span className="inline-block text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md whitespace-nowrap">
+                            {t.feeType.split('\n').map((ft: string, i: number) => (
+                              <React.Fragment key={i}>
+                                {ft}
+                                {i < t.feeType.split('\n').length - 1 && <br />}
+                              </React.Fragment>
+                            ))}
+                          </span>
+                        </td>
+                        <td className="py-3 px-6 text-right font-bold text-purple-600 whitespace-nowrap">
+                          ₹{t.concessionAmount.toLocaleString()}
+                        </td>
+                        <td className="py-3 px-6 text-center">
+                          <span className="text-slate-500 font-medium whitespace-nowrap">{t.time}</span>
+                        </td>
+                        <td className="py-3 px-6">
+                          <span className="text-slate-500 font-medium whitespace-nowrap">
+                            {getCashierName(t.performedBy)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

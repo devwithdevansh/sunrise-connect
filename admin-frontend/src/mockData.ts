@@ -58,6 +58,7 @@ export interface PaymentTransaction {
   paymentBreakdown?: { method: string; amount: number }[];
   isDeleted?: boolean;
   academicYear?: string;
+  performedBy?: string;
 }
 
 
