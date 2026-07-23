@@ -12,27 +12,24 @@ class OnboardingView extends GetView<OnboardingController> {
   static const _pages = [
     _OnboardPage(
       imageAsset: 'assets/images/sunrise-logo.png',
-      isLogo: true,
-      title: 'Welcome to\nSunrise Connect',
-      subtitle: 'Your all-in-one school fee management portal.',
+      iconColor: AppColors.sun,
+      iconBg: AppColors.white,
+      title: 'Track Fees\nEasily',
+      subtitle: 'Stay on top of every fee deadline and never miss a payment for your child.',
     ),
     _OnboardPage(
-      imageAsset: 'assets/images/onboard_dashboard.png',
-      isLogo: false,
-      title: 'The Dashboard',
-      subtitle: 'See your total outstanding balance and upcoming dues at a quick glance.',
+      icon: Icons.receipt_long_rounded,
+      iconColor: AppColors.teal,
+      iconBg: AppColors.tealPale,
+      title: 'Instant\nReceipts',
+      subtitle: 'Download digital receipts for every payment made — anytime, anywhere.',
     ),
     _OnboardPage(
-      imageAsset: 'assets/images/onboard_payment.png',
-      isLogo: false,
-      title: 'Paying Fees',
-      subtitle: 'Navigate to the Pending Fees timeline to select and securely pay your child\'s fees.',
-    ),
-    _OnboardPage(
-      imageAsset: 'assets/images/onboard_receipt.png',
-      isLogo: false,
-      title: 'Digital Receipts',
-      subtitle: 'Access your Payment History anytime to download official school receipts.',
+      icon: Icons.notifications_active_rounded,
+      iconColor: AppColors.primaryMid,
+      iconBg: AppColors.primaryLight,
+      title: 'Smart\nReminders',
+      subtitle: 'Get notified before due dates so you\'re always prepared and never charged late fees.',
     ),
   ];
 
@@ -99,64 +96,44 @@ class OnboardingView extends GetView<OnboardingController> {
 }
 
 class _OnboardPage extends StatelessWidget {
+  final IconData? icon;
+  final Color iconColor;
+  final Color iconBg;
   final String title;
   final String subtitle;
-  final String imageAsset;
-  final bool isLogo;
+  final String? imageAsset;
 
   const _OnboardPage({
+    this.icon,
+    required this.iconColor,
+    required this.iconBg,
     required this.title,
     required this.subtitle,
-    required this.imageAsset,
-    required this.isLogo,
+    this.imageAsset,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.all(32),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: Center(
-              child: isLogo
-                  ? Container(
-                      width: 140,
-                      height: 140,
-                      decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle, boxShadow: [
-                        BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 10))
-                      ]),
-                      padding: const EdgeInsets.all(24),
-                      child: Image.asset(imageAsset, fit: BoxFit.contain),
-                    ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack)
-                  : Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x1A000000), blurRadius: 30, offset: Offset(0, 15))
-                        ],
-                      ),
-                      child: Image.asset(
-                        imageAsset,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: AppColors.border,
-                          child: const Center(
-                            child: Text('Screenshot missing.\nPlease add image.', textAlign: TextAlign.center),
-                          ),
-                        ),
-                      ),
-                    ).animate().fade(duration: 400.ms).slideY(begin: 0.1),
-            ),
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            padding: imageAsset != null ? const EdgeInsets.all(16) : null,
+            child: imageAsset != null
+                ? Image.asset(imageAsset!, fit: BoxFit.contain)
+                : Icon(icon, size: 60, color: iconColor),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 48),
           Text(title, style: AppTextStyles.displayMedium, textAlign: TextAlign.center)
               .animate().fade(duration: 400.ms).slideY(begin: 0.2),
           const SizedBox(height: 16),
-          Text(subtitle, style: AppTextStyles.bodyLarge.copyWith(color: AppColors.inkMid), textAlign: TextAlign.center)
+          Text(subtitle, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center)
               .animate().fade(delay: 200.ms).slideY(begin: 0.2),
-          const SizedBox(height: 16),
         ],
       ),
     );
