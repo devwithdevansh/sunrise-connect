@@ -69,7 +69,7 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
   const [dailyTransactions, setDailyTransactions] = useState<any[]>([]);
 
   useEffect(() => {
-    if (activeTab === 'daily') {
+    if (activeTab === 'daily' || activeTab === 'concessions') {
       const filtered = globalTransactions.filter((tx: any) => {
         const txDate = new Date(tx.createdAt).toISOString().split('T')[0];
         return txDate === selectedDate;
