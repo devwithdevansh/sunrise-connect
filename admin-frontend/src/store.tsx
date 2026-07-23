@@ -768,7 +768,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update fee structure');
-      await fetchAll();
+      const resData = await res.json();
+      setFeeStructures(prev => prev.map(f => f._id === id ? resData.data : f));
       return true;
     } catch (err) {
       console.error(err);
@@ -783,7 +784,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
       if (!res.ok) throw new Error('Failed to delete fee structure');
       setFeeStructures(prev => prev.filter(f => f._id !== id));
-      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -800,7 +800,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to update transport fee structure');
-      debouncedFetchAll();
+      const resData = await res.json();
+      setTransportFeeStructures(prev => prev.map(t => t._id === id ? resData.data : t));
       return true;
     } catch (err) {
       console.error(err);
@@ -815,7 +816,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
       if (!res.ok) throw new Error('Failed to delete transport fee structure');
       setTransportFeeStructures(prev => prev.filter(t => t._id !== id));
-      debouncedFetchAll();
       return true;
     } catch (err) {
       console.error(err);
@@ -831,7 +831,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to create fee structure');
-      debouncedFetchAll();
+      const resData = await res.json();
+      setFeeStructures(prev => [...prev, resData.data]);
       return true;
     } catch (err) {
       console.error(err);
@@ -847,7 +848,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Failed to create transport fee structure');
-      debouncedFetchAll();
+      const resData = await res.json();
+      setTransportFeeStructures(prev => [...prev, resData.data]);
       return true;
     } catch (err) {
       console.error(err);
