@@ -469,12 +469,17 @@ class _SegButton extends StatelessWidget {
           children: [
             Icon(icon, size: 15, color: isSelected ? Colors.white : _C.inkMid),
             const SizedBox(width: 6),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : _C.inkMid,
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : _C.inkMid,
+                  ),
+                ),
               ),
             ),
             if (badgeCount > 0) ...[
