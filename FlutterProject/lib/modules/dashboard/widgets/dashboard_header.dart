@@ -222,14 +222,14 @@ class _HeaderIconButton extends StatelessWidget {
 
 class _ChildrenPills extends StatelessWidget {
   final DashboardController controller;
-  const _ChildrenPills({required this.controller});
+  const _ChildrenPills({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 55,
       child: Obx(() {
-        // Explicitly subscribe to notification state & active student changes so Obx rebuilds child pills in real-time
+        // Explicitly touch reactive properties so Obx tracks notification changes
         final _ = controller.unreadNotificationCount.value;
         final __ = controller.notifications.length;
         final activeStudentId = controller.student.value?.id;
@@ -243,82 +243,83 @@ class _ChildrenPills extends StatelessWidget {
             final student = controller.students[index];
             final isSelected = activeStudentId == student.id;
 
-          return AnimatedTapButton(
-            onTap: () => controller.switchStudent(student),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? Colors.white : Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.25),
-                      width: 1,
+            return AnimatedTapButton(
+              onTap: () => controller.switchStudent(student),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? Colors.white : Colors.white.withOpacity(0.25),
+                        width: 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.12),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : [],
                     ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 11,
+                          backgroundColor: isSelected
+                              ? AppColors.primaryMid.withOpacity(0.15)
+                              : Colors.white.withOpacity(0.2),
+                          child: Text(
+                            student.initials,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? AppColors.primaryMid : Colors.white,
                             ),
-                          ]
-                        : [],
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 11,
-                        backgroundColor: isSelected
-                            ? AppColors.primaryMid.withOpacity(0.15)
-                            : Colors.white.withOpacity(0.2),
-                        child: Text(
-                          student.initials,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? AppColors.primaryMid : Colors.white,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        student.name,
-                        style: AppTextStyles.labelLarge.copyWith(
-                          color: isSelected ? AppColors.primaryMid : Colors.white,
-                          fontSize: 13,
+                        const SizedBox(width: 8),
+                        Text(
+                          student.name,
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: isSelected ? AppColors.primaryMid : Colors.white,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                      if (isSelected) ...[
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          size: 14,
-                          color: AppColors.primaryMid,
-                        ),
+                        if (isSelected) ...[
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: AppColors.primaryMid,
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ),
-                if (controller.hasUnreadNotificationsFor(student.id))
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: AppColors.red,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
                     ),
                   ),
-              ],
+                  if (controller.hasUnreadNotificationsFor(student.id))
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: AppColors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         );
