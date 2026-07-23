@@ -319,7 +319,8 @@ class _ChildrenPills extends StatelessWidget {
                     ),
                   ),
               ],
-            ),
+            );
+          },
         );
       }),
     );
