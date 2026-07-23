@@ -15,6 +15,7 @@ import { PromoteStudents } from './components/PromoteStudents';
 import { StaffManagement } from './components/StaffManagement';
 import { AuditLogs } from './components/AuditLogs';
 import { ImportExcel } from './components/ImportExcel';
+import { TodayExpenses } from './components/TodayExpenses';
 
 import { Reports } from './components/Reports';
 import { Receipts } from './components/Receipts';
@@ -32,6 +33,8 @@ const ScreenContent: React.FC<{ onPrint: (tx: PaymentTransaction) => void, onPri
       return <Dashboard />;
     case 'collect-fee':
       return <CollectFee />;
+    case 'today-expenses':
+      return <TodayExpenses />;
     case 'unpaid-fees':
       return <UnpaidFees />;
     case 'fee-structure':

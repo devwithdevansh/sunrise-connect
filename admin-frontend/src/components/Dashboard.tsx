@@ -98,7 +98,7 @@ const DashboardSkeleton: React.FC = () => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { students, activeStudents, setScreen, isLoadingDetails, transactions: globalTransactions, unpaidData } = useApp();
+  const { students, activeStudents, setScreen, isLoadingDetails, transactions: globalTransactions, unpaidData, expenses } = useApp();
 
   // Define today's date string matching the format in store.tsx (YYYY-MM-DD)
   const todayString = useMemo(() => {
@@ -117,6 +117,17 @@ export const Dashboard: React.FC = () => {
       return txDate === selectedDate;
     });
   }, [globalTransactions, selectedDate]);
+
+  // Cash expenses for selected date
+  const cashExpensesForSelectedDate = useMemo(() => {
+    return (expenses || []).reduce((acc, exp) => {
+      const expDate = exp.date ? new Date(exp.date).toISOString().split('T')[0] : '';
+      if (!exp.isReversed && expDate === selectedDate && exp.paymentMethod === 'CASH') {
+        return acc + (exp.amount || 0);
+      }
+      return acc;
+    }, 0);
+  }, [expenses, selectedDate]);
 
   const metrics = useMemo(() => {
     let totalAmount = 0;
@@ -293,9 +304,20 @@ export const Dashboard: React.FC = () => {
 
     return Array.from(totals.entries()).map(([label, value]) => {
       const conf = config[label] || fallbackConfig;
+      let displayValue = value;
+      let subtitle = '';
+
+      if (label === 'CASH') {
+        displayValue = Math.max(0, value - cashExpensesForSelectedDate);
+        if (cashExpensesForSelectedDate > 0) {
+          subtitle = `Exp: -₹${cashExpensesForSelectedDate.toLocaleString('en-IN')}`;
+        }
+      }
+
       return {
         label,
-        value: value.toLocaleString('en-IN'),
+        value: displayValue.toLocaleString('en-IN'),
+        subtitle,
         ...conf
       };
     }).sort((a, b) => {
@@ -448,6 +470,12 @@ export const Dashboard: React.FC = () => {
             <span className="h-2 w-2 rounded-full bg-pink-400"></span>
             <span>Concessions Given: <strong className="text-white">₹{todayConcession.toLocaleString('en-IN')}</strong></span>
           </div>
+          {cashExpensesForSelectedDate > 0 && (
+            <div className="flex items-center gap-2 bg-rose-500/20 px-3 py-1.5 rounded-full border border-rose-400/30 text-rose-200">
+              <span className="h-2 w-2 rounded-full bg-rose-400"></span>
+              <span>Cash Expenses: <strong className="text-white">₹{cashExpensesForSelectedDate.toLocaleString('en-IN')}</strong></span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -458,13 +486,18 @@ export const Dashboard: React.FC = () => {
           return (
             <div
               key={mode.label}
-              className="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-all duration-300"
+              className="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-all duration-300 relative"
             >
               <div className={`p-2.5 rounded-xl border mb-3 ${mode.bg}`}>
                 <Icon className="h-5 w-5" />
               </div>
               <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{mode.label}</span>
               <strong className="text-slate-800 text-lg font-bold mt-1">₹{mode.value}</strong>
+              {mode.subtitle && (
+                <span className="text-[10px] font-semibold text-rose-600 mt-0.5 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+                  {mode.subtitle}
+                </span>
+              )}
             </div>
           );
         })}

@@ -15,7 +15,8 @@ import {
   Activity,
   BarChart3,
   LogOut,
-  Settings
+  Settings,
+  Wallet
 } from 'lucide-react';
 import logo from '../assets/sunrise-round-logo.png';
 import dwdLogo from '../assets/dwd-logo.png';
@@ -58,6 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
       title: 'FEES',
       items: [
         { id: 'collect-fee', label: 'Collect Fee', icon: CreditCard },
+        { id: 'today-expenses' as ScreenType, label: "Today's Expenses", icon: Wallet },
         { id: 'unpaid-fees', label: 'Unpaid Fees', icon: AlertTriangle, badge: unpaidCount },
         ...(currentUser?.role === 'ADMIN' ? [{ id: 'fee-structure' as ScreenType, label: 'Fee Structure', icon: Layers }] : []),
       ]

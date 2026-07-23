@@ -26,7 +26,8 @@ export type ScreenType =
   | 'reports'
   | 'receipts'
   | 'import-excel'
-  | 'audit-log';
+  | 'audit-log'
+  | 'today-expenses';
 
 export interface AcademicYearData {
   _id: string;
@@ -73,8 +74,25 @@ export interface AuditLog {
   entityType: string;
   entityId: string;
   performedBy: string;
-  details: any;
+  details: string;
   createdAt: string;
+}
+
+export interface ExpenseData {
+  _id: string;
+  title: string;
+  category: string;
+  amount: number;
+  paymentMethod: 'CASH' | 'BANK' | 'ONLINE';
+  description?: string;
+  date: string;
+  createdBy?: {
+    _id: string;
+    name: string;
+  };
+  isReversed?: boolean;
+  reversedAt?: string;
+  reversedReason?: string;
 }
 
 interface AppContextType {
@@ -90,8 +108,13 @@ interface AppContextType {
   academicYears: AcademicYearData[];
   feeCategories: FeeCategoryData[];
   auditLogs: AuditLog[];
+  expenses: ExpenseData[];
   users: any[];
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
+  fetchExpenses: () => Promise<void>;
+  addExpense: (expense: Partial<ExpenseData>) => Promise<boolean>;
+  deleteExpense: (id: string) => Promise<boolean>;
+  reverseExpense: (id: string, reason?: string) => Promise<boolean>;
   addStudent: (student: Omit<Student, 'id' | 'status'>) => Promise<boolean>;
   recordPayment: (
     studentId: string,
@@ -162,6 +185,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
   const [feeCategories, setFeeCategories] = useState<FeeCategoryData[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseData[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [selectedStudentIdForFee, setSelectedStudentIdForFee] = useState<string | null>(null);
@@ -341,6 +365,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAcademicYears(data.academicYears || []);
         setFeeCategories(data.feeCategories || []);
         setUsers(data.users || []);
+
+        // Fetch initial expenses
+        try {
+          const expRes = await authFetch('/api/v1/expenses');
+          if (expRes.ok) {
+            const expJson = await expRes.json();
+            setExpenses(expJson.data?.expenses || []);
+          }
+        } catch (e) {
+          console.error('Failed to load expenses', e);
+        }
 
         setLedgerEntries([]);
         setTransactions(data.transactions || []);
@@ -1121,8 +1156,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         academicYears,
         feeCategories,
         auditLogs,
+        expenses,
         users,
         authFetch,
+        fetchExpenses: async () => {
+          try {
+            const res = await authFetch('/api/v1/expenses');
+            if (res.ok) {
+              const data = await res.json();
+              setExpenses(data.data?.expenses || []);
+            }
+          } catch (err) {
+            console.error('Error fetching expenses:', err);
+          }
+        },
+        addExpense: async (expData: Partial<ExpenseData>) => {
+          try {
+            const res = await authFetch('/api/v1/expenses', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(expData),
+            });
+            if (res.ok) {
+              const resData = await res.json();
+              setExpenses((prev) => [resData.data.expense, ...prev]);
+              return true;
+            }
+          } catch (err) {
+            console.error('Error adding expense:', err);
+          }
+          return false;
+        },
+        deleteExpense: async (id: string) => {
+          try {
+            const res = await authFetch(`/api/v1/expenses/${id}`, {
+              method: 'DELETE',
+            });
+            if (res.ok) {
+              setExpenses((prev) => prev.filter((item) => item._id !== id));
+              return true;
+            }
+          } catch (err) {
+            console.error('Error deleting expense:', err);
+          }
+          return false;
+        },
+        reverseExpense: async (id: string, reason?: string) => {
+          try {
+            const res = await authFetch(`/api/v1/expenses/${id}/reverse`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason }),
+            });
+            if (res.ok) {
+              const resData = await res.json();
+              const updatedExp = resData.data.expense;
+              setExpenses((prev) =>
+                prev.map((exp) => (exp._id === id ? updatedExp : exp))
+              );
+              return true;
+            }
+          } catch (err) {
+            console.error('Error reversing expense:', err);
+          }
+          return false;
+        },
         addStudent,
         recordPayment,
         applyConcession,
