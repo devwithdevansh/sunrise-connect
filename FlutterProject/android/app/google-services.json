@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:1030048539425:android:d46f73cdb42a5e05f35460",
+        "android_client_info": {
+          "package_name": "com.devwithdevansh.sunrise_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmFWEFH-h6PqY1-50aFYkkSVnR2gjOUww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:1030048539425:android:c3111fb5a48a9c17f35460",
         "android_client_info": {
           "package_name": "com.example.sunrise_connect"
