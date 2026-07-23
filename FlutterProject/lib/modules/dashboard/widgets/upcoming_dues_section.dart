@@ -6,6 +6,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../../data/models/fee_model.dart';
 import '../controllers/dashboard_controller.dart';
+import '../../fees/widgets/payment_coming_soon_sheet.dart';
 import 'section_header.dart';
 
 /// Upcoming dues list showing at most 3 pending fees, or a celebratory
@@ -246,7 +247,7 @@ class _FeeRowCard extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Get.back();
-              controller.payFee(fee);
+              PaymentComingSoonSheet.show(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryMid,

@@ -4,6 +4,7 @@ import 'package:get/get.dart' hide GetNumUtils;
 import 'package:lottie/lottie.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/pending_fees_controller.dart';
+import '../../widgets/payment_coming_soon_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS — Sunrise Connect Premium Theme
@@ -1086,7 +1087,7 @@ class _PaySheet extends StatelessWidget {
                   onTap: () async {
                     Get.back();
                     HapticFeedback.mediumImpact();
-                    await c.paySelected();
+                    PaymentComingSoonSheet.show(context);
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
