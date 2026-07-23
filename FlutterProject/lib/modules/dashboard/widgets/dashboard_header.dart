@@ -228,14 +228,20 @@ class _ChildrenPills extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 55,
-      child: Obx(() => ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: controller.students.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final student = controller.students[index];
-          final isSelected = controller.student.value?.id == student.id;
+      child: Obx(() {
+        // Explicitly subscribe to notification state & active student changes so Obx rebuilds child pills in real-time
+        final _ = controller.unreadNotificationCount.value;
+        final __ = controller.notifications.length;
+        final activeStudentId = controller.student.value?.id;
+
+        return ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: controller.students.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            final student = controller.students[index];
+            final isSelected = activeStudentId == student.id;
 
           return AnimatedTapButton(
             onTap: () => controller.switchStudent(student),
@@ -314,9 +320,8 @@ class _ChildrenPills extends StatelessWidget {
                   ),
               ],
             ),
-          );
-        },
-      )),
+        );
+      }),
     );
   }
 }
