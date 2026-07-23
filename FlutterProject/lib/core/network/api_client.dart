@@ -53,10 +53,14 @@ class ApiClient {
         await _secureStorage.delete(key: StorageKeys.accessToken);
         await _secureStorage.delete(key: 'refresh_token');
         final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
+        await prefs.remove(StorageKeys.parentId);
+        await prefs.setBool(StorageKeys.isLoggedIn, false);
         Get.offAllNamed(AppRoutes.login);
         return false;
       }
+
+      final prefs = await SharedPreferences.getInstance();
+      final pId = prefs.getString(StorageKeys.parentId);
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth/refresh'),
@@ -64,7 +68,11 @@ class ApiClient {
           'Content-Type': 'application/json',
           'User-Agent': 'SunriseConnectApp/1.0.0',
         },
-        body: json.encode({'refreshToken': rToken}),
+        body: json.encode({
+          'refreshToken': rToken,
+          'domain': 'parent',
+          if (pId != null && pId.isNotEmpty) 'userId': pId,
+        }),
       ).timeout(_timeout);
 
       if (response.statusCode == 200) {
@@ -78,16 +86,20 @@ class ApiClient {
           await _secureStorage.write(key: 'refresh_token', value: newRefresh);
         }
         return true;
-      } else {
-        // Refresh token invalid or expired. Force logout.
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // Refresh token is explicitly invalid or expired. Force logout.
         await _secureStorage.delete(key: StorageKeys.accessToken);
         await _secureStorage.delete(key: 'refresh_token');
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
+        await prefs.remove(StorageKeys.parentId);
+        await prefs.setBool(StorageKeys.isLoggedIn, false);
         Get.offAllNamed(AppRoutes.login);
+        return false;
+      } else {
+        // Temporary server error. Do NOT logout user.
         return false;
       }
     } catch (e) {
+      // Network error or timeout. Do NOT logout user.
       return false;
     } finally {
       _isRefreshing = false;

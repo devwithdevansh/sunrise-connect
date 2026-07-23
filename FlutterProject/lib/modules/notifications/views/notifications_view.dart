@@ -23,18 +23,11 @@ class NotificationsView extends StatelessWidget {
       final sId = controller.student.value?.id;
       if (sId != null) {
         await repo.markAllAsRead(studentId: sId);
-        for (final n in controller.notifications) {
-          n.markAsReadFor(sId);
-        }
+        controller.markAllNotificationsAsReadLocally(studentId: sId);
       } else {
         await repo.markAllAsRead();
-        for (final n in controller.notifications) {
-          n.isRead = true;
-        }
+        controller.markAllNotificationsAsReadLocally();
       }
-      
-      controller.unreadNotificationCount.value = 0;
-      controller.notifications.refresh();
     }
 
     return Scaffold(

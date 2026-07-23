@@ -15,12 +15,13 @@ class QuickActionsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pending = controller.totalPending.value.toInt();
-    final paidCount = controller.mainFees.where((f) => f.isPaid).length;
-    final unreadCount = controller.unreadNotificationCount.value;
+    return Obx(() {
+      final pending = controller.totalPending.value.toInt();
+      final paidCount = controller.mainFees.where((f) => f.isPaid).length;
+      final unreadCount = controller.unreadNotificationCount.value;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -83,6 +84,7 @@ class QuickActionsGrid extends StatelessWidget {
         ],
       ),
     );
+    });
   }
 }
 

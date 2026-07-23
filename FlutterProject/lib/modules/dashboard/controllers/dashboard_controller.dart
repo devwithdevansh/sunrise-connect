@@ -11,6 +11,7 @@ import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../fees/receipt_details/controllers/receipt_details_controller.dart';
 import '../../../services/sound_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../../core/widgets/permission_dialog.dart';
 import '../../../../core/services/fcm_service.dart';
 
@@ -48,24 +49,35 @@ class DashboardController extends GetxController {
   Future<void> _checkPermissions() async {
     final prefs = await SharedPreferences.getInstance();
     final hasAsked = prefs.getBool('has_asked_fcm_permission') ?? false;
-    if (!hasAsked) {
-      Get.bottomSheet(
-         PermissionSheet(
-           onAllow: () async {
-             Get.back();
-             await prefs.setBool('has_asked_fcm_permission', true);
-             await FcmService.requestPermissions();
-           },
-           onDeny: () async {
-             Get.back();
-             await prefs.setBool('has_asked_fcm_permission', true);
-           }
-         ),
-         isDismissible: false,
-         enableDrag: false,
-         isScrollControlled: true,
-      );
+    if (hasAsked) return;
+
+    try {
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        await prefs.setBool('has_asked_fcm_permission', true);
+        return;
+      }
+    } catch (e) {
+      print('Error checking FCM notification settings: $e');
     }
+
+    Get.bottomSheet(
+       PermissionSheet(
+         onAllow: () async {
+           Get.back();
+           await prefs.setBool('has_asked_fcm_permission', true);
+           await FcmService.requestPermissions();
+         },
+         onDeny: () async {
+           Get.back();
+           await prefs.setBool('has_asked_fcm_permission', true);
+         }
+       ),
+       isDismissible: false,
+       enableDrag: false,
+       isScrollControlled: true,
+    );
   }
 
   Future<void> _checkAuthAndLoad() async {
