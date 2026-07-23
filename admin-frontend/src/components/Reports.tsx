@@ -10,7 +10,7 @@ interface ReportsProps {
 }
 
 export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
-  const { activeStudents, unpaidData, feeStructures, academicYears, transactions: globalTransactions } = useApp();
+  const { activeStudents, unpaidData, feeStructures, academicYears, transactions: globalTransactions, expenses } = useApp();
 
   const [activeTab, setActiveTab] = useState<'daily' | 'outstanding' | 'rte'>('daily');
 
@@ -103,6 +103,23 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       return true;
     });
 
+    // Filter expenses by selected date
+    let cashExpenses = 0;
+    const filteredExpenses = (expenses || []).filter(exp => {
+      if (exp.isReversed) return false;
+      const expDate = exp.date ? new Date(exp.date).toISOString().split('T')[0] : '';
+      if (expDate !== selectedDate) return false;
+
+      if (dailySearchQuery) {
+        const q = dailySearchQuery.toLowerCase();
+        return (
+          exp.title.toLowerCase().includes(q) ||
+          exp.category.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+
     // Summary calculations
     let totalCollected = 0;
     let cashCollected = 0;
@@ -117,14 +134,23 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
       else if (method === 'CHEQUE') chequeCollected += t.amount;
     });
 
+    filteredExpenses.forEach(exp => {
+      if (exp.paymentMethod === 'CASH') {
+        cashExpenses += (exp.amount || 0);
+      }
+    });
+
     return {
       transactions: filteredTxns,
+      expenses: filteredExpenses,
+      cashExpenses,
       totalCollected,
       cashCollected,
+      netCashCollected: cashCollected - cashExpenses,
       onlineCollected,
       chequeCollected
     };
-  }, [dailyTransactions, selectedDate, dailySearchQuery]);
+  }, [dailyTransactions, expenses, selectedDate, dailySearchQuery]);
 
   // ==========================================
   // 2. OUTSTANDING DUES REPORT CALCULATION
@@ -306,6 +332,21 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Daily Collections");
+
+    if (dailyReportData.expenses && dailyReportData.expenses.length > 0) {
+      const expData = dailyReportData.expenses.map((exp: any, idx: number) => ({
+        'S.No': idx + 1,
+        'Expense Title': exp.title,
+        'Category': exp.category,
+        'Payment Method': exp.paymentMethod,
+        'Amount (₹)': exp.amount,
+        'Description': exp.description || ''
+      }));
+      const expWorksheet = XLSX.utils.json_to_sheet(expData);
+      expWorksheet['!cols'] = [{ wch: 6 }, { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 30 }];
+      XLSX.utils.book_append_sheet(workbook, expWorksheet, "Daily Expenses");
+    }
+
     XLSX.writeFile(workbook, `daily_collections_${selectedDate}.xlsx`);
   };
 
@@ -479,8 +520,13 @@ export const Reports: React.FC<ReportsProps> = ({ onPrintReport }) => {
                 <ArrowUpRight className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Cash Payments</span>
-                <h3 className="text-xl font-bold text-slate-800">₹{dailyReportData.cashCollected.toLocaleString()}</h3>
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Net Cash Payments</span>
+                <h3 className="text-xl font-bold text-slate-800">₹{Math.max(0, dailyReportData.netCashCollected).toLocaleString()}</h3>
+                {dailyReportData.cashExpenses > 0 && (
+                  <p className="text-[10px] font-semibold text-slate-500 mt-1 truncate">
+                    Exp: -₹{dailyReportData.cashExpenses.toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4 animate-fadeIn">

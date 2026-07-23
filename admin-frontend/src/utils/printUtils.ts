@@ -731,10 +731,41 @@ export function generateReportHTML(
       )
       .join("");
 
+    const netCash = Math.max(0, (data.cashCollected || 0) - (data.cashExpenses || 0));
+
+    let expensesHTML = "";
+    if (data.expenses && data.expenses.length > 0) {
+      const expRows = data.expenses.map((exp: any, i: number) => `
+        <tr style="background:${i % 2 === 0 ? "#fff5f5" : "#fff"};page-break-inside:avoid;">
+          <td style="${tdStyle}color:#94a3b8;text-align:center;">${i + 1}</td>
+          <td style="${tdStyle}font-weight:700;color:#dc2626;">${exp.title}</td>
+          <td style="${tdStyle}">${exp.category}</td>
+          <td style="${tdStyle}font-weight:700;text-transform:uppercase;">${exp.paymentMethod}</td>
+          <td style="${tdStyle}color:#64748b;">${exp.description || "—"}</td>
+          <td style="${tdRStyle}color:#dc2626;">₹${(exp.amount || 0).toLocaleString("en-IN")}</td>
+        </tr>
+      `).join("");
+
+      expensesHTML = `
+        <h4 style="margin:20px 0 10px 0;color:#1b3a6b;font-size:12px;">Daily Expenses</h4>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #dde4f0;border-radius:6px;overflow:hidden;margin-bottom:14px;">
+          <thead><tr style="background:#f1f5f9;">
+            <th style="${thStyle}width:32px;text-align:center;">#</th>
+            <th style="${thStyle}">Title</th>
+            <th style="${thStyle}">Category</th>
+            <th style="${thStyle}">Method</th>
+            <th style="${thStyle}">Description</th>
+            <th style="${thRStyle}">Amount</th>
+          </tr></thead>
+          <tbody>${expRows}</tbody>
+        </table>
+      `;
+    }
+
     bodyHTML = `
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
         ${statCard("Total Collected", `₹${(data.totalCollected || 0).toLocaleString("en-IN")}`, "#1b3a6b")}
-        ${statCard("Cash", `₹${(data.cashCollected || 0).toLocaleString("en-IN")}`)}
+        ${statCard("Net Cash", `₹${netCash.toLocaleString("en-IN")}`)}
         ${statCard("Online / UPI", `₹${(data.onlineCollected || 0).toLocaleString("en-IN")}`)}
         ${statCard("Cheque", `₹${(data.chequeCollected || 0).toLocaleString("en-IN")}`)}
       </div>
@@ -748,6 +779,7 @@ export function generateReportHTML(
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      ${expensesHTML}
     `;
   }
 
