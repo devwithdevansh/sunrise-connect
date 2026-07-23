@@ -18,7 +18,7 @@ import {
   Settings
 } from 'lucide-react';
 import logo from '../assets/sunrise-round-logo.png';
-import dwdLogo from '../assets/logo.png';
+import dwdLogo from '../assets/dwd-logo.png';
 
 interface MenuItem {
   id: ScreenType;
