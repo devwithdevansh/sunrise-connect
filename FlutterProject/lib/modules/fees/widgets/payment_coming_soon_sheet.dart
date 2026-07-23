@@ -72,9 +72,9 @@ class PaymentComingSoonSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.amberBg,
+                    color: AppColors.amberPale,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.amberBorder),
+                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -84,7 +84,7 @@ class PaymentComingSoonSheet extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'In the meantime, please pay your fees at the school administration office.',
-                          style: AppTextStyles.labelMedium.copyWith(
+                          style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.amber,
                           ),
                         ),
@@ -101,7 +101,7 @@ class PaymentComingSoonSheet extends StatelessWidget {
                       Get.back();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.navy,
+                      backgroundColor: AppColors.navyDark,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       elevation: 0,
