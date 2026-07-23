@@ -25,15 +25,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const EXPENSE_CATEGORIES = [
-  'Tea & Snacks',
-  'Stationery & Office Supplies',
-  'Maintenance & Repairs',
-  'Utilities & Electricity',
-  'Transport & Fuel',
-  'Staff & Welfare',
-  'Miscellaneous'
-] as const;
+
 
 export const TodayExpenses: React.FC = () => {
   const { expenses, transactions, addExpense, deleteExpense, reverseExpense } = useApp();
@@ -57,7 +49,6 @@ export const TodayExpenses: React.FC = () => {
   // Form State
   const [formData, setFormData] = useState({
     title: '',
-    category: 'Tea & Snacks',
     amount: '',
     paymentMethod: 'CASH' as 'CASH' | 'BANK' | 'ONLINE',
     description: '',
@@ -121,7 +112,6 @@ export const TodayExpenses: React.FC = () => {
   const handleOpenModal = () => {
     setFormData({
       title: '',
-      category: 'Tea & Snacks',
       amount: '',
       paymentMethod: 'CASH',
       description: '',
@@ -141,10 +131,15 @@ export const TodayExpenses: React.FC = () => {
       return;
     }
 
+    if (formData.paymentMethod === 'CASH' && Number(formData.amount) > netCashCollection) {
+      alert(`Expense amount (₹${formData.amount}) cannot be greater than the Net Cash in Hand (₹${netCashCollection}).`);
+      return;
+    }
+
     setIsSubmitting(true);
     const success = await addExpense({
       title: formData.title.trim(),
-      category: formData.category,
+      category: 'Miscellaneous',
       amount: Number(formData.amount),
       paymentMethod: formData.paymentMethod,
       description: formData.description.trim(),
@@ -642,23 +637,7 @@ export const TodayExpenses: React.FC = () => {
                 </div>
               </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Expense Category
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                >
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
 
               {/* Expense Date */}
               <div>
