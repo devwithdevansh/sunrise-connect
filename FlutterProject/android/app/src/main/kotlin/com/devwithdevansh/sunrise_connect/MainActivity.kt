@@ -1,4 +1,4 @@
-package com.example.sunrise_connect
+package com.devwithdevansh.sunrise_connect
 
 import io.flutter.embedding.android.FlutterActivity
 
