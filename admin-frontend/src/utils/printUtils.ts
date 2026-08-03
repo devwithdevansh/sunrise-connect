@@ -636,7 +636,7 @@ export function generateReceiptHTML(
         <span style="opacity: 0.4;">|</span>
         <span>✉️ ${SCH.email}</span>
         <span style="opacity: 0.4;">|</span>
-        <span>🌐 www.sunriseschool.in</span>
+        <span>🌐 www.sunriseschoolrajkot.com</span>
       </div>
     </div>
   </div>

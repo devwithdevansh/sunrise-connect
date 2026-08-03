@@ -241,16 +241,21 @@ class ReceiptPdfGenerator {
                                     width: 60,
                                     height: 60,
                                     margin: const pw.EdgeInsets.only(right: 15),
-                                    padding: const pw.EdgeInsets.all(4),
+                                    padding: const pw.EdgeInsets.all(6),
                                     decoration: const pw.BoxDecoration(
                                       color: PdfColors.white,
                                       shape: pw.BoxShape.circle,
                                     ),
-                                    child: pw.Center(
-                                      child: pw.Image(
-                                        logoImage,
-                                        fit: pw.BoxFit.contain,
-                                        alignment: pw.Alignment.center,
+                                    child: pw.Align(
+                                      alignment: pw.Alignment.center,
+                                      child: pw.SizedBox(
+                                        width: 48,
+                                        height: 48,
+                                        child: pw.Image(
+                                          logoImage,
+                                          fit: pw.BoxFit.contain,
+                                          alignment: pw.Alignment.center,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -316,7 +321,7 @@ class ReceiptPdfGenerator {
                                 pw.SizedBox(width: 8),
                                 pw.Text('|', style: pw.TextStyle(color: PdfColors.white, fontSize: 8)),
                                 pw.SizedBox(width: 8),
-                                pw.Text('Web: www.sunriseschool.in', style: pw.TextStyle(color: PdfColors.white, fontSize: 8)),
+                                pw.Text('Web: www.sunriseschoolrajkot.com', style: pw.TextStyle(color: PdfColors.white, fontSize: 8)),
                               ]
                             )
                           )
