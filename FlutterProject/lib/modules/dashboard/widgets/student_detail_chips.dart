@@ -12,18 +12,18 @@ class StudentDetailChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = controller.student.value;
-    if (s == null) return const SizedBox.shrink();
+    return Obx(() {
+      final s = controller.student.value;
+      if (s == null) return const SizedBox.shrink();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Obx(() {
-        final pending = controller.totalPending.value;
-        final allPaid = pending <= 0;
+      final pending = controller.totalPending.value;
+      final allPaid = pending <= 0;
 
-        return Row(
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
           children: [
             _DetailChip(
               icon: Icons.school_rounded,

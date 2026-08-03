@@ -10,6 +10,8 @@ import '../../../../data/repositories/student_repository.dart';
 import '../../../../data/repositories/fee_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../fees/receipt_details/controllers/receipt_details_controller.dart';
+import '../../fees/pending_fees/controllers/pending_fees_controller.dart';
+import '../../fees/payment_history/controllers/payment_history_controller.dart';
 import '../../../services/sound_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../../core/widgets/permission_dialog.dart';
@@ -196,6 +198,9 @@ class DashboardController extends GetxController {
   }
 
   Future<void> switchStudent(StudentModel selected) async {
+    // Clear initial FCM student ID so manual student switching is not overridden
+    FcmService.initialStudentId = null;
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(StorageKeys.studentId, selected.id);
     student.value = selected;
@@ -226,8 +231,15 @@ class DashboardController extends GetxController {
       if (Get.isRegistered<ReceiptDetailsController>()) {
         Get.find<ReceiptDetailsController>().loadReceipts(forceRefresh: true);
       }
+      if (Get.isRegistered<PendingFeesController>()) {
+        Get.find<PendingFeesController>().reloadForStudent();
+      }
+      if (Get.isRegistered<PaymentHistoryController>()) {
+        Get.find<PaymentHistoryController>().loadPaymentHistory(forceRefresh: true);
+      }
     } catch (e) {
       print('Error switching student: $e');
+      _updateVisibleNotifications();
     } finally {
       isLoading.value = false;
     }

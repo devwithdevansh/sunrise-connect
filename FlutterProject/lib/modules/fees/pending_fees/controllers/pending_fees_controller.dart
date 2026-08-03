@@ -339,6 +339,11 @@ class PendingFeesController extends GetxController
     }
   }
 
+  Future<void> reloadForStudent() async {
+    selectedIds.clear();
+    await _loadFees();
+  }
+
   @override
   Future<void> refresh() async {
     isRefreshing.value = true;

@@ -240,9 +240,18 @@ class FcmService {
       }
     }
     
+    // Clear initialStudentId so subsequent manual student switches aren't overridden
+    FcmService.initialStudentId = null;
+
+    if (Get.currentRoute == '/notifications') {
+      return;
+    }
+    
     Get.until((route) => route.settings.name == '/dashboard' || route.isFirst);
     Future.delayed(const Duration(milliseconds: 200), () {
-      Get.toNamed('/notifications');
+      if (Get.currentRoute != '/notifications') {
+        Get.toNamed('/notifications');
+      }
     });
   }
 }
