@@ -305,7 +305,7 @@ class ReceiptPdfGenerator {
                           child: pw.Container(
                             width: 400,
                             height: 35,
-                            padding: const pw.EdgeInsets.only(right: 25, top: 12),
+                            padding: const pw.EdgeInsets.only(left: 45, right: 25, top: 12),
                             decoration: pw.BoxDecoration(
                               color: primaryColor,
                               borderRadius: const pw.BorderRadius.only(topLeft: pw.Radius.circular(30)),
@@ -313,6 +313,7 @@ class ReceiptPdfGenerator {
                             child: pw.Row(
                               mainAxisAlignment: pw.MainAxisAlignment.end,
                               children: [
+                                pw.SizedBox(width: 25),
                                 pw.Text('Tel: +91 97236 55151', style: pw.TextStyle(color: PdfColors.white, fontSize: 8)),
                                 pw.SizedBox(width: 8),
                                 pw.Text('|', style: pw.TextStyle(color: PdfColors.white, fontSize: 8)),

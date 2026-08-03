@@ -630,8 +630,8 @@ export function generateReceiptHTML(
     </div>
 
     <!-- Right Navy Block (Full height, overlapping, with top-left curve) -->
-    <div style="position: absolute; bottom: 0; right: 0; width: 70%; height: 40px; background: #1b3a6b; z-index: 2; border-top-left-radius: 35px; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: #fff; font-size: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="display: flex; gap: 12px; font-weight: 600; align-items: center; letter-spacing: 0.5px;">
+    <div style="position: absolute; bottom: 0; right: 0; width: 70%; height: 40px; background: #1b3a6b; z-index: 2; border-top-left-radius: 35px; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; padding-left: 45px; color: #fff; font-size: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+      <div style="display: flex; gap: 12px; font-weight: 600; align-items: center; letter-spacing: 0.5px; padding-left: 25px;">
         <span>📞 ${SCH.phone}</span>
         <span style="opacity: 0.4;">|</span>
         <span>✉️ ${SCH.email}</span>
