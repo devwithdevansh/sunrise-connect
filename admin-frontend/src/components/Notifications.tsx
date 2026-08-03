@@ -147,8 +147,6 @@ export const Notifications: React.FC = () => {
       const payload: any = { title: title.trim(), body: body.trim(), targetType };
       if (targetType === 'CLASS') {
         payload.targetFilter = { standard: selectedClass.standard, medium: selectedClass.medium };
-      } else if (targetType === 'PARENT') {
-        payload.targetFilter = { parentId: parentSearch.trim() };
       } else if (targetType === 'STUDENT') {
         if (selectedStudentForMsg) {
           payload.targetFilter = { studentId: selectedStudentForMsg._id || selectedStudentForMsg.id };
@@ -274,7 +272,6 @@ export const Notifications: React.FC = () => {
                     { id: 'ALL', label: 'All Parents', icon: <Users className="h-4 w-4" />, desc: 'Every parent' },
                     { id: 'CLASS', label: 'By Class', icon: <BookOpen className="h-4 w-4" />, desc: 'Filter by Std + Medium' },
                     { id: 'STUDENT', label: 'By Student', icon: <User className="h-4 w-4" />, desc: 'Search name' },
-                    { id: 'PARENT', label: 'By Parent ID', icon: <User className="h-4 w-4" />, desc: 'Raw Mongo ID' },
                   ] as const).map(opt => (
                     <button
                       key={opt.id}
@@ -317,20 +314,7 @@ export const Notifications: React.FC = () => {
                 </div>
               )}
 
-              {/* Conditional: Parent ID input */}
-              {targetType === 'PARENT' && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Parent ID</label>
-                  <input
-                    id="parent-id-input"
-                    type="text"
-                    placeholder="MongoDB Parent _id"
-                    value={parentSearch}
-                    onChange={e => setParentSearch(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  />
-                </div>
-              )}
+
 
               {/* Conditional: Student search */}
               {targetType === 'STUDENT' && (
