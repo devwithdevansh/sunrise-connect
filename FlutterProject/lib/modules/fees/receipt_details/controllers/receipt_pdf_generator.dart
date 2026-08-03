@@ -241,12 +241,18 @@ class ReceiptPdfGenerator {
                                     width: 60,
                                     height: 60,
                                     margin: const pw.EdgeInsets.only(right: 15),
-                                    padding: const pw.EdgeInsets.all(3),
+                                    padding: const pw.EdgeInsets.all(4),
                                     decoration: const pw.BoxDecoration(
                                       color: PdfColors.white,
                                       shape: pw.BoxShape.circle,
                                     ),
-                                    child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                                    child: pw.Center(
+                                      child: pw.Image(
+                                        logoImage,
+                                        fit: pw.BoxFit.contain,
+                                        alignment: pw.Alignment.center,
+                                      ),
+                                    ),
                                   ),
                                 pw.Column(
                                   crossAxisAlignment: pw.CrossAxisAlignment.start,

@@ -371,7 +371,7 @@ export function generateReceiptHTML(
     : "AUTHORISED SIGNATORY";
 
   const logoImg = logoBase64
-    ? `<img src="${logoBase64}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`
+    ? `<img src="${logoBase64}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:0 auto;" />`
     : "";
 
   return `<!DOCTYPE html>
@@ -540,7 +540,7 @@ export function generateReceiptHTML(
 
     <!-- Left Navy Block (Full height, overlapping, with bottom-right curve) -->
     <div style="position: absolute; top: 0; left: 0; width: 65%; height: 130px; background: #1b3a6b; z-index: 2; border-bottom-right-radius: 40px; display: flex; align-items: center; padding-left: 28px; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-      <div style="width: 88px; height: 88px; border-radius: 50%; background: #fff; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-right: 18px; flex-shrink: 0;">
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: #fff; padding: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-right: 18px; flex-shrink: 0; overflow: hidden;">
         ${logoImg}
       </div>
       <div style="display: flex; flex-direction: column; gap: 5px;">
