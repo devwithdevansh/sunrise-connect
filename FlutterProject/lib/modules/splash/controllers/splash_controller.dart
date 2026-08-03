@@ -18,10 +18,11 @@ class SplashController extends GetxController {
       
       final isOnboarded = prefs.getBool(StorageKeys.isOnboarded) ?? false;
       final isLoggedIn = prefs.getBool(StorageKeys.isLoggedIn) ?? false;
+      final parentId = prefs.getString(StorageKeys.parentId) ?? '';
 
       if (!isOnboarded) {
         Get.offAllNamed(AppRoutes.onboarding);
-      } else if (!isLoggedIn) {
+      } else if (!isLoggedIn || parentId.isEmpty) {
         Get.offAllNamed(AppRoutes.login);
       } else {
         Get.offAllNamed(AppRoutes.dashboard);

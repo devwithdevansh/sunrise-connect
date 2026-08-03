@@ -23,9 +23,15 @@ class ProfileView extends StatelessWidget {
     await FcmService.removeToken();
 
     final prefs = await SharedPreferences.getInstance();
-    const secureStorage = FlutterSecureStorage();
-    await secureStorage.delete(key: StorageKeys.accessToken);
-    await secureStorage.delete(key: 'refresh_token');
+    const secureStorage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    try {
+      await secureStorage.delete(key: StorageKeys.accessToken);
+      await secureStorage.delete(key: 'refresh_token');
+    } catch (e) {
+      print('Error deleting tokens during logout: $e');
+    }
     await prefs.remove(StorageKeys.parentId);
     await prefs.remove(StorageKeys.studentId);
     await prefs.remove(StorageKeys.phone);

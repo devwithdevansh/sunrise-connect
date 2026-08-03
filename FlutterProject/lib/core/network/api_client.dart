@@ -14,9 +14,13 @@ class ApiClient {
   // Single source of truth for the backend base URL — see Env.
   static String get baseUrl => Env.baseUrl;
 
-  static const _secureStorage = FlutterSecureStorage();
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
   static const _timeout = Duration(seconds: 15);
+
   static bool _isRefreshing = false;
+  static Completer<bool>? _refreshCompleter;
 
   /// Helper to decode JWT token to extract claims
   static Map<String, dynamic> decodeJwt(String token) {
@@ -41,21 +45,40 @@ class ApiClient {
 
   /// Get Parent token from SecureStorage
   static Future<String?> getParentToken() async {
-    return await _secureStorage.read(key: StorageKeys.accessToken);
+    try {
+      return await _secureStorage.read(key: StorageKeys.accessToken);
+    } catch (e) {
+      print('Error reading parent token: $e');
+      return null;
+    }
   }
 
   static Future<bool> _refreshToken() async {
-    if (_isRefreshing) return false;
+    // If a refresh is already in progress, await its result
+    if (_isRefreshing && _refreshCompleter != null) {
+      return await _refreshCompleter!.future;
+    }
+
     _isRefreshing = true;
+    _refreshCompleter = Completer<bool>();
+
     try {
-      final rToken = await _secureStorage.read(key: 'refresh_token');
+      String? rToken;
+      try {
+        rToken = await _secureStorage.read(key: 'refresh_token');
+      } catch (e) {
+        print('Error reading refresh token: $e');
+      }
+
       if (rToken == null || rToken.isEmpty) {
-        await _secureStorage.delete(key: StorageKeys.accessToken);
-        await _secureStorage.delete(key: 'refresh_token');
         final prefs = await SharedPreferences.getInstance();
-        await prefs.remove(StorageKeys.parentId);
-        await prefs.setBool(StorageKeys.isLoggedIn, false);
-        Get.offAllNamed(AppRoutes.login);
+        final pId = prefs.getString(StorageKeys.parentId);
+        if (pId == null || pId.isEmpty) {
+          await _forceLogout();
+          _refreshCompleter?.complete(false);
+          return false;
+        }
+        _refreshCompleter?.complete(false);
         return false;
       }
 
@@ -80,29 +103,56 @@ class ApiClient {
         final newAccess = body['data']['accessToken'] as String?;
         final newRefresh = body['data']['refreshToken'] as String?;
         if (newAccess != null) {
-          await _secureStorage.write(key: StorageKeys.accessToken, value: newAccess);
+          try {
+            await _secureStorage.write(key: StorageKeys.accessToken, value: newAccess);
+          } catch (e) {
+            print('Error writing new access token: $e');
+          }
         }
         if (newRefresh != null) {
-          await _secureStorage.write(key: 'refresh_token', value: newRefresh);
+          try {
+            await _secureStorage.write(key: 'refresh_token', value: newRefresh);
+          } catch (e) {
+            print('Error writing new refresh token: $e');
+          }
         }
+        _refreshCompleter?.complete(true);
         return true;
       } else if (response.statusCode == 401 || response.statusCode == 403) {
-        // Refresh token is explicitly invalid or expired. Force logout.
-        await _secureStorage.delete(key: StorageKeys.accessToken);
-        await _secureStorage.delete(key: 'refresh_token');
-        await prefs.remove(StorageKeys.parentId);
-        await prefs.setBool(StorageKeys.isLoggedIn, false);
-        Get.offAllNamed(AppRoutes.login);
+        // Refresh token is explicitly invalid or expired on server. Force logout.
+        await _forceLogout();
+        _refreshCompleter?.complete(false);
         return false;
       } else {
-        // Temporary server error. Do NOT logout user.
+        // Temporary server error (500, 502, 503). Do NOT logout user!
+        _refreshCompleter?.complete(false);
         return false;
       }
     } catch (e) {
-      // Network error or timeout. Do NOT logout user.
+      // Network error or timeout. Do NOT logout user!
+      _refreshCompleter?.complete(false);
       return false;
     } finally {
       _isRefreshing = false;
+      _refreshCompleter = null;
+    }
+  }
+
+  static Future<void> _forceLogout() async {
+    try {
+      try {
+        await _secureStorage.delete(key: StorageKeys.accessToken);
+        await _secureStorage.delete(key: 'refresh_token');
+      } catch (_) {}
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(StorageKeys.parentId);
+      await prefs.remove(StorageKeys.studentId);
+      await prefs.setBool(StorageKeys.isLoggedIn, false);
+      if (Get.currentRoute != AppRoutes.login && Get.currentRoute != '/login') {
+        Get.offAllNamed(AppRoutes.login);
+      }
+    } catch (e) {
+      print('Error during force logout: $e');
     }
   }
 

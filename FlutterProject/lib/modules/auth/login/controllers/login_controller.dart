@@ -29,10 +29,16 @@ class LoginController extends GetxController {
         final parentId = jwtData['id'] as String? ?? '';
 
         final prefs = await SharedPreferences.getInstance();
-        const secureStorage = FlutterSecureStorage();
-        await secureStorage.write(key: StorageKeys.accessToken, value: accessToken);
-        if (refreshToken != null) {
-          await secureStorage.write(key: 'refresh_token', value: refreshToken);
+        const secureStorage = FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        );
+        try {
+          await secureStorage.write(key: StorageKeys.accessToken, value: accessToken);
+          if (refreshToken != null) {
+            await secureStorage.write(key: 'refresh_token', value: refreshToken);
+          }
+        } catch (e) {
+          print('Error writing auth tokens: $e');
         }
         await prefs.setString(StorageKeys.parentId, parentId);
         await prefs.setString(StorageKeys.phone, phone);
