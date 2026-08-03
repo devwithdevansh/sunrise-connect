@@ -70,9 +70,9 @@ class StudentDetailChips extends StatelessWidget {
               bgColor: allPaid ? AppColors.tealPale : AppColors.redPale,
             ),
           ],
-        );
-      }),
-    );
+        ),
+      );
+    });
   }
 }
 
