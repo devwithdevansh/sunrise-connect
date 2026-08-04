@@ -274,7 +274,6 @@ export const Notifications: React.FC = () => {
                     { id: 'ALL', label: 'All Parents', icon: <Users className="h-4 w-4" />, desc: 'Every parent' },
                     { id: 'CLASS', label: 'By Class', icon: <BookOpen className="h-4 w-4" />, desc: 'Filter by Std + Medium' },
                     { id: 'STUDENT', label: 'By Student', icon: <User className="h-4 w-4" />, desc: 'Search name' },
-                    { id: 'PARENT', label: 'By Parent ID', icon: <User className="h-4 w-4" />, desc: 'Raw Mongo ID' },
                   ] as const).map(opt => (
                     <button
                       key={opt.id}
