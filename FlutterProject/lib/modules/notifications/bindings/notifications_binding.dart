@@ -5,7 +5,7 @@ class NotificationsBinding extends Bindings {
   @override
   void dependencies() {
     if (!Get.isRegistered<DashboardController>()) {
-      Get.lazyPut<DashboardController>(() => DashboardController());
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
     }
   }
 }

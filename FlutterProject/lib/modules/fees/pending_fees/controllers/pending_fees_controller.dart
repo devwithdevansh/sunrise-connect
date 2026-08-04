@@ -285,6 +285,9 @@ class PendingFeesController extends GetxController
   // ── Data loading ──────────────────────────────────────────────────────────
   void _syncWithDashboard() {
     isLoading.value = true;
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+    }
     final allFees = Get.find<DashboardController>().fees;
     final filteredData = allFees.where((f) => !f.isAdmission && !f.isBagKit).toList();
     

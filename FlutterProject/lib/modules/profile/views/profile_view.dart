@@ -9,7 +9,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/constants/storage_keys.dart';
 import '../../../core/services/fcm_service.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
-import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../../services/sound_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -42,6 +41,9 @@ class ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+    }
     final controller = Get.find<DashboardController>();
 
     return Scaffold(

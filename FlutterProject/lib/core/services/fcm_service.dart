@@ -219,7 +219,7 @@ class FcmService {
     }
 
     if (!Get.isRegistered<DashboardController>()) {
-      Get.lazyPut<DashboardController>(() => DashboardController());
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
     }
 
     if (Get.isRegistered<DashboardController>()) {

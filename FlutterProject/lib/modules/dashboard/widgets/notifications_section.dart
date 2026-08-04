@@ -49,7 +49,7 @@ class _NotifCard extends StatelessWidget {
     final iconColor = isSuccess ? AppColors.teal : AppColors.primaryMid;
     final iconBg = isSuccess ? AppColors.tealPale : AppColors.primaryLight;
 
-    final sId = Get.find<DashboardController>().student.value?.id;
+    final sId = Get.isRegistered<DashboardController>() ? Get.find<DashboardController>().student.value?.id : null;
     final isRead = sId != null ? notif.isReadFor(sId) : notif.isRead;
 
     return Container(

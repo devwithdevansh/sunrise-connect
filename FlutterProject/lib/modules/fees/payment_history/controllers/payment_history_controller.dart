@@ -127,6 +127,9 @@ class PaymentHistoryController extends GetxController {
   // ── Data loading ──────────────────────────────────────────────────────────
 
   Future<void> loadPaymentHistory({bool forceRefresh = false}) async {
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+    }
     final dashCtrl = Get.find<DashboardController>();
     final sId      = dashCtrl.student.value?.id ?? '';
     if (sId.isEmpty) { isLoading.value = false; return; }

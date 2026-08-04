@@ -16,6 +16,9 @@ class NotificationsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+    }
     final controller = Get.find<DashboardController>();
     final repo = NotificationRepository();
 

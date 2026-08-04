@@ -193,6 +193,9 @@ class ReceiptDetailsController extends GetxController {
 
   Future<void> _clearUnreadReceiptNotifications(String studentId) async {
     try {
+      if (!Get.isRegistered<DashboardController>()) {
+        Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+      }
       final dashCtrl = Get.find<DashboardController>();
       final notifs = dashCtrl.notifications.where((n) => 
         !n.isReadFor(studentId) && n.type == 'PAYMENT_RECEIVED' && (n.targetStudentIds.isEmpty || n.targetStudentIds.contains(studentId))
@@ -216,6 +219,9 @@ class ReceiptDetailsController extends GetxController {
   // ── Data loading ──────────────────────────────────────────────────────────
 
   Future<void> loadReceipts({bool forceRefresh = false}) async {
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+    }
     final dashCtrl = Get.find<DashboardController>();
     final sId      = dashCtrl.student.value?.id ?? '';
     if (sId.isEmpty) { isLoading.value = false; return; }
