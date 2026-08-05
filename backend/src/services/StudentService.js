@@ -55,6 +55,9 @@ class StudentService {
           }
 
           parent = await mongoose.model('Parent').create([newParent], { session }).then(docs => docs[0]);
+        } else if (!parent.isActive) {
+          parent.isActive = true;
+          await parent.save({ session });
         }
         parentId = parent._id;
       }
@@ -993,10 +996,21 @@ class StudentService {
         }
       }
 
+      // Check sibling status for parent cleanup
+      const siblingCount = await mongoose.model('Student').countDocuments({ parentId: student.parentId, _id: { $ne: studentId } }).session(session);
+      let activeSiblingCount = 0;
+      if (siblingCount > 0) {
+        activeSiblingCount = await mongoose.model('Student').countDocuments({ parentId: student.parentId, _id: { $ne: studentId }, isActive: true }).session(session);
+      }
+
       if (hasPayments) {
         // SOFT DELETE
         await studentRepository.updateOne({ _id: studentId }, { $set: { isActive: false } }, { session });
         await this._deactivateStudent(studentId, session);
+
+        if (siblingCount === 0 || activeSiblingCount === 0) {
+          await mongoose.model('Parent').updateOne({ _id: student.parentId }, { $set: { isActive: false } }, { session });
+        }
 
         await AuditService.log(
           { performedBy, targetStudentId: studentId, action: 'STUDENT_SOFT_DELETED', details: { studentCode: student.studentCode, studentName: student.studentName, reason: 'Has payment history' } },
@@ -1006,6 +1020,12 @@ class StudentService {
         // HARD DELETE
         await mongoose.model('StudentFeeLedger').deleteMany({ studentId }, { session });
         await studentRepository.deleteOne({ _id: studentId }, { session });
+
+        if (siblingCount === 0) {
+          await mongoose.model('Parent').deleteOne({ _id: student.parentId }, { session });
+        } else if (activeSiblingCount === 0) {
+          await mongoose.model('Parent').updateOne({ _id: student.parentId }, { $set: { isActive: false } }, { session });
+        }
 
         await AuditService.log(
           { performedBy, targetStudentId: studentId, action: 'STUDENT_DELETED', details: { studentCode: student.studentCode, studentName: student.studentName } },
@@ -1034,6 +1054,9 @@ class StudentService {
       if (student.isActive) throw new AppError('Student is already active', 400);
 
       await studentRepository.updateOne({ _id: studentId }, { $set: { isActive: true } }, { session });
+      
+      // Reactivate parent if they were soft-deleted
+      await mongoose.model('Parent').updateOne({ _id: student.parentId, isActive: false }, { $set: { isActive: true } }, { session });
 
       const activeYearDoc = await mongoose.model('AcademicYear').findOne({ isActive: true }).session(session);
       if (!activeYearDoc) throw new AppError('No active academic year found.', 400);
