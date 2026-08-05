@@ -189,7 +189,7 @@ class SplashView extends GetView<SplashController> {
                       .fadeIn(duration: 400.ms),
                   const SizedBox(height: 20),
                   Text(
-                    'Powered by Sunrise Public School',
+                    'Powered by Sunrise School',
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.white.withOpacity(.35),
                       letterSpacing: 1,

@@ -343,6 +343,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             parentName: s.parentId?.parentName || '',
             parentMobile: s.parentId?.primaryMobileNumber || '',
             parentSecondaryMobile: s.parentId?.secondaryMobileNumber || '',
+            parentAllowOtpReset: s.parentId?.allowOtpReset || false,
             transportStartMonth: s.transportStartMonth || 'June',
             status,
             ledgers: [],

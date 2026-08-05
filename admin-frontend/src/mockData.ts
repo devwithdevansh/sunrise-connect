@@ -17,6 +17,7 @@ export interface Student {
   parentName: string;
   parentMobile: string;
   parentSecondaryMobile?: string;
+  parentAllowOtpReset?: boolean;
   status: 'PAID' | 'PARTIAL' | '2 DUE' | '1 DUE' | '3+ DUE' | 'RTE';
 }
 

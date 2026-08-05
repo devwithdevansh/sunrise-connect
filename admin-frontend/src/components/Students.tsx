@@ -111,6 +111,7 @@ export const Students: React.FC = () => {
   const [editSIsRTE, setEditSIsRTE] = useState(false);
   const [editSAdmissionMonth, setEditSAdmissionMonth] = useState('June');
   const [editSBuyBagKit, setEditSBuyBagKit] = useState(false);
+  const [editSAllowOtpReset, setEditSAllowOtpReset] = useState(false);
 
   // Sibling Modal State
   const [siblingModalData, setSiblingModalData] = useState<{ parentName: string, parentId: string } | null>(null);
@@ -377,6 +378,7 @@ export const Students: React.FC = () => {
     setEditSParentSecondaryMobile(s.parentSecondaryMobile || '');
     setEditSIsRTE(s.isRTE || false);
     setEditSBuyBagKit(s.buyBagKit || false);
+    setEditSAllowOtpReset(s.parentAllowOtpReset || false);
     setIsEditModalOpen(true);
   };
 
@@ -395,6 +397,7 @@ export const Students: React.FC = () => {
       parentName: editSParentName,
       parentMobile: editSParentMobile,
       parentSecondaryMobile: editSParentSecondaryMobile || null,
+      parentAllowOtpReset: editSAllowOtpReset,
       isRTE: editSIsRTE,
       buyBagKit: editSBuyBagKit,
     };
@@ -1539,6 +1542,19 @@ export const Students: React.FC = () => {
                 />
                 <label htmlFor="editBuyBagKitCheckbox" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
                   Include Bag & Kit Fee (Optional)
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2 border-t border-dashed border-slate-205 mt-2">
+                <input
+                  type="checkbox"
+                  id="editAllowOtpResetCheckbox"
+                  checked={editSAllowOtpReset}
+                  onChange={(e) => setEditSAllowOtpReset(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                />
+                <label htmlFor="editAllowOtpResetCheckbox" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
+                  Allow Parent to Reset Password via OTP (Forgot Password)
                 </label>
               </div>
 
