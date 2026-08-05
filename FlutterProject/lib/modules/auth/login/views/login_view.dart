@@ -100,7 +100,26 @@ class _LoginViewState extends State<LoginView> {
                       return null;
                     },
                   ).animate().fade(delay: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _controller.goToOnboarding,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Forgot Password?',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.primaryMid,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ).animate().fade(delay: 450.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
+                  const SizedBox(height: 24),
                   Obx(() => CustomButton(
                         label: 'Login',
                         loading: _controller.isLoading.value,

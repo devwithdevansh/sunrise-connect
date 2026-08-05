@@ -70,7 +70,6 @@ class AuthService {
       ]
     });
     if (!parent) throw new AppError('Parent not found', 404);
-    if (parent.isPasswordSet) throw new AppError('Onboarding already completed. Please log in normally.', 400);
 
     let matchedNumber = parent.primaryMobileNumber;
     if (parent.secondaryMobileNumber && parent.secondaryMobileNumber.trim() === mobileInput) {
@@ -91,7 +90,6 @@ class AuthService {
     try {
       const existingParent = await parentRepository.findById(parentId, null, { session });
       if (!existingParent) throw new AppError('Parent not found', 404);
-      if (existingParent.isPasswordSet) throw new AppError('Password already set', 400);
 
       const hash = await bcrypt.hash(newPassword, 12);
       await parentRepository.updateOne(

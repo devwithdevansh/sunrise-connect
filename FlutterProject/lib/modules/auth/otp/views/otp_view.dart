@@ -72,12 +72,12 @@ class _OtpViewState extends State<OtpView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                Text('Account Setup', style: AppTextStyles.displayMedium)
+                Text('Account Verification', style: AppTextStyles.displayMedium)
                     .animate().fade(duration: 400.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
                 const SizedBox(height: 8),
                 Text(
                   isPhoneEmpty
-                      ? 'Enter your registered mobile number to set up your password.'
+                      ? 'Enter your registered mobile number to set up or reset your password.'
                       : 'For verification, please enter the last 4 digits of your mobile number (+91 ${_controller.phone.value}).',
                   style: AppTextStyles.bodyMedium,
                 ).animate().fade(delay: 100.ms).slideY(begin: 0.2, curve: Curves.easeOutQuad),
