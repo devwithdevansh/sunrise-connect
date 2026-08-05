@@ -142,6 +142,9 @@ export const Whatsapp: React.FC = () => {
       };
       if (targetType === 'CLASS') {
         payload.targetFilter = { standard: selectedClass.standard, medium: selectedClass.medium };
+      } else if (targetType === 'PARENT') {
+        // If they enter a parent ID, convert it to array for the backend
+        payload.parentIds = [parentSearch.trim()];
       } else if (targetType === 'STUDENT') {
         payload.targetFilter = { 
           student: selectedStudentForMsg?._id || selectedStudentForMsg?.id,
@@ -345,7 +348,19 @@ export const Whatsapp: React.FC = () => {
                 </div>
               )}
 
-
+              {/* Conditional: Parent ID input */}
+              {targetType === 'PARENT' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Parent ID</label>
+                  <input
+                    type="text"
+                    placeholder="MongoDB Parent _id"
+                    value={parentSearch}
+                    onChange={e => setParentSearch(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              )}
 
               {/* Conditional: Student search */}
               {targetType === 'STUDENT' && (
